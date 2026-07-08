@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Gestión de Usuarios</title>
+
+<link rel="stylesheet" href="/css/usuarios.css">
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+
+<body>
+
+
+	<div class="usuarios-container">
+
+
+		<header class="header">
+
+
+			<div class="header-left">
+
+
+				<a href="/dashboard" class="btn-dashboard"> <i
+					class="fa-solid fa-arrow-left"></i> <span>Dashboard</span>
+
+				</a>
+
+
+
+				<div class="titulo-usuarios">
+
+					<h1>Gestión de Usuarios</h1>
+
+					<p>Administración de usuarios, roles y permisos</p>
+
+				</div>
+
+
+			</div>
+
+
+
+
+
+			<div class="header-actions">
+
+
+				<button class="btn-nuevo" id="btnNuevoUsuario"
+					th:data-total="${totalUsuarios}" th:data-limite="${limiteUsuarios}">
+
+					<i class="fa-solid fa-plus"></i> Nuevo Usuario
+
+				</button>
+
+
+
+				<div class="contador-usuarios">
+
+					<i class="fa-solid fa-users"></i> <span> Usuarios
+						registrados: </span> <strong th:text="${totalUsuarios}"> 0 </strong> <span>/</span>
+
+
+					<strong th:text="${limiteUsuarios}"> 30 </strong>
+
+
+				</div>
+
+
+			</div>
+
+
+		</header>
+
+
+
+
+
+		<div class="search-box">
+
+			<i class="fa-solid fa-magnifying-glass"></i> <input
+				id="buscadorUsuarios" type="text" placeholder="Buscar usuario...">
+
+		</div>
+
+
+
+
+
+		<div class="table-container">
+
+
+			<table>
+
+
+				<thead>
+
+
+					<tr>
+
+						<th>ID</th>
+
+						<th>Imagen</th>
+
+						<th>Nombre</th>
+
+						<th>Usuario</th>
+
+						<th>Contraseña</th>
+
+						<th>Correo</th>
+
+						<th>Teléfono</th>
+
+						<th>Rol</th>
+
+						<th>Estado</th>
+
+						<th>Acciones</th>
+
+
+					</tr>
+
+
+				</thead>
+
+
+
+
+
+				<tbody>
+
+
+					<tr th:each="usuario : ${usuarios}">
+
+
+						<td th:text="${usuario.id}">ID</td>
+
+
+
+						<td><img
+							th:src="${usuario.imagenPerfil != null ? usuario.imagenPerfil : '/imgs/perfil.png'}"
+							class="avatar ver-imagen" alt="Perfil"
+							th:data-imagen="${usuario.imagenPerfil != null ? usuario.imagenPerfil : '/imgs/perfil.png'}">
+
+						</td>
+
+
+
+
+
+						<td th:text="${usuario.nombre}">Nombre</td>
+
+
+
+
+						<td th:text="${usuario.usuario}">Usuario</td>
+
+
+
+
+
+						<td>
+
+
+							<div class="password-box">
+
+
+								<input class="pass" type="password"
+									th:value="${usuario.password}" readonly>
+
+
+
+								<button type="button" class="show-pass">
+
+									<i class="fa-solid fa-eye"></i>
+
+								</button>
+
+
+							</div>
+
+
+						</td>
+
+
+
+
+
+
+						<td th:text="${usuario.correo}">Correo</td>
+
+
+
+
+
+						<td th:text="${usuario.telefono}">Telefono</td>
+
+
+
+
+
+						<td><span class="rol" th:text="${usuario.rol}"> Rol </span></td>
+
+
+
+
+
+						<td><span th:if="${usuario.enLinea}" class="estado activo">
+
+								En línea </span> <span th:unless="${usuario.enLinea}"
+							class="estado inactivo"> Desconectado </span></td>
+
+
+
+
+
+
+						<td class="acciones">
+
+
+
+							<button class="btn ver" type="button" th:data-id="${usuario.id}"
+								onclick="abrirPermisos(this)">
+
+								<i class="fa-solid fa-eye"></i>
+
+							</button>
+
+
+
+
+
+							<button class="btn editar" type="button"
+								th:data-id="${usuario.id}" th:data-nombre="${usuario.nombre}"
+								th:data-usuario="${usuario.usuario}"
+								th:data-password="${usuario.password}"
+								th:data-correo="${usuario.correo}"
+								th:data-telefono="${usuario.telefono}"
+								th:data-rol="${usuario.rol}"
+								th:data-imagen="${usuario.imagenPerfil}"
+								onclick="abrirEditar(this)">
+
+
+								<i class="fa-solid fa-pen"></i>
+
+
+							</button>
+
+
+
+
+
+							<form th:action="@{/usuarios/eliminar/{id}(id=${usuario.id})}"
+								method="post" class="form-eliminar">
+
+
+
+								<button class="btn eliminar" type="button"
+									onclick="abrirModalEliminar(this)">
+
+
+									<i class="fa-solid fa-trash"></i>
+
+
+								</button>
+
+
+
+							</form>
+
+
+
+						</td>
+
+
+					</tr>
+
+
+				</tbody>
+
+
+
+			</table>
+
+
+		</div>
+
+
+	</div>
+
+	<!-- =========================
+MODAL CREAR / EDITAR USUARIO
+========================= -->
+
+
+	<div class="modal" id="modalUsuario">
+
+
+		<div class="modal-content">
+
+
+
+			<div class="modal-header">
+
+
+				<h2 id="tituloModal">
+
+					<i class="fa-solid fa-user-plus"></i> Crear Usuario
+
+				</h2>
+
+
+
+
+				<button type="button" class="cerrar-modal" id="btnCerrarModal">
+
+					<i class="fa-solid fa-xmark"></i>
+
+				</button>
+
+
+			</div>
+
+
+
+
+
+			<form id="formUsuario" action="/usuarios/guardar" method="post"
+				enctype="multipart/form-data">
+
+
+				<input type="hidden" id="idUsuario" name="id">
+
+
+
+
+
+
+				<div class="foto-container">
+
+
+					<img src="/imgs/perfil.png" id="previewFoto" class="preview"
+						alt="Foto perfil"> <label class="btn-imagen"> <i
+						class="fa-solid fa-camera"></i> Cambiar foto <input
+						id="fotoPerfil" type="file" name="imagen" accept="image/*" hidden>
+
+
+					</label>
+
+
+
+				</div>
+
+
+
+
+
+
+
+
+				<div class="form-grid">
+
+
+
+
+
+
+					<div class="campo">
+
+
+						<label> Nombre completo </label> <input type="text" name="nombre"
+							placeholder="Nombre Completo" required>
+
+
+					</div>
+
+
+
+
+
+
+
+
+					<div class="campo">
+
+
+						<label> Usuario </label> <input id="usuario" type="text"
+							name="usuario" placeholder="Usuario" required>
+
+
+					</div>
+
+
+
+
+
+
+
+					<div class="campo">
+
+
+						<label> Contraseña </label>
+
+
+
+						<div class="password-create">
+
+
+
+							<input id="password" type="password" name="password" required>
+
+
+
+
+							<button type="button" id="btnMostrarCrearPassword">
+
+
+								<i class="fa-solid fa-eye"></i>
+
+
+							</button>
+
+
+
+
+							<button type="button" id="btnGenerarPassword">
+
+
+								<i class="fa-solid fa-wand-magic-sparkles"></i>
+
+
+							</button>
+
+
+
+						</div>
+
+
+
+					</div>
+
+
+
+
+
+
+
+
+
+					<div class="campo">
+
+
+						<label> Correo </label>
+
+
+
+						<div class="correo-box">
+
+
+							<input id="correoUsuario" type="text" placeholder="@Correo"
+								required> <select id="dominio">
+
+
+								<option value="@gmail.com">@gmail.com</option>
+
+
+								<option value="@hotmail.com">@hotmail.com</option>
+
+
+								<option value="@outlook.com">@outlook.com</option>
+
+
+								<option value="@empresa.com">@empresa.com</option>
+
+
+							</select>
+
+
+						</div>
+
+
+
+
+						<input type="hidden" id="correo" name="correo">
+
+
+
+					</div>
+
+
+
+
+
+
+
+
+
+					<div class="campo">
+
+
+						<label> Teléfono </label> <input type="text" name="telefono"
+							placeholder="0000-0000">
+
+
+					</div>
+
+
+
+
+
+
+
+
+					<div class="campo">
+
+
+						<label> Rol </label> <select name="rol">
+
+
+							<option value="Administrador">Administrador</option>
+
+
+							<option value="Operador">Operador</option>
+
+
+							<option value="Conductor">Conductor</option>
+
+
+						</select>
+
+
+					</div>
+
+
+
+
+				</div>
+
+
+
+
+
+
+
+
+
+				<div class="modal-footer">
+
+
+					<button type="button" class="btn-cancelar" id="btnCancelarModal">
+
+
+						Cancelar</button>
+
+
+
+
+
+
+					<button type="submit" class="btn-guardar">
+
+
+						<i class="fa-solid fa-save"></i> <span id="textoGuardar">
+
+							Guardar Usuario </span>
+
+
+
+					</button>
+
+
+
+				</div>
+
+
+
+
+			</form>
+
+
+		</div>
+
+
+	</div>
+
+
+
+
+
+
+
+	<!-- =========================
+MODAL ELIMINAR
+========================= -->
+
+
+	<div class="modal" id="modalEliminar">
+
+
+		<div class="modal-content">
+
+
+			<div class="modal-header">
+
+
+				<h2>
+
+					<i class="fa-solid fa-triangle-exclamation"></i> Confirmar
+					eliminación
+
+
+				</h2>
+
+
+			</div>
+
+
+
+
+			<p>Este usuario será eliminado del sistema. Esta acción no se
+				puede deshacer.</p>
+
+
+
+
+			<div class="modal-footer">
+
+
+
+				<button type="button" class="btn-cancelar"
+					onclick="cerrarModalEliminar()">Cancelar</button>
+
+
+
+
+
+				<button type="button" class="btn-guardar"
+					onclick="confirmarEliminar()">Eliminar</button>
+
+
+
+
+			</div>
+
+
+		</div>
+
+
+	</div>
+
+
+
+
+
+
+
+
+
+	<!-- =========================
+MODAL PERMISOS
+========================= -->
+
+
+	<div class="modal" id="modalPermisos">
+
+
+		<div class="modal-content">
+
+
+
+			<div class="modal-header">
+
+
+				<h2>
+
+					<i class="fa-solid fa-user-lock"></i> Permisos de Usuario
+
+
+				</h2>
+
+
+			</div>
+
+
+
+
+			<div id="listaPermisos"></div>
+
+
+
+
+
+			<div class="modal-footer">
+
+
+				<button type="button" class="btn-cancelar"
+					onclick="cerrarModalPermisos()">Cancelar</button>
+
+
+
+
+				<button type="button" class="btn-guardar"
+					onclick="guardarPermisos()">Guardar</button>
+
+
+
+			</div>
+
+
+
+		</div>
+
+
+	</div>
+
+
+
+<!-- MODAL IMAGEN PERFIL -->
+
+<div class="modal" id="modalImagenPerfil">
+
+
+    <div class="modal-imagen-content">
+
+
+        <button class="cerrar-imagen" id="cerrarImagen">
+
+            <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+
+
+        <img id="imagenGrande" src="" alt="Imagen perfil">
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+	<!-- TOAST -->
+
+	<div id="mensajeToast" class="toast">
+
+
+		<i class="fa-solid fa-circle-exclamation"></i> <span id="textoToast"></span>
+
+
+	</div>
+
+
+
+
+
+
+
+	<script src="/js/usuarios.js"></script>
+
+
+
+</body>
+
+
+</html>

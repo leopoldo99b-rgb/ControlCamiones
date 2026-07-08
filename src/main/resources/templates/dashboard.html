@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Control de Viajes | Dashboard</title>
+
+<link rel="stylesheet" href="/css/dashboard.css">
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+
+
+<body>
+
+
+	<div class="sidebar" id="sidebar">
+
+
+		<div class="logo">
+
+			<i class="fas fa-truck"></i> <span>Control Viajes</span>
+
+		</div>
+
+
+
+		<ul>
+
+
+			<li class="active"><a href="/dashboard"> <i
+					class="fas fa-chart-line"></i> Dashboard
+
+			</a></li>
+
+
+
+
+			<li
+				th:if="${session.usuarioLogueado != null 
+        and session.usuarioLogueado.permisos.?[nombre=='VIAJES'].size() > 0}">
+
+				<a href="#"> <i class="fas fa-route"></i> Viajes
+
+			</a>
+
+			</li>
+
+
+
+
+			<li
+				th:if="${session.usuarioLogueado != null 
+        and session.usuarioLogueado.permisos.?[nombre=='CAMIONES'].size() > 0}">
+
+				<a href="/camiones"> <i class="fas fa-truck-moving"></i> Camiones
+
+			</a>
+
+			</li>
+
+
+
+
+			<li
+				th:if="${session.usuarioLogueado != null 
+and session.usuarioLogueado.permisos.?[nombre=='CONDUCTORES'].size() > 0}">
+
+				<a href="/conductores"> <i class="fas fa-users"></i> Conductores
+
+			</a>
+
+			</li>
+
+
+
+			<li
+				th:if="${session.usuarioLogueado != null 
+        and session.usuarioLogueado.permisos.?[nombre=='COMBUSTIBLE'].size() > 0}">
+
+				<a href="#"> <i class="fas fa-gas-pump"></i> Combustible
+
+			</a>
+
+			</li>
+
+
+
+
+			<li
+				th:if="${session.usuarioLogueado != null 
+        and session.usuarioLogueado.permisos.?[nombre=='REPORTES'].size() > 0}">
+
+				<a href="#"> <i class="fas fa-file-invoice"></i> Reportes
+
+			</a>
+
+			</li>
+
+
+
+
+
+			<li
+				th:if="${session.usuarioLogueado != null 
+        and session.usuarioLogueado.permisos.?[nombre=='USUARIOS'].size() > 0}">
+
+
+				<a href="/usuarios"> <i class="fas fa-user-shield"></i> Usuarios
+
+			</a>
+
+
+			</li>
+
+
+
+
+
+			<li><a href="#"> <i class="fas fa-cog"></i> Configuración
+
+			</a></li>
+
+
+
+		</ul>
+
+
+	</div>
+
+
+
+
+
+	<div class="main">
+
+
+		<header>
+
+
+
+			<button id="menu-btn">
+
+				<i class="fas fa-bars"></i>
+
+			</button>
+
+
+
+
+			<h2>Panel Administrativo</h2>
+
+
+
+
+
+			<div class="user">
+
+
+				<img
+					th:if="${session.usuarioLogueado != null 
+        and session.usuarioLogueado.imagenPerfil != null}"
+					th:src="${session.usuarioLogueado.imagenPerfil}" class="user-photo"
+					alt="Perfil"> <img
+					th:unless="${session.usuarioLogueado != null 
+        and session.usuarioLogueado.imagenPerfil != null}"
+					src="/imgs/perfil.png" class="user-photo" alt="Perfil">
+
+
+
+				<div class="user-info">
+
+
+					<span class="user-name" th:if="${session.usuarioLogueado != null}"
+						th:text="${session.usuarioLogueado.nombre}"> Usuario </span> <span
+						class="user-name" th:unless="${session.usuarioLogueado != null}">
+
+						Invitado </span>
+
+
+
+				</div>
+
+
+
+
+				<a href="/logout" class="btn-logout"> <i
+					class="fa-solid fa-right-from-bracket"></i> <span> Cerrar
+						sesión </span>
+
+
+				</a>
+
+
+			</div>
+
+
+
+		</header>
+
+
+
+
+
+
+
+		<section class="cards">
+
+
+
+			<div class="card">
+
+				<i class="fas fa-route"></i>
+
+				<h3>145</h3>
+
+				<p>Viajes Realizados</p>
+
+
+			</div>
+
+
+
+
+
+			<div class="card">
+
+
+				<i class="fas fa-truck"></i>
+
+
+				<h3>32</h3>
+
+
+				<p>Camiones Activos</p>
+
+
+			</div>
+
+
+
+
+
+			<div class="card">
+
+
+				<i class="fas fa-users"></i>
+
+
+				<h3>18</h3>
+
+
+				<p>Conductores</p>
+
+
+			</div>
+
+
+
+
+
+			<div class="card">
+
+
+				<i class="fas fa-gas-pump"></i>
+
+
+				<h3>7,800 L</h3>
+
+
+				<p>Combustible Consumido</p>
+
+
+			</div>
+
+
+
+		</section>
+
+
+
+
+
+	</div>
+
+
+
+
+
+
+	<script>
+
+
+const btn = document.getElementById("menu-btn");
+
+const sidebar = document.getElementById("sidebar");
+
+
+
+btn.addEventListener("click", () => {
+
+
+    sidebar.classList.toggle("show");
+
+
+});
+
+
+
+
+
+document.addEventListener("click", (e) => {
+
+
+    const clickDentroMenu =
+        sidebar.contains(e.target);
+
+
+
+    const clickBoton =
+        btn.contains(e.target);
+
+
+
+
+    if (!clickDentroMenu && !clickBoton) {
+
+
+        sidebar.classList.remove("show");
+
+
+    }
+
+
+
+});
+
+
+
+</script>
+
+
+
+</body>
+
+</html>

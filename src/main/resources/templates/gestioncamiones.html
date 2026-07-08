@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Gestión de Camiones</title>
+
+<link rel="stylesheet" href="/css/gestioncamiones.css">
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link
+	href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+	rel="stylesheet">
+
+</head>
+
+<body>
+
+	<!--==================================================
+                    HEADER
+===================================================-->
+
+	<header class="topbar">
+
+		<div class="logo">
+
+			<div class="logo-icon">
+				<i class="fa-solid fa-truck-front"></i>
+			</div>
+
+			<div>
+				<h2>Gestión de Camiones</h2>
+				<span>Control de la flota de transporte</span>
+			</div>
+
+		</div>
+
+		<a href="/camiones" class="btn-back"> <i
+			class="fa-solid fa-arrow-left"></i> <span>Volver</span>
+
+		</a>
+
+	</header>
+
+	<!--==================================================
+                    HERO
+===================================================-->
+
+	<section class="hero">
+
+		<div class="hero-left">
+
+			<span class="badge"> <i class="fa-solid fa-truck-fast"></i>
+
+				Módulo de Flota
+
+			</span>
+
+			<h1>
+
+				Administración de <span>Camiones</span>
+
+			</h1>
+
+			<p>Registra, consulta, modifica y administra todos los vehículos
+				de la empresa.</p>
+
+		</div>
+
+		<div class="hero-right">
+
+			<img src="https://cdn-icons-png.flaticon.com/512/1995/1995502.png"
+				alt="Camión">
+
+		</div>
+
+	</section>
+
+	<!--==================================================
+                CONTENEDOR
+===================================================-->
+
+	<div class="container">
+
+		<!--==================================================
+                    TOOLBAR
+    ===================================================-->
+
+		<div class="toolbar">
+
+			<div class="toolbar-left">
+
+				<button type="button" class="btn-primary" id="btnNuevoCamion">
+
+					<i class="fa-solid fa-plus"></i> Nuevo Camión
+
+				</button>
+
+				<button type="button" class="btn-secondary">
+
+					<i class="fa-solid fa-file-arrow-down"></i> Exportar
+
+				</button>
+
+			</div>
+
+			<div class="toolbar-right">
+
+				<div class="search-box">
+
+					<i class="fa-solid fa-magnifying-glass"></i> <input type="text"
+						id="buscarCamion" placeholder="Buscar por placa, marca o modelo">
+
+				</div>
+
+			</div>
+
+		</div>
+
+		<!--==================================================
+                    FILTROS
+    ===================================================-->
+
+		<div class="filters">
+
+			<!-- ESTADO -->
+
+			<div class="filter-item">
+
+				<label for="filtroEstado"> Estado </label> <select id="filtroEstado">
+
+					<option value="">Todos</option>
+
+					<option value="DISPONIBLE">DISPONIBLE</option>
+
+					<option value="EN VIAJE">EN VIAJE</option>
+
+					<option value="MANTENIMIENTO">MANTENIMIENTO</option>
+
+					<option value="FUERA DE SERVICIO">FUERA DE SERVICIO</option>
+
+				</select>
+
+			</div>
+
+			<!-- TIPO -->
+
+			<div class="filter-item">
+
+				<label for="filtroTipo"> Tipo </label> <select id="filtroTipo">
+
+					<option value="">Todos</option>
+
+					<option value="Cabezal">Cabezal</option>
+
+					<option value="Furgón">Furgón</option>
+
+					<option value="Cisterna">Cisterna</option>
+
+					<option value="Volqueta">Volqueta</option>
+
+					<option value="Plataforma">Plataforma</option>
+
+				</select>
+
+			</div>
+
+			<!-- MARCA -->
+
+			<div class="filter-item">
+
+				<label for="filtroMarca"> Marca </label> <select id="filtroMarca">
+
+					<option value="">Todas</option>
+
+					<option value="Freightliner">Freightliner</option>
+
+					<option value="Volvo">Volvo</option>
+
+					<option value="Kenworth">Kenworth</option>
+
+					<option value="International">International</option>
+
+					<option value="Scania">Scania</option>
+
+				</select>
+
+			</div>
+
+			<!-- TOTAL -->
+
+			<div class="filter-item total">
+
+				<h3>
+
+					<i class="fa-solid fa-truck-front"></i> <span id="totalCamiones">
+
+						0 </span> Camiones
+
+				</h3>
+
+			</div>
+
+		</div>
+
+		<!--==================================================
+                    TABLA
+    ===================================================-->
+
+		<div class="table-card">
+
+			<div class="table-header">
+
+				<div>
+
+					<h2>
+
+						<i class="fa-solid fa-truck-front"></i> Flota Registrada
+
+					</h2>
+
+					<p>Administra todos los vehículos registrados en el sistema.</p>
+
+				</div>
+
+				<div class="table-info">
+
+					<span> <i class="fa-solid fa-circle-check"></i> Gestión
+						Inteligente
+
+					</span>
+
+				</div>
+
+			</div>
+
+			<div class="table-responsive">
+
+				<table class="camiones-table">
+
+					<thead>
+
+						<tr>
+
+							<th>Imagen</th>
+
+							<th>Vehículo</th>
+
+							<th>Placa</th>
+
+							<th>Marca</th>
+
+							<th>Modelo</th>
+
+							<th>Tipo</th>
+
+							<th>Km</th>
+
+							<th>Estado</th>
+
+							<th>Acciones</th>
+
+						</tr>
+
+					</thead>
+
+					<tbody id="tbodyCamiones">
+						<!-- Aquí JS renderiza todos los camiones -->
+
+					</tbody>
+
+				</table>
+
+			</div>
+
+			<!--======================================
+                    PAGINACIÓN
+        =======================================-->
+
+			<div class="pagination">
+
+				<button type="button">
+
+					<i class="fa-solid fa-angle-left"></i>
+
+				</button>
+
+				<button type="button" class="active">1</button>
+
+				<button type="button">2</button>
+
+				<button type="button">3</button>
+
+				<button type="button">
+
+					<i class="fa-solid fa-angle-right"></i>
+
+				</button>
+
+			</div>
+
+		</div>
+
+		<!--==================================================
+                MODAL NUEVO CAMIÓN
+===================================================-->
+
+		<div class="modal" id="modalNuevoCamion">
+
+			<div class="modal-content modal-lg">
+
+
+				<!-- HEADER -->
+
+				<div class="modal-header">
+
+					<div>
+
+						<h2>
+							<i class="fa-solid fa-truck-front"></i> Registrar Nuevo Camión
+						</h2>
+
+						<p>Complete toda la información del vehículo.</p>
+
+					</div>
+
+
+					<button type="button" class="btn-close">
+
+						<i class="fa-solid fa-xmark"></i>
+
+					</button>
+
+				</div>
+
+
+
+				<!-- FORMULARIO -->
+
+				<form id="formCamion" enctype="multipart/form-data">
+
+
+					<!-- ZONA CON SCROLL -->
+
+					<div class="form-scroll">
+
+
+
+						<!-- GRID PRINCIPAL -->
+
+						<div class="form-grid">
+
+
+							<!-- FOTO -->
+
+							<div class="foto-container">
+
+
+								<div class="preview">
+
+									<img id="previewFoto" src="/imgs/stock.jpg" alt="Camión">
+
+								</div>
+
+
+								<label for="foto" class="upload-btn"> <i
+									class="fa-solid fa-camera"></i> Cambiar fotografía
+
+								</label> <input type="file" id="foto" name="foto" accept="image/*"
+									hidden>
+
+
+							</div>
+
+
+
+
+
+							<!-- CAMPOS -->
+
+							<div class="campos">
+
+
+								<div class="input-group">
+									<label>Placa *</label> <input type="text" id="placa"
+										name="placa" placeholder="Ej: HAA-1234">
+								</div>
+
+
+
+								<div class="input-group">
+									<label>Marca *</label> <input type="text" id="marca"
+										name="marca" placeholder="Freightliner">
+								</div>
+
+
+
+								<div class="input-group">
+									<label>Modelo *</label> <input type="text" id="modelo"
+										name="modelo" placeholder="Cascadia">
+								</div>
+
+
+
+								<div class="input-group">
+									<label>Año</label> <input type="number" id="anio" name="anio">
+								</div>
+
+
+
+								<div class="input-group">
+									<label>Color</label> <input type="text" id="color" name="color">
+								</div>
+
+
+
+								<div class="input-group">
+
+									<label>Tipo</label> <select id="tipo" name="tipo">
+
+										<option value="">Seleccione tipo</option>
+
+										<option value="Cabezal">Cabezal</option>
+
+										<option value="Furgón">Furgón</option>
+
+										<option value="Cisterna">Cisterna</option>
+
+										<option value="Volqueta">Volqueta</option>
+
+										<option value="Plataforma">Plataforma</option>
+
+									</select>
+
+								</div>
+
+
+
+								<div class="input-group">
+									<label>Capacidad de carga</label> <input type="number"
+										step="0.01" id="capacidad" name="capacidad">
+
+								</div>
+
+
+
+								<div class="input-group">
+
+									<label>Kilometraje</label> <input type="number"
+										id="kilometraje" name="kilometraje">
+
+								</div>
+
+
+
+								<div class="input-group">
+
+									<label>Número Motor</label> <input type="text" id="motor"
+										name="motor">
+
+								</div>
+
+
+
+								<div class="input-group">
+
+									<label>Número Chasis</label> <input type="text" id="chasis"
+										name="chasis">
+
+								</div>
+
+
+
+								<div class="input-group">
+
+									<label>Estado</label> <select id="estado" name="estado">
+
+										<option value="">Seleccione estado</option>
+
+										<option value="DISPONIBLE">DISPONIBLE</option>
+
+										<option value="EN VIAJE">EN VIAJE</option>
+
+										<option value="MANTENIMIENTO">MANTENIMIENTO</option>
+
+										<option value="FUERA DE SERVICIO">FUERA DE SERVICIO</option>
+
+
+									</select>
+
+								</div>
+
+
+
+								<div class="input-group">
+
+									<label>Fecha Compra</label> <input type="date" id="fechaCompra"
+										name="fechaCompra">
+
+								</div>
+
+
+
+								<div class="input-group">
+
+									<label>Valor Compra</label> <input type="number" step="0.01"
+										id="valorCompra" name="valorCompra">
+
+								</div>
+
+
+
+							</div>
+
+
+						</div>
+
+
+
+
+						<!-- OBSERVACIONES -->
+
+						<div class="input-group textarea">
+
+
+							<label for="observaciones"> Observaciones </label>
+
+
+							<textarea id="observaciones" name="observaciones" rows="5"
+								placeholder="Información adicional del vehículo..."></textarea>
+
+
+						</div>
+
+
+
+					</div>
+
+
+
+
+					<!-- BOTONES FUERA DEL SCROLL -->
+
+					<div class="modal-footer">
+
+
+						<button type="button" class="btn-cancel">Cancelar</button>
+
+
+
+						<button type="submit" class="btn-save">
+
+
+							<i class="fa-solid fa-floppy-disk"></i> Guardar Camión
+
+
+						</button>
+
+
+					</div>
+
+
+
+				</form>
+
+
+
+			</div>
+
+		</div>
+
+		<!--==================================================
+                    MODAL EDITAR
+===================================================-->
+
+		<div class="modal" id="modalEditar">
+
+			<div class="modal-content modal-lg">
+
+				<div class="modal-header">
+
+					<h2>
+
+						<i class="fa-solid fa-pen"></i> Editar Camión
+
+					</h2>
+
+					<button type="button" class="btn-close">
+
+						<i class="fa-solid fa-xmark"></i>
+
+					</button>
+
+				</div>
+
+				<form id="formEditar">
+
+					<!--
+                        Aquí irá posteriormente el mismo
+                        formulario del Modal Nuevo,
+                        utilizando IDs diferentes:
+
+                        editarPlaca
+                        editarMarca
+                        editarModelo
+                        editarTipo
+                        editarEstado
+                        etc.
+                    -->
+
+				</form>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+	<!-- MODAL IMAGEN GRANDE -->
+	<div class="modal" id="modalImagen">
+
+		<div class="modal-img-content">
+
+			<button type="button" class="btn-close-img">
+
+				<i class="fa-solid fa-xmark"></i>
+
+			</button>
+
+			<img id="imagenGrande" src="" alt="Imagen">
+
+		</div>
+
+	</div>
+
+
+	<!--==================================================
+              MODAL ELIMINAR CAMIÓN
+===================================================-->
+
+	<div class="modal" id="modalEliminar">
+
+		<div class="modal-delete">
+
+			<div class="delete-icon">
+				<i class="fa-solid fa-triangle-exclamation"></i>
+			</div>
+
+
+			<h2>Eliminar Camión</h2>
+
+
+			<p>¿Estás seguro que deseas eliminar este camión?</p>
+
+			<span class="delete-warning"> Esta acción no se puede
+				deshacer. </span>
+
+
+			<div class="code-box">
+
+				<label> Código de seguridad: </label>
+
+
+				<div class="generated-code" id="codigoGenerado">000000</div>
+
+
+				<input type="text" id="codigoConfirmacion"
+					placeholder="Ingrese el código">
+
+			</div>
+
+
+			<div class="modal-footer">
+
+
+				<button type="button" class="btn-cancel" id="cancelarEliminar">
+
+					Cancelar</button>
+
+
+
+				<button type="button" id="confirmarEliminar" disabled>
+
+					<i class="fa-solid fa-trash"></i> Eliminar
+
+				</button>
+
+
+			</div>
+
+
+		</div>
+
+	</div>
+
+
+	<!--==================================================
+              MODAL VER CAMIÓN
+===================================================-->
+
+	<div class="modal" id="modalVerCamion">
+
+
+		<div class="modal-content modal-lg ficha-modal">
+
+
+			<div class="modal-header">
+
+
+				<div>
+
+					<h2>
+						<i class="fa-solid fa-truck-front"></i> Ficha del Camión
+					</h2>
+
+
+					<p>Información completa del vehículo</p>
+
+
+				</div>
+
+
+
+				<button type="button" class="btn-close">
+
+					<i class="fa-solid fa-xmark"></i>
+
+				</button>
+
+
+			</div>
+
+
+
+
+
+			<div class="modal-content-body">
+
+
+				<div class="ficha-conductor">
+
+
+
+					<!--=========================
+				        PERFIL CAMIÓN
+				==========================-->
+
+					<div class="perfil-ficha">
+
+
+
+						<img id="fotoCamionDetalle" class="foto-detalle"
+							src="/imgs/stock.jpg" alt="Imagen del camión">
+
+
+
+
+
+						<h2 id="vehiculoDetalle"></h2>
+
+
+
+
+
+						<button type="button" id="btnImprimirCamion"
+							class="btn-imprimir-ficha">
+
+
+							<i class="fa-solid fa-file-pdf"></i> Generar ficha PDF
+
+
+						</button>
+
+
+
+
+						<!-- FECHA OCULTA PARA PDF -->
+
+						<span id="fechaCreacionDetalle" style="display: none;"> </span>
+
+
+
+
+					</div>
+
+
+
+
+
+
+
+					<!--=========================
+				        DATOS CAMIÓN
+				==========================-->
+
+					<div class="datos-ficha">
+
+
+
+						<div class="titulo-datos">
+
+							<i class="fa-solid fa-truck"></i> Datos del vehículo
+
+
+						</div>
+
+
+
+
+
+
+						<div class="grid-datos">
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Placa </label> <span id="placaDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Marca </label> <span id="marcaDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Modelo </label> <span id="modeloDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Año </label> <span id="anioDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Tipo </label> <span id="tipoDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Estado </label> <span id="estadoDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Kilometraje </label> <span id="kmDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Capacidad </label> <span id="capacidadDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Número Motor </label> <span id="motorDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+
+
+
+							<div class="dato-box">
+
+								<label> Número Chasis </label> <span id="chasisDetalle"></span>
+
+
+							</div>
+
+
+
+
+
+						</div>
+
+
+
+
+
+
+
+
+
+						<div class="titulo-datos mt-4">
+
+
+							<i class="fa-solid fa-note-sticky"></i> Observaciones
+
+
+
+						</div>
+
+
+
+
+
+
+
+						<div class="observaciones-box">
+
+
+							<span id="observacionesDetalle"> </span>
+
+
+
+						</div>
+
+
+
+
+
+					</div>
+
+
+
+
+				</div>
+
+
+
+
+			</div>
+
+
+
+
+		</div>
+
+
+
+
+	</div>
+
+	<!--==================================================
+                    FIN CONTENIDO
+===================================================-->
+
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script src="/js/camiones.js"></script>
+</body>
+
+</html>

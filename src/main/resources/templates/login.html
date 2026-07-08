@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Control de Viajes | Login</title>
+
+<link rel="stylesheet" href="/css/login.css">
+
+<!-- ICONOS FONT AWESOME -->
+<link rel="stylesheet" 
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+
+<body>
+
+
+<!-- GIF DE FONDO -->
+
+<img src="/imgs/fondo1.gif" 
+id="background-gif" 
+alt="Fondo camiones">
+
+
+
+<div class="overlay"></div>
+
+
+
+<div class="login-card">
+
+
+
+    <div class="logo">
+
+        <img src="/imgs/logo.png" 
+        alt="Logo Control de Viajes">
+
+    </div>
+
+
+
+    <h1>
+        Control de Viajes
+    </h1>
+
+
+
+    <p class="subtitle">
+        Plataforma inteligente de gestión logística
+    </p>
+
+
+
+
+
+<form action="/login" method="post">
+
+
+
+    <!-- USUARIO -->
+
+    <div class="input-group">
+
+        <i class="fa-solid fa-user"></i>
+
+
+        <input 
+        type="text"
+        name="usuario"
+        placeholder="Usuario"
+        required>
+
+
+    </div>
+
+
+
+
+
+    <!-- PASSWORD -->
+
+    <div class="input-group">
+
+
+        <i class="fa-solid fa-lock"></i>
+
+
+        <input 
+        id="password"
+        type="password"
+        name="password"
+        placeholder="Contraseña"
+        required>
+
+
+
+        <i class="fa-solid fa-eye password-toggle"
+        onclick="mostrarPassword()"></i>
+
+
+    </div>
+
+
+
+
+
+    <button type="submit">
+
+        Ingresar al sistema
+
+    </button>
+
+
+
+
+</form>
+
+
+
+
+
+<footer>
+
+© 2026 B&C Developer
+<br>
+Todos los derechos reservados
+
+</footer>
+
+
+
+
+</div>
+
+
+
+
+
+<script>
+
+
+function mostrarPassword(){
+
+
+    let password = document.getElementById("password");
+
+    let icono = document.querySelector(".password-toggle");
+
+
+
+    if(password.type === "password"){
+
+
+        password.type = "text";
+
+
+        icono.classList.remove("fa-eye");
+
+
+        icono.classList.add("fa-eye-slash");
+
+
+
+    }else{
+
+
+        password.type = "password";
+
+
+        icono.classList.remove("fa-eye-slash");
+
+
+        icono.classList.add("fa-eye");
+
+
+    }
+
+
+}
+
+
+
+</script>
+
+
+
+</body>
+
+</html>

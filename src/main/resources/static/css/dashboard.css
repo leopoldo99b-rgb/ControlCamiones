@@ -1,0 +1,553 @@
+@charset "UTF-8";
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    background:#f5f7fb;
+    display:flex;
+    min-height:100vh;
+}
+
+.sidebar{
+    width:260px;
+    background:#111827;
+    color:white;
+    padding:20px;
+    transition:.3s;
+}
+
+.logo{
+    font-size:24px;
+    font-weight:bold;
+    margin-bottom:40px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.sidebar ul{
+    list-style:none;
+}
+
+.sidebar li{
+    margin:10px 0;
+}
+
+.sidebar a{
+    color:white;
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px;
+    border-radius:12px;
+    transition:.3s;
+}
+
+.sidebar a:hover,
+.sidebar .active a{
+    background:#2563eb;
+}
+
+.main{
+    flex:1;
+}
+
+header{
+    background:white;
+    padding:18px 25px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
+}
+
+header h2{
+    color:#111827;
+}
+#menu-btn{
+    display:none;
+    border:none;
+    background:none;
+    font-size:22px;
+    cursor:pointer;
+}
+
+.cards{
+    padding:30px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:white;
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 5px 15px rgba(0,0,0,.06);
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+.card i{
+    font-size:35px;
+    color:#2563eb;
+    margin-bottom:15px;
+}
+
+.card h3{
+    font-size:32px;
+    margin-bottom:10px;
+}
+
+.card p{
+    color:#777;
+}
+
+
+/* ==============================
+   USUARIO HEADER
+============================== */
+
+.user{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    font-size:16px;
+
+    color:#333;
+
+}
+
+
+.user > i{
+
+    font-size:34px;
+
+    color:#2563eb;
+
+}
+
+
+
+/* ==============================
+   BOTON CERRAR SESION
+============================== */
+
+
+.btn-logout{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin-left:20px;
+
+    padding:8px 16px;
+
+    border-radius:10px;
+
+    background:#ef4444;
+
+    color:white !important;
+
+    text-decoration:none;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+
+
+.btn-logout i{
+
+    font-size:16px;
+
+    color:white;
+
+}
+
+
+
+.btn-logout:hover{
+
+    background:#dc2626;
+
+    transform:translateY(-2px);
+
+}
+
+/* ==========================
+   USUARIO HEADER
+========================== */
+
+
+.user{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+
+
+/* FOTO PERFIL */
+
+.user-photo{
+
+    width:42px;
+
+    height:42px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+    border:2px solid #2563eb;
+
+}
+
+
+
+/* NOMBRE */
+
+.user-info{
+
+    display:flex;
+
+    align-items:center;
+
+}
+
+
+
+.user-name{
+
+    font-size:16px;
+
+    font-weight:600;
+
+    color:#1f2937;
+
+}
+
+
+
+/* BOTON CERRAR SESION */
+
+.btn-logout{
+
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+
+    padding:9px 16px;
+
+
+    background:#ef4444;
+
+
+    color:white;
+
+
+    text-decoration:none;
+
+
+    border-radius:8px;
+
+
+    font-size:14px;
+
+
+    font-weight:600;
+
+
+    transition:.3s;
+
+
+}
+
+
+
+.btn-logout i{
+
+    font-size:16px;
+
+}
+
+
+
+.btn-logout:hover{
+
+
+    background:#dc2626;
+
+
+    transform:translateY(-2px);
+
+
+}
+
+
+@media(max-width:768px){
+
+    #menu-btn{
+        display:block;
+    }
+
+    .sidebar{
+        position:fixed;
+        left:-280px;
+        top:0;
+        height:100%;
+        z-index:999;
+    }
+
+    .sidebar.show{
+        left:0;
+    }
+
+    header{
+        gap:15px;
+    }
+
+    header h2{
+        font-size:18px;
+    }
+
+    .user span{
+        display:none;
+    }
+
+    .cards{
+        padding:15px;
+    }
+    
+    @media(max-width:768px){
+
+
+    body{
+
+        overflow-x:hidden;
+
+    }
+
+
+
+    .main{
+
+        width:100%;
+
+    }
+
+
+
+    #menu-btn{
+
+        display:block;
+
+        flex-shrink:0;
+
+    }
+
+
+
+    header{
+
+
+        width:100%;
+
+        padding:15px 18px;
+
+
+        display:flex;
+
+        align-items:center;
+
+
+        justify-content:space-between;
+
+
+        gap:10px;
+
+
+        overflow:hidden;
+
+    }
+
+
+
+    header h2{
+
+
+        font-size:17px;
+
+
+        line-height:20px;
+
+
+        max-width:120px;
+
+
+        text-align:left;
+
+
+        margin:0;
+
+
+    }
+
+
+
+
+
+    .user{
+
+
+        display:flex;
+
+
+        align-items:center;
+
+
+        gap:8px;
+
+
+        flex-shrink:0;
+
+
+    }
+
+
+
+
+
+    .user-photo{
+
+
+        width:40px;
+
+        height:40px;
+
+
+    }
+
+
+
+
+    .user-name{
+
+
+        display:none;
+
+
+    }
+
+
+
+
+
+    .btn-logout{
+
+
+        width:38px;
+
+
+        height:38px;
+
+
+        padding:0;
+
+
+        margin:0;
+
+
+        display:flex;
+
+
+        justify-content:center;
+
+
+        align-items:center;
+
+
+        border-radius:10px;
+
+
+    }
+
+
+
+
+
+    .btn-logout span{
+
+
+        display:none;
+
+
+    }
+
+
+
+    .btn-logout i{
+
+
+        font-size:17px;
+
+    }
+
+
+
+
+    .cards{
+
+
+        padding:15px;
+
+
+        grid-template-columns:1fr;
+
+
+    }
+
+
+
+
+    .card{
+
+
+        padding:30px;
+
+
+        min-height:180px;
+
+    }
+
+
+}
+}

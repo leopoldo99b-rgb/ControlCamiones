@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Módulo de Camiones</title>
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/css/camiones-menu.css">
+
+<!-- ICONOS -->
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<!-- GOOGLE FONT -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link
+	href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+	rel="stylesheet">
+
+</head>
+
+<body>
+
+
+
+
+
+
+	<!-- ============================= -->
+
+	<!-- HEADER -->
+
+	<!-- ============================= -->
+
+
+
+	<header class="topbar">
+
+		<div class="logo">
+
+			<div class="logo-icon">
+
+				<i class="fa-solid fa-truck"></i>
+
+			</div>
+
+			<span>Módulo de Camiones</span>
+
+		</div>
+
+
+
+
+		<div class="usuario">
+
+			<a href="/dashboard" class="btn-back"> <i
+				class="fa-solid fa-arrow-left"></i> <span>Dashboard</span>
+
+			</a>
+
+		</div>
+
+	</header>
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<!-- ============================= -->
+
+	<!-- HERO -->
+
+	<!-- ============================= -->
+
+
+
+	<section class="hero">
+
+
+
+
+
+		<!-- Decoración izquierda -->
+
+		<div class="hero-left">
+
+			<img class="icon-trailer"
+				src="https://cdn-icons-png.flaticon.com/512/1995/1995470.png">
+
+		</div>
+
+
+
+
+
+
+		<!-- CONTENIDO -->
+
+		<div class="hero-center">
+
+			<span class="badge"><i class="fa-solid fa-truck-front"></i>
+				Gestión de Flota </span>
+
+			<h1>
+
+				Gestión de <span>Flota</span>
+
+			</h1>
+
+			<p>Administra todos los procesos relacionados con los camiones</p>
+
+			<div class="linea"></div>
+
+		</div>
+
+
+
+
+
+
+		<!-- Decoración derecha -->
+
+		<div class="hero-right">
+
+			<div class="gps">
+
+				<i class="fa-solid fa-location-dot"></i>
+
+			</div>
+
+		</div>
+
+
+
+
+	</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<!-- ============================= -->
+
+	<!-- TARJETAS -->
+
+	<!-- ============================= -->
+
+
+
+	<section class="cards">
+
+
+
+
+
+
+
+		<!-- CARD 1 -->
+
+
+
+		<div class="card azul">
+
+			<div class="icon-circle">
+				<i class="fa-solid fa-truck"></i>
+			</div>
+
+			<h2>Gestionar Camiones</h2>
+
+			<p>Registrar, editar y consultar vehículos de la flota.</p>
+
+			<div class="imagen">
+				<img src="https://cdn-icons-png.flaticon.com/512/1995/1995502.png">
+			</div>
+
+			<a href="/gestioncamiones" class="card-btn"> Ingresar al módulo <span><i
+					class="fa-solid fa-arrow-right"></i></span>
+			</a>
+
+		</div>
+
+
+
+
+
+
+
+
+
+		<!-- CARD 2 -->
+
+
+
+		<div class="card verde">
+
+			<div class="icon-circle">
+
+				<i class="fa-solid fa-link"></i>
+
+			</div>
+
+			<h2>Asignar Camiones</h2>
+
+			<p>Asignar conductores a los vehículos disponibles.</p>
+
+			<div class="imagen">
+
+				<img src="https://cdn-icons-png.flaticon.com/512/3050/3050525.png">
+
+			</div>
+
+			<button>
+
+				Ingresar al módulo <span> <i class="fa-solid fa-arrow-right"></i>
+
+				</span>
+
+			</button>
+
+		</div>
+
+
+
+
+
+
+
+
+
+
+
+
+		<!-- CARD 3 -->
+
+
+
+		<div class="card naranja">
+
+			<div class="icon-circle">
+
+				<i class="fa-solid fa-screwdriver-wrench"></i>
+
+			</div>
+
+			<h2>Mantenimientos</h2>
+
+			<p>Controlar servicios, reparaciones y mantenimientos.</p>
+
+			<div class="imagen">
+
+				<img src="https://cdn-icons-png.flaticon.com/512/2942/2942813.png">
+
+			</div>
+
+			<button>
+
+				Ingresar al módulo <span> <i class="fa-solid fa-arrow-right"></i>
+
+				</span>
+
+			</button>
+
+		</div>
+
+
+
+
+
+
+
+
+
+
+
+
+		<!-- CARD 4 -->
+
+
+
+		<div class="card morado">
+
+			<div class="icon-circle">
+
+				<i class="fa-solid fa-road"></i>
+
+			</div>
+
+			<h2>Rutas</h2>
+
+			<p>Administrar rutas y recorridos de transporte.</p>
+
+			<div class="imagen">
+
+				<img src="https://cdn-icons-png.flaticon.com/512/854/854878.png">
+
+			</div>
+
+			<button>
+
+				Ingresar al módulo <span> <i class="fa-solid fa-arrow-right"></i>
+
+				</span>
+
+			</button>
+
+		</div>
+
+
+
+	</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<!-- PANEL INFERIOR -->
+
+
+
+	<section class="panel-info">
+
+		<div class="info-icon">
+
+			<i class="fa-solid fa-chart-line"></i>
+
+		</div>
+
+		<div>
+
+			<h3>Control total de tu flota</h3>
+
+			<p>Optimiza, administra y lleva el control de todos los procesos
+				de operación.</p>
+
+		</div>
+
+		<i class="fa-solid fa-chart-column grafico"></i>
+
+	</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<!-- BOTON FLOTANTE -->
+
+
+
+	<button class="btn-top">
+
+		<i class="fa-solid fa-arrow-up"></i>
+
+	</button>
+
+
+
+
+
+
+
+
+	<script src="/js/camiones-menu.js"></script>
+
+</body>
+
+</html>
