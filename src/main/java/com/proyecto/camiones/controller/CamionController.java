@@ -1,6 +1,5 @@
 package com.proyecto.camiones.controller;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +27,10 @@ public class CamionController {
     public String gestionCamiones() {
         return "gestioncamiones";
     }
+
+    //=====================================================
+    // GUARDAR
+    //=====================================================
 
     @PostMapping("/camiones/guardar")
     @ResponseBody
@@ -59,9 +62,6 @@ public class CamionController {
 
     ) throws Exception {
 
-        // =========================
-        // CONVERSIONES SEGURAS
-        // =========================
         Integer anioInt = (anio == null || anio.isEmpty()) ? null : Integer.parseInt(anio);
         Double capacidadD = (capacidad == null || capacidad.isEmpty()) ? null : Double.parseDouble(capacidad);
         Integer km = (kilometraje == null || kilometraje.isEmpty()) ? null : Integer.parseInt(kilometraje);
@@ -71,16 +71,6 @@ public class CamionController {
                 ? null
                 : LocalDate.parse(fechaCompra);
 
-        // =========================
-        // VALIDACIÓN CRÍTICA
-        // =========================
-        if (placa == null || marca == null || modelo == null || tipo == null || estado == null) {
-            throw new RuntimeException("❌ Campos obligatorios vienen NULL desde el frontend");
-        }
-
-        // =========================
-        // GUARDAR
-        // =========================
         return camionService.guardar(
                 foto,
                 placa,
@@ -94,44 +84,84 @@ public class CamionController {
                 chasis,
                 km,
                 estado,
-                fecha, 
+                fecha,
                 valor,
                 observaciones
         );
     }
-    
+
+    //=====================================================
+    // LISTAR
+    //=====================================================
+
     @GetMapping("/camiones/lista")
     @ResponseBody
     public List<Camion> listar() {
+
         try {
+
             return camionService.listarTodos();
+
         } catch (Exception e) {
+
             e.printStackTrace();
+
             return new ArrayList<>();
+
         }
+
     }
-    
- // ======================================================
- // ELIMINAR CAMION
- // ======================================================
 
- @DeleteMapping("/camiones/eliminar/{id}")
- @ResponseBody
- public String eliminarCamion(@PathVariable Long id) {
+    //=====================================================
+    // ELIMINAR
+    //=====================================================
 
-     try {
+    @DeleteMapping("/camiones/eliminar/{id}")
+    @ResponseBody
+    public String eliminarCamion(@PathVariable Long id) {
 
-         camionService.eliminar(id);
+        try {
 
-         return "Camión eliminado correctamente";
+            camionService.eliminar(id);
 
-     } catch (Exception e) {
+            return "Camión eliminado correctamente";
 
-         e.printStackTrace();
+        } catch (Exception e) {
 
-         return "Error al eliminar camión";
+            e.printStackTrace();
 
-     }
+            return "Error al eliminar camión";
 
- }
+        }
+
+    }
+
+    //=====================================================
+    // EDITAR
+    //=====================================================
+
+    @PutMapping("/camiones/editar/{id}")
+    @ResponseBody
+    public Camion editarCamion(
+            @PathVariable Long id,
+            @RequestBody Camion datos) {
+
+        return camionService.editar(id, datos);
+
+    }
+
+    //=====================================================
+    // AGREGAR OBSERVACION
+    //=====================================================
+
+    @PutMapping("/camiones/observacion/{id}")
+    @ResponseBody
+    public Camion agregarObservacion(
+            @PathVariable Long id,
+            @RequestBody String observacion) {
+
+        return camionService.agregarObservacion(id, observacion);
+
+    }
+
 }

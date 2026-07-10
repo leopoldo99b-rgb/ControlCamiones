@@ -8,7 +8,14 @@ let paginaActual = 1;
 
 const registrosPorPagina = 10;
 
-let camionActualFicha = null;
+let camionSeleccionadoPDF = null;
+
+let camionSeleccionadoAccion=null;
+
+let modoEdicion = false;
+
+let camionEditando = null;
+
 
 // ======================================================
 // ELEMENTOS DOM
@@ -87,6 +94,36 @@ let codigoEliminar = "";
 
 const modalVerCamion =
     document.getElementById("modalVerCamion");
+	
+	const modalEditar =
+	    document.getElementById("modalEditar");
+	
+	const modalAccionCamion =
+	document.getElementById("modalAccionCamion");
+
+
+	const modalTipoObservacion =
+	document.getElementById("modalTipoObservacion");
+
+
+	const modalDetalleObservacion =
+	document.getElementById("modalDetalleObservacion");
+
+
+	const btnEditarInfo =
+	document.getElementById("btnEditarInfo");
+
+
+	const btnNuevaObservacion =
+	document.getElementById("btnNuevaObservacion");
+
+
+	const continuarObservacion =
+	document.getElementById("continuarObservacion");
+
+
+	const guardarObservacion =
+	document.getElementById("guardarObservacion");
 
 
 // ======================================================
@@ -658,11 +695,13 @@ function renderTabla(camiones) {
 
 
 
-                <button class="btn-action">
+			<button 
+			class="btn-action btn-editar"
+			data-id="${c.id}">
 
-                    <i class="fa-solid fa-pen"></i>
+			<i class="fa-solid fa-pen"></i>
 
-                </button>
+			</button>
 
 
 
@@ -958,261 +997,558 @@ if (buscarCamion) {
 
 
 
-// ======================================================
-// GUARDAR CAMIÓN
-// ======================================================
+	// ======================================================
+	// GUARDAR / EDITAR CAMIÓN
+	// ======================================================
 
 
-if (formCamion) {
+	// ======================================================
+	// ABRIR MODAL EDITAR USANDO EL MISMO FORMULARIO
+	// ======================================================
 
+	function abrirModalEditar(camion) {
 
-    formCamion.addEventListener(
-        "submit",
-        async (e) => {
+	    if (!camion)
+	        return;
 
 
-            e.preventDefault();
+	    console.log("EDITANDO CAMION:", camion);
 
 
+	    modoEdicion = true;
+	    camionEditandoId = camion.id;
 
-            const datos =
-                new FormData();
 
+	    modalNuevo.style.display = "flex";
 
 
+	    // Cambiar título
+	    document.querySelector("#modalNuevoCamion h2").innerHTML =
+	        `
+	        <i class="fa-solid fa-pen-to-square"></i>
+	        Editar Camión
+	        `;
 
-            if (inputFoto &&
-                inputFoto.files.length > 0) {
 
+	    // Cargar datos
 
-                datos.append(
-                    "foto",
-                    inputFoto.files[0]
-                );
+	    document.getElementById("placa").value =
+	        camion.placa || "";
 
 
-            }
+	    document.getElementById("marca").value =
+	        camion.marca || "";
 
 
+	    document.getElementById("modelo").value =
+	        camion.modelo || "";
 
 
+	    document.getElementById("anio").value =
+	        camion.anio || "";
 
-            datos.append(
-                "placa",
-                document.getElementById("placa").value
-            );
 
+	    document.getElementById("color").value =
+	        camion.color || "";
 
 
-            datos.append(
-                "marca",
-                document.getElementById("marca").value
-            );
+	    document.getElementById("tipo").value =
+	        camion.tipo || "";
 
 
+	    document.getElementById("capacidad").value =
+	        camion.capacidadCarga || "";
 
-            datos.append(
-                "modelo",
-                document.getElementById("modelo").value
-            );
 
+	    document.getElementById("kilometraje").value =
+	        camion.kilometrajeActual || "";
 
 
-            datos.append(
-                "anio",
-                document.getElementById("anio").value
-            );
+	    document.getElementById("motor").value =
+	        camion.numeroMotor || "";
 
 
+	    document.getElementById("chasis").value =
+	        camion.numeroChasis || "";
 
-            datos.append(
-                "color",
-                document.getElementById("color").value
-            );
 
+	    document.getElementById("estado").value =
+	        camion.estado || "";
 
 
-            datos.append(
-                "tipo",
-                document.getElementById("tipo").value
-            );
+	    document.getElementById("fechaCompra").value =
+	        camion.fechaCompra || "";
 
 
+	    document.getElementById("valorCompra").value =
+	        camion.valorCompra || "";
 
-            datos.append(
-                "estado",
-                document.getElementById("estado").value
-            );
 
+	    document.getElementById("observaciones").value =
+	        camion.observaciones || "";
 
 
-            datos.append(
-                "capacidad",
-                document.getElementById("capacidad").value
-            );
+	    if(camion.imgcamion){
 
+	        previewFoto.src =
+	            camion.imgcamion;
 
+	    }
 
-            datos.append(
-                "kilometraje",
-                document.getElementById("kilometraje").value
-            );
+	}
 
 
 
-            datos.append(
-                "motor",
-                document.getElementById("motor").value
-            );
+	// ======================================================
+	// NUEVO CAMIÓN
+	// ======================================================
 
+	btnNuevoCamion.onclick = function(){
 
+	    modoEdicion = false;
+	    camionEditandoId = null;
 
-            datos.append(
-                "chasis",
-                document.getElementById("chasis").value
-            );
 
+	    formCamion.reset();
 
 
-            datos.append(
-                "fechaCompra",
-                document.getElementById("fechaCompra").value
-            );
+	    previewFoto.src =
+	        "/imgs/stock.jpg";
 
 
+	    document.querySelector("#modalNuevoCamion h2").innerHTML =
+	    `
+	    <i class="fa-solid fa-truck-front"></i>
+	    Registrar Nuevo Camión
+	    `;
 
-            datos.append(
-                "valorCompra",
-                document.getElementById("valorCompra").value
-            );
 
+	    modalNuevo.style.display="flex";
 
+	};
 
-            datos.append(
-                "observaciones",
-                document.getElementById("observaciones").value
-            );
 
 
 
+	// ======================================================
+	// GUARDAR / ACTUALIZAR CAMIÓN
+	// ======================================================
 
 
-            try {
+	if(formCamion){
 
 
-                btnGuardar.disabled = true;
+	formCamion.addEventListener(
+	"submit",
+	async function(e){
 
 
+	e.preventDefault();
 
-                btnGuardar.innerHTML =
-                    `
-<i class="fa-solid fa-spinner fa-spin"></i>
-Guardando...
-`;
 
 
+	const estabaEditando = modoEdicion;
 
 
 
-                const respuesta =
-                    await fetch(
-                        "/camiones/guardar",
-                        {
+	const datos = new FormData();
 
-                            method: "POST",
 
-                            body: datos
 
-                        }
+	// FOTO SOLO SI CAMBIA
+	if(inputFoto &&
+	   inputFoto.files.length > 0){
 
-                    );
 
+	    datos.append(
+	        "foto",
+	        inputFoto.files[0]
+	    );
 
+	}
 
 
 
-                if (!respuesta.ok) {
+	// CAMPOS
 
+	datos.append(
+	"placa",
+	document.getElementById("placa").value
+	);
 
-                    alert(
-                        "Error al guardar camión"
-                    );
 
+	datos.append(
+	"marca",
+	document.getElementById("marca").value
+	);
 
-                    return;
 
+	datos.append(
+	"modelo",
+	document.getElementById("modelo").value
+	);
 
-                }
 
+	datos.append(
+	"anio",
+	document.getElementById("anio").value
+	);
 
 
+	datos.append(
+	"color",
+	document.getElementById("color").value
+	);
 
 
-                formCamion.reset();
+	datos.append(
+	"tipo",
+	document.getElementById("tipo").value
+	);
 
 
+	datos.append(
+	"capacidad",
+	document.getElementById("capacidad").value
+	);
 
-                previewFoto.src =
-                    "/imgs/stock.jpg";
 
+	datos.append(
+	"kilometraje",
+	document.getElementById("kilometraje").value
+	);
 
 
-                modalNuevo.style.display = "none";
+	datos.append(
+	"motor",
+	document.getElementById("motor").value
+	);
 
 
+	datos.append(
+	"chasis",
+	document.getElementById("chasis").value
+	);
 
-                await cargarCamiones();
 
+	datos.append(
+	"estado",
+	document.getElementById("estado").value
+	);
 
 
-                alert(
-                    "Camión guardado correctamente"
-                );
+	datos.append(
+	"fechaCompra",
+	document.getElementById("fechaCompra").value
+	);
 
 
+	datos.append(
+	"valorCompra",
+	document.getElementById("valorCompra").value
+	);
 
-            }
-            catch (error) {
 
+	datos.append(
+	"observaciones",
+	document.getElementById("observaciones").value
+	);
 
-                console.error(error);
 
 
-                alert(
-                    "Error de conexión"
-                );
 
 
-            }
-            finally {
+	try{
 
 
-                btnGuardar.disabled = false;
+	btnGuardar.disabled=true;
 
 
+	btnGuardar.innerHTML=
+	`
+	<i class="fa-solid fa-spinner fa-spin"></i>
+	Guardando...
+	`;
 
-                btnGuardar.innerHTML =
-                    `
-<i class="fa-solid fa-floppy-disk"></i>
-Guardar Camión
-`;
 
 
 
-            }
 
+	let respuesta;
 
 
-        });
 
 
-}
 
+	// ==================================================
+	// EDITAR
+	// ==================================================
 
+	if(modoEdicion){
 
 
 
+	    if(!camionEditandoId){
 
+
+	        alert(
+	        "Error: no hay camión seleccionado"
+	        );
+
+
+	        return;
+
+	    }
+
+
+
+	    const objeto = {
+
+
+	        placa:
+	        datos.get("placa"),
+
+
+	        marca:
+	        datos.get("marca"),
+
+
+	        modelo:
+	        datos.get("modelo"),
+
+
+	        anio:
+	        Number(datos.get("anio")) || null,
+
+
+	        color:
+	        datos.get("color"),
+
+
+	        tipo:
+	        datos.get("tipo"),
+
+
+	        capacidadCarga:
+	        Number(datos.get("capacidad")) || null,
+
+
+	        kilometrajeActual:
+	        Number(datos.get("kilometraje")) || null,
+
+
+	        numeroMotor:
+	        datos.get("motor"),
+
+
+	        numeroChasis:
+	        datos.get("chasis"),
+
+
+	        estado:
+	        datos.get("estado"),
+
+
+	        fechaCompra:
+	        datos.get("fechaCompra"),
+
+
+	        valorCompra:
+	        Number(datos.get("valorCompra")) || null,
+
+
+	        observaciones:
+	        datos.get("observaciones")
+
+	    };
+
+
+
+	    console.log(
+	        "EDITANDO ID:",
+	        camionEditandoId
+	    );
+
+
+	    console.log(
+	        "DATOS:",
+	        objeto
+	    );
+
+
+
+	    respuesta =
+	    await fetch(
+
+	        "/camiones/editar/"
+	        +
+	        camionEditandoId,
+
+	        {
+
+	            method:"PUT",
+
+	            headers:{
+
+	                "Content-Type":
+	                "application/json"
+
+	            },
+
+
+	            body:
+	            JSON.stringify(objeto)
+
+	        }
+
+	    );
+
+
+
+	}
+
+
+
+
+
+	// ==================================================
+	// NUEVO
+	// ==================================================
+
+	else{
+
+
+	    respuesta =
+	    await fetch(
+
+	        "/camiones/guardar",
+
+	        {
+
+	            method:"POST",
+
+	            body:datos
+
+	        }
+
+	    );
+
+
+	}
+
+
+
+
+
+
+
+	if(!respuesta.ok){
+
+
+	    const error =
+	    await respuesta.text();
+
+
+	    console.error(error);
+
+
+	    alert(
+	    "Error guardando camión"
+	    );
+
+
+	    return;
+
+
+	}
+
+
+
+
+
+
+	// LIMPIAR
+
+	formCamion.reset();
+
+
+	if(previewFoto){
+
+	    previewFoto.src =
+	    "/imgs/stock.jpg";
+
+	}
+
+
+
+	modalNuevo.style.display="none";
+
+
+
+	modoEdicion=false;
+
+	camionEditandoId=null;
+
+
+
+	await cargarCamiones();
+
+
+
+
+	alert(
+
+	    estabaEditando
+
+	    ?
+
+	    "Camión actualizado correctamente"
+
+	    :
+
+	    "Camión guardado correctamente"
+
+	);
+
+
+
+
+	}
+	catch(error){
+
+
+	console.error(error);
+
+
+	alert(
+	"Error de conexión"
+	);
+
+
+
+	}
+	finally{
+
+
+	btnGuardar.disabled=false;
+
+
+	btnGuardar.innerHTML=
+	`
+	<i class="fa-solid fa-floppy-disk"></i>
+	Guardar Camión
+	`;
+
+
+
+	}
+
+
+
+	});
+
+
+	}
 
 // ======================================================
 // INICIO ÚNICO
@@ -1527,152 +1863,95 @@ document
 
     });
 
-	// ======================================================
-	// ABRIR FICHA CAMION
-	// ======================================================
+// ======================================================
+// ABRIR FICHA CAMION
+// ======================================================
 
-	function abrirFichaCamion(id) {
+function abrirFichaCamion(id) {
 
 
-	    camionActualFicha =
-	        listaCamiones.find(c => c.id == id);
+    const camion =
+        listaCamiones.find(
+            c => c.id == id
+        );
 
 
+    if (!camion)
+        return;
 
-	    const camion = camionActualFicha;
 
 
+    camionSeleccionadoPDF = camion;
 
-	    if (!camion)
-	        return;
 
 
+    console.log(
+        "CAMION SELECCIONADO:",
+        camion
+    );
 
-	    const imagenCamion =
-	        camion.imgcamion &&
-	        camion.imgcamion.trim() !== ""
-	        ?
-	        camion.imgcamion
-	        :
-	        "/imgs/stock.jpg";
 
 
+    document.getElementById("fotoCamionDetalle").src =
+        camion.imgcamion ||
+        "/imgs/stock.jpg";
 
-	    const fotoDetalle =
-	        document.getElementById(
-	            "fotoCamionDetalle"
-	        );
 
 
-	    if (fotoDetalle) {
+    document.getElementById("vehiculoDetalle").textContent =
+        camion.marca + " " + camion.modelo;
 
-	        fotoDetalle.src = imagenCamion;
 
-	        fotoDetalle.onerror = function(){
 
-	            this.src="/imgs/stock.jpg";
+    document.getElementById("placaDetalle").textContent =
+        camion.placa || "";
 
-	        };
+    document.getElementById("marcaDetalle").textContent =
+        camion.marca || "";
 
-	    }
+    document.getElementById("modeloDetalle").textContent =
+        camion.modelo || "";
 
+    document.getElementById("anioDetalle").textContent =
+        camion.anio || "";
 
+    document.getElementById("tipoDetalle").textContent =
+        camion.tipo || "";
 
-	    document.getElementById("vehiculoDetalle").textContent =
-	        `${camion.marca || ""} ${camion.modelo || ""}`;
+    document.getElementById("estadoDetalle").textContent =
+        camion.estado || "";
 
+    document.getElementById("kmDetalle").textContent =
+        camion.kilometrajeActual || "";
 
+    document.getElementById("capacidadDetalle").textContent =
+        camion.capacidadCarga || "";
 
-	    document.getElementById("placaDetalle").textContent =
-	        camion.placa || "";
+    document.getElementById("motorDetalle").textContent =
+        camion.numeroMotor || "";
 
+    document.getElementById("chasisDetalle").textContent =
+        camion.numeroChasis || "";
 
 
-	    document.getElementById("marcaDetalle").textContent =
-	        camion.marca || "";
 
+    document.getElementById("observacionesDetalle").textContent =
 
+        camion.observaciones ||
+        "Sin observaciones";
 
-	    document.getElementById("modeloDetalle").textContent =
-	        camion.modelo || "";
 
 
+    console.log(
+        "OBSERVACIONES:",
+        camion.observaciones
+    );
 
-	    document.getElementById("anioDetalle").textContent =
-	        camion.anio || "";
 
 
+    modalVerCamion.style.display = "flex";
 
-	    document.getElementById("tipoDetalle").textContent =
-	        camion.tipo || "";
-
-
-
-	    document.getElementById("estadoDetalle").textContent =
-	        camion.estado || "";
-
-
-
-	    document.getElementById("kmDetalle").textContent =
-	        camion.kilometrajeActual || 0;
-
-
-
-	    document.getElementById("capacidadDetalle").textContent =
-	        camion.capacidadCarga || "";
-
-
-
-	    document.getElementById("motorDetalle").textContent =
-	        camion.numeroMotor || "";
-
-
-
-	    document.getElementById("chasisDetalle").textContent =
-	        camion.numeroChasis || "";
-
-
-
-	    // ===============================
-	    // OBSERVACIONES
-	    // ===============================
-
-
-	    let textoObservaciones = "";
-
-
-	    if(camion.observaciones){
-
-	        textoObservaciones =
-	            camion.observaciones;
-
-	    }
-	    else{
-
-	        textoObservaciones =
-	            "Sin observaciones";
-
-	    }
-
-
-
-	    document.getElementById(
-	        "observacionesDetalle"
-	    ).textContent = textoObservaciones;
-
-
-
-	    console.log(
-	        "OBSERVACIONES RECIBIDAS:",
-	        textoObservaciones
-	    );
-
-
-
-	    modalVerCamion.style.display="flex";
-
-
-	}
+}
 // ======================================================
 // EVENTO VER CAMION
 // ======================================================
@@ -1698,27 +1977,27 @@ document.addEventListener("click", function(e) {
 });
 
 // ======================================================
-// GENERAR PDF FICHA CAMIÓN
+// GENERAR PDF FICHA CAMIÓN PROFESIONAL
 // ======================================================
 
 
-const btnImprimirCamion =
-    document.getElementById("btnImprimirCamion");
+document
+    .getElementById("btnImprimirCamion")
+    .addEventListener("click", () => {
 
 
+        if (!camionSeleccionadoPDF) {
 
-if (btnImprimirCamion) {
+            alert("No hay camión seleccionado");
+            return;
 
-
-    btnImprimirCamion.addEventListener("click", async function() {
-
+        }
 
 
         const { jsPDF } = window.jspdf;
 
 
-
-        let pdf = new jsPDF(
+        const pdf = new jsPDF(
             "p",
             "mm",
             "a4"
@@ -1726,24 +2005,49 @@ if (btnImprimirCamion) {
 
 
 
-        let azul = [
-            31,
-            41,
-            55
-        ];
+        const c = camionSeleccionadoPDF;
+
+
+
+        const ancho =
+            pdf.internal.pageSize.width;
+
+
+
+        const alto =
+            pdf.internal.pageSize.height;
 
 
 
 
-        // ======================================================
-        // ENCABEZADO
-        // ======================================================
+        // ===============================
+        // COLORES
+        // ===============================
 
 
-        function encabezado(texto) {
+        const azul = [15, 23, 42];
+
+        const azulClaro = [37, 99, 235];
+
+        const gris = [241, 245, 249];
+
+        const texto = [30, 41, 59];
 
 
-            pdf.setFillColor(...azul);
+
+
+
+        // ===============================
+        // HEADER
+        // ===============================
+
+
+        function header(titulo) {
+
+
+            pdf.setFillColor(
+                ...azul
+            );
 
 
             pdf.roundedRect(
@@ -1751,8 +2055,8 @@ if (btnImprimirCamion) {
                 10,
                 190,
                 25,
-                4,
-                4,
+                5,
+                5,
                 "F"
             );
 
@@ -1765,15 +2069,11 @@ if (btnImprimirCamion) {
             );
 
 
-
-            pdf.setFontSize(
-                20
-            );
-
+            pdf.setFontSize(18);
 
 
             pdf.text(
-                texto,
+                titulo,
                 105,
                 26,
                 {
@@ -1782,179 +2082,119 @@ if (btnImprimirCamion) {
             );
 
 
+
         }
 
 
 
-        // ======================================================
-        // PRIMERA HOJA
-        // ======================================================
 
 
-        encabezado(
+        // ===============================
+        // FOOTER
+        // ===============================
+
+
+        function footer() {
+
+
+            pdf.setDrawColor(
+                220
+            );
+
+
+            pdf.line(
+                10,
+                285,
+                200,
+                285
+            );
+
+
+            pdf.setFontSize(8);
+
+
+            pdf.setTextColor(
+                120
+            );
+
+
+            pdf.text(
+
+                "Sistema de Gestión de Flota - Ficha Vehicular",
+
+                105,
+
+                292,
+
+                {
+                    align: "center"
+                }
+
+            );
+
+
+        }
+
+
+
+
+
+
+        // ===============================
+        // PRIMERA PAGINA
+        // ===============================
+
+
+        header(
             "FICHA DEL CAMIÓN"
         );
 
 
 
 
-        // ======================================================
-        // CARGAR IMAGEN
-        // ======================================================
-
-
-        async function cargarImagen(url) {
-
-
-            return new Promise(resolve => {
-
-
-                let img =
-                    new Image();
-
-
-
-                img.crossOrigin =
-                    "Anonymous";
-
-
-
-                img.onload = function() {
-
-
-                    let canvas =
-                        document.createElement(
-                            "canvas"
-                        );
-
-
-
-                    canvas.width =
-                        this.width;
-
-
-                    canvas.height =
-                        this.height;
-
-
-
-                    let ctx =
-                        canvas.getContext(
-                            "2d"
-                        );
-
-
-
-                    ctx.drawImage(
-                        this,
-                        0,
-                        0
-                    );
-
-
-
-                    resolve(
-                        canvas.toDataURL(
-                            "image/jpeg"
-                        )
-                    );
-
-
-                }
-
-
-
-                img.onerror = function() {
-
-                    resolve(null);
-
-                }
-
-
-
-                img.src = url;
-
-
-            });
-
-
-        }
-
-
-
-
-
-        let foto =
-            camionActualFicha &&
-                camionActualFicha.imgcamion &&
-                camionActualFicha.imgcamion.trim() !== ""
-                ?
-                camionActualFicha.imgcamion
-                :
-                "/imgs/stock.jpg";
-
-
-
-        let imagen =
-            await cargarImagen(
-                foto
-            );
-
-
-
-        if (imagen) {
-
-
-            pdf.addImage(
-
-                imagen,
-
-                "JPEG",
-
-                82,
-
-                42,
-
-                45,
-
-                45
-
-            );
-
-
-        }
-
-
-
-
-        // ======================================================
-        // NOMBRE VEHICULO
-        // ======================================================
+        // TITULO VEHICULO
 
 
         pdf.setTextColor(
-            20,
-            20,
-            20
+            ...texto
         );
 
 
-
-        pdf.setFontSize(
-            18
-        );
-
+        pdf.setFontSize(22);
 
 
         pdf.text(
 
-            document.getElementById(
-                "vehiculoDetalle"
-            ).innerText,
+            `${c.marca || ""} ${c.modelo || ""}`,
 
             105,
 
-            98,
+            55,
+
+            {
+                align: "center"
+            }
+
+        );
+
+
+
+
+        pdf.setFontSize(12);
+
+
+        pdf.setTextColor(
+            100
+        );
+
+
+        pdf.text(
+
+            "Documento oficial del vehículo",
+
+            105,
+
+            63,
 
             {
                 align: "center"
@@ -1966,614 +2206,193 @@ if (btnImprimirCamion) {
 
 
 
-        // ======================================================
-        // FUNCIONES
-        // ======================================================
+
+        // ===============================
+        // FOTO
+        // ===============================
 
 
-        function titulo(texto, y) {
+        if (c.imgcamion) {
+
+
+            try {
+
+
+                pdf.addImage(
+
+                    c.imgcamion,
+
+                    "JPEG",
+
+                    75,
+
+                    75,
+
+                    60,
+
+                    45
+
+                );
+
+
+            }
+            catch (e) {
+
+                console.log(
+                    "No se pudo cargar imagen"
+                );
+
+            }
+
+
+        }
+
+
+
+
+
+
+
+        // ===============================
+        // TARJETAS DATOS
+        // ===============================
+
+
+        function tarjeta(
+            x,
+            y,
+            titulo,
+            valor
+        ) {
 
 
             pdf.setFillColor(
-                241,
-                245,
-                249
+                ...gris
             );
-
 
 
             pdf.roundedRect(
-                15,
-                y,
-                180,
-                8,
-                2,
-                2,
-                "F"
-            );
 
-
-
-            pdf.setTextColor(
-                31,
-                41,
-                55
-            );
-
-
-
-            pdf.setFontSize(
-                11
-            );
-
-
-
-            pdf.text(
-                texto,
-                20,
-                y + 6
-            );
-
-
-        }
-
-
-
-
-
-        function dato(
-            label,
-            valor,
-            x,
-            y
-        ) {
-
-
-            pdf.setTextColor(
-                100,
-                116,
-                139
-            );
-
-
-
-            pdf.setFontSize(
-                8
-            );
-
-
-
-            pdf.text(
-                label,
                 x,
-                y
-            );
 
-
-
-            pdf.setTextColor(
-                20,
-                20,
-                20
-            );
-
-
-
-            pdf.setFontSize(
-                10
-            );
-
-
-
-            pdf.text(
-                valor || "No registrado",
-                x,
-                y + 5
-            );
-
-
-        }
-
-
-
-
-
-        // ======================================================
-        // DATOS CAMIÓN
-        // ======================================================
-
-
-        titulo(
-            "DATOS DEL VEHÍCULO",
-            115
-        );
-
-
-
-        dato(
-            "Placa",
-            document.getElementById(
-                "placaDetalle"
-            ).innerText,
-            20,
-            135
-        );
-
-
-
-        dato(
-            "Marca",
-            document.getElementById(
-                "marcaDetalle"
-            ).innerText,
-            110,
-            135
-        );
-
-
-
-        dato(
-            "Modelo",
-            document.getElementById(
-                "modeloDetalle"
-            ).innerText,
-            20,
-            155
-        );
-
-
-
-        dato(
-            "Año",
-            document.getElementById(
-                "anioDetalle"
-            ).innerText,
-            110,
-            155
-        );
-
-
-
-        dato(
-            "Tipo",
-            document.getElementById(
-                "tipoDetalle"
-            ).innerText,
-            20,
-            175
-        );
-
-
-
-        dato(
-            "Estado",
-            document.getElementById(
-                "estadoDetalle"
-            ).innerText,
-            110,
-            175
-        );
-
-
-
-        dato(
-            "Kilometraje",
-            document.getElementById(
-                "kmDetalle"
-            ).innerText,
-            20,
-            195
-        );
-
-
-
-        dato(
-            "Capacidad",
-            document.getElementById(
-                "capacidadDetalle"
-            ).innerText,
-            110,
-            195
-        );
-
-
-
-        dato(
-            "Número Motor",
-            document.getElementById(
-                "motorDetalle"
-            ).innerText,
-            20,
-            215
-        );
-
-
-
-        dato(
-            "Número Chasis",
-            document.getElementById(
-                "chasisDetalle"
-            ).innerText,
-            110,
-            215
-        );
-
-
-        // ======================================================
-        // OBSERVACIONES PARA PDF
-        // ======================================================
-
-
-		let observaciones =
-		    camionActualFicha &&
-		    camionActualFicha.observaciones
-		    ?
-		    camionActualFicha.observaciones.trim()
-		    :
-		    "Sin observaciones";
-
-       
-
-
-        if (!observaciones) {
-
-            observaciones =
-                "Sin observaciones";
-
-        }
-
-
-
-
-        // SIEMPRE SEGUNDA HOJA
-
-
-        pdf.addPage();
-
-
-
-        encabezado(
-            "OBSERVACIONES DEL CAMIÓN"
-        );
-
-
-
-        let y = 50;
-
-
-
-        let listaObservaciones;
-
-
-
-        if (
-            observaciones.includes(
-                "------------------------------------------------------------------------------------------------"
-            )
-        ) {
-
-            listaObservaciones =
-                observaciones.split(
-                    "------------------------------------------------------------------------------------------------"
-                );
-
-
-        }
-        else {
-
-
-            listaObservaciones =
-                [
-                    observaciones
-                ];
-
-        }
-
-
-
-
-
-        listaObservaciones.forEach(obs => {
-
-
-            obs =
-                obs.trim();
-
-
-
-            if (obs === "")
-                return;
-
-
-
-
-            let lineas =
-                obs.split("\n");
-
-
-
-            let fecha =
-                new Date().toLocaleDateString();
-
-
-
-            let hora =
-                new Date().toLocaleTimeString();
-
-
-
-            let detalle = [];
-
-
-
-
-            lineas.forEach(l => {
-
-
-                if (
-                    l.startsWith("Fecha:")
-                ) {
-
-
-                    fecha =
-                        l.replace(
-                            "Fecha:",
-                            ""
-                        )
-                            .trim();
-
-
-                }
-
-
-                else if (
-                    l.includes(
-                        "Hora de Registro de Observación:"
-                    )
-                ) {
-
-
-                    hora =
-                        l.replace(
-                            "Hora de Registro de Observación:",
-                            ""
-                        )
-                            .trim();
-
-
-                }
-
-
-                else if (
-                    l.startsWith(
-                        "Detalle"
-                    )
-                ) {
-
-
-
-                }
-
-
-                else if (
-                    l.trim() != ""
-                ) {
-
-
-                    detalle.push(l);
-
-
-                }
-
-
-            });
-
-
-
-
-
-            let contenidoObservacion;
-
-
-            if (detalle.length > 0) {
-
-                contenidoObservacion =
-                    detalle.join("\n");
-
-            }
-            else {
-
-                contenidoObservacion =
-                    obs;
-
-            }
-
-            console.log(
-                "2 - CONTENIDO QUE VA AL PDF:",
-                contenidoObservacion
-            );
-
-            let textoDetalle =
-                pdf.splitTextToSize(
-                    contenidoObservacion,
-                    165
-                );
-
-
-
-            console.log(
-                "3 - TEXTO DIVIDIDO PDF:",
-                textoDetalle
-            );
-
-            let altura =
-                35 +
-                (
-                    textoDetalle.length * 5
-                );
-
-
-
-
-
-
-            if (
-                y + altura > 275
-            ) {
-
-
-                pdf.addPage();
-
-
-                encabezado(
-                    "OBSERVACIONES DEL CAMIÓN"
-                );
-
-
-                y = 50;
-
-
-            }
-
-
-
-
-
-            pdf.setDrawColor(
-                210
-            );
-
-
-
-            pdf.roundedRect(
-                15,
                 y,
-                180,
-                altura,
+
+                85,
+
+                18,
+
                 3,
-                3
+
+                3,
+
+                "F"
+
             );
 
 
 
-            let pos =
-                y + 10;
+            pdf.setFontSize(8);
 
 
-
-
-
-            pdf.setFont(
-                "helvetica",
-                "bold"
+            pdf.setTextColor(
+                100
             );
-
-
-
-            pdf.setFontSize(
-                10
-            );
-
 
 
             pdf.text(
-                "Fecha:",
-                20,
-                pos
+
+                titulo,
+
+                x + 5,
+
+                y + 6
+
             );
 
 
 
-            pdf.setFont(
-                "helvetica",
-                "normal"
-            );
+            pdf.setFontSize(11);
 
+
+            pdf.setTextColor(
+                ...texto
+            );
 
 
             pdf.text(
-                fecha,
-                38,
-                pos
+
+                String(valor || "No registrado"),
+
+                x + 5,
+
+                y + 14
+
             );
 
 
+        }
 
 
 
-            pdf.setFont(
-                "helvetica",
-                "bold"
+
+
+
+        let y = 140;
+
+
+
+        const datos = [
+
+            ["Placa", c.placa],
+
+            ["Marca", c.marca],
+
+            ["Modelo", c.modelo],
+
+            ["Año", c.anio],
+
+            ["Tipo", c.tipo],
+
+            ["Estado", c.estado],
+
+            ["Kilometraje", c.kilometrajeActual + " km"],
+
+            ["Motor", c.numeroMotor],
+
+            ["Chasis", c.numeroChasis],
+
+            ["Capacidad", c.capacidadCarga]
+
+        ];
+
+
+
+        datos.forEach((d, i) => {
+
+
+            let columna =
+                i % 2 === 0
+                    ? 15
+                    : 110;
+
+
+
+            let fila =
+                Math.floor(i / 2);
+
+
+
+            tarjeta(
+
+                columna,
+
+                y + (fila * 23),
+
+                d[0],
+
+                d[1]
+
             );
-
-
-
-            pdf.text(
-                "Hora:",
-                100,
-                pos
-            );
-
-
-
-            pdf.setFont(
-                "helvetica",
-                "normal"
-            );
-
-
-
-            pdf.text(
-                hora,
-                118,
-                pos
-            );
-
-
-
-
-
-            pos += 10;
-
-
-
-
-            pdf.setFont(
-                "helvetica",
-                "bold"
-            );
-
-
-
-            pdf.text(
-                "Detalle de la Observación:",
-                20,
-                pos
-            );
-
-
-
-            pos += 7;
-
-
-
-            pdf.setFont(
-                "helvetica",
-                "normal"
-            );
-
-
-
-            pdf.text(
-                textoDetalle,
-                20,
-                pos
-            );
-
-
-
-            y += altura + 10;
-
 
 
         });
@@ -2581,40 +2400,137 @@ if (btnImprimirCamion) {
 
 
 
-
-        // ======================================================
-        // PIE
-        // ======================================================
+        footer();
 
 
-        pdf.setPage(
-            pdf.getNumberOfPages()
+
+
+
+        // ===============================
+        // PAGINA OBSERVACIONES
+        // ===============================
+
+
+        pdf.addPage();
+
+
+
+        header(
+            "OBSERVACIONES DEL VEHÍCULO"
         );
 
 
 
-        pdf.setFontSize(
-            8
+        let observaciones =
+            c.observaciones ||
+            "Sin observaciones";
+
+
+
+
+        pdf.setFontSize(12);
+
+
+
+        let lineas =
+            pdf.splitTextToSize(
+                observaciones,
+                160
+            );
+
+
+
+        let posY = 55;
+
+
+
+        pdf.setFillColor(
+            248,
+            250,
+            252
+        );
+
+
+
+        pdf.roundedRect(
+
+            20,
+
+            45,
+
+            170,
+
+            180,
+
+            5,
+
+            5,
+
+            "F"
+
         );
 
 
 
         pdf.setTextColor(
-            120,
-            120,
-            120
+            51,
+            65,
+            85
         );
 
 
 
         pdf.text(
-            "Sistema de Gestión de Camiones",
-            105,
-            290,
-            {
-                align: "center"
-            }
+
+            lineas,
+
+            30,
+
+            posY
+
         );
+
+
+
+
+        // DATOS PIE OBSERVACION
+
+
+        pdf.setFontSize(10);
+
+
+        pdf.setTextColor(
+            100
+        );
+
+
+        pdf.text(
+
+            "Vehículo: " + c.placa,
+
+            20,
+
+            250
+
+        );
+
+
+
+        pdf.text(
+
+            "Fecha emisión: " +
+            new Date().toLocaleDateString(),
+
+            20,
+
+            258
+
+        );
+
+
+
+
+        footer();
 
 
 
@@ -2622,21 +2538,382 @@ if (btnImprimirCamion) {
 
         pdf.save(
 
-            "Ficha_Camion_" +
-
-            document.getElementById(
-                "vehiculoDetalle"
-            ).innerText
-
-            +
-
-            ".pdf"
+            "Ficha_" + c.placa + ".pdf"
 
         );
 
 
 
     });
+	
+	
+	// ======================================================
+	// ABRIR MODAL ACCIONES
+	// ======================================================
 
 
-}
+	document.addEventListener(
+	"click",
+	function(e){
+
+
+	    const boton =
+	    e.target.closest(".btn-editar");
+
+
+	    if(!boton)
+	    return;
+
+
+
+	    camionSeleccionadoAccion =
+	    listaCamiones.find(
+	        c => c.id == boton.dataset.id
+	    );
+
+
+
+	    console.log(
+	        "CAMION SELECCIONADO:",
+	        camionSeleccionadoAccion
+	    );
+
+
+
+	    if(!camionSeleccionadoAccion)
+	    return;
+
+
+
+	    modalAccionCamion.style.display="flex";
+
+
+	});
+
+
+
+
+	// ======================================================
+	// EDITAR INFORMACION
+	// ======================================================
+
+
+	btnEditarInfo.onclick=function(){
+
+
+	    modalAccionCamion.style.display="none";
+
+
+	    abrirModalEditar(
+	        camionSeleccionadoAccion
+	    );
+
+
+	};
+
+
+
+
+
+	// ======================================================
+	// NUEVA OBSERVACION
+	// ======================================================
+
+
+	btnNuevaObservacion.onclick=function(){
+
+
+	    modalAccionCamion.style.display="none";
+
+
+	    modalTipoObservacion.style.display="flex";
+
+
+	};
+
+
+
+
+
+
+	// ======================================================
+	// CONTINUAR OBSERVACION
+	// ======================================================
+
+
+	continuarObservacion.onclick=function(){
+
+
+	    modalTipoObservacion.style.display="none";
+
+
+	    modalDetalleObservacion.style.display="flex";
+
+
+	};
+
+
+
+
+
+
+	// ======================================================
+	// GUARDAR OBSERVACION
+	// ======================================================
+
+	guardarObservacion.onclick = async function () {
+
+	    const tipo = document.getElementById("tipoObservacion").value;
+
+	    const detalle = document.getElementById("detalleObservacion").value;
+
+	    if (!detalle.trim()) {
+	        alert("Debe escribir un detalle");
+	        return;
+	    }
+
+	    const fecha = new Date();
+
+	    const texto = `
+	Tipo: ${tipo}
+
+	Fecha: ${fecha.toLocaleDateString()}
+
+	Hora: ${fecha.toLocaleTimeString()}
+
+	Detalle:
+
+	${detalle}
+	`;
+
+	    console.log("ID:", camionSeleccionadoAccion.id);
+	    console.log("OBSERVACION:", texto);
+
+	    try {
+
+	        const respuesta = await fetch(
+	            "/camiones/observacion/" + camionSeleccionadoAccion.id,
+	            {
+	                method: "PUT",
+	                headers: {
+	                    "Content-Type": "text/plain"
+	                },
+	                body: texto
+	            }
+	        );
+
+	        console.log("STATUS:", respuesta.status);
+
+	        const resultado = await respuesta.text();
+
+	        console.log("RESPUESTA:", resultado);
+
+	        if (!respuesta.ok) {
+	            alert("Error:\n\n" + resultado);
+	            return;
+	        }
+
+	        alert("Observación guardada correctamente");
+
+	        modalDetalleObservacion.style.display = "none";
+
+	        document.getElementById("detalleObservacion").value = "";
+
+	        await cargarCamiones();
+
+	    } catch (e) {
+
+	        console.error(e);
+
+	        alert("Error de conexión");
+	    }
+
+	};
+
+
+
+
+
+
+	// ======================================================
+	// CERRAR MODAL ACCION
+	// ======================================================
+
+
+	document
+	.querySelector(".cerrarAccion")
+	.addEventListener(
+	"click",
+	()=>{
+
+
+	    modalAccionCamion.style.display="none";
+
+
+	});
+
+
+
+
+
+
+
+	// ======================================================
+	// ABRIR MODAL EDITAR USANDO EL FORMULARIO NUEVO
+	// ======================================================
+
+	function abrirModalEditar(camion){
+
+
+	    if(!camion)
+	    return;
+
+
+
+	    // Guardamos el objeto completo
+	    camionEditando = camion;
+
+
+	    // Guardamos el ID para el PUT
+	    camionEditandoId = camion.id;
+
+
+	    // Activamos modo edición
+	    modoEdicion = true;
+
+
+
+	    console.log(
+	        "CAMION EDITANDO:",
+	        camionEditando
+	    );
+
+
+	    console.log(
+	        "ID EDITANDO:",
+	        camionEditandoId
+	    );
+
+
+
+	    // Abrimos el mismo modal de crear
+
+	    modalNuevo.style.display="flex";
+
+
+
+	    // Cambiamos título si quieres
+
+	    const titulo =
+	    document.querySelector(
+	        "#modalNuevoCamion .modal-header h2"
+	    );
+
+
+	    if(titulo){
+
+	        titulo.innerHTML =
+	        `
+	        <i class="fa-solid fa-pen-to-square"></i>
+	        Editar Camión
+	        `;
+
+	    }
+
+
+
+
+
+	    // ===============================
+	    // CARGAR DATOS
+	    // ===============================
+
+
+	    document.getElementById("placa").value =
+	        camion.placa || "";
+
+
+
+	    document.getElementById("marca").value =
+	        camion.marca || "";
+
+
+
+	    document.getElementById("modelo").value =
+	        camion.modelo || "";
+
+
+
+	    document.getElementById("anio").value =
+	        camion.anio || "";
+
+
+
+	    document.getElementById("color").value =
+	        camion.color || "";
+
+
+
+	    document.getElementById("tipo").value =
+	        camion.tipo || "";
+
+
+
+	    document.getElementById("capacidad").value =
+	        camion.capacidadCarga || "";
+
+
+
+	    document.getElementById("kilometraje").value =
+	        camion.kilometrajeActual || "";
+
+
+
+	    document.getElementById("motor").value =
+	        camion.numeroMotor || "";
+
+
+
+	    document.getElementById("chasis").value =
+	        camion.numeroChasis || "";
+
+
+
+	    document.getElementById("estado").value =
+	        camion.estado || "";
+
+
+
+	    document.getElementById("fechaCompra").value =
+	        camion.fechaCompra || "";
+
+
+
+	    document.getElementById("valorCompra").value =
+	        camion.valorCompra || "";
+
+
+
+	    document.getElementById("observaciones").value =
+	        camion.observaciones || "";
+
+
+
+	    // Imagen
+
+	    if(previewFoto){
+
+
+	        previewFoto.src =
+	        camion.imgcamion
+	        ?
+	        camion.imgcamion
+	        :
+	        "/imgs/stock.jpg";
+
+
+	    }
+
+
+
+	}

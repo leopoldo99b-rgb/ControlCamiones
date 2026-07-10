@@ -578,219 +578,126 @@
 
 		</div>
 
+
+
 		<!--==================================================
-                    MODAL EDITAR
+              MODAL ELIMINAR CAMIÓN
 ===================================================-->
 
-		<div class="modal" id="modalEditar">
+		<div class="modal" id="modalEliminar">
 
-			<div class="modal-content modal-lg">
+			<div class="modal-delete">
 
-				<div class="modal-header">
+				<div class="delete-icon">
+					<i class="fa-solid fa-triangle-exclamation"></i>
+				</div>
 
-					<h2>
 
-						<i class="fa-solid fa-pen"></i> Editar Camión
+				<h2>Eliminar Camión</h2>
 
-					</h2>
 
-					<button type="button" class="btn-close">
+				<p>¿Estás seguro que deseas eliminar este camión?</p>
+
+				<span class="delete-warning"> Esta acción no se puede
+					deshacer. </span>
+
+
+				<div class="code-box">
+
+					<label> Código de seguridad: </label>
+
+
+					<div class="generated-code" id="codigoGenerado">000000</div>
+
+
+					<input type="text" id="codigoConfirmacion"
+						placeholder="Ingrese el código">
+
+				</div>
+
+
+				<div class="modal-footer">
+
+
+					<button type="button" class="btn-cancel" id="cancelarEliminar">
+
+						Cancelar</button>
+
+
+
+					<button type="button" id="confirmarEliminar" disabled>
+
+						<i class="fa-solid fa-trash"></i> Eliminar
+
+					</button>
+
+
+				</div>
+
+
+			</div>
+
+		</div>
+
+
+		<!-- ==================================================
+     MODAL FICHA CAMION
+================================================== -->
+
+		<div class="modal" id="modalVerCamion">
+
+
+			<div class="modal-ficha">
+
+
+				<div class="modal-header-ficha">
+
+
+					<div>
+						<h2>
+							<i class="fa-solid fa-truck"></i> Ficha del Camión
+						</h2>
+
+						<p>Información completa del vehículo</p>
+					</div>
+
+
+
+					<button id="cerrarFichaCamion" class="btn-cerrar-ficha">
 
 						<i class="fa-solid fa-xmark"></i>
 
 					</button>
 
-				</div>
-
-				<form id="formEditar">
-
-					<!--
-                        Aquí irá posteriormente el mismo
-                        formulario del Modal Nuevo,
-                        utilizando IDs diferentes:
-
-                        editarPlaca
-                        editarMarca
-                        editarModelo
-                        editarTipo
-                        editarEstado
-                        etc.
-                    -->
-
-				</form>
-
-			</div>
-
-		</div>
-
-	</div>
-
-
-	<!-- MODAL IMAGEN GRANDE -->
-	<div class="modal" id="modalImagen">
-
-		<div class="modal-img-content">
-
-			<button type="button" class="btn-close-img">
-
-				<i class="fa-solid fa-xmark"></i>
-
-			</button>
-
-			<img id="imagenGrande" src="" alt="Imagen">
-
-		</div>
-
-	</div>
-
-
-	<!--==================================================
-              MODAL ELIMINAR CAMIÓN
-===================================================-->
-
-	<div class="modal" id="modalEliminar">
-
-		<div class="modal-delete">
-
-			<div class="delete-icon">
-				<i class="fa-solid fa-triangle-exclamation"></i>
-			</div>
-
-
-			<h2>Eliminar Camión</h2>
-
-
-			<p>¿Estás seguro que deseas eliminar este camión?</p>
-
-			<span class="delete-warning"> Esta acción no se puede
-				deshacer. </span>
-
-
-			<div class="code-box">
-
-				<label> Código de seguridad: </label>
-
-
-				<div class="generated-code" id="codigoGenerado">000000</div>
-
-
-				<input type="text" id="codigoConfirmacion"
-					placeholder="Ingrese el código">
-
-			</div>
-
-
-			<div class="modal-footer">
-
-
-				<button type="button" class="btn-cancel" id="cancelarEliminar">
-
-					Cancelar</button>
-
-
-
-				<button type="button" id="confirmarEliminar" disabled>
-
-					<i class="fa-solid fa-trash"></i> Eliminar
-
-				</button>
-
-
-			</div>
-
-
-		</div>
-
-	</div>
-
-
-	<!--==================================================
-              MODAL VER CAMIÓN
-===================================================-->
-
-	<div class="modal" id="modalVerCamion">
-
-
-		<div class="modal-content modal-lg ficha-modal">
-
-
-			<div class="modal-header">
-
-
-				<div>
-
-					<h2>
-						<i class="fa-solid fa-truck-front"></i> Ficha del Camión
-					</h2>
-
-
-					<p>Información completa del vehículo</p>
-
 
 				</div>
 
 
 
-				<button type="button" class="btn-close">
-
-					<i class="fa-solid fa-xmark"></i>
-
-				</button>
 
 
-			</div>
+				<div class="ficha-body">
 
 
+					<div class="perfil-camion">
 
 
-
-			<div class="modal-content-body">
-
-
-				<div class="ficha-conductor">
-
-
-
-					<!--=========================
-				        PERFIL CAMIÓN
-				==========================-->
-
-					<div class="perfil-ficha">
-
-
-
-						<img id="fotoCamionDetalle" class="foto-detalle"
-							src="/imgs/stock.jpg" alt="Imagen del camión">
-
-
-
+						<img id="fotoCamionDetalle" src="/imgs/stock.jpg">
 
 
 						<h2 id="vehiculoDetalle"></h2>
 
 
 
+						<button id="btnImprimirCamion" class="btn-pdf">
 
 
-						<button type="button" id="btnImprimirCamion"
-							class="btn-imprimir-ficha">
-
-
-							<i class="fa-solid fa-file-pdf"></i> Generar ficha PDF
+							<i class="fa-solid fa-file-pdf"></i> Generar PDF
 
 
 						</button>
 
 
-
-
-						<!-- FECHA OCULTA PARA PDF -->
-
-						<span id="fechaCreacionDetalle" style="display: none;"> </span>
-
-
-
-
 					</div>
 
 
@@ -799,160 +706,64 @@
 
 
 
-					<!--=========================
-				        DATOS CAMIÓN
-				==========================-->
-
-					<div class="datos-ficha">
+					<div class="datos-camion">
 
 
-
-						<div class="titulo-datos">
-
-							<i class="fa-solid fa-truck"></i> Datos del vehículo
-
-
-						</div>
+						<div class="titulo">Datos del vehículo</div>
 
 
 
+						<div class="grid">
 
 
-
-						<div class="grid-datos">
-
-
-
-
-
-							<div class="dato-box">
-
-								<label> Placa </label> <span id="placaDetalle"></span>
-
-
+							<div>
+								<label>Placa</label> <span id="placaDetalle"></span>
 							</div>
 
 
-
-
-
-
-							<div class="dato-box">
-
-								<label> Marca </label> <span id="marcaDetalle"></span>
-
-
+							<div>
+								<label>Marca</label> <span id="marcaDetalle"></span>
 							</div>
 
 
-
-
-
-
-							<div class="dato-box">
-
-								<label> Modelo </label> <span id="modeloDetalle"></span>
-
-
+							<div>
+								<label>Modelo</label> <span id="modeloDetalle"></span>
 							</div>
 
 
-
-
-
-
-
-							<div class="dato-box">
-
-								<label> Año </label> <span id="anioDetalle"></span>
-
-
+							<div>
+								<label>Año</label> <span id="anioDetalle"></span>
 							</div>
 
 
-
-
-
-
-
-
-							<div class="dato-box">
-
-								<label> Tipo </label> <span id="tipoDetalle"></span>
-
-
+							<div>
+								<label>Tipo</label> <span id="tipoDetalle"></span>
 							</div>
 
 
-
-
-
-
-
-							<div class="dato-box">
-
-								<label> Estado </label> <span id="estadoDetalle"></span>
-
-
+							<div>
+								<label>Estado</label> <span id="estadoDetalle"></span>
 							</div>
 
 
-
-
-
-
-
-
-							<div class="dato-box">
-
-								<label> Kilometraje </label> <span id="kmDetalle"></span>
-
-
+							<div>
+								<label>Kilometraje</label> <span id="kmDetalle"></span>
 							</div>
 
 
-
-
-
-
-
-
-							<div class="dato-box">
-
-								<label> Capacidad </label> <span id="capacidadDetalle"></span>
-
-
+							<div>
+								<label>Capacidad</label> <span id="capacidadDetalle"></span>
 							</div>
 
 
-
-
-
-
-
-
-							<div class="dato-box">
-
-								<label> Número Motor </label> <span id="motorDetalle"></span>
-
-
+							<div>
+								<label>Motor</label> <span id="motorDetalle"></span>
 							</div>
 
 
-
-
-
-
-
-
-							<div class="dato-box">
-
-								<label> Número Chasis </label> <span id="chasisDetalle"></span>
-
-
+							<div>
+								<label>Chasis</label> <span id="chasisDetalle"></span>
 							</div>
-
-
 
 
 
@@ -963,66 +774,178 @@
 
 
 
+						<div class="titulo">Observaciones</div>
 
 
 
-						<div class="titulo-datos mt-4">
-
-
-							<i class="fa-solid fa-note-sticky"></i> Observaciones
-
-
-
-						</div>
-
-
-
-
-
-
-
-						<div class="observaciones-box">
-
+						<div class="observaciones">
 
 							<span id="observacionesDetalle"> </span>
 
-
-
 						</div>
 
 
 
-
-
 					</div>
-
 
 
 
 				</div>
 
 
+			</div>
+
+
+		</div>
+
+		<!-- ==========================================
+     MODAL ACCION CAMION
+========================================== -->
+
+		<div class="modal" id="modalAccionCamion">
+
+
+			<div class="modal-delete accion-modal">
+
+
+				<i class="fa-solid fa-truck-ramp-box"></i>
+
+
+				<h2>¿Qué deseas hacer?</h2>
+
+
+				<p>Selecciona una acción para este vehículo</p>
+
+
+
+				<div class="acciones-edicion">
+
+
+					<button id="btnEditarInfo" class="accion-card">
+
+
+						<i class="fa-solid fa-pen-to-square"></i> <span> Editar
+							información </span>
+
+
+					</button>
+
+
+
+
+					<button id="btnNuevaObservacion" class="accion-card">
+
+
+						<i class="fa-solid fa-note-sticky"></i> <span> Nueva
+							observación </span>
+
+
+					</button>
+
+
+				</div>
+
+
+
+				<button class="btn-cancel cerrarAccion">Cancelar</button>
+
+
+
+			</div>
+
+		</div>
+
+		<!-- ==========================================
+     MODAL TIPO OBSERVACION
+========================================== -->
+
+
+		<div class="modal" id="modalTipoObservacion">
+
+
+			<div class="modal-delete">
+
+
+				<h2>Nueva observación</h2>
+
+
+				<p>Seleccione el tipo</p>
+
+
+				<select id="tipoObservacion" class="select-modal">
+
+
+					<option>Mantenimiento</option>
+
+
+					<option>Reparación</option>
+
+
+					<option>Cambio de piezas</option>
+
+
+					<option>Multa</option>
+
+
+					<option>Accidente</option>
+
+
+					<option>Inspección</option>
+
+
+					<option>Otro</option>
+
+
+				</select>
+
+
+
+				<button id="continuarObservacion" class="btn-save">
+
+					Continuar</button>
 
 
 			</div>
 
 
+		</div>
+
+		<!-- ==========================================
+     MODAL DETALLE OBSERVACION
+========================================== -->
+
+
+		<div class="modal" id="modalDetalleObservacion">
+
+
+			<div class="modal-delete">
+
+
+				<h2>Detalle de observación</h2>
+
+
+
+				<textarea id="detalleObservacion" rows="6"
+					placeholder="Escriba el detalle..."></textarea>
+
+
+
+				<button id="guardarObservacion" class="btn-save">Guardar
+					observación</button>
+
+
+
+			</div>
 
 
 		</div>
-
-
-
-
-	</div>
-
-	<!--==================================================
+		<!--==================================================
                     FIN CONTENIDO
 ===================================================-->
 
-	<script
-		src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-	<script src="/js/camiones.js"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+		<script src="/js/camiones.js"></script>
 </body>
 
 </html>
