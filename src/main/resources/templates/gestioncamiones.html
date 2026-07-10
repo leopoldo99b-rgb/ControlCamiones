@@ -136,9 +136,17 @@
 
 			<div class="filter-item">
 
-				<label for="filtroMarca"> Marca </label> <select id="filtroMarca">
+				<label for="filtroEstado"> Estado </label> <select id="filtroEstado">
 
-					<option value="">Todas</option>
+					<option value="">Todos</option>
+
+					<option value="DISPONIBLE">DISPONIBLE</option>
+
+					<option value="EN VIAJE">EN VIAJE</option>
+
+					<option value="MANTENIMIENTO">MANTENIMIENTO</option>
+
+					<option value="FUERA DE SERVICIO">FUERA DE SERVICIO</option>
 
 				</select>
 
@@ -156,7 +164,7 @@
 
 					<option value="Furgón">Furgón</option>
 					
-					<option value="Furgón-Refrigerado">Furgón Refrigerado</option>
+					<option value="Furgón-Refrijerado">Furgón Refrigerado</option>
 
 					<option value="Cisterna">Cisterna</option>
 
@@ -176,20 +184,9 @@
 
 					<option value="">Todas</option>
 
-					<option value="Freightliner">Freightliner</option>
-
-					<option value="Volvo">Volvo</option>
-
-					<option value="Kenworth">Kenworth</option>
-
-					<option value="International">International</option>
-
-					<option value="Scania">Scania</option>
-
 				</select>
 
 			</div>
-
 			<!-- TOTAL -->
 
 			<div class="filter-item total">
@@ -308,195 +305,275 @@
                 MODAL NUEVO CAMIÓN
 ===================================================-->
 
-		<div class="modal" id="modalNuevoCamion">
+<div class="modal" id="modalNuevoCamion">
 
-			<div class="modal-content modal-lg">
+    <div class="modal-content modal-lg">
 
-				<!-- HEADER -->
+        <!-- HEADER -->
 
-				<div class="modal-header">
+        <div class="modal-header">
 
-					<div>
+            <div>
 
-						<h2>
-							<i class="fa-solid fa-truck-front"></i> Registrar Nuevo Camión
-						</h2>
+                <h2>
+                    <i class="fa-solid fa-truck-front"></i>
+                    Registrar Nuevo Camión
+                </h2>
 
-						<p>Complete toda la información del vehículo.</p>
+                <p>Complete toda la información del vehículo.</p>
 
-					</div>
+            </div>
 
-					<button type="button" class="btn-close">
-						<i class="fa-solid fa-xmark"></i>
-					</button>
+            <button type="button" class="btn-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
 
-				</div>
+        </div>
 
-				<!-- FORMULARIO -->
+        <!-- FORMULARIO -->
 
-				<form id="formCamion" enctype="multipart/form-data">
+        <form id="formCamion" enctype="multipart/form-data">
 
-					<!-- ZONA CON SCROLL -->
+            <!-- ZONA CON SCROLL -->
 
-					<div class="form-scroll">
+            <div class="form-scroll">
 
-						<!-- GRID PRINCIPAL -->
+                <!-- GRID PRINCIPAL -->
 
-						<div class="form-grid">
+                <div class="form-grid">
 
-							<!-- FOTO -->
+                    <!-- FOTO -->
 
-							<div class="foto-container">
+                    <div class="foto-container">
 
-								<div class="preview">
-									<img id="previewFoto" src="/imgs/stock.jpg" alt="Camión">
-								</div>
+                        <div class="preview">
+                            <img id="previewFoto" src="/imgs/stock.jpg" alt="Camión">
+                        </div>
 
-								<label for="foto" class="upload-btn"> <i
-									class="fa-solid fa-camera"></i> Cambiar fotografía
-								</label> <input type="file" id="foto" name="foto" accept="image/*"
-									hidden>
+                        <label for="foto" class="upload-btn">
+                            <i class="fa-solid fa-camera"></i>
+                            Cambiar fotografía
+                        </label>
 
-							</div>
+                        <input
+                            type="file"
+                            id="foto"
+                            name="foto"
+                            accept="image/*"
+                            hidden>
 
-							<!-- CAMPOS -->
+                    </div>
 
-							<div class="campos">
+                    <!-- CAMPOS -->
 
-								<div class="input-group">
-									<label>Placa *</label> <input type="text" id="placa"
-										name="placa" placeholder="Ej: HAA-1234" required>
-								</div>
+                    <div class="campos">
 
-								<div class="input-group">
-									<label>Marca *</label> <input type="text" id="marca"
-										name="marca" placeholder="Freightliner" required>
-								</div>
+                        <div class="input-group">
+                            <label>Placa *</label>
+                            <input
+                                type="text"
+                                id="placa"
+                                name="placa"
+                                placeholder="Ej: HAA-1234"
+                                required>
+                        </div>
 
-								<div class="input-group">
-									<label>Modelo *</label> <input type="text" id="modelo"
-										name="modelo" placeholder="Cascadia" required>
-								</div>
+                        <div class="input-group">
+                            <label>Marca *</label>
+                            <input
+                                type="text"
+                                id="marca"
+                                name="marca"
+                                placeholder="Freightliner"
+                                required>
+                        </div>
 
-								<div class="input-group">
-									<label>Año *</label> <input type="number" id="anio" name="anio"
-										required>
-								</div>
+                        <div class="input-group">
+                            <label>Modelo *</label>
+                            <input
+                                type="text"
+                                id="modelo"
+                                name="modelo"
+                                placeholder="Cascadia"
+                                required>
+                        </div>
 
-								<div class="input-group">
-									<label>Color *</label> <input type="text" id="color"
-										name="color" required>
-								</div>
+                        <div class="input-group">
+                            <label>Año *</label>
+                            <input
+                                type="number"
+                                id="anio"
+                                name="anio"
+                                required>
+                        </div>
 
-								<div class="input-group">
+                        <div class="input-group">
+                            <label>Color *</label>
+                            <input
+                                type="text"
+                                id="color"
+                                name="color"
+                                required>
+                        </div>
 
-									<label>Tipo *</label> <select id="tipo" name="tipo" required>
+                        <div class="input-group">
 
-										<option value="">Seleccione tipo</option>
+                            <label>Tipo *</label>
 
-										<option value="Cabezal">Cabezal</option>
-										<option value="Furgón">Furgón</option>
-										<option value="Furgón-Refrigerado">Furgón Refrigerado</option>
-										<option value="Cisterna">Cisterna</option>
-										<option value="Volqueta">Volqueta</option>
-										<option value="Plataforma">Plataforma</option>
+                            <select
+                                id="tipo"
+                                name="tipo"
+                                required>
 
-									</select>
+                                <option value="">Seleccione tipo</option>
 
-								</div>
+                                <option value="Cabezal">Cabezal</option>
+                                <option value="Furgón">Furgón</option>
+                                <option value="Furgón-Refrijerado">Furgón Refrigerado</option>
+                                <option value="Cisterna">Cisterna</option>
+                                <option value="Volqueta">Volqueta</option>
+                                <option value="Plataforma">Plataforma</option>
 
-								<div class="input-group">
+                            </select>
 
-									<label>Capacidad de carga *</label> <input type="number"
-										step="0.01" id="capacidad" name="capacidad" required>
+                        </div>
 
-								</div>
+                        <div class="input-group">
 
-								<div class="input-group">
+                            <label>Capacidad de carga *</label>
 
-									<label>Kilometraje *</label> <input type="number"
-										id="kilometraje" name="kilometraje" required>
+                            <input
+                                type="number"
+                                step="0.01"
+                                id="capacidad"
+                                name="capacidad"
+                                required>
 
-								</div>
+                        </div>
 
-								<div class="input-group">
+                        <div class="input-group">
 
-									<label>Número Motor *</label> <input type="text" id="motor"
-										name="motor" required>
+                            <label>Kilometraje *</label>
 
-								</div>
+                            <input
+                                type="number"
+                                id="kilometraje"
+                                name="kilometraje"
+                                required>
 
-								<div class="input-group">
+                        </div>
 
-									<label>Número Chasis *</label> <input type="text" id="chasis"
-										name="chasis" required>
+                        <div class="input-group">
 
-								</div>
+                            <label>Número Motor *</label>
 
-								<div class="input-group">
+                            <input
+                                type="text"
+                                id="motor"
+                                name="motor"
+                                required>
 
-									<label>Estado *</label> <select id="estado" name="estado"
-										required>
+                        </div>
 
-										<option value="">Seleccione estado</option>
+                        <div class="input-group">
 
-										<option value="DISPONIBLE">DISPONIBLE</option>
-										<option value="EN VIAJE">EN VIAJE</option>
-										<option value="MANTENIMIENTO">MANTENIMIENTO</option>
-										<option value="FUERA DE SERVICIO">FUERA DE SERVICIO</option>
+                            <label>Número Chasis *</label>
 
-									</select>
+                            <input
+                                type="text"
+                                id="chasis"
+                                name="chasis"
+                                required>
 
-								</div>
+                        </div>
 
-								<div class="input-group">
+                        <div class="input-group">
 
-									<label>Fecha Compra *</label> <input type="date"
-										id="fechaCompra" name="fechaCompra" required>
+                            <label>Estado *</label>
 
-								</div>
+                            <select
+                                id="estado"
+                                name="estado"
+                                required>
 
-								<div class="input-group">
+                                <option value="">Seleccione estado</option>
 
-									<label>Valor Compra *</label> <input type="number" step="0.01"
-										id="valorCompra" name="valorCompra" required>
+                                <option value="DISPONIBLE">DISPONIBLE</option>
+                                <option value="EN VIAJE">EN VIAJE</option>
+                                <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+                                <option value="FUERA DE SERVICIO">FUERA DE SERVICIO</option>
 
-								</div>
+                            </select>
 
-							</div>
+                        </div>
 
-						</div>
+                        <div class="input-group">
 
-						<!-- OBSERVACIONES -->
+                            <label>Fecha Compra *</label>
 
-						<div class="input-group textarea">
+                            <input
+                                type="date"
+                                id="fechaCompra"
+                                name="fechaCompra"
+                                required>
 
-							<label for="observaciones"> Observaciones (Opcional) </label>
+                        </div>
 
-							<textarea id="observaciones" name="observaciones" rows="5"
-								placeholder="Información adicional del vehículo..."></textarea>
+                        <div class="input-group">
 
-						</div>
+                            <label>Valor Compra *</label>
 
-					</div>
+                            <input
+                                type="number"
+                                step="0.01"
+                                id="valorCompra"
+                                name="valorCompra"
+                                required>
 
-					<!-- BOTONES -->
+                        </div>
 
-					<div class="modal-footer">
+                    </div>
 
-						<button type="button" class="btn-cancel">Cancelar</button>
+                </div>
 
-						<button type="submit" class="btn-save">
-							<i class="fa-solid fa-floppy-disk"></i> Guardar Camión
-						</button>
+                <!-- OBSERVACIONES -->
 
-					</div>
+                <div class="input-group textarea">
 
-				</form>
+                    <label for="observaciones">
+                        Observaciones (Opcional)
+                    </label>
 
-			</div>
+                    <textarea
+                        id="observaciones"
+                        name="observaciones"
+                        rows="5"
+                        placeholder="Información adicional del vehículo..."></textarea>
 
-		</div>
+                </div>
+
+            </div>
+
+            <!-- BOTONES -->
+
+            <div class="modal-footer">
+
+                <button type="button" class="btn-cancel">
+                    Cancelar
+                </button>
+
+                <button type="submit" class="btn-save">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Guardar Camión
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
 
 
 		<!--==================================================
@@ -858,43 +935,43 @@
 
 
 		</div>
-
+		
 		<!-- ==========================================
      MODAL VER IMAGEN
 ========================================== -->
 
-		<div class="modal" id="modalImagen">
+<div class="modal" id="modalImagen">
 
-			<div class="modal-content">
+    <div class="modal-content">
 
-				<button class="btn-close-img">
-					<i class="fa-solid fa-xmark"></i>
-				</button>
+        <button class="btn-close-img">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
 
-				<img id="imagenGrande" src="" alt="Imagen">
+        <img id="imagenGrande" src="" alt="Imagen">
 
-			</div>
+    </div>
 
-		</div>
+</div>
 
-		<!-- ==========================================
+<!-- ==========================================
      MODAL alertas
 ========================================== -->
-		<div id="notificacion" class="notificacion">
+<div id="notificacion" class="notificacion">
 
-			<div class="icono-notificacion">
-				<i id="iconoNotificacion"></i>
-			</div>
+    <div class="icono-notificacion">
+        <i id="iconoNotificacion"></i>
+    </div>
 
-			<div class="contenido-notificacion">
+    <div class="contenido-notificacion">
 
-				<h4 id="tituloNotificacion"></h4>
+        <h4 id="tituloNotificacion"></h4>
 
-				<p id="mensajeNotificacion"></p>
+        <p id="mensajeNotificacion"></p>
 
-			</div>
+    </div>
 
-		</div>
+</div>
 		<!--==================================================
                     FIN CONTENIDO
 ===================================================-->
