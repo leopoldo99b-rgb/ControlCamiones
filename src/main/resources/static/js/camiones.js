@@ -169,7 +169,23 @@ document
     });
 
 
+	// ======================================================
+	// CERRAR FICHA CAMION
+	// ======================================================
 
+	const cerrarFichaCamion =
+	    document.getElementById("cerrarFichaCamion");
+
+
+	if(cerrarFichaCamion){
+
+	    cerrarFichaCamion.addEventListener("click", () => {
+
+	        modalVerCamion.style.display = "none";
+
+	    });
+
+	}
 
 // cerrar click fuera
 
@@ -280,6 +296,12 @@ async function cargarCamiones() {
 
 
         paginaActual = 1;
+		
+		// ===============================
+		       // ACTUALIZAR FILTRO MARCAS
+		       // ===============================
+
+		       cargarFiltroMarcas();
 
 
 
@@ -1291,9 +1313,11 @@ if (buscarCamion) {
 	    if(!camionEditandoId){
 
 
-	        alert(
-	        "Error: no hay camión seleccionado"
-	        );
+			mostrarNotificacion(
+			    "error",
+			    "Error",
+			    "No hay un camión seleccionado para editar"
+			);
 
 
 	        return;
@@ -1452,9 +1476,11 @@ if (buscarCamion) {
 	    console.error(error);
 
 
-	    alert(
-	    "Error guardando camión"
-	    );
+		mostrarNotificacion(
+		    "error",
+		    "Error",
+		    "No se pudo guardar el camión"
+		);
 
 
 	    return;
@@ -1496,18 +1522,14 @@ if (buscarCamion) {
 
 
 
-	alert(
-
+	mostrarNotificacion(
+	    "success",
+	    estabaEditando 
+	        ? "Camión actualizado"
+	        : "Camión guardado",
 	    estabaEditando
-
-	    ?
-
-	    "Camión actualizado correctamente"
-
-	    :
-
-	    "Camión guardado correctamente"
-
+	        ? "El camión fue actualizado correctamente"
+	        : "El camión fue registrado correctamente"
 	);
 
 
@@ -1520,8 +1542,10 @@ if (buscarCamion) {
 	console.error(error);
 
 
-	alert(
-	"Error de conexión"
+	mostrarNotificacion(
+	    "error",
+	    "Sin conexión",
+	    "No se pudo conectar con el servidor"
 	);
 
 
@@ -1637,7 +1661,11 @@ function eliminarCamion() {
         .then(data => {
 
 
-            alert(data);
+			mostrarNotificacion(
+			    "success",
+			    "Camión eliminado",
+			    data
+			);
 
 
             modalEliminar.style.display = "none";
@@ -1655,7 +1683,11 @@ function eliminarCamion() {
             console.error(error);
 
 
-            alert("Error eliminando camión");
+			mostrarNotificacion(
+			    "error",
+			    "Error",
+			    "Error Eliminando Camion"
+			);
 
 
         });
@@ -1986,13 +2018,17 @@ document
     .addEventListener("click", () => {
 
 
-        if (!camionSeleccionadoPDF) {
+		if (!camionSeleccionadoPDF) {
 
-            alert("No hay camión seleccionado");
-            return;
+		    mostrarNotificacion(
+		        "warning",
+		        "Sin selección",
+		        "No hay un camión seleccionado para generar la ficha"
+		    );
 
-        }
+		    return;
 
+		}
 
         const { jsPDF } = window.jspdf;
 
@@ -2663,18 +2699,39 @@ document
 
 	guardarObservacion.onclick = async function () {
 
-	    const tipo = document.getElementById("tipoObservacion").value;
 
-	    const detalle = document.getElementById("detalleObservacion").value;
+	    const tipo =
+	        document.getElementById("tipoObservacion").value;
+
+
+	    const detalle =
+	        document.getElementById("detalleObservacion").value;
+
+
 
 	    if (!detalle.trim()) {
-	        alert("Debe escribir un detalle");
+
+
+	        mostrarNotificacion(
+	            "warning",
+	            "Campo requerido",
+	            "Debe escribir un detalle para guardar la observación"
+	        );
+
+
 	        return;
+
 	    }
+
+
+
 
 	    const fecha = new Date();
 
+
+
 	    const texto = `
+
 	Tipo: ${tipo}
 
 	Fecha: ${fecha.toLocaleDateString()}
@@ -2684,52 +2741,150 @@ document
 	Detalle:
 
 	${detalle}
+
 	`;
 
-	    console.log("ID:", camionSeleccionadoAccion.id);
-	    console.log("OBSERVACION:", texto);
+
+
+
+	    console.log(
+	        "ID:",
+	        camionSeleccionadoAccion.id
+	    );
+
+
+	    console.log(
+	        "OBSERVACION:",
+	        texto
+	    );
+
+
+
 
 	    try {
 
+
 	        const respuesta = await fetch(
-	            "/camiones/observacion/" + camionSeleccionadoAccion.id,
+
+	            "/camiones/observacion/" 
+	            + 
+	            camionSeleccionadoAccion.id,
+
 	            {
+
 	                method: "PUT",
+
 	                headers: {
-	                    "Content-Type": "text/plain"
+
+	                    "Content-Type":
+	                    "text/plain"
+
 	                },
+
 	                body: texto
+
 	            }
+
 	        );
 
-	        console.log("STATUS:", respuesta.status);
 
-	        const resultado = await respuesta.text();
 
-	        console.log("RESPUESTA:", resultado);
+
+
+	        console.log(
+	            "STATUS:",
+	            respuesta.status
+	        );
+
+
+
+	        const resultado =
+	            await respuesta.text();
+
+
+
+
+	        console.log(
+	            "RESPUESTA:",
+	            resultado
+	        );
+
+
+
+
+
 
 	        if (!respuesta.ok) {
-	            alert("Error:\n\n" + resultado);
+
+
+
+	            mostrarNotificacion(
+	                "error",
+	                "Error al guardar",
+	                resultado
+	            );
+
+
+
 	            return;
+
+
 	        }
 
-	        alert("Observación guardada correctamente");
 
-	        modalDetalleObservacion.style.display = "none";
 
-	        document.getElementById("detalleObservacion").value = "";
+
+
+
+
+	        mostrarNotificacion(
+	            "success",
+	            "Observación guardada",
+	            "La observación fue registrada correctamente"
+	        );
+
+
+
+
+
+	        modalDetalleObservacion.style.display =
+	            "none";
+
+
+
+	        document.getElementById(
+	            "detalleObservacion"
+	        ).value = "";
+
+
+
 
 	        await cargarCamiones();
 
+
+
+
+
 	    } catch (e) {
+
+
 
 	        console.error(e);
 
-	        alert("Error de conexión");
+
+
+	        mostrarNotificacion(
+	            "error",
+	            "Error de conexión",
+	            "No fue posible comunicarse con el servidor"
+	        );
+
+
 	    }
 
-	};
 
+
+	};
 
 
 
@@ -2890,7 +3045,7 @@ document
 
 
 	    document.getElementById("valorCompra").value =
-	        camion.valorCompra || "";
+	        camion.valorCompra || ""; 
 
 
 
@@ -2915,5 +3070,134 @@ document
 	    }
 
 
+
+	}
+	
+	function mostrarNotificacion(tipo, titulo, mensaje){
+
+
+	    const notificacion =
+	        document.getElementById("notificacion");
+
+
+	    const icono =
+	        document.getElementById("iconoNotificacion");
+
+
+	    const tituloEl =
+	        document.getElementById("tituloNotificacion");
+
+
+	    const mensajeEl =
+	        document.getElementById("mensajeNotificacion");
+
+
+
+	    if(!notificacion){
+
+	        console.error(
+	            "No existe el elemento #notificacion en HTML"
+	        );
+
+	        return;
+
+	    }
+
+
+
+	    notificacion.className =
+	        "notificacion " + tipo;
+
+
+
+	    if(icono){
+
+	        if(tipo === "success"){
+
+	            icono.className =
+	            "fa-solid fa-circle-check";
+
+	        }
+	        else if(tipo === "error"){
+
+	            icono.className =
+	            "fa-solid fa-circle-xmark";
+
+	        }
+	        else{
+
+	            icono.className =
+	            "fa-solid fa-triangle-exclamation";
+
+	        }
+
+	    }
+
+
+
+	    if(tituloEl)
+	        tituloEl.textContent = titulo;
+
+
+
+	    if(mensajeEl)
+	        mensajeEl.textContent = mensaje;
+
+
+
+	    setTimeout(()=>{
+
+	        notificacion.classList.add("show");
+
+	    },100);
+
+
+
+	    setTimeout(()=>{
+
+	        notificacion.classList.remove("show");
+
+	    },3500);
+
+
+
+	}
+	
+	function cargarFiltroMarcas(){
+
+	    const select = document.getElementById("filtroMarca");
+
+	    if(!select) return;
+
+
+	    // limpiar opciones actuales
+	    select.innerHTML = `
+	        <option value="">Todas</option>
+	    `;
+
+
+	    const marcas = [
+	        ...new Set(
+	            listaCamiones
+	            .map(camion => camion.marca)
+	            .filter(marca => marca)
+	        )
+	    ];
+
+
+	    marcas.sort();
+
+
+	    marcas.forEach(marca => {
+
+	        const option = document.createElement("option");
+
+	        option.value = marca;
+
+	        option.textContent = marca;
+
+	        select.appendChild(option);
+
+	    });
 
 	}
