@@ -14,259 +14,208 @@ import com.proyecto.camiones.repository.CamionRepository;
 @Service
 public class CamionService {
 
+	@Autowired
+	private CamionRepository repo;
 
-    @Autowired
-    private CamionRepository repo;
+	@Autowired
+	private CloudinaryService cloudinaryService;
 
+	// ============================
+	// GUARDAR
+	// ============================
 
-    @Autowired
-    private CloudinaryService cloudinaryService;
+	public Camion guardar(MultipartFile foto, String placa, String marca, String modelo, Integer anio, String color,
+			String tipo, Double capacidad, String motor, String chasis, Integer kilometraje, String estado,
+			LocalDate fechaCompra, Double valorCompra, String observaciones) throws IOException {
 
+		Camion c = new Camion();
 
+		c.setPlaca(placa);
+		c.setMarca(marca);
+		c.setModelo(modelo);
 
-    // ============================
-    // GUARDAR
-    // ============================
+		c.setAnio(anio);
+		c.setColor(color);
 
-    public Camion guardar(
-            MultipartFile foto,
-            String placa,
-            String marca,
-            String modelo,
-            Integer anio,
-            String color,
-            String tipo,
-            Double capacidad,
-            String motor,
-            String chasis,
-            Integer kilometraje,
-            String estado,
-            LocalDate fechaCompra,
-            Double valorCompra,
-            String observaciones
-    ) throws IOException {
+		c.setTipo(tipo);
+		c.setEstado(estado);
 
+		c.setCapacidadCarga(capacidad);
 
-        Camion c = new Camion();
+		c.setNumeroMotor(motor);
+		c.setNumeroChasis(chasis);
 
+		c.setKilometrajeActual(kilometraje);
 
-        c.setPlaca(placa);
-        c.setMarca(marca);
-        c.setModelo(modelo);
+		c.setFechaCompra(fechaCompra);
+		c.setValorCompra(valorCompra);
 
-        c.setAnio(anio);
-        c.setColor(color);
+		c.setObservaciones(observaciones);
 
-        c.setTipo(tipo);
-        c.setEstado(estado);
+		if (foto != null && !foto.isEmpty()) {
 
-        c.setCapacidadCarga(capacidad);
+			String url = cloudinaryService.subirImagen(foto);
 
-        c.setNumeroMotor(motor);
-        c.setNumeroChasis(chasis);
+			c.setImgcamion(url);
 
-        c.setKilometrajeActual(kilometraje);
+		}
 
-        c.setFechaCompra(fechaCompra);
-        c.setValorCompra(valorCompra);
+		return repo.save(c);
 
-        c.setObservaciones(observaciones);
+	}
 
+	// ============================
+	// LISTAR
+	// ============================
 
+	public List<Camion> listarTodos() {
 
-        if(foto != null && !foto.isEmpty()){
+		return repo.findAll();
 
-            String url =
-                    cloudinaryService.subirImagen(foto);
+	}
 
-            c.setImgcamion(url);
+	// ============================
+	// ELIMINAR
+	// ============================
 
-        }
+	public void eliminar(Long id) throws IOException {
 
+		Camion camion = repo.findById(id).orElseThrow(() -> new RuntimeException("Camión no encontrado"));
 
-        return repo.save(c);
+		if (camion.getImgcamion() != null && !camion.getImgcamion().isEmpty()) {
 
-    }
+			cloudinaryService.eliminarImagen(camion.getImgcamion());
 
+		}
 
+		repo.delete(camion);
 
+	}
 
-    // ============================
-    // LISTAR
-    // ============================
+	// ============================
+	// EDITAR
+	// ============================
 
-    public List<Camion> listarTodos(){
+	public Camion editar(Long id, MultipartFile foto, String placa, String marca, String modelo, Integer anio,
+			String color, String tipo, Double capacidad, String motor, String chasis, Integer kilometraje,
+			String estado, LocalDate fechaCompra, Double valorCompra, String observaciones) throws IOException {
 
-        return repo.findAll();
+		Camion c = repo.findById(id).orElseThrow(() -> new RuntimeException("Camión no encontrado"));
 
-    }
+		c.setPlaca(placa);
 
+		c.setMarca(marca);
 
+		c.setModelo(modelo);
 
+		c.setAnio(anio);
 
+		c.setColor(color);
 
-    // ============================
-    // ELIMINAR
-    // ============================
+		c.setTipo(tipo);
 
-    public void eliminar(Long id) throws IOException{
+		c.setEstado(estado);
 
+		c.setCapacidadCarga(capacidad);
 
-        Camion camion =
-                repo.findById(id)
-                .orElseThrow(
-                    () -> new RuntimeException(
-                        "Camión no encontrado"
-                    )
-                );
+		c.setNumeroMotor(motor);
 
+		c.setNumeroChasis(chasis);
 
+		c.setKilometrajeActual(kilometraje);
 
-        if(camion.getImgcamion()!=null &&
-           !camion.getImgcamion().isEmpty()){
+		c.setFechaCompra(fechaCompra);
 
+		c.setValorCompra(valorCompra);
 
-            cloudinaryService.eliminarImagen(
-                    camion.getImgcamion()
-            );
+		c.setObservaciones(observaciones);
 
-        }
+		// Si se seleccionó una nueva foto, reemplazar la anterior
+		if (foto != null && !foto.isEmpty()) {
 
+			// Eliminar imagen anterior de Cloudinary
+			if (c.getImgcamion() != null && !c.getImgcamion().isBlank()) {
 
+				cloudinaryService.eliminarImagen(c.getImgcamion());
 
-        repo.delete(camion);
+			}
 
-    }
+			// Subir nueva imagen
+			String url = cloudinaryService.subirImagen(foto);
 
+			c.setImgcamion(url);
 
+		}
 
+		return repo.save(c);
 
+	}
+	// ============================
+	// AGREGAR OBSERVACION
+	// ============================
 
+	public Camion agregarObservacion(Long id, String nueva) {
 
-    // ============================
-    // EDITAR
-    // ============================
 
-    public Camion editar(
-            Long id,
-            Camion datos
-    ){
+	    Camion c =
+	        repo.findById(id)
+	        .orElseThrow(
+	            () -> new RuntimeException("Camión no encontrado")
+	        );
 
 
-        Camion c =
-                repo.findById(id)
-                .orElseThrow(
-                    () -> new RuntimeException(
-                        "Camión no encontrado"
-                    )
-                );
+	    String actual = c.getObservaciones();
 
 
+	    if(actual == null || actual.trim().isEmpty()){
 
-        c.setPlaca(datos.getPlaca());
 
-        c.setMarca(datos.getMarca());
+	        c.setObservaciones(
+	            nueva.trim()
+	        );
 
-        c.setModelo(datos.getModelo());
 
-        c.setAnio(datos.getAnio());
+	    }else{
 
-        c.setColor(datos.getColor());
 
-        c.setTipo(datos.getTipo());
+	        c.setObservaciones(
 
-        c.setEstado(datos.getEstado());
+	            actual.trim()
+	            +
+	            "\n\n\n"
+	            +
+	            nueva.trim()
 
-        c.setCapacidadCarga(
-                datos.getCapacidadCarga()
-        );
+	        );
 
-        c.setNumeroMotor(
-                datos.getNumeroMotor()
-        );
+	    }
 
-        c.setNumeroChasis(
-                datos.getNumeroChasis()
-        );
 
-        c.setKilometrajeActual(
-                datos.getKilometrajeActual()
-        );
+	    return repo.save(c);
 
-        c.setFechaCompra(
-                datos.getFechaCompra()
-        );
+	}
+	// ============================
+	// ACTUALIZAR OBSERVACIONES
+	// ============================
 
-        c.setValorCompra(
-                datos.getValorCompra()
-        );
+	public Camion actualizarObservaciones(
+	        Long id,
+	        String observaciones) {
 
 
-        return repo.save(c);
+	    Camion c =
+	        repo.findById(id)
+	        .orElseThrow(
+	            () -> new RuntimeException(
+	                "Camión no encontrado"
+	            )
+	        );
 
-    }
 
+	    c.setObservaciones(observaciones);
 
 
+	    return repo.save(c);
 
-
-
-    // ============================
-    // AGREGAR OBSERVACION
-    // ============================
-
-    public Camion agregarObservacion(
-            Long id,
-            String nueva
-    ){
-
-
-        Camion c =
-                repo.findById(id)
-                .orElseThrow(
-                    () -> new RuntimeException(
-                        "Camión no encontrado"
-                    )
-                );
-
-
-
-        String actual =
-                c.getObservaciones();
-
-
-
-        if(actual == null){
-
-            actual = "";
-
-        }
-
-
-
-        c.setObservaciones(
-
-                actual
-
-                +
-
-                "\n\n----------------------------------------\n"
-
-                +
-
-                nueva
-
-                +
-
-                "\n----------------------------------------"
-
-        );
-
-
-
-        return repo.save(c);
-
-    }
-
-
+	}
 }

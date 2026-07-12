@@ -124,7 +124,52 @@ const modalVerCamion =
 
 	const guardarObservacion =
 	document.getElementById("guardarObservacion");
+	
+	const btnExportar =
+	    document.getElementById("btnExportar");
 
+
+	const modalExportar =
+	    document.getElementById("modalExportar");
+
+
+	const exportarPDF =
+	    document.getElementById("exportarPDF");
+
+
+	const exportarExcel =
+	    document.getElementById("exportarExcel");
+		
+		
+		// MODAL SELECCIONAR ELIMINACIÓN
+
+		const btnEliminarCamion =
+		    document.getElementById("btnEliminarCamion");
+
+
+		const btnEliminarObservacion =
+		    document.getElementById("btnEliminarObservacion");
+
+
+		const cancelarSeleccionEliminar =
+		    document.getElementById("cancelarSeleccionEliminar");
+
+
+		// MODAL CONFIRMAR ELIMINACIÓN CON CÓDIGO
+
+		const modalConfirmarEliminar =
+		    document.getElementById("modalConfirmarEliminar");
+			
+			const modalEliminarObservacion =
+			    document.getElementById("modalEliminarObservacion");
+
+
+			const listaObservacionesEliminar =
+			    document.getElementById("listaObservacionesEliminar");
+
+
+			const cancelarEliminarObservacion =
+			    document.getElementById("cancelarEliminarObservacion");
 
 // ======================================================
 // ABRIR MODAL NUEVO
@@ -141,7 +186,57 @@ if (btnNuevoCamion) {
 }
 
 
+if(btnExportar){
 
+    btnExportar.addEventListener("click",()=>{
+
+        modalExportar.style.display="flex";
+
+    });
+
+}
+
+
+// ======================================================
+// BOTÓN EXPORTAR EXCEL
+// ======================================================
+
+
+if(exportarExcel){
+
+    exportarExcel.addEventListener("click",()=>{
+
+
+        exportarExcelCamiones();
+
+
+        // cerrar modal después de exportar
+        modalExportar.style.display="none";
+
+
+    });
+
+}
+
+
+// ======================================================
+// BOTÓN EXPORTAR PDF
+// ======================================================
+
+if(exportarPDF){
+
+    exportarPDF.addEventListener("click",()=>{
+
+
+        exportarTablaPDF();
+
+
+        modalExportar.style.display="none";
+
+
+    });
+
+}
 // ======================================================
 // CERRAR MODALES
 // ======================================================
@@ -1324,109 +1419,20 @@ if (buscarCamion) {
 
 	    }
 
-
-
-	    const objeto = {
-
-
-	        placa:
-	        datos.get("placa"),
-
-
-	        marca:
-	        datos.get("marca"),
-
-
-	        modelo:
-	        datos.get("modelo"),
-
-
-	        anio:
-	        Number(datos.get("anio")) || null,
-
-
-	        color:
-	        datos.get("color"),
-
-
-	        tipo:
-	        datos.get("tipo"),
-
-
-	        capacidadCarga:
-	        Number(datos.get("capacidad")) || null,
-
-
-	        kilometrajeActual:
-	        Number(datos.get("kilometraje")) || null,
-
-
-	        numeroMotor:
-	        datos.get("motor"),
-
-
-	        numeroChasis:
-	        datos.get("chasis"),
-
-
-	        estado:
-	        datos.get("estado"),
-
-
-	        fechaCompra:
-	        datos.get("fechaCompra"),
-
-
-	        valorCompra:
-	        Number(datos.get("valorCompra")) || null,
-
-
-	        observaciones:
-	        datos.get("observaciones")
-
-	    };
-
-
-
 	    console.log(
 	        "EDITANDO ID:",
 	        camionEditandoId
 	    );
 
 
-	    console.log(
-	        "DATOS:",
-	        objeto
-	    );
 
-
-
-	    respuesta =
-	    await fetch(
-
-	        "/camiones/editar/"
-	        +
-	        camionEditandoId,
-
-	        {
-
-	            method:"PUT",
-
-	            headers:{
-
-	                "Content-Type":
-	                "application/json"
-
-	            },
-
-
-	            body:
-	            JSON.stringify(objeto)
-
-	        }
-
-	    );
-
+	    respuesta = await fetch(
+		    "/camiones/editar/" + camionEditandoId,
+		    {
+		        method: "PUT",
+		        body: datos
+		    }
+		);
 
 
 	}
@@ -1607,27 +1613,11 @@ function actualizarContador(total) {
 // ABRIR MODAL ELIMINAR
 // ======================================================
 
+
 function abrirModalEliminar(id) {
 
 
     camionSeleccionadoEliminar = id;
-
-
-    codigoEliminar =
-        Math.floor(100000 + Math.random() * 900000);
-
-
-
-    codigoGenerado.textContent =
-        codigoEliminar;
-
-
-
-    codigoConfirmacion.value = "";
-
-
-    btnConfirmarEliminar.disabled = true;
-
 
 
     modalEliminar.style.display = "flex";
@@ -1636,8 +1626,130 @@ function abrirModalEliminar(id) {
 }
 
 
+// ======================================================
+// OPCIÓN ELIMINAR CAMIÓN
+// ======================================================
+
+if(btnEliminarCamion){
+
+    btnEliminarCamion.onclick = function(){
 
 
+        modalEliminar.style.display = "none";
+
+
+        codigoEliminar =
+            Math.floor(100000 + Math.random() * 900000);
+
+
+        codigoGenerado.textContent =
+            codigoEliminar;
+
+
+        codigoConfirmacion.value = "";
+
+
+        btnConfirmarEliminar.disabled = true;
+
+
+        modalConfirmarEliminar.style.display = "flex";
+
+
+    };
+
+}
+
+
+
+// ======================================================
+// OPCIÓN ELIMINAR OBSERVACIÓN
+// ======================================================
+
+if(btnEliminarObservacion){
+
+    btnEliminarObservacion.onclick = function(){
+
+
+        modalEliminar.style.display = "none";
+
+
+        abrirEliminarObservacion();
+
+
+    };
+
+}
+
+
+// ======================================================
+// ABRIR ELIMINAR OBSERVACIÓN
+// ======================================================
+
+function abrirEliminarObservacion(){
+
+
+    const camion =
+        listaCamiones.find(
+            c => c.id == camionSeleccionadoEliminar
+        );
+
+
+
+    if(!camion){
+
+        mostrarNotificacion(
+            "error",
+            "Error",
+            "No se encontró el camión"
+        );
+
+        return;
+
+    }
+
+
+
+    if(!camion.observaciones ||
+       camion.observaciones.trim() === ""){
+
+
+        mostrarNotificacion(
+            "warning",
+            "Sin observaciones",
+            "Este camión no tiene observaciones para eliminar"
+        );
+
+
+        return;
+
+    }
+
+
+
+	mostrarObservacionesEliminar(
+	    camion.observaciones
+	);
+
+
+}
+
+
+
+// ======================================================
+// CANCELAR SELECCIÓN
+// ======================================================
+
+if(cancelarSeleccionEliminar){
+
+    cancelarSeleccionEliminar.onclick = function(){
+
+
+        modalEliminar.style.display = "none";
+
+
+    };
+
+}
 
 
 // ======================================================
@@ -2442,146 +2554,353 @@ document
 
 
 
-        // ===============================
-        // PAGINA OBSERVACIONES
-        // ===============================
+		// ===============================
+		// PAGINA OBSERVACIONES
+		// ===============================
 
 
-        pdf.addPage();
+		pdf.addPage();
 
 
 
-        header(
-            "OBSERVACIONES DEL VEHÍCULO"
-        );
+		header(
+		    "OBSERVACIONES DEL VEHÍCULO"
+		);
 
 
 
-        let observaciones =
-            c.observaciones ||
-            "Sin observaciones";
+		// ===============================
+		// OBSERVACIONES INDIVIDUALES
+		// ===============================
 
 
+		let observaciones =
+		    c.observaciones
+		    ?
+		    c.observaciones.split("\n\n\n")
+		    :
+		    [];
 
 
-        pdf.setFontSize(12);
 
+		let posY = 50;
 
 
-        let lineas =
-            pdf.splitTextToSize(
-                observaciones,
-                160
-            );
 
+		if(observaciones.length === 0){
 
 
-        let posY = 55;
+		    pdf.setFontSize(12);
 
+		    pdf.setTextColor(
+		        80
+		    );
 
 
-        pdf.setFillColor(
-            248,
-            250,
-            252
-        );
+		    pdf.text(
 
+		        "Sin observaciones",
 
+		        30,
 
-        pdf.roundedRect(
+		        posY
 
-            20,
+		    );
 
-            45,
 
-            170,
+		}
+		else{
 
-            180,
 
-            5,
+		    observaciones.forEach((obs,index)=>{
 
-            5,
 
-            "F"
+		        const lineas =
+		            obs.split("\n");
 
-        );
 
 
+		        let altura =
+		            (lineas.length * 6) + 25;
 
-        pdf.setTextColor(
-            51,
-            65,
-            85
-        );
 
 
+		        // Si no hay espacio crea otra página
 
-        pdf.text(
+		        if(posY + altura > 270){
 
-            lineas,
 
-            30,
+		            pdf.addPage();
 
-            posY
 
-        );
+		            header(
+		                "OBSERVACIONES DEL VEHÍCULO"
+		            );
 
 
+		            posY = 50;
 
+		        }
 
-        // DATOS PIE OBSERVACION
 
 
-        pdf.setFontSize(10);
 
+		        // RECUADRO OBSERVACION
 
-        pdf.setTextColor(
-            100
-        );
 
+		        pdf.setFillColor(
+		            248,
+		            250,
+		            252
+		        );
 
-        pdf.text(
 
-            "Vehículo: " + c.placa,
+		        pdf.roundedRect(
 
-            20,
+		            20,
 
-            250
+		            posY,
 
-        );
+		            170,
 
+		            altura,
 
+		            5,
 
-        pdf.text(
+		            5,
 
-            "Fecha emisión: " +
-            new Date().toLocaleDateString(),
+		            "F"
 
-            20,
+		        );
 
-            258
 
-        );
 
+		        // TITULO
 
 
+		        pdf.setFontSize(11);
 
-        footer();
 
+		        pdf.setTextColor(
+		            15,
+		            23,
+		            42
+		        );
 
 
+		        pdf.setFont(undefined,"bold");
 
 
-        pdf.save(
+		        pdf.text(
 
-            "Ficha_" + c.placa + ".pdf"
+		            "Observación " + (index + 1),
 
-        );
+		            30,
 
+		            posY + 10
 
+		        );
 
-    });
-	
+
+
+		        let yTexto =
+		            posY + 20;
+
+
+
+					        // CONTENIDO
+
+
+					        lineas.forEach((linea, i)=>{
+
+
+					            // Si viene "Detalle:" solo, tomar la siguiente línea
+
+					            if(linea.trim() === "Detalle:"){
+
+
+					                pdf.setFont(undefined,"bold");
+
+
+					                pdf.text(
+
+					                    "Detalle:",
+
+					                    35,
+
+					                    yTexto
+
+					                );
+
+
+
+					                pdf.setFont(undefined,"normal");
+
+
+					                if(lineas[i + 1]){
+
+
+					                    pdf.text(
+
+					                        lineas[i + 1].trim(),
+
+					                        75,
+
+					                        yTexto
+
+					                    );
+
+
+					                }
+
+
+
+					                yTexto += 6;
+
+
+					                return;
+
+
+					            }
+
+
+
+
+
+					            let partes =
+					                linea.split(":");
+
+
+
+
+					            if(partes.length > 1){
+
+
+					                const etiqueta =
+					                    partes[0].trim() + ":";
+
+
+					                const valor =
+					                    partes.slice(1)
+					                    .join(":")
+					                    .trim();
+
+
+
+
+					                // ETIQUETA EN NEGRITA
+
+
+					                pdf.setFont(undefined,"bold");
+
+
+					                pdf.text(
+
+					                    etiqueta,
+
+					                    35,
+
+					                    yTexto
+
+					                );
+
+
+
+
+					                // VALOR
+
+
+					                pdf.setFont(undefined,"normal");
+
+
+					                pdf.text(
+
+					                    valor,
+
+					                    75,
+
+					                    yTexto
+
+					                );
+
+
+
+					            }
+
+
+
+					            yTexto += 6;
+
+
+
+					        });
+
+
+
+
+					        posY += altura + 8;
+
+
+
+					    });
+
+
+
+					}
+
+
+		// ===============================
+		// DATOS PIE OBSERVACION
+		// ===============================
+
+
+		pdf.setFontSize(10);
+
+
+		pdf.setTextColor(
+		    100
+		);
+
+
+
+		pdf.text(
+
+		    "Vehículo: " + c.placa,
+
+		    20,
+
+		    250
+
+		);
+
+
+
+		pdf.text(
+
+		    "Fecha emisión: " +
+		    new Date().toLocaleDateString(),
+
+		    20,
+
+		    258
+
+		);
+
+
+
+		footer();
+
+
+
+
+
+		pdf.save(
+
+		    "Ficha_" + c.placa + ".pdf"
+
+		);
+		
+		});
 	
 	// ======================================================
 	// ABRIR MODAL ACCIONES
@@ -2730,20 +3049,13 @@ document
 
 
 
-	    const texto = `
+		const texto = 
+		`Tipo: ${tipo}
+		Fecha: ${fecha.toLocaleDateString()}
+		Hora: ${fecha.toLocaleTimeString()}
 
-	Tipo: ${tipo}
-
-	Fecha: ${fecha.toLocaleDateString()}
-
-	Hora: ${fecha.toLocaleTimeString()}
-
-	Detalle:
-
-	${detalle}
-
-	`;
-
+		Detalle:
+		${detalle}`;
 
 
 
@@ -3199,5 +3511,903 @@ document
 	        select.appendChild(option);
 
 	    });
+
+	}
+	
+	// ======================================================
+	// EXPORTAR CAMIONES A EXCEL PROFESIONAL
+	// ======================================================
+
+	function exportarExcelCamiones(){
+
+
+	    if(!listaCamiones || listaCamiones.length === 0){
+
+	        mostrarNotificacion(
+	            "warning",
+	            "Sin datos",
+	            "No existen camiones para exportar"
+	        );
+
+	        return;
+
+	    }
+
+
+
+	    const fecha = new Date();
+
+
+
+	    const datos = [
+
+	        [
+	            "CONTROL DE FLOTA VEHICULAR"
+	        ],
+
+	        [
+	            "Reporte general de camiones registrados"
+	        ],
+
+	        [
+	            "Fecha de generación:",
+	            fecha.toLocaleDateString()
+	        ],
+
+	        [],
+
+
+	        [
+	            "Imagen",
+	            "Placa",
+	            "Marca",
+	            "Modelo",
+	            "Año",
+	            "Tipo",
+	            "Color",
+	            "Capacidad",
+	            "Kilometraje",
+	            "Estado",
+	            "Número Motor",
+	            "Número Chasis",
+	            "Fecha Compra",
+	            "Valor Compra"
+	        ]
+
+	    ];
+
+
+
+
+
+	    listaCamiones.forEach(c=>{
+
+
+	        datos.push([
+
+	            "Consultar sistema",
+
+	            String(c.placa || ""),
+
+	            String(c.marca || ""),
+
+	            String(c.modelo || ""),
+
+	            String(c.anio || ""),
+
+	            String(c.tipo || ""),
+
+	            String(c.color || ""),
+
+	            String(c.capacidadCarga || ""),
+
+	            Number(c.kilometrajeActual || 0),
+
+	            String(c.estado || ""),
+
+	            String(c.numeroMotor || ""),
+
+	            String(c.numeroChasis || ""),
+
+	            String(c.fechaCompra || ""),
+
+	            Number(c.valorCompra || 0)
+
+	        ]);
+
+
+	    });
+
+
+
+
+
+
+	    const hoja =
+	        XLSX.utils.aoa_to_sheet(datos);
+
+
+
+
+
+
+	    // ==========================================
+	    // COMBINAR TITULOS
+	    // ==========================================
+
+
+	    hoja["!merges"]=[
+
+	        {
+	            s:{r:0,c:0},
+	            e:{r:0,c:13}
+	        },
+
+	        {
+	            s:{r:1,c:0},
+	            e:{r:1,c:13}
+	        }
+
+	    ];
+
+
+
+
+
+
+
+	    // ==========================================
+	    // ANCHO COLUMNAS
+	    // ==========================================
+
+
+	    hoja["!cols"]=[
+
+	        {wch:20},
+	        {wch:14},
+	        {wch:18},
+	        {wch:18},
+	        {wch:10},
+	        {wch:16},
+	        {wch:15},
+	        {wch:16},
+	        {wch:16},
+	        {wch:18},
+	        {wch:20},
+	        {wch:22},
+	        {wch:16},
+	        {wch:18}
+
+	    ];
+
+
+
+
+
+
+
+	    // ==========================================
+	    // ESTILOS
+	    // ==========================================
+
+
+	    const titulo = {
+
+
+	        fill:{
+	            fgColor:{
+	                rgb:"0F172A"
+	            }
+	        },
+
+
+	        font:{
+	            bold:true,
+	            color:{
+	                rgb:"FFFFFF"
+	            },
+	            sz:18
+	        },
+
+
+	        alignment:{
+	            horizontal:"center",
+	            vertical:"center"
+	        }
+
+	    };
+
+
+
+
+
+	    const subtitulo = {
+
+
+	        fill:{
+	            fgColor:{
+	                rgb:"2563EB"
+	            }
+	        },
+
+
+	        font:{
+	            bold:true,
+	            color:{
+	                rgb:"FFFFFF"
+	            }
+	        },
+
+
+	        alignment:{
+	            horizontal:"center"
+	        }
+
+
+	    };
+
+
+
+
+
+	    const encabezado = {
+
+
+	        fill:{
+	            fgColor:{
+	                rgb:"1E40AF"
+	            }
+	        },
+
+
+	        font:{
+	            bold:true,
+	            color:{
+	                rgb:"FFFFFF"
+	            }
+	        },
+
+
+	        alignment:{
+	            horizontal:"center",
+	            vertical:"center",
+	            wrapText:true
+	        }
+
+	    };
+
+
+
+
+
+
+	    const cuerpo = {
+
+
+	        border:{
+
+
+	            top:{
+	                style:"thin",
+	                color:{
+	                    rgb:"D1D5DB"
+	                }
+	            },
+
+
+	            bottom:{
+	                style:"thin",
+	                color:{
+	                    rgb:"D1D5DB"
+	                }
+	            }
+
+
+	        },
+
+
+	        alignment:{
+	            vertical:"center"
+	        }
+
+	    };
+
+
+
+
+
+
+
+
+
+	    // TITULOS
+
+
+	    hoja["A1"].s = titulo;
+
+	    hoja["A2"].s = subtitulo;
+
+
+
+
+
+
+	    // ENCABEZADOS FILA 5
+
+
+	    for(let col=0; col<14; col++){
+
+
+	        const celda =
+	        XLSX.utils.encode_cell({
+
+	            r:4,
+
+	            c:col
+
+	        });
+
+
+	        hoja[celda].s =
+	            encabezado;
+
+
+	    }
+
+
+
+
+
+
+
+	    // CUERPO
+
+
+	    for(let fila=5; fila<datos.length; fila++){
+
+
+	        for(let col=0; col<14; col++){
+
+
+	            const celda =
+	            XLSX.utils.encode_cell({
+
+	                r:fila,
+
+	                c:col
+
+	            });
+
+
+
+	            if(hoja[celda]){
+
+
+	                hoja[celda].s =
+	                    cuerpo;
+
+
+	            }
+
+
+	        }
+
+
+	    }
+
+
+
+
+
+
+
+
+	    // ==========================================
+	    // FORMATOS CORRECTOS
+	    // ==========================================
+
+
+	    for(let fila=5; fila<datos.length; fila++){
+
+
+
+	        // AÑO TEXTO
+	        hoja["E"+(fila+1)].t = "s";
+
+
+
+	        // CAPACIDAD TEXTO
+	        hoja["H"+(fila+1)].t = "s";
+
+
+
+	        // KILOMETRAJE
+	        hoja["I"+(fila+1)].z =
+	        '#,##0 "km"';
+
+
+
+	        // VALOR COMPRA LPS
+	        hoja["N"+(fila+1)].z =
+	        '"LPS " #,##0.00';
+
+
+
+	    }
+
+
+
+
+
+
+
+
+
+	    // ==========================================
+	    // FILTRO
+	    // ==========================================
+
+
+	    hoja["!autofilter"]={
+
+	        ref:
+	        "A5:N"+datos.length
+
+	    };
+
+
+
+
+
+
+
+	    // ==========================================
+	    // CONGELAR ENCABEZADO
+	    // ==========================================
+
+
+	    hoja["!freeze"]={
+
+	        xSplit:0,
+
+	        ySplit:5
+
+	    };
+
+
+
+
+
+
+
+	    const libro =
+	        XLSX.utils.book_new();
+
+
+
+
+	    XLSX.utils.book_append_sheet(
+
+	        libro,
+
+	        hoja,
+
+	        "Camiones"
+
+	    );
+
+
+
+
+
+
+
+	    XLSX.writeFile(
+
+	        libro,
+
+	        "Reporte_Camiones.xlsx"
+
+	    );
+
+
+	}
+	
+	// ======================================================
+	// MOSTRAR OBSERVACIONES PARA ELIMINAR
+	// ======================================================
+
+	function mostrarObservacionesEliminar(texto){
+
+
+	    listaObservacionesEliminar.innerHTML = "";
+
+
+
+		const observaciones =
+		    texto.split("\n\n\n")
+		    .filter(o => o.trim() !== "");
+			
+			console.log("TEXTO RECIBIDO:", texto);
+			console.log("OBSERVACIONES SEPARADAS:", observaciones);
+
+
+
+	    observaciones.forEach((obs,index)=>{
+
+
+	        const div =
+	            document.createElement("div");
+
+
+	        div.className =
+	            "observacion-eliminar-card";
+
+
+
+	        div.innerHTML = `
+
+	            <div class="numero-observacion">
+
+	                Observación ${index + 1}
+
+	            </div>
+
+
+	            <p>
+
+	                ${obs}
+
+	            </p>
+
+
+	            <button
+	                class="btn-eliminar-obs"
+	                data-index="${index}">
+
+	                <i class="fa-solid fa-trash"></i>
+	                Eliminar
+
+	            </button>
+
+	        `;
+
+
+	        listaObservacionesEliminar.appendChild(div);
+
+
+	    });
+
+
+
+	    modalEliminarObservacion.style.display="flex";
+
+
+	}
+	
+	// ======================================================
+	// ELIMINAR OBSERVACIÓN INDIVIDUAL
+	// ======================================================
+
+	document.addEventListener("click", function(e){
+
+
+	    const boton =
+	        e.target.closest(".btn-eliminar-obs");
+
+
+	    if(!boton)
+	        return;
+
+
+
+	    const indice =
+	        boton.dataset.index;
+
+
+
+	    eliminarObservacion(indice);
+
+
+	});
+	
+	async function eliminarObservacion(indice){
+
+
+	    const camion =
+	        listaCamiones.find(
+	            c => c.id == camionSeleccionadoEliminar
+	        );
+
+
+
+	    if(!camion)
+	        return;
+
+
+
+		const observaciones =
+		    camion.observaciones
+		    .split("\n\n\n")
+		    .map(o => o.trim())
+		    .filter(o => o.length > 0);
+
+
+
+
+	    observaciones.splice(indice,1);
+
+
+
+
+		const nuevasObservaciones =
+		    observaciones.length > 0
+		    ?
+		    observaciones.join("\n\n\n")
+		    :
+		    "";
+
+
+
+
+	    try{
+
+
+	        const respuesta =
+	        await fetch(
+	            "/camiones/observaciones/actualizar/"
+	            +
+	            camionSeleccionadoEliminar,
+	            {
+
+	                method:"PUT",
+
+	                headers:{
+	                    "Content-Type":"text/plain"
+	                },
+
+	                body:nuevasObservaciones
+
+	            }
+	        );
+
+
+
+
+	        if(!respuesta.ok){
+
+	            throw new Error(
+	                "Error actualizando observaciones"
+	            );
+
+	        }
+
+
+
+
+	        mostrarNotificacion(
+	            "success",
+	            "Observación eliminada",
+	            "La observación fue eliminada correctamente"
+	        );
+
+
+
+
+	        modalEliminarObservacion.style.display="none";
+
+
+
+	        await cargarCamiones();
+
+
+
+
+	    }
+	    catch(error){
+
+
+	        mostrarNotificacion(
+	            "error",
+	            "Error",
+	            "No se pudo eliminar la observación"
+	        );
+
+
+	    }
+
+
+	}
+	
+	// ======================================================
+	// EXPORTAR TABLA CAMIONES A PDF
+	// ======================================================
+
+
+	async function exportarTablaPDF(){
+
+
+	    const tabla =
+	        document.getElementById("tablaCamionesPDF");
+
+
+
+	    if(!tabla){
+
+
+	        mostrarNotificacion(
+	            "error",
+	            "Error",
+	            "No se encontró la tabla para exportar"
+	        );
+
+
+	        return;
+
+
+	    }
+
+
+
+
+
+	    mostrarNotificacion(
+	        "success",
+	        "Generando PDF",
+	        "Preparando reporte de camiones..."
+	    );
+
+
+
+
+
+	    // ==========================================
+	    // OCULTAR COLUMNA ACCIONES
+	    // ==========================================
+
+
+	    const columnasAcciones =
+	        tabla.querySelectorAll(
+	            "th:last-child, td:last-child"
+	        );
+
+
+
+	    columnasAcciones.forEach(celda=>{
+
+	        celda.style.display = "none";
+
+	    });
+
+
+
+
+
+
+
+	    // ==========================================
+	    // CAPTURAR TABLA SIN ACCIONES
+	    // ==========================================
+
+
+	    const canvas =
+	        await html2canvas(
+	            tabla,
+	            {
+
+	                scale:2,
+
+	                useCORS:true,
+
+	                backgroundColor:"#ffffff"
+
+	            }
+	        );
+
+
+
+
+
+
+	    const imagen =
+	        canvas.toDataURL(
+	            "image/png"
+	        );
+
+
+
+
+
+
+	    // ==========================================
+	    // CREAR PDF
+	    // ==========================================
+
+
+	    const { jsPDF } =
+	        window.jspdf;
+
+
+
+
+
+	    const pdf =
+	        new jsPDF(
+	            "l",
+	            "mm",
+	            "a4"
+	        );
+
+
+
+
+
+
+	    const anchoPDF =
+	        pdf.internal.pageSize.getWidth();
+
+
+
+
+
+	    const altoImagen =
+	        (canvas.height * anchoPDF)
+	        /
+	        canvas.width;
+
+
+
+
+
+
+
+	    pdf.addImage(
+
+	        imagen,
+
+	        "PNG",
+
+	        10,
+
+	        10,
+
+	        anchoPDF - 20,
+
+	        altoImagen
+
+	    );
+
+
+
+
+
+
+
+
+	    // ==========================================
+	    // RESTAURAR COLUMNA ACCIONES
+	    // ==========================================
+
+
+	    columnasAcciones.forEach(celda=>{
+
+	        celda.style.display = "";
+
+	    });
+
+
+
+
+
+
+
+
+	    pdf.save(
+
+	        "Reporte_Flota_Camiones.pdf"
+
+	    );
+
+
 
 	}

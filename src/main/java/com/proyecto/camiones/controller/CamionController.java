@@ -15,153 +15,173 @@ import com.proyecto.camiones.services.CamionService;
 @Controller
 public class CamionController {
 
-    @Autowired
-    private CamionService camionService;
+	@Autowired
+	private CamionService camionService;
 
-    @GetMapping("/camiones")
-    public String camiones() {
-        return "camiones";
-    }
+	@GetMapping("/camiones")
+	public String camiones() {
+		return "camiones";
+	}
 
-    @GetMapping("/gestioncamiones")
-    public String gestionCamiones() {
-        return "gestioncamiones";
-    }
+	@GetMapping("/gestioncamiones")
+	public String gestionCamiones() {
+		return "gestioncamiones";
+	}
 
-    //=====================================================
-    // GUARDAR
-    //=====================================================
+	// =====================================================
+	// GUARDAR
+	// =====================================================
 
-    @PostMapping("/camiones/guardar")
-    @ResponseBody
-    public Camion guardarCamion(
+	@PostMapping("/camiones/guardar")
+	@ResponseBody
+	public Camion guardarCamion(
 
-            @RequestParam(value = "foto", required = false) MultipartFile foto,
+			@RequestParam(value = "foto", required = false) MultipartFile foto,
 
-            @RequestParam(required = false) String placa,
-            @RequestParam(required = false) String marca,
-            @RequestParam(required = false) String modelo,
+			@RequestParam(required = false) String placa, @RequestParam(required = false) String marca,
+			@RequestParam(required = false) String modelo,
 
-            @RequestParam(required = false) String anio,
-            @RequestParam(required = false) String color,
+			@RequestParam(required = false) String anio, @RequestParam(required = false) String color,
 
-            @RequestParam(required = false) String tipo,
+			@RequestParam(required = false) String tipo,
 
-            @RequestParam(required = false) String capacidad,
-            @RequestParam(required = false) String motor,
-            @RequestParam(required = false) String chasis,
-            @RequestParam(required = false) String kilometraje,
+			@RequestParam(required = false) String capacidad, @RequestParam(required = false) String motor,
+			@RequestParam(required = false) String chasis, @RequestParam(required = false) String kilometraje,
 
-            @RequestParam(required = false) String estado,
+			@RequestParam(required = false) String estado,
 
-            @RequestParam(required = false) String fechaCompra,
+			@RequestParam(required = false) String fechaCompra,
 
-            @RequestParam(required = false) String valorCompra,
+			@RequestParam(required = false) String valorCompra,
 
-            @RequestParam(required = false) String observaciones
+			@RequestParam(required = false) String observaciones
 
-    ) throws Exception {
+	) throws Exception {
 
-        Integer anioInt = (anio == null || anio.isEmpty()) ? null : Integer.parseInt(anio);
-        Double capacidadD = (capacidad == null || capacidad.isEmpty()) ? null : Double.parseDouble(capacidad);
-        Integer km = (kilometraje == null || kilometraje.isEmpty()) ? null : Integer.parseInt(kilometraje);
-        Double valor = (valorCompra == null || valorCompra.isEmpty()) ? null : Double.parseDouble(valorCompra);
+		Integer anioInt = (anio == null || anio.isEmpty()) ? null : Integer.parseInt(anio);
+		Double capacidadD = (capacidad == null || capacidad.isEmpty()) ? null : Double.parseDouble(capacidad);
+		Integer km = (kilometraje == null || kilometraje.isEmpty()) ? null : Integer.parseInt(kilometraje);
+		Double valor = (valorCompra == null || valorCompra.isEmpty()) ? null : Double.parseDouble(valorCompra);
 
-        LocalDate fecha = (fechaCompra == null || fechaCompra.isEmpty())
-                ? null
-                : LocalDate.parse(fechaCompra);
+		LocalDate fecha = (fechaCompra == null || fechaCompra.isEmpty()) ? null : LocalDate.parse(fechaCompra);
 
-        return camionService.guardar(
-                foto,
-                placa,
-                marca,
-                modelo,
-                anioInt,
-                color,
-                tipo,
-                capacidadD,
-                motor,
-                chasis,
-                km,
-                estado,
-                fecha,
-                valor,
-                observaciones
-        );
-    }
+		return camionService.guardar(foto, placa, marca, modelo, anioInt, color, tipo, capacidadD, motor, chasis, km,
+				estado, fecha, valor, observaciones);
+	}
 
-    //=====================================================
-    // LISTAR
-    //=====================================================
+	// =====================================================
+	// LISTAR
+	// =====================================================
 
-    @GetMapping("/camiones/lista")
-    @ResponseBody
-    public List<Camion> listar() {
+	@GetMapping("/camiones/lista")
+	@ResponseBody
+	public List<Camion> listar() {
 
-        try {
+		try {
 
-            return camionService.listarTodos();
+			return camionService.listarTodos();
 
-        } catch (Exception e) {
+		} catch (Exception e) {
 
-            e.printStackTrace();
+			e.printStackTrace();
 
-            return new ArrayList<>();
+			return new ArrayList<>();
 
-        }
+		}
 
-    }
+	}
 
-    //=====================================================
-    // ELIMINAR
-    //=====================================================
+	// =====================================================
+	// ELIMINAR
+	// =====================================================
 
-    @DeleteMapping("/camiones/eliminar/{id}")
-    @ResponseBody
-    public String eliminarCamion(@PathVariable Long id) {
+	@DeleteMapping("/camiones/eliminar/{id}")
+	@ResponseBody
+	public String eliminarCamion(@PathVariable Long id) {
 
-        try {
+		try {
 
-            camionService.eliminar(id);
+			camionService.eliminar(id);
 
-            return "Camión eliminado correctamente";
+			return "Camión eliminado correctamente";
 
-        } catch (Exception e) {
+		} catch (Exception e) {
 
-            e.printStackTrace();
+			e.printStackTrace();
 
-            return "Error al eliminar camión";
+			return "Error al eliminar camión";
 
-        }
+		}
 
-    }
+	}
 
-    //=====================================================
-    // EDITAR
-    //=====================================================
+	// =====================================================
+	// EDITAR
+	// =====================================================
 
-    @PutMapping("/camiones/editar/{id}")
-    @ResponseBody
-    public Camion editarCamion(
-            @PathVariable Long id,
-            @RequestBody Camion datos) {
+	@PutMapping("/camiones/editar/{id}")
+	@ResponseBody
+	public Camion editarCamion(
 
-        return camionService.editar(id, datos);
+			@PathVariable Long id,
 
-    }
+			@RequestParam(value = "foto", required = false) MultipartFile foto,
 
-    //=====================================================
-    // AGREGAR OBSERVACION
-    //=====================================================
+			@RequestParam(required = false) String placa, @RequestParam(required = false) String marca,
+			@RequestParam(required = false) String modelo, @RequestParam(required = false) String anio,
+			@RequestParam(required = false) String color, @RequestParam(required = false) String tipo,
+			@RequestParam(required = false) String capacidad, @RequestParam(required = false) String motor,
+			@RequestParam(required = false) String chasis, @RequestParam(required = false) String kilometraje,
+			@RequestParam(required = false) String estado, @RequestParam(required = false) String fechaCompra,
+			@RequestParam(required = false) String valorCompra, @RequestParam(required = false) String observaciones
 
-    @PutMapping("/camiones/observacion/{id}")
-    @ResponseBody
-    public Camion agregarObservacion(
-            @PathVariable Long id,
-            @RequestBody String observacion) {
+	) throws Exception {
 
-        return camionService.agregarObservacion(id, observacion);
+		Integer anioInt = (anio == null || anio.isEmpty()) ? null : Integer.parseInt(anio);
+		Double capacidadD = (capacidad == null || capacidad.isEmpty()) ? null : Double.parseDouble(capacidad);
+		Integer km = (kilometraje == null || kilometraje.isEmpty()) ? null : Integer.parseInt(kilometraje);
+		Double valor = (valorCompra == null || valorCompra.isEmpty()) ? null : Double.parseDouble(valorCompra);
 
-    }
+		LocalDate fecha = (fechaCompra == null || fechaCompra.isEmpty()) ? null : LocalDate.parse(fechaCompra);
 
+		return camionService.editar(id, foto, placa, marca, modelo, anioInt, color, tipo, capacidadD, motor, chasis, km,
+				estado, fecha, valor, observaciones);
+	}
+
+	// =====================================================
+	// AGREGAR OBSERVACION
+	// =====================================================
+
+	@PutMapping("/camiones/observacion/{id}")
+	@ResponseBody
+	public Camion agregarObservacion(@PathVariable Long id, @RequestBody String observacion) {
+
+		return camionService.agregarObservacion(id, observacion);
+
+	}
+	
+	
+	
+	// =====================================================
+	// ACTUALIZAR OBSERVACIONES
+	// =====================================================
+
+	@PutMapping("/camiones/observaciones/actualizar/{id}")
+	@ResponseBody
+	public Camion actualizarObservaciones(
+	        @PathVariable Long id,
+	        @RequestBody(required = false) String observaciones) {
+
+
+	    if(observaciones == null){
+	        observaciones = "";
+	    }
+
+
+	    return camionService.actualizarObservaciones(
+	            id,
+	            observaciones
+	    );
+
+	}
 }
