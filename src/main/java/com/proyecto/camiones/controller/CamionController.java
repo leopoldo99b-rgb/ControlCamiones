@@ -184,4 +184,37 @@ public class CamionController {
 	    );
 
 	}
+	
+	// =====================================================
+	// CAMIONES DISPONIBLES PARA ASIGNACIONES
+	// =====================================================
+
+	@GetMapping("/camiones/disponibles")
+	@ResponseBody
+	public List<Camion> listarDisponibles(){
+
+
+	    try {
+
+
+	        return camionService
+	                .listarTodos()
+	                .stream()
+	                .filter(c -> 
+	                    "DISPONIBLE".equalsIgnoreCase(c.getEstado())
+	                )
+	                .toList();
+
+
+	    } catch(Exception e){
+
+
+	        e.printStackTrace();
+
+	        return new ArrayList<>();
+
+	    }
+
+
+	}
 }

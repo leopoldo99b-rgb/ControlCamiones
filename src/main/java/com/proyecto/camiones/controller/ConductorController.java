@@ -4,6 +4,7 @@ package com.proyecto.camiones.controller;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 
@@ -14,9 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import com.cloudinary.Cloudinary;
+import com.proyecto.camiones.model.AsignacionCamion;
 import com.proyecto.camiones.model.Conductor;
 import com.proyecto.camiones.repository.ConductorRepository;
-
+import com.proyecto.camiones.repository.AsignacionRepository;
 
 
 @Controller
@@ -30,7 +32,7 @@ public class ConductorController {
 
     private final Cloudinary cloudinary;
 
-
+    private final AsignacionRepository asignacionRepository;
 
     private static final int MAX_CONDUCTORES = 30;
 
@@ -41,12 +43,15 @@ public class ConductorController {
 
     public ConductorController(
             ConductorRepository conductorRepository,
-            Cloudinary cloudinary
+            Cloudinary cloudinary,
+            AsignacionRepository asignacionRepository
     ){
 
         this.conductorRepository = conductorRepository;
 
         this.cloudinary = cloudinary;
+
+        this.asignacionRepository = asignacionRepository;
 
     }
 
@@ -100,6 +105,28 @@ public class ConductorController {
                 totalConductores < MAX_CONDUCTORES
         );
 
+        
+        Map<Long, AsignacionCamion> mapaAsignaciones = new java.util.HashMap<>();
+
+
+        List<AsignacionCamion> asignaciones =
+                asignacionRepository.findByEstado("ACTIVA");
+
+
+        for(AsignacionCamion asignacion : asignaciones){
+
+            mapaAsignaciones.put(
+                    asignacion.getConductor().getId(),
+                    asignacion
+            );
+
+        }
+
+
+        model.addAttribute(
+                "mapaAsignaciones",
+                mapaAsignaciones
+        );
 
 
         return "conductores";
@@ -531,4 +558,24 @@ public class ConductorController {
         return "ok";
 
     }
+    
+    
+    /*
+     * ============================
+     * CONDUCTORES ACTIVOS PARA ASIGNACIONES
+     * ============================
+     */
+
+
+ // ==============================================
+ // CONDUCTORES ACTIVOS PARA ASIGNACIONES
+ // ==============================================
+
+ @GetMapping("/activos")
+ @ResponseBody
+ public List<Conductor> listarActivos(){
+
+     return conductorRepository.findByEstado("ACTIVO");
+
+ }
 }

@@ -3,6 +3,9 @@ package com.proyecto.camiones.model;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity
@@ -59,7 +62,10 @@ public class Conductor {
 
 
     private LocalDateTime createdAt;
-
+    
+    @OneToMany(mappedBy = "conductor", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<AsignacionCamion> asignaciones;
 
 
     public Conductor(){
@@ -259,5 +265,13 @@ public class Conductor {
     }
 
 
+    public List<AsignacionCamion> getAsignaciones() {
+        return asignaciones;
+    }
+
+
+    public void setAsignaciones(List<AsignacionCamion> asignaciones) {
+        this.asignaciones = asignaciones;
+    }
 
 }

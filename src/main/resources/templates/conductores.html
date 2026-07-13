@@ -233,7 +233,14 @@
 
 
 
-							<td><span class="sin-camion"> Sin asignar </span></td>
+							<td><span th:if="${mapaAsignaciones[conductor.id] != null}"
+								class="camion-asignado"> <i class="fa-solid fa-truck"></i>
+
+									<span th:text="${mapaAsignaciones[conductor.id].camion.placa}">
+										Placa </span>
+
+							</span> <span th:if="${mapaAsignaciones[conductor.id] == null}"
+								class="sin-camion"> Sin asignar </span></td>
 
 
 

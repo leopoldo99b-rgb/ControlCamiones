@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Asignación de Camiones</title>
+
+
+<link rel="stylesheet" href="/css/asignaciones.css">
+
+
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+
+</head>
+
+
+<body>
+
+
+	<div class="container">
+
+
+
+		<!-- =====================================================
+                    HEADER
+===================================================== -->
+
+
+		<header class="page-header">
+
+
+			<div class="header-title">
+
+
+				<h1>
+
+					<i class="fa-solid fa-link"></i> Asignación de Camiones
+
+				</h1>
+
+
+				<p>Administra la relación entre conductores y vehículos.</p>
+
+
+			</div>
+
+
+
+
+
+			<div class="header-actions">
+
+
+				<a href="/camiones" class="btn-back"> <i
+					class="fa-solid fa-arrow-left"></i> Volver al menú
+
+
+				</a>
+
+
+
+
+
+				<button id="btnNuevaAsignacion" class="btn-primary">
+
+
+					<i class="fa-solid fa-plus"></i> Nueva Asignación
+
+
+				</button>
+
+
+
+			</div>
+
+
+
+		</header>
+
+
+
+
+
+
+
+		<!-- =====================================================
+                    TARJETAS
+===================================================== -->
+
+
+		<section class="cards">
+
+
+
+			<div class="card">
+
+
+				<div class="card-icon green">
+
+					<i class="fa-solid fa-truck"></i>
+
+				</div>
+
+
+				<div>
+
+					<h3 id="totalDisponibles">0</h3>
+
+
+					<p>Camiones Disponibles</p>
+
+
+				</div>
+
+
+			</div>
+
+
+
+
+
+			<div class="card">
+
+
+				<div class="card-icon blue">
+
+					<i class="fa-solid fa-link"></i>
+
+				</div>
+
+
+
+				<div>
+
+					<h3 id="totalAsignados">0</h3>
+
+
+					<p>Asignaciones Activas</p>
+
+
+				</div>
+
+
+			</div>
+
+
+
+
+
+			<div class="card">
+
+
+				<div class="card-icon orange">
+
+					<i class="fa-solid fa-user"></i>
+
+				</div>
+
+
+
+
+				<div>
+
+					<h3 id="totalConductores">0</h3>
+
+
+					<p>Conductores sin Asignar</p>
+
+
+				</div>
+
+
+
+			</div>
+
+
+
+		</section>
+
+
+
+
+
+
+
+
+		<!-- =====================================================
+                    BUSCADOR
+===================================================== -->
+
+
+		<section class="toolbar">
+
+
+			<div class="search-box">
+
+
+				<i class="fa-solid fa-magnifying-glass"></i> <input
+					id="buscarAsignacion" type="text"
+					placeholder="Buscar conductor o camión...">
+
+
+
+			</div>
+
+
+
+		</section>
+
+
+
+
+
+
+
+
+		<!-- =====================================================
+                    TABLA
+===================================================== -->
+
+
+		<section class="table-card">
+
+
+
+			<div class="table-header">
+
+
+				<div>
+
+
+					<h2>
+
+						<i class="fa-solid fa-list"></i> Asignaciones Registradas
+
+					</h2>
+
+
+
+					<p>Consulta historial y asignaciones activas.</p>
+
+
+
+				</div>
+
+
+
+			</div>
+
+
+
+
+
+			<div class="table-responsive">
+
+
+				<table id="tablaAsignaciones">
+
+
+					<thead>
+
+
+						<tr>
+
+
+							<th>Conductor</th>
+
+
+							<th>Camión</th>
+
+
+							<th>Fecha Asignación</th>
+							
+							
+							<th>Fecha Finalización</th>
+
+
+							<th>Estado</th>
+
+
+							<th>Acciones</th>
+
+
+						</tr>
+
+
+					</thead>
+
+
+
+					<tbody id="tbodyAsignaciones">
+
+
+					</tbody>
+
+
+
+				</table>
+
+
+			</div>
+
+
+		</section>
+
+
+
+
+
+	</div>
+
+
+
+
+
+
+
+
+	<!-- =====================================================
+                MODAL NUEVA ASIGNACION
+===================================================== -->
+
+
+	<div id="modalAsignacion" class="modal">
+
+
+		<div class="modal-content">
+
+
+
+			<div class="modal-header">
+
+
+				<h2>
+
+					<i class="fa-solid fa-link"></i> Nueva Asignación
+
+				</h2>
+
+
+
+				<button class="close-modal">
+
+
+					<i class="fa-solid fa-xmark"></i>
+
+
+				</button>
+
+
+
+			</div>
+
+
+
+
+
+
+			<div class="modal-body">
+
+
+				<div class="form-grid">
+
+
+
+					<div class="form-group">
+
+
+						<label> Conductor </label> <select id="selectConductores">
+
+
+							<option value="">Seleccione conductor</option>
+
+
+						</select>
+
+
+					</div>
+
+
+
+
+
+
+					<div class="form-group">
+
+
+						<label> Camión Disponible </label> <select id="selectCamiones">
+
+
+							<option value="">Seleccione camión</option>
+
+
+						</select>
+
+
+					</div>
+
+
+
+
+
+
+					<div class="form-group">
+
+
+						<label> Fecha asignación </label> <input id="fechaAsignacion"
+							type="date">
+
+
+
+					</div>
+
+
+
+
+
+
+					<div class="form-group full">
+
+
+						<label> Observaciones </label>
+
+
+						<textarea id="observacion" rows="4"
+							placeholder="Ingrese observaciones..."></textarea>
+
+
+
+					</div>
+
+
+
+
+				</div>
+
+
+			</div>
+
+
+
+
+
+
+			<div class="modal-footer">
+
+
+				<button class="btn-secondary">Cancelar</button>
+
+
+
+
+				<button id="btnGuardarAsignacion" class="btn-primary">
+
+
+					<i class="fa-solid fa-floppy-disk"></i> Asignar Camión
+
+
+				</button>
+
+
+
+			</div>
+
+
+
+
+		</div>
+
+
+	</div>
+
+
+
+
+
+
+
+
+
+	<!-- =====================================================
+                MODAL DETALLE
+===================================================== -->
+
+
+	<div id="modalDetalle" class="modal">
+
+
+		<div class="modal-content modal-detail">
+
+
+			<div class="modal-header">
+
+
+				<h2>
+
+					<i class="fa-solid fa-circle-info"></i> Información de Asignación
+
+				</h2>
+
+
+
+
+				<button class="close-modal">
+
+
+					<i class="fa-solid fa-xmark"></i>
+
+
+
+
+
+			</div>
+
+
+
+
+
+
+			<div class="modal-body">
+
+
+				<div class="detail-grid">
+
+
+
+					<div>
+
+						<strong> Conductor </strong>
+
+						<p id="detalleConductor"></p>
+
+					</div>
+
+
+
+
+
+					<div>
+
+						<strong> Camión </strong>
+
+						<p id="detalleCamion"></p>
+
+					</div>
+
+
+
+
+
+
+					<div>
+
+						<strong> Fecha </strong>
+
+						<p id="detalleFecha"></p>
+
+					</div>
+
+
+
+
+
+
+					<div>
+
+						<strong> Estado </strong>
+
+						<p id="detalleEstado"></p>
+
+					</div>
+
+
+
+
+
+
+					<div class="full">
+
+						<strong> Observaciones </strong>
+
+
+						<p id="detalleObservacion"></p>
+
+
+					</div>
+
+
+
+				</div>
+
+
+			</div>
+
+
+		</div>
+
+
+	</div>
+
+
+
+
+
+
+
+
+	<script src="/js/asignaciones.js"></script>
+
+
+</body>
+
+</html>
