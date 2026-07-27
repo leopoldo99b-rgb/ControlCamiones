@@ -35,6 +35,10 @@ let listaMantenimientosCompleta = [];
 let modalAuditoria;
 let btnAbrirAuditoria;
 
+let mantenimientoActual = null;
+
+let btnImprimirAuditoria;
+
 // =====================================================
 // REPUESTOS VARIABLES GLOBALES
 // =====================================================
@@ -255,6 +259,11 @@ function inicializarVariables(){
 		        new bootstrap.Modal(modal5);
 
 		}
+		
+		btnImprimirAuditoria =
+		    document.getElementById(
+		        "btnImprimirAuditoria"
+		    );
 
 
 }
@@ -468,7 +477,14 @@ function inicializarEventos(){
 
 	}
 
+	if(btnImprimirAuditoria){
 
+	    btnImprimirAuditoria.addEventListener(
+	        "click",
+	        imprimirAuditoria
+	    );
+
+	}
 
 }
 
@@ -1398,6 +1414,8 @@ async function verMantenimiento(id){
 
         let m =
             await respuesta.json();
+			
+			mantenimientoActual = m.id;
 
         // ==========================================
         // ESTADO
@@ -2564,7 +2582,11 @@ function actualizarDashboard(){
     let total =
         listaMantenimientosCompleta.length;
 
-    let gastoMensual = 0;
+    // ==========================================
+    // GASTO HISTÓRICO
+    // ==========================================
+
+    let gastoHistorico = 0;
 
     let proximos = 0;
 
@@ -2581,39 +2603,17 @@ function actualizarDashboard(){
         0
     );
 
-    let mesActual =
-        hoy.getMonth();
-
-    let anioActual =
-        hoy.getFullYear();
-
     listaMantenimientosCompleta.forEach(
         mantenimiento => {
 
             // ==========================
-            // GASTO DEL MES ACTUAL
+            // SUMAR TODO EL HISTÓRICO
             // ==========================
 
-            if(mantenimiento.fecha){
-
-                let fecha =
-                    new Date(
-                        mantenimiento.fecha + "T00:00:00"
-                    );
-
-                if(
-                    fecha.getMonth() === mesActual &&
-                    fecha.getFullYear() === anioActual
-                ){
-
-                    gastoMensual +=
-                        Number(
-                            mantenimiento.costo
-                        ) || 0;
-
-                }
-
-            }
+            gastoHistorico +=
+                Number(
+                    mantenimiento.costo
+                ) || 0;
 
             // ==========================
             // PRÓXIMOS Y VENCIDOS
@@ -2641,12 +2641,22 @@ function actualizarDashboard(){
         }
     );
 
+    // ==========================================
+    // ACTUALIZAR CARDS
+    // ==========================================
+
     cardTotal.textContent =
         total;
 
     cardCosto.textContent =
         "L. " +
-        gastoMensual.toFixed(2);
+        gastoHistorico.toLocaleString(
+            "es-HN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
 
     cardProximos.textContent =
         proximos;
@@ -2667,5 +2677,80 @@ function abrirAuditoria(){
         modalAuditoria.show();
 
     }
+
+}
+
+
+
+function imprimirMantenimiento(){
+
+    console.log("ID seleccionado:", mantenimientoActual);
+
+    if(!mantenimientoActual){
+
+        alert("No hay mantenimiento seleccionado");
+
+        return;
+
+    }
+
+    window.open(
+        "/mantenimiento/pdf/" + mantenimientoActual,
+        "_blank"
+    );
+
+}
+
+document
+.getElementById("btnImprimirMantenimiento")
+.addEventListener("click",imprimirMantenimiento);
+
+
+function imprimirAuditoria(){
+
+    let parametros =
+        new URLSearchParams();
+
+    parametros.append(
+        "camion",
+        document.getElementById("filtroCamion").value
+    );
+
+    parametros.append(
+        "tipo",
+        document.getElementById("filtroTipo").value
+    );
+
+    parametros.append(
+        "estado",
+        document.getElementById("filtroEstado").value
+    );
+
+    parametros.append(
+        "fechaInicio",
+        document.getElementById("fechaInicio").value
+    );
+
+    parametros.append(
+        "fechaFin",
+        document.getElementById("fechaFin").value
+    );
+
+    let busqueda =
+        document.getElementById("buscarMantenimiento");
+
+    if(busqueda){
+
+        parametros.append(
+            "busqueda",
+            busqueda.value
+        );
+
+    }
+
+    window.open(
+        "/pdf?" + parametros.toString(),
+        "_blank"
+    );
 
 }

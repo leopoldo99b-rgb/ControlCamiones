@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8" />
+
+<title>Detalle del mantenimiento</title>
+
+<style type="text/css">
+@page {
+	size: A4;
+	margin: 18mm 15mm;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	font-family: Arial, Helvetica, sans-serif;
+	background: #f4f7fb;
+	color: #334155;
+	font-size: 12px;
+	margin: 0;
+	padding: 0;
+}
+
+/*=============================================
+ENCABEZADO
+=============================================*/
+.header {
+	width: 100%;
+	background: #2563eb;
+	color: #ffffff;
+	border-radius: 12px;
+	padding: 22px;
+	margin-bottom: 22px;
+}
+
+.header table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.header td {
+	border: none;
+	vertical-align: middle;
+	padding: 0;
+}
+
+.logo {
+	width: 70px;
+}
+
+.logo img {
+	width: 60px;
+}
+
+.empresa {
+	padding-left: 15px;
+}
+
+.empresa h1 {
+	margin: 0;
+	font-size: 23px;
+	font-weight: bold;
+}
+
+.empresa p {
+	margin-top: 5px;
+	margin-bottom: 0;
+	font-size: 12px;
+}
+
+.impresion {
+	text-align: right;
+	font-size: 11px;
+	line-height: 18px;
+}
+
+/*=============================================
+CARDS
+=============================================*/
+.card {
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+	margin-bottom: 22px;
+	overflow: hidden;
+	page-break-inside: avoid;
+}
+
+.card-title {
+	background: #f8fafc;
+	color: #2563eb;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 14px 18px;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.card-body {
+	padding: 18px;
+}
+
+/*=============================================
+INFO
+=============================================*/
+.info {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 12px;
+}
+
+.info td {
+	width: 50%;
+	border: none;
+	padding: 0;
+}
+
+.item {
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	background: #ffffff;
+	padding: 14px;
+}
+
+.label {
+	display: block;
+	font-size: 10px;
+	color: #64748b;
+	font-weight: bold;
+	margin-bottom: 6px;
+}
+
+.value {
+	display: block;
+	font-size: 14px;
+	font-weight: bold;
+	color: #0f172a;
+}
+
+.value-green {
+	color: #16a34a;
+	font-size: 16px;
+}
+
+/*=============================================
+TEXTOS
+=============================================*/
+.text-box {
+	background: #f8fafc;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	padding: 18px;
+	white-space: pre-wrap;
+	line-height: 1.8;
+	min-height: 90px;
+}
+
+/*=============================================
+TABLA
+=============================================*/
+.table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.table thead th {
+	background: #2563eb;
+	color: #ffffff;
+	padding: 12px;
+	text-align: left;
+	font-size: 11px;
+}
+
+.table tbody td {
+	padding: 12px;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.table tbody tr:nth-child(even) {
+	background: #f8fafc;
+}
+
+.center {
+	text-align: center;
+}
+
+.right {
+	text-align: right;
+}
+
+.money {
+	color: #15803d;
+	font-weight: bold;
+}
+
+thead {
+	display: table-header-group;
+}
+
+tfoot {
+	display: table-footer-group;
+}
+
+tr {
+	page-break-inside: avoid;
+}
+</style>
+
+</head>
+
+<body>
+
+	<div class="header">
+
+		<table>
+
+			<tr>
+
+				<td style="width: 70px;">
+
+					<div class="logo">
+
+						<!-- Si tienes logo usa esta línea -->
+
+						<!-- <img th:src="@{/img/logo.png}" alt="Logo" /> -->
+
+					</div>
+
+				</td>
+
+				<td>
+
+					<div class="empresa">
+
+						<h1>SISTEMA DE GESTIÓN DE CAMIONES</h1>
+
+						<p>Detalle del mantenimiento</p>
+
+					</div>
+
+				</td>
+
+				<td>
+
+					<div class="impresion">
+
+						<strong>Fecha impresión</strong> <br /> <span
+							th:text="${fechaImpresion}"></span>
+
+					</div>
+
+				</td>
+
+			</tr>
+
+		</table>
+
+	</div>
+
+	<div class="card">
+
+		<div class="card-title">Información general</div>
+
+		<div class="card-body">
+
+			<table class="info">
+
+				<tr>
+
+					<td>
+
+						<div class="item">
+
+							<span class="label">Camión</span> <span class="value"
+								th:text="${mantenimiento.placa}"> </span>
+
+						</div>
+
+					</td>
+
+					<td>
+
+						<div class="item">
+
+							<span class="label">Fecha</span> <span class="value"
+								th:text="${fechaMantenimiento}"> </span>
+
+						</div>
+
+					</td>
+
+				</tr>
+
+				<tr>
+
+					<td>
+
+						<div class="item">
+
+							<span class="label">Estado</span> <span class="value"
+								th:text="${mantenimiento.estado}"> </span>
+
+						</div>
+
+					</td>
+
+					<td>
+
+						<div class="item">
+
+							<span class="label">Tipo</span> <span class="value"
+								th:text="${mantenimiento.tipo}"> </span>
+
+						</div>
+
+					</td>
+
+				</tr>
+				<tr>
+
+					<td>
+
+						<div class="item">
+
+							<span class="label">Taller</span> <span class="value"
+								th:text="${mantenimiento.taller}"> </span>
+
+						</div>
+
+					</td>
+
+					<td>
+
+						<div class="item">
+
+							<span class="label">Kilometraje</span> <span class="value"
+								th:text="${mantenimiento.kilometraje} + ' km'"> </span>
+
+						</div>
+
+					</td>
+
+				</tr>
+
+				<tr>
+
+					<td>
+
+						<div class="item">
+
+							<span class="label">Costo</span> <span class="value value-green"
+								th:text="${costoFormateado}"> </span>
+
+						</div>
+
+					</td>
+
+					<td>
+
+						<div class="item">
+
+							<span class="label">Próximo mantenimiento</span> <span
+								class="value" th:text="${mantenimiento.proximoMantenimiento}">
+							</span>
+
+						</div>
+
+					</td>
+
+				</tr>
+
+				<tr>
+
+					<td colspan="2">
+
+						<div class="item">
+
+							<span class="label">Próxima fecha</span> <span class="value"
+								th:text="${proximaFecha}"> </span>
+
+						</div>
+
+					</td>
+
+				</tr>
+
+			</table>
+
+		</div>
+
+	</div>
+
+	<!-- ==========================================
+DESCRIPCIÓN
+========================================== -->
+
+	<div class="card">
+
+		<div class="card-title">Descripción</div>
+
+		<div class="card-body">
+
+			<div class="text-box" th:text="${mantenimiento.descripcion}"></div>
+
+		</div>
+
+	</div>
+
+	<!-- ==========================================
+OBSERVACIONES
+========================================== -->
+
+	<div class="card">
+
+		<div class="card-title">Observaciones</div>
+
+		<div class="card-body">
+
+			<div class="text-box" th:text="${mantenimiento.observaciones}">
+			</div>
+
+		</div>
+
+	</div>
+
+	<!-- ==========================================
+REPUESTOS
+========================================== -->
+
+	<div class="card">
+
+		<div class="card-title">Repuestos utilizados</div>
+
+		<div class="card-body">
+
+			<table class="table">
+
+				<thead>
+
+					<tr>
+
+						<th style="width: 50%;">Repuesto</th>
+
+						<th class="center" style="width: 15%;">Cantidad</th>
+
+						<th class="right" style="width: 17%;">Precio</th>
+
+						<th class="right" style="width: 18%;">Subtotal</th>
+
+					</tr>
+
+				</thead>
+
+				<tbody>
+
+					<tr th:each="r : ${mantenimiento.repuestos}">
+
+						<td th:text="${r.nombre}"></td>
+
+						<td class="center" th:text="${r.cantidad}"></td>
+
+						<td class="right money"
+							th:text="${#numbers.formatDecimal(r.precio,1,'COMMA',2,'POINT')}">
+						</td>
+
+						<td class="right money"
+							th:text="${#numbers.formatDecimal(r.subtotal,1,'COMMA',2,'POINT')}">
+						</td>
+
+					</tr>
+
+				</tbody>
+
+				<tfoot>
+
+					<tr>
+
+						<td colspan="3" class="right"
+							style="font-weight: bold; padding-top: 15px;">TOTAL</td>
+
+						<td class="right money"
+							style="font-size: 15px; font-weight: bold;"
+							th:text="${totalRepuestos}"></td>
+
+					</tr>
+
+				</tfoot>
+
+			</table>
+
+		</div>
+
+	</div>
+	<!-- ==========================================
+FIRMAS
+========================================== -->
+
+	<br />
+	<br />
+	<br />
+
+	<table style="width: 100%;">
+
+		<tr>
+
+			<td style="width: 50%; text-align: center; border: none;">
+
+				_______________________________ <br /> <br /> Responsable
+
+			</td>
+
+			<td style="width: 50%; text-align: center; border: none;">
+
+				_______________________________ <br /> <br /> Recibido por
+
+			</td>
+
+		</tr>
+
+	</table>
+
+	<!-- ==========================================
+PIE DE PÁGINA
+========================================== -->
+
+	<div
+		style="margin-top: 45px; text-align: center; font-size: 10px; color: #64748b;">
+
+		Documento generado automáticamente por el Sistema de Gestión de
+		Camiones. <br /> No requiere firma electrónica.
+
+	</div>
+
+</body>
+
+</html>

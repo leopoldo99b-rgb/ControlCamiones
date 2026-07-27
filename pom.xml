@@ -78,7 +78,21 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
+    <!-- HTML -> PDF -->
+    <dependency>
+        <groupId>com.openhtmltopdf</groupId>
+        <artifactId>openhtmltopdf-pdfbox</artifactId>
+        <version>1.0.10</version>
+    </dependency>
+
+    <!-- Soporte para imágenes SVG (opcional pero recomendable) -->
+    <dependency>
+        <groupId>com.openhtmltopdf</groupId>
+        <artifactId>openhtmltopdf-svg-support</artifactId>
+        <version>1.0.10</version>
+    </dependency>
+
+</dependencies>
 
 	<build>
 		<plugins>
