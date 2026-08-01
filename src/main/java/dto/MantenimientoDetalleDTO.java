@@ -8,6 +8,8 @@ public class MantenimientoDetalleDTO {
 
 
     private Long id;
+    
+    private Long camionId;
 
     private String placa;
 
@@ -42,6 +44,7 @@ public class MantenimientoDetalleDTO {
 
     public MantenimientoDetalleDTO(
             Long id,
+            Long camionId,
             String placa,
             LocalDate fecha,
             String tipo,
@@ -57,6 +60,7 @@ public class MantenimientoDetalleDTO {
     ){
 
         this.id=id;
+        this.camionId = camionId;
         this.placa=placa;
         this.fecha=fecha;
         this.tipo=tipo;
@@ -78,6 +82,11 @@ public class MantenimientoDetalleDTO {
         return id;
     }
 
+    public Long getCamionId(){
+
+        return camionId;
+
+    }
 
     public String getPlaca(){
         return placa;

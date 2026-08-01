@@ -192,11 +192,6 @@
 
 					</button>
 
-					<button id="btnExportarExcel" class="btn-toolbar">
-
-						<i class="fa-solid fa-file-excel"></i> Excel
-
-					</button>
 
 					<button id="btnActualizar" class="btn-toolbar">
 
@@ -391,6 +386,53 @@
 				</div>
 
 
+			</div>
+
+
+			<!-- ===================================================== -->
+			<!-- MODAL SELECCIONAR TIPO DE EDICIÓN -->
+			<!-- ===================================================== -->
+			<div class="modal fade" id="modalSeleccionEdicion" tabindex="-1">
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content border-0 shadow-lg">
+
+						<div class="modal-header bg-warning text-dark">
+							<h5 class="modal-title">
+								<i class="fa-solid fa-pen-to-square me-2"></i> ¿Qué deseas
+								modificar?
+							</h5>
+
+							<button type="button" class="btn-close" data-bs-dismiss="modal">
+							</button>
+						</div>
+
+						<div class="modal-body">
+
+							<p class="text-muted text-center mb-4">Selecciona la acción
+								que deseas realizar sobre este mantenimiento.</p>
+
+							<div class="d-grid gap-3">
+
+								<button class="btn btn-outline-primary btn-lg"
+									id="btnEditarCompleto">
+
+									<i class="fa-solid fa-screwdriver-wrench me-2"></i> Editar
+									mantenimiento completo
+								</button>
+
+								<button class="btn btn-outline-warning btn-lg"
+									id="btnEditarEstado">
+
+									<i class="fa-solid fa-repeat me-2"></i> Modificar únicamente el
+									estado
+								</button>
+
+							</div>
+
+						</div>
+
+					</div>
+				</div>
 			</div>
 
 
@@ -944,9 +986,9 @@
 
 										<div>
 
-											<label> Costo total </label> <input type="number" step="0.01"
+											<label>Costo total</label> <input type="number" step="0.01"
 												id="costo" name="costo" class="form-control"
-												placeholder="0.00">
+												placeholder="0.00" readonly>
 
 										</div>
 
@@ -1598,6 +1640,108 @@ MODAL ELIMINAR MANTENIMIENTO
 
 
 			</button>
+
+
+			<!-- =========================================================
+                    MODAL GRÁFICOS
+========================================================== -->
+
+			<div class="modal fade" id="modalGraficos" tabindex="-1"
+				aria-hidden="true">
+
+				<div class="modal-dialog modal-dialog-centered">
+
+					<div class="modal-content">
+
+						<div class="modal-header">
+
+							<h5 class="modal-title">
+
+								<i class="fa-solid fa-chart-pie"></i> Generar reporte gráfico
+
+							</h5>
+
+							<button type="button" class="btn-close" data-bs-dismiss="modal">
+							</button>
+
+						</div>
+
+						<div class="modal-body">
+
+							<p class="mb-3">Seleccione el gráfico que desea generar.</p>
+
+							<div class="list-group">
+
+								<label class="list-group-item"> <input
+									class="form-check-input me-2" type="radio" name="tipoGrafico"
+									value="dashboard" checked> Dashboard Ejecutivo
+
+								</label> <label class="list-group-item"> <input
+									class="form-check-input me-2" type="radio" name="tipoGrafico"
+									value="costosMes"> Costos por mes (Barras)
+
+								</label> <label class="list-group-item"> <input
+									class="form-check-input me-2" type="radio" name="tipoGrafico"
+									value="tipos"> Mantenimientos por tipo (Barras)
+
+								</label> <label class="list-group-item"> <input
+									class="form-check-input me-2" type="radio" name="tipoGrafico"
+									value="estados"> Estados de mantenimiento (Circular)
+
+								</label> <label class="list-group-item"> <input
+									class="form-check-input me-2" type="radio" name="tipoGrafico"
+									value="camiones"> Costos por camión (Barras)
+
+								</label> <label class="list-group-item"> <input
+									class="form-check-input me-2" type="radio" name="tipoGrafico"
+									value="proximos"> Próximos vs Vencidos (Circular)
+
+								</label>
+
+							</div>
+
+						</div>
+						<hr>
+
+						<div class="row">
+
+							<div class="col-md-6">
+
+								<label> Fecha inicio </label> <input type="date"
+									id="fechaGraficoInicio" class="form-control">
+
+							</div>
+
+
+							<div class="col-md-6">
+
+								<label> Fecha fin </label> <input type="date"
+									id="fechaGraficoFin" class="form-control">
+
+							</div>
+
+
+						</div>
+
+						<div class="modal-footer">
+
+							<button class="btn btn-secondary" data-bs-dismiss="modal">
+
+								Cancelar</button>
+
+							<button class="btn btn-primary" id="btnGenerarGrafico">
+
+								<i class="fa-solid fa-file-pdf"></i> Generar PDF
+
+							</button>
+
+						</div>
+
+					</div>
+
+				</div>
+
+			</div>
 
 			<!-- =========================================================
                     SCRIPTS

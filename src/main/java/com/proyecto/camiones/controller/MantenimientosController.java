@@ -210,6 +210,8 @@ public class MantenimientosController {
         return new MantenimientoDetalleDTO(
 
             m.getId(),
+            
+            m.getCamion().getId(),
 
             m.getCamion().getPlaca(),
 
@@ -302,6 +304,7 @@ public ResponseEntity<byte[]> generarPdf(
           new MantenimientoDetalleDTO(
 
                   m.getId(),
+                  m.getCamion().getId(),
                   m.getCamion().getPlaca(),
                   m.getFecha(),
                   m.getTipo(),
@@ -675,4 +678,6 @@ public ResponseEntity<byte[]> generarAuditoriaPdf(
     }
 
 }
+
+
 }

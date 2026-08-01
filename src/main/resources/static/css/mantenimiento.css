@@ -3655,3 +3655,306 @@ body{
     }
 
 }
+
+/* =====================================================
+   MODAL SELECCIÓN DE EDICIÓN
+===================================================== */
+
+#modalSeleccionEdicion .modal-dialog{
+    max-width: 520px;
+}
+
+#modalSeleccionEdicion .modal-content{
+    border: none;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0,0,0,.18);
+}
+
+/* Header */
+
+#modalSeleccionEdicion .modal-header{
+    background: linear-gradient(135deg,#ffc107,#ffb300);
+    color: #222;
+    border-bottom: none;
+    padding: 18px 24px;
+}
+
+#modalSeleccionEdicion .modal-title{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+#modalSeleccionEdicion .btn-close{
+    filter: brightness(.2);
+}
+
+/* Body */
+
+#modalSeleccionEdicion .modal-body{
+    padding: 30px;
+    background: #fff;
+}
+
+#modalSeleccionEdicion .modal-body p{
+    font-size: .95rem;
+    color: #6c757d;
+    margin-bottom: 25px;
+}
+
+/* Botones */
+
+#modalSeleccionEdicion .btn{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-align: left;
+    padding: 18px 22px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: .25s;
+}
+
+#modalSeleccionEdicion .btn i{
+    font-size: 1.4rem;
+    width: 30px;
+    text-align: center;
+}
+
+/* Editar completo */
+
+#btnEditarCompleto{
+    background: #ffffff;
+    border: 2px solid #0d6efd;
+    color: #0d6efd;
+}
+
+#btnEditarCompleto:hover{
+    background: #0d6efd;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(13,110,253,.25);
+}
+
+/* Editar estado */
+
+#btnEditarEstado{
+    background: #ffffff;
+    border: 2px solid #ffc107;
+    color: #b78103;
+}
+
+#btnEditarEstado:hover{
+    background: #ffc107;
+    color: #212529;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255,193,7,.30);
+}
+/*==========================================================
+                MODAL GRÁFICOS
+==========================================================*/
+
+#modalGraficos .modal-dialog{
+
+    max-width:650px;
+
+}
+
+#modalGraficos .modal-content{
+
+    border:none;
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+    box-shadow:0 15px 40px rgba(0,0,0,.15);
+
+}
+
+#modalGraficos .modal-header{
+
+    background:linear-gradient(135deg,#0d6efd,#0a58ca);
+
+    color:#fff;
+
+    border:none;
+
+    padding:18px 24px;
+
+}
+
+#modalGraficos .modal-title{
+
+    font-weight:700;
+
+    font-size:1.2rem;
+
+}
+
+#modalGraficos .btn-close{
+
+    filter:invert(1);
+
+}
+
+#modalGraficos .modal-body{
+
+    background:#f8fafc;
+
+    padding:24px;
+
+}
+
+#modalGraficos .modal-body p{
+
+    color:#6c757d;
+
+    margin-bottom:20px;
+
+}
+
+/*==========================================================
+                OPCIONES
+==========================================================*/
+
+#modalGraficos .list-group{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:15px;
+
+}
+
+#modalGraficos .list-group-item{
+
+    border:1px solid #dee2e6;
+
+    border-radius:14px;
+
+    padding:18px;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    background:#fff;
+
+    display:flex;
+
+    align-items:center;
+
+    min-height:80px;
+
+}
+
+#modalGraficos .list-group-item:hover{
+
+    border-color:#0d6efd;
+
+    background:#eef5ff;
+
+    transform:translateY(-3px);
+
+}
+
+#modalGraficos .form-check-input{
+
+    margin-right:12px;
+
+    cursor:pointer;
+
+}
+
+/*==========================================================
+                FOOTER
+==========================================================*/
+
+#modalGraficos .modal-footer{
+
+    border:none;
+
+    padding:18px 24px;
+
+}
+
+#modalGraficos .btn{
+
+    border-radius:10px;
+
+    padding:10px 22px;
+
+    font-weight:600;
+
+}
+
+/*==========================================================
+                TABLET
+==========================================================*/
+
+@media (max-width:768px){
+
+    #modalGraficos .modal-dialog{
+
+        margin:1rem;
+
+    }
+
+    #modalGraficos .list-group{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+
+/*==========================================================
+                CELULARES
+==========================================================*/
+
+@media (max-width:576px){
+
+    #modalGraficos .modal-header{
+
+        padding:15px;
+
+    }
+
+    #modalGraficos .modal-body{
+
+        padding:18px;
+
+    }
+
+    #modalGraficos .modal-footer{
+
+        display:flex;
+
+        flex-direction:column;
+
+        gap:10px;
+
+    }
+
+    #modalGraficos .modal-footer .btn{
+
+        width:100%;
+
+    }
+
+    #modalGraficos .list-group-item{
+
+        min-height:70px;
+
+        font-size:.95rem;
+
+    }
+
+}

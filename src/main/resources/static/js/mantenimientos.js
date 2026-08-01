@@ -36,6 +36,17 @@ let modalAuditoria;
 let btnAbrirAuditoria;
 
 let mantenimientoActual = null;
+let mantenimientoSeleccionado = null;
+let buscarMantenimiento;
+let listaMantenimientosOriginal = [];
+
+let btnActualizar;
+
+let modalGraficos;
+
+let btnAbrirGraficos;
+
+let btnGenerarGrafico;
 
 let btnImprimirAuditoria;
 
@@ -90,7 +101,10 @@ function inicializarVariables(){
             "btnPrimerRegistro"
         );
 
-
+		btnActualizar =
+		    document.getElementById(
+		        "btnActualizar"
+		    );
 
     formMantenimiento =
         document.getElementById(
@@ -104,6 +118,10 @@ function inicializarVariables(){
             "idMantenimiento"
         );
 
+		buscarMantenimiento =
+		    document.getElementById(
+		        "buscarMantenimiento"
+		    );
 
 
     tituloModalMantenimiento =
@@ -265,6 +283,28 @@ function inicializarVariables(){
 		        "btnImprimirAuditoria"
 		    );
 
+			btnAbrirGraficos =
+			    document.getElementById(
+			        "btnAbrirgraficos"
+			    );
+
+			btnGenerarGrafico =
+			    document.getElementById(
+			        "btnGenerarGrafico"
+			    );
+
+			let modal6 =
+			    document.getElementById(
+			        "modalGraficos"
+			    );
+
+			if(modal6){
+
+			    modalGraficos =
+			        new bootstrap.Modal(modal6);
+
+			}
+
 
 }
 
@@ -287,7 +327,14 @@ function inicializarEventos(){
 
     }
 
+	if(buscarMantenimiento){
 
+	    buscarMantenimiento.addEventListener(
+	        "input",
+	        filtrarBusqueda
+	    );
+
+	}
 
     if(btnPrimerRegistro){
 
@@ -299,7 +346,23 @@ function inicializarEventos(){
     }
 
 
+	if(btnAbrirGraficos){
 
+	    btnAbrirGraficos.addEventListener(
+	        "click",
+	        abrirModalGraficos
+	    );
+
+	}
+
+	if(btnGenerarGrafico){
+
+	    btnGenerarGrafico.addEventListener(
+	        "click",
+	        generarGraficoPDF
+	    );
+
+	}
 
     let btnAgregarRepuesto =
         document.getElementById(
@@ -355,7 +418,14 @@ function inicializarEventos(){
     }
 
 
+	if(btnActualizar){
 
+	    btnActualizar.addEventListener(
+	        "click",
+	        actualizarTabla
+	    );
+
+	}
 
 
     let codigoUsuario =
@@ -485,6 +555,23 @@ function inicializarEventos(){
 	    );
 
 	}
+	
+	document.getElementById("btnEditarEstado").addEventListener("click", () => {
+
+	    modalSeleccionEdicion.hide();
+
+	    editarEstado(mantenimientoSeleccionado);
+
+	});
+	
+	
+	document.getElementById("btnEditarCompleto").addEventListener("click", () => {
+
+	    modalSeleccionEdicion.hide();
+
+	    editarMantenimiento(mantenimientoSeleccionado);
+
+	});
 
 }
 
@@ -844,32 +931,21 @@ function agregarRepuesto(){
 
 function calcularRepuestos(){
 
-
-
     if(!tbodyRepuestos){
 
         return;
 
     }
 
-
-
     let filas =
         tbodyRepuestos.querySelectorAll(
             "tr"
         );
 
-
-
     let total = 0;
-
-
-
 
     filas.forEach(
         fila => {
-
-
 
             let cantidad =
                 Number(
@@ -878,8 +954,6 @@ function calcularRepuestos(){
                     ).value
                 ) || 0;
 
-
-
             let precio =
                 Number(
                     fila.querySelector(
@@ -887,13 +961,8 @@ function calcularRepuestos(){
                     ).value
                 ) || 0;
 
-
-
-
             let subtotal =
                 cantidad * precio;
-
-
 
             fila.querySelector(
                 ".subtotal"
@@ -901,18 +970,14 @@ function calcularRepuestos(){
                 "L " +
                 subtotal.toFixed(2);
 
-
-
-
             total += subtotal;
-
-
 
         }
     );
 
-
-
+    // ==========================================
+    // TOTAL DE REPUESTOS
+    // ==========================================
 
     if(totalRepuestos){
 
@@ -922,8 +987,9 @@ function calcularRepuestos(){
 
     }
 
-
-
+    // ==========================================
+    // TOTAL DEL MANTENIMIENTO
+    // ==========================================
 
     if(totalMantenimiento){
 
@@ -933,10 +999,23 @@ function calcularRepuestos(){
 
     }
 
+    // ==========================================
+    // ACTUALIZAR EL CAMPO COSTO AUTOMÁTICAMENTE
+    // ==========================================
 
+    let campoCosto =
+        document.getElementById(
+            "costo"
+        );
+
+    if(campoCosto){
+
+        campoCosto.value =
+            total.toFixed(2);
+
+    }
 
 }
-
 
 
 // =====================================================
@@ -1151,6 +1230,8 @@ async function cargarMantenimientos(
         // Guardar todos los registros obtenidos
         listaMantenimientosCompleta =
             mantenimientos;
+			
+			listaMantenimientosOriginal = [...mantenimientos];
 
         // Volver siempre a la primera página
         paginaActualTabla = 1;
@@ -1187,13 +1268,16 @@ async function cargarMantenimientos(
 
 async function guardarMantenimiento(e){
 
-
     e.preventDefault();
-
-
 
     let datos = {
 
+        // IMPORTANTE:
+        // Si está vacío crea uno nuevo.
+        // Si tiene valor actualiza ese mantenimiento.
+        id: idMantenimiento.value
+            ? Number(idMantenimiento.value)
+            : null,
 
         camion:{
             id:Number(
@@ -1201,28 +1285,20 @@ async function guardarMantenimiento(e){
             )
         },
 
-
-
         fecha:
             document.getElementById(
                 "fecha"
             ).value,
-
-
 
         tipo:
             selectTipo.options[
                 selectTipo.selectedIndex
             ]?.text || "",
 
-
-
         estado:
             document.getElementById(
                 "estado"
             ).value,
-
-
 
         kilometraje:
             Number(
@@ -1231,8 +1307,6 @@ async function guardarMantenimiento(e){
                 ).value
             ),
 
-
-
         costo:
             Number(
                 document.getElementById(
@@ -1240,14 +1314,10 @@ async function guardarMantenimiento(e){
                 ).value
             ),
 
-
-
         taller:
             document.getElementById(
                 "taller"
             ).value,
-
-
 
         proximoMantenimiento:
             Number(
@@ -1256,81 +1326,53 @@ async function guardarMantenimiento(e){
                 ).value
             ),
 
-
-
         proximaFecha:
             document.getElementById(
                 "proximaFecha"
             ).value,
-
-
 
         descripcion:
             document.getElementById(
                 "descripcion"
             ).value,
 
-
-
         observaciones:
             document.getElementById(
                 "observaciones"
             ).value,
 
-
-
         repuestos:
             obtenerRepuestos()
 
-
     };
 
-
-
-
-
     try{
-
 
         let respuesta =
             await fetch(
                 "/mantenimiento/guardar",
                 {
 
-
                     method:"POST",
 
-
                     headers:{
-
 
                         "Content-Type":
                             "application/json"
 
-
                     },
-
 
                     body:
                         JSON.stringify(datos)
 
-
                 }
             );
 
-
-
-
-
         if(respuesta.ok){
-
-
 
             alert(
                 "Mantenimiento guardado correctamente"
             );
-
-
 
             if(modalMantenimiento){
 
@@ -1338,66 +1380,39 @@ async function guardarMantenimiento(e){
 
             }
 
-
-
             formMantenimiento.reset();
-
-
 
             if(tbodyRepuestos){
 
-                tbodyRepuestos.innerHTML="";
+                tbodyRepuestos.innerHTML = "";
 
             }
 
-
-
             cargarMantenimientos();
 
-
-
         }else{
-
-
 
             let error =
                 await respuesta.text();
 
-
-
-            console.error(
-                error
-            );
-
-
+            console.error(error);
 
             alert(
                 "Error guardando mantenimiento"
             );
 
-
         }
 
-
-
-
-
     }catch(error){
-
 
         console.error(
             "Error guardando:",
             error
         );
 
-
     }
 
-
-
 }
-
-
 
 // =====================================================
 // VER DETALLE MANTENIMIENTO
@@ -2440,7 +2455,7 @@ function mostrarPaginaMantenimientos(){
 				        <button
 				            class="btn btn-warning"
 				            title="Editar estado"
-				            onclick="editarEstado(${m.id})">
+				            onclick="mostrarSeleccionEdicion(${m.id})">
 
 				            <i class="fa-solid fa-pen"></i>
 
@@ -2752,5 +2767,240 @@ function imprimirAuditoria(){
         "/pdf?" + parametros.toString(),
         "_blank"
     );
+
+}
+
+
+
+const modalSeleccionEdicion = new bootstrap.Modal(
+    document.getElementById("modalSeleccionEdicion")
+);
+
+function mostrarSeleccionEdicion(id){
+
+    mantenimientoSeleccionado = id;
+
+    modalSeleccionEdicion.show();
+
+}
+
+
+async function editarMantenimiento(id){
+
+    try{
+
+        const respuesta =
+            await fetch("/mantenimiento/ver/" + id);
+
+        const m = await respuesta.json();
+
+        // guardar el id
+        idMantenimiento.value = m.id;
+
+        tituloModalMantenimiento.innerHTML = `
+            <i class="fa-solid fa-pen"></i>
+            Editar mantenimiento
+        `;
+
+        await cargarCamiones();
+        await cargarTiposMantenimiento();
+
+        // llenar formulario
+
+        selectCamion.value = m.camionId;
+
+        document.getElementById("fecha").value = m.fecha;
+
+        document.getElementById("estado").value = m.estado;
+
+        document.getElementById("kilometraje").value = m.kilometraje;
+
+        document.getElementById("costo").value = m.costo;
+
+        document.getElementById("taller").value = m.taller;
+
+        document.getElementById("proximoMantenimiento").value =
+            m.proximoMantenimiento;
+
+        document.getElementById("proximaFecha").value =
+            m.proximaFecha;
+
+        document.getElementById("descripcion").value =
+            m.descripcion;
+
+        document.getElementById("observaciones").value =
+            m.observaciones;
+
+        // seleccionar tipo
+
+        for(let option of selectTipo.options){
+
+            if(option.text === m.tipo){
+
+                selectTipo.value = option.value;
+
+                break;
+
+            }
+
+        }
+
+        // limpiar repuestos
+
+        tbodyRepuestos.innerHTML = "";
+
+        // cargar repuestos
+
+        if(m.repuestos){
+
+            m.repuestos.forEach(r=>{
+
+                agregarRepuesto();
+
+                let fila =
+                    tbodyRepuestos.lastElementChild;
+
+                fila.querySelector(".repuestoNombre").value =
+                    r.nombre;
+
+                fila.querySelector(".repuestoCantidad").value =
+                    r.cantidad;
+
+                fila.querySelector(".repuestoPrecio").value =
+                    r.precio;
+
+            });
+
+        }
+
+        calcularRepuestos();
+
+        modalMantenimiento.show();
+
+    }
+    catch(error){
+
+        console.error(error);
+
+    }
+
+}
+
+function filtrarBusqueda(){
+
+    let texto =
+        buscarMantenimiento.value
+        .toLowerCase()
+        .trim();
+
+    if(texto === ""){
+
+        listaMantenimientosCompleta =
+            [...listaMantenimientosOriginal];
+
+    }else{
+
+        listaMantenimientosCompleta =
+            listaMantenimientosOriginal.filter(m =>
+
+                (m.placa ?? "")
+                    .toLowerCase()
+                    .includes(texto)
+
+                ||
+
+                (m.taller ?? "")
+                    .toLowerCase()
+                    .includes(texto)
+
+                ||
+
+                (m.tipo ?? "")
+                    .toLowerCase()
+                    .includes(texto)
+
+                ||
+
+                (m.descripcion ?? "")
+                    .toLowerCase()
+                    .includes(texto)
+
+            );
+
+    }
+
+    paginaActualTabla = 1;
+
+    mostrarPaginaMantenimientos();
+
+    actualizarDashboard();
+
+}
+
+async function actualizarTabla(){
+
+    aplicarFiltros();
+
+}
+
+// =====================================================
+// ABRIR MODAL GRÁFICOS
+// =====================================================
+
+function abrirModalGraficos(){
+
+    if(modalGraficos){
+
+        modalGraficos.show();
+
+    }
+
+}
+
+
+// =====================================================
+// GENERAR PDF DEL GRÁFICO
+// =====================================================
+
+function generarGraficoPDF(){
+
+    let tipo =
+        document.querySelector(
+            'input[name="tipoGrafico"]:checked'
+        ).value;
+
+
+    let inicio =
+        document.getElementById(
+            "fechaGraficoInicio"
+        ).value;
+
+
+    let fin =
+        document.getElementById(
+            "fechaGraficoFin"
+        ).value;
+
+
+
+    modalGraficos.hide();
+
+
+
+    window.open(
+
+        "/mantenimiento/graficos/pdf?tipo="
+        + tipo
+        +
+        "&inicio="
+        + inicio
+        +
+        "&fin="
+        + fin,
+
+        "_blank"
+
+    );
+
 
 }
