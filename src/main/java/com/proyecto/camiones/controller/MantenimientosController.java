@@ -9,8 +9,13 @@ import com.proyecto.camiones.model.Mantenimiento;
 import com.proyecto.camiones.repository.MantenimientoRepository;
 import com.proyecto.camiones.repository.MantenimientoSpecification;
 import com.proyecto.camiones.services.MantenimientoService;
+
+import dto.DashboardGraficoDTO;
+import dto.GraficoDTO;
 import dto.MantenimientoDTO;
 import dto.MantenimientoDetalleDTO;
+import dto.ReporteGraficoDTO;
+import dto.ReporteGraficoRequestDTO;
 import dto.RepuestoDetalleDTO;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
@@ -19,6 +24,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -679,5 +687,849 @@ public ResponseEntity<byte[]> generarAuditoriaPdf(
 
 }
 
+//==========================================
+//DATOS PARA GRÁFICOS
+//==========================================
+
+@GetMapping("/mantenimiento/graficos/datos")
+@ResponseBody
+public List<GraficoDTO> datosGrafico(
+
+      @RequestParam(defaultValue = "tipos") String dataset,
+
+      @RequestParam(required = false) String inicio,
+
+      @RequestParam(required = false) String fin
+
+) {
+
+  LocalDate fechaInicio = null;
+  LocalDate fechaFin = null;
+
+  if (inicio != null && !inicio.isBlank()) {
+      fechaInicio = LocalDate.parse(inicio);
+  }
+
+  if (fin != null && !fin.isBlank()) {
+      fechaFin = LocalDate.parse(fin);
+  }
+
+  List<Mantenimiento> mantenimientos =
+          mantenimientoRepository.findAll(
+
+                  MantenimientoSpecification.filtrar(
+
+                          null,
+                          null,
+                          null,
+                          fechaInicio,
+                          fechaFin
+
+                  )
+
+          );
+
+  switch (dataset) {
+
+      //==========================================
+      // MANTENIMIENTOS POR TIPO
+      //==========================================
+
+      case "tipos":
+
+          return mantenimientos.stream()
+
+                  .collect(Collectors.groupingBy(
+
+                          Mantenimiento::getTipo,
+
+                          Collectors.counting()
+
+                  ))
+
+                  .entrySet()
+
+                  .stream()
+
+                  .sorted(Map.Entry.comparingByKey())
+
+                  .map(e -> new GraficoDTO(
+
+                          e.getKey(),
+
+                          e.getValue()
+
+                  ))
+
+                  .toList();
+
+      //==========================================
+      // ESTADOS
+      //==========================================
+
+      case "estados":
+
+          return mantenimientos.stream()
+
+                  .collect(Collectors.groupingBy(
+
+                          Mantenimiento::getEstado,
+
+                          Collectors.counting()
+
+                  ))
+
+                  .entrySet()
+
+                  .stream()
+
+                  .sorted(Map.Entry.comparingByKey())
+
+                  .map(e -> new GraficoDTO(
+
+                          e.getKey(),
+
+                          e.getValue()
+
+                  ))
+
+                  .toList();
+
+      //==========================================
+      // COSTO POR CAMIÓN
+      //==========================================
+
+      case "camiones":
+
+          return mantenimientos.stream()
+
+                  .filter(m -> m.getCamion() != null)
+
+                  .collect(Collectors.groupingBy(
+
+                          m -> m.getCamion().getPlaca(),
+
+                          Collectors.reducing(
+
+                                  BigDecimal.ZERO,
+
+                                  m -> m.getCosto() == null
+                                          ? BigDecimal.ZERO
+                                          : m.getCosto(),
+
+                                  BigDecimal::add
+
+                          )
+
+                  ))
+
+                  .entrySet()
+
+                  .stream()
+
+                  .sorted(
+                          Map.Entry.<String, BigDecimal>comparingByValue()
+                                  .reversed()
+                  )
+
+                  .map(e -> new GraficoDTO(
+
+                          e.getKey(),
+
+                          e.getValue()
+
+                  ))
+
+                  .toList();
+
+      //==========================================
+      // COSTOS POR MES
+      //==========================================
+
+      case "costosMes":
+
+          return mantenimientos.stream()
+
+                  .filter(m -> m.getFecha() != null)
+
+                  .collect(Collectors.groupingBy(
+
+                          m -> m.getFecha().getMonthValue(),
+
+                          Collectors.reducing(
+
+                                  BigDecimal.ZERO,
+
+                                  m -> m.getCosto() == null
+                                          ? BigDecimal.ZERO
+                                          : m.getCosto(),
+
+                                  BigDecimal::add
+
+                          )
+
+                  ))
+
+                  .entrySet()
+
+                  .stream()
+
+                  .sorted(Map.Entry.comparingByKey())
+
+                  .map(e -> new GraficoDTO(
+
+                          String.valueOf(e.getKey()),
+
+                          e.getValue()
+
+                  ))
+
+                  .toList();
+
+      //==========================================
+      // PRÓXIMOS VS VENCIDOS
+      //==========================================
+
+      case "proximos":
+
+          return mantenimientos.stream()
+
+                  .filter(m -> m.getProximaFecha() != null)
+
+                  .collect(Collectors.groupingBy(
+
+                          m ->
+
+                                  m.getProximaFecha().isBefore(LocalDate.now())
+
+                                          ? "Vencidos"
+
+                                          : "Próximos",
+
+                          Collectors.counting()
+
+                  ))
+
+                  .entrySet()
+
+                  .stream()
+
+                  .sorted(Map.Entry.comparingByKey())
+
+                  .map(e -> new GraficoDTO(
+
+                          e.getKey(),
+
+                          e.getValue()
+
+                  ))
+
+                  .toList();
+
+      default:
+
+          return List.of();
+
+  }
 
 }
+
+//==========================================
+//DASHBOARD PARA TARJETAS
+//==========================================
+
+@GetMapping("/mantenimiento/graficos/dashboard")
+@ResponseBody
+public DashboardGraficoDTO dashboard(
+
+      @RequestParam(required = false) String inicio,
+
+      @RequestParam(required = false) String fin
+
+) {
+
+  LocalDate fechaInicio = null;
+  LocalDate fechaFin = null;
+
+  if (inicio != null && !inicio.isBlank()) {
+
+      fechaInicio = LocalDate.parse(inicio);
+
+  }
+
+  if (fin != null && !fin.isBlank()) {
+
+      fechaFin = LocalDate.parse(fin);
+
+  }
+
+  List<Mantenimiento> mantenimientos =
+          mantenimientoRepository.findAll(
+
+                  MantenimientoSpecification.filtrar(
+
+                          null,
+                          null,
+                          null,
+                          fechaInicio,
+                          fechaFin
+
+                  )
+
+          );
+
+  BigDecimal costoTotal =
+
+          mantenimientos.stream()
+
+                  .map(m -> m.getCosto() == null
+                          ? BigDecimal.ZERO
+                          : m.getCosto())
+
+                  .reduce(
+
+                          BigDecimal.ZERO,
+
+                          BigDecimal::add
+
+                  );
+
+  long proximos =
+
+          mantenimientos.stream()
+
+                  .filter(m ->
+
+                          m.getProximaFecha() != null
+
+                                  &&
+
+                                  !m.getProximaFecha().isBefore(LocalDate.now())
+
+                  )
+
+                  .count();
+
+  long vencidos =
+
+          mantenimientos.stream()
+
+                  .filter(m ->
+
+                          m.getProximaFecha() != null
+
+                                  &&
+
+                                  m.getProximaFecha().isBefore(LocalDate.now())
+
+                  )
+
+                  .count();
+
+  return new DashboardGraficoDTO(
+
+          (long) mantenimientos.size(),
+
+          costoTotal,
+
+          proximos,
+
+          vencidos
+
+  );
+
+}
+
+//==========================================
+//REPORTE PARA PDF DE GRÁFICOS
+//==========================================
+
+@GetMapping("/mantenimiento/graficos/reporte")
+@ResponseBody
+public ReporteGraficoDTO reporteGrafico(
+
+     @RequestParam String dataset,
+
+     @RequestParam(required = false) String inicio,
+
+     @RequestParam(required = false) String fin
+
+) {
+
+ //------------------------------------------
+ // CONVERTIR FECHAS
+ //------------------------------------------
+
+ LocalDate fechaInicio = null;
+ LocalDate fechaFin = null;
+
+ if (inicio != null && !inicio.isBlank()) {
+     fechaInicio = LocalDate.parse(inicio);
+ }
+
+ if (fin != null && !fin.isBlank()) {
+     fechaFin = LocalDate.parse(fin);
+ }
+
+ //------------------------------------------
+ // OBTENER MANTENIMIENTOS FILTRADOS
+ //------------------------------------------
+
+ List<Mantenimiento> mantenimientos =
+         mantenimientoRepository.findAll(
+
+                 MantenimientoSpecification.filtrar(
+
+                         null,
+                         null,
+                         null,
+                         fechaInicio,
+                         fechaFin
+
+                 )
+
+         );
+
+ //------------------------------------------
+ // DASHBOARD
+ //------------------------------------------
+
+ BigDecimal costoTotal =
+
+         mantenimientos.stream()
+
+                 .map(Mantenimiento::getCosto)
+
+                 .filter(Objects::nonNull)
+
+                 .reduce(
+
+                         BigDecimal.ZERO,
+
+                         BigDecimal::add
+
+                 );
+
+ long proximos =
+
+         mantenimientos.stream()
+
+                 .filter(m ->
+
+                         m.getProximaFecha() != null
+                                 &&
+                                 !m.getProximaFecha().isBefore(LocalDate.now())
+
+                 )
+
+                 .count();
+
+ long vencidos =
+
+         mantenimientos.stream()
+
+                 .filter(m ->
+
+                         m.getProximaFecha() != null
+                                 &&
+                                 m.getProximaFecha().isBefore(LocalDate.now())
+
+                 )
+
+                 .count();
+
+ DashboardGraficoDTO dashboard =
+
+         new DashboardGraficoDTO(
+
+                 (long) mantenimientos.size(),
+
+                 costoTotal,
+
+                 proximos,
+
+                 vencidos
+
+         );
+
+ //------------------------------------------
+ // DATOS DEL GRÁFICO
+ //------------------------------------------
+
+ List<GraficoDTO> datos;
+
+ switch (dataset) {
+
+     case "tipos":
+
+         datos = mantenimientos.stream()
+
+                 .collect(Collectors.groupingBy(
+
+                         Mantenimiento::getTipo,
+
+                         Collectors.counting()
+
+                 ))
+
+                 .entrySet()
+
+                 .stream()
+
+                 .map(e -> new GraficoDTO(
+
+                         e.getKey(),
+
+                         e.getValue()
+
+                 ))
+
+                 .toList();
+
+         break;
+
+     case "estados":
+
+         datos = mantenimientos.stream()
+
+                 .collect(Collectors.groupingBy(
+
+                         Mantenimiento::getEstado,
+
+                         Collectors.counting()
+
+                 ))
+
+                 .entrySet()
+
+                 .stream()
+
+                 .map(e -> new GraficoDTO(
+
+                         e.getKey(),
+
+                         e.getValue()
+
+                 ))
+
+                 .toList();
+
+         break;
+
+     case "camiones":
+
+         datos = mantenimientos.stream()
+
+                 .collect(Collectors.groupingBy(
+
+                         m -> m.getCamion().getPlaca(),
+
+                         Collectors.reducing(
+
+                                 BigDecimal.ZERO,
+
+                                 Mantenimiento::getCosto,
+
+                                 BigDecimal::add
+
+                         )
+
+                 ))
+
+                 .entrySet()
+
+                 .stream()
+
+                 .map(e -> new GraficoDTO(
+
+                         e.getKey(),
+
+                         e.getValue()
+
+                 ))
+
+                 .toList();
+
+         break;
+
+     case "costosMes":
+
+         datos = mantenimientos.stream()
+
+                 .collect(Collectors.groupingBy(
+
+                         m -> m.getFecha().getMonthValue(),
+
+                         Collectors.reducing(
+
+                                 BigDecimal.ZERO,
+
+                                 Mantenimiento::getCosto,
+
+                                 BigDecimal::add
+
+                         )
+
+                 ))
+
+                 .entrySet()
+
+                 .stream()
+
+                 .sorted(Map.Entry.comparingByKey())
+
+                 .map(e -> new GraficoDTO(
+
+                         String.valueOf(e.getKey()),
+
+                         e.getValue()
+
+                 ))
+
+                 .toList();
+
+         break;
+
+     case "proximos":
+
+         datos = mantenimientos.stream()
+
+                 .filter(m -> m.getProximaFecha() != null)
+
+                 .collect(Collectors.groupingBy(
+
+                         m ->
+
+                                 m.getProximaFecha().isBefore(LocalDate.now())
+
+                                         ? "Vencidos"
+
+                                         : "Próximos",
+
+                         Collectors.counting()
+
+                 ))
+
+                 .entrySet()
+
+                 .stream()
+
+                 .map(e -> new GraficoDTO(
+
+                         e.getKey(),
+
+                         e.getValue()
+
+                 ))
+
+                 .toList();
+
+         break;
+
+     default:
+
+         datos = List.of();
+
+ }
+
+ //------------------------------------------
+ // TÍTULO DEL REPORTE
+ //------------------------------------------
+
+ String titulo = switch (dataset) {
+
+     case "tipos" -> "Mantenimientos por tipo";
+
+     case "costosMes" -> "Costos por mes";
+
+     case "estados" -> "Estados del mantenimiento";
+
+     case "camiones" -> "Costos por camión";
+
+     case "proximos" -> "Próximos vs Vencidos";
+
+     default -> "Reporte de Mantenimientos";
+
+ };
+
+ //------------------------------------------
+ // DTO FINAL
+ //------------------------------------------
+
+ ReporteGraficoDTO reporte = new ReporteGraficoDTO();
+
+ reporte.setTitulo(titulo);
+ reporte.setDataset(dataset);
+ reporte.setInicio(inicio);
+ reporte.setFin(fin);
+ reporte.setDashboard(dashboard);
+ reporte.setDatos(datos);
+
+ return reporte;
+
+}
+
+//==========================================
+//PDF REPORTE GRÁFICO
+//==========================================
+
+@PostMapping(
+     value = "/mantenimiento/graficos/pdf",
+     consumes = MediaType.APPLICATION_JSON_VALUE,
+     produces = MediaType.APPLICATION_PDF_VALUE
+)
+public ResponseEntity<byte[]> generarReporteGrafico(
+
+     @RequestBody ReporteGraficoRequestDTO request
+
+) {
+
+ try {
+
+     //------------------------------------------
+     // OBTENER DATOS DEL REPORTE
+     //------------------------------------------
+
+     ReporteGraficoDTO reporte =
+
+             reporteGrafico(
+
+                     request.getDataset(),
+
+                     request.getInicio(),
+
+                     request.getFin()
+
+             );
+
+     //------------------------------------------
+     // CONTEXTO THYMELEAF
+     //------------------------------------------
+
+     Context context = new Context();
+
+     context.setVariable(
+
+             "reporte",
+
+             reporte
+
+     );
+
+     context.setVariable(
+
+             "fechaImpresion",
+
+             LocalDateTime.now().format(
+
+                     DateTimeFormatter.ofPattern(
+
+                             "dd/MM/yyyy HH:mm"
+
+                     )
+
+             )
+
+     );
+
+     //------------------------------------------
+     // IMAGEN DEL GRÁFICO
+     //------------------------------------------
+
+     context.setVariable(
+
+             "imagenGrafico",
+
+             request.getImagenGrafico() == null
+                     ? ""
+                     : request.getImagenGrafico()
+
+     );
+
+     //------------------------------------------
+     // GENERAR HTML
+     //------------------------------------------
+
+     String html =
+
+             templateEngine.process(
+
+                     "pdf/reporte-grafico",
+
+                     context
+
+             );
+
+     //------------------------------------------
+     // CONVERTIR HTML A PDF
+     //------------------------------------------
+
+     ByteArrayOutputStream output =
+
+             new ByteArrayOutputStream();
+
+     PdfRendererBuilder builder =
+
+             new PdfRendererBuilder();
+
+     builder.useFastMode();
+
+     builder.withHtmlContent(
+
+             html,
+
+             null
+
+     );
+
+     builder.toStream(
+
+             output
+
+     );
+
+     builder.run();
+
+     //------------------------------------------
+     // DEVOLVER PDF
+     //------------------------------------------
+
+     return ResponseEntity.ok()
+
+             .header(
+
+                     HttpHeaders.CONTENT_DISPOSITION,
+
+                     "inline; filename=ReporteGrafico.pdf"
+
+             )
+
+             .contentType(
+
+                     MediaType.APPLICATION_PDF
+
+             )
+
+             .body(
+
+                     output.toByteArray()
+
+             );
+
+ }
+
+ catch (Exception e) {
+
+     e.printStackTrace();
+
+     throw new RuntimeException(
+
+             "Error generando el reporte gráfico.",
+
+             e
+
+     );
+
+ }
+
+}}

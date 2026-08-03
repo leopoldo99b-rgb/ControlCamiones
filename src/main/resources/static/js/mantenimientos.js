@@ -46,7 +46,7 @@ let modalGraficos;
 
 let btnAbrirGraficos;
 
-let btnGenerarGrafico;
+let graficoMantenimientos = null;
 
 let btnImprimirAuditoria;
 
@@ -572,6 +572,18 @@ function inicializarEventos(){
 	    editarMantenimiento(mantenimientoSeleccionado);
 
 	});
+	
+	document
+	    .getElementById("btnActualizarGrafico")
+	    .addEventListener("click", cargarGrafico);
+
+	document
+	    .getElementById("datasetGrafico")
+	    .addEventListener("change", cargarGrafico);
+
+	document
+	    .getElementById("tipoGrafico")
+	    .addEventListener("change", cargarGrafico);
 
 }
 
@@ -2949,6 +2961,8 @@ async function actualizarTabla(){
 
 function abrirModalGraficos(){
 
+    cargarGrafico();
+
     if(modalGraficos){
 
         modalGraficos.show();
@@ -2956,7 +2970,6 @@ function abrirModalGraficos(){
     }
 
 }
-
 
 // =====================================================
 // GENERAR PDF DEL GRÁFICO
@@ -3004,3 +3017,378 @@ function generarGraficoPDF(){
 
 
 }
+
+async function cargarGrafico() {
+
+    try {
+
+        const dataset =
+            document.getElementById("datasetGrafico").value;
+
+        const tipoGrafico =
+            document.getElementById("tipoGrafico").value;
+
+        const inicio =
+            document.getElementById("fechaGraficoInicio").value;
+
+        const fin =
+            document.getElementById("fechaGraficoFin").value;
+
+        //--------------------------------------------------
+        // URL DEL GRÁFICO
+        //--------------------------------------------------
+
+        let url =
+            "/mantenimiento/graficos/datos?dataset=" + encodeURIComponent(dataset);
+
+        if (inicio) {
+
+            url += "&inicio=" + encodeURIComponent(inicio);
+
+        }
+
+        if (fin) {
+
+            url += "&fin=" + encodeURIComponent(fin);
+
+        }
+
+        //--------------------------------------------------
+        // URL DEL DASHBOARD
+        //--------------------------------------------------
+
+        let urlDashboard =
+            "/mantenimiento/graficos/dashboard";
+
+        const parametros = [];
+
+        if (inicio) {
+
+            parametros.push(
+                "inicio=" + encodeURIComponent(inicio)
+            );
+
+        }
+
+        if (fin) {
+
+            parametros.push(
+                "fin=" + encodeURIComponent(fin)
+            );
+
+        }
+
+        if (parametros.length > 0) {
+
+            urlDashboard += "?" + parametros.join("&");
+
+        }
+
+        //--------------------------------------------------
+        // CARGAR AMBOS ENDPOINTS
+        //--------------------------------------------------
+
+        const [respuestaGrafico, respuestaDashboard] =
+            await Promise.all([
+
+                fetch(url),
+
+                fetch(urlDashboard)
+
+            ]);
+
+        if (!respuestaGrafico.ok) {
+
+            throw new Error("No se pudieron cargar los datos del gráfico.");
+
+        }
+
+        if (!respuestaDashboard.ok) {
+
+            throw new Error("No se pudieron cargar las tarjetas.");
+
+        }
+
+        const datos =
+            await respuestaGrafico.json();
+
+        const dashboard =
+            await respuestaDashboard.json();
+
+        //--------------------------------------------------
+        // ACTUALIZAR TARJETAS
+        //--------------------------------------------------
+
+        document.getElementById("cardGraficoTotal").textContent =
+            dashboard.totalMantenimientos;
+
+        document.getElementById("cardGraficoCosto").textContent =
+            Number(dashboard.costoTotal).toLocaleString(
+
+                "es-HN",
+
+                {
+
+                    style: "currency",
+
+                    currency: "HNL"
+
+                }
+
+            );
+
+        document.getElementById("cardGraficoProximos").textContent =
+            dashboard.proximos;
+
+        document.getElementById("cardGraficoVencidos").textContent =
+            dashboard.vencidos;
+
+        //--------------------------------------------------
+        // ETIQUETAS Y VALORES
+        //--------------------------------------------------
+
+        const meses = [
+
+            "",
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre"
+
+        ];
+
+        const etiquetas =
+
+            dataset === "costosMes"
+
+                ? datos.map(d => meses[Number(d.etiqueta)])
+
+                : datos.map(d => d.etiqueta);
+
+        const valores =
+            datos.map(d => Number(d.valor));
+
+        //--------------------------------------------------
+        // DESTRUIR GRÁFICO ANTERIOR
+        //--------------------------------------------------
+
+        if (graficoMantenimientos) {
+
+            graficoMantenimientos.destroy();
+
+        }
+
+        //--------------------------------------------------
+        // CREAR GRÁFICO
+        //--------------------------------------------------
+
+        const ctx =
+            document
+                .getElementById("graficoMantenimientos")
+                .getContext("2d");
+
+        const nombres = {
+
+            tipos: "Mantenimientos por tipo",
+
+            estados: "Estados del mantenimiento",
+
+            camiones: "Costos por camión",
+
+            costosMes: "Costos por mes",
+
+            proximos: "Próximos vs Vencidos"
+
+        };
+
+        graficoMantenimientos = new Chart(ctx, {
+
+            type: tipoGrafico,
+
+            data: {
+
+                labels: etiquetas,
+
+                datasets: [{
+
+                    label: nombres[dataset] ?? dataset,
+
+                    data: valores,
+
+                    borderWidth: 2,
+
+                    fill: tipoGrafico === "line"
+
+                }]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                animation: {
+
+                    duration: 700
+
+                },
+
+                plugins: {
+
+                    legend: {
+
+                        display: true,
+
+                        position: "top"
+
+                    }
+
+                },
+
+                scales:
+
+                    (
+
+                        tipoGrafico === "pie" ||
+
+                        tipoGrafico === "doughnut" ||
+
+                        tipoGrafico === "radar" ||
+
+                        tipoGrafico === "polarArea"
+
+                    )
+
+                    ? {}
+
+                    : {
+
+                        y: {
+
+                            beginAtZero: true
+
+                        }
+
+                    }
+
+            }
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        alert("No se pudieron cargar los gráficos.");
+
+    }
+
+}
+
+
+document
+    .getElementById("btnGenerarGrafico")
+    .addEventListener("click", exportarGraficoPDF);
+
+async function exportarGraficoPDF() {
+
+    try {
+
+        const dataset =
+            document.getElementById("datasetGrafico").value;
+
+        const tipoGrafico =
+            document.getElementById("tipoGrafico").value;
+
+        const inicio =
+            document.getElementById("fechaGraficoInicio").value;
+
+        const fin =
+            document.getElementById("fechaGraficoFin").value;
+
+        //------------------------------------------
+        // IMAGEN DEL GRÁFICO
+        //------------------------------------------
+
+        const imagenGrafico =
+            graficoMantenimientos.toBase64Image();
+
+        //------------------------------------------
+        // BODY
+        //------------------------------------------
+
+        const body = {
+
+            dataset,
+            tipoGrafico,
+            inicio,
+            fin,
+            imagenGrafico
+
+        };
+
+        //------------------------------------------
+        // GENERAR PDF
+        //------------------------------------------
+
+        const response = await fetch(
+
+            "/mantenimiento/graficos/pdf",
+
+            {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type": "application/json"
+
+                },
+
+                body: JSON.stringify(body)
+
+            }
+
+        );
+
+        if (!response.ok) {
+
+            throw new Error("No se pudo generar el PDF.");
+
+        }
+
+        //------------------------------------------
+        // ABRIR PDF
+        //------------------------------------------
+
+        const blob =
+            await response.blob();
+
+        const url =
+            URL.createObjectURL(blob);
+
+        window.open(url, "_blank");
+
+    }
+
+    catch (e) {
+
+        console.error(e);
+
+        alert("Error al generar el PDF.");
+
+    }
+
+	}

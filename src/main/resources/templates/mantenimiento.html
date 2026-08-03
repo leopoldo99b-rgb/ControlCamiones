@@ -1642,106 +1642,327 @@ MODAL ELIMINAR MANTENIMIENTO
 			</button>
 
 
-			<!-- =========================================================
+<!-- =========================================================
                     MODAL GRÁFICOS
 ========================================================== -->
 
-			<div class="modal fade" id="modalGraficos" tabindex="-1"
-				aria-hidden="true">
+<div class="modal fade"
+     id="modalGraficos"
+     tabindex="-1"
+     aria-hidden="true">
 
-				<div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
 
-					<div class="modal-content">
+        <div class="modal-content">
 
-						<div class="modal-header">
+            <!--======================================
+                        HEADER
+            =======================================-->
 
-							<h5 class="modal-title">
+            <div class="modal-header">
 
-								<i class="fa-solid fa-chart-pie"></i> Generar reporte gráfico
+                <h4 class="modal-title">
 
-							</h5>
+                    <i class="fa-solid fa-chart-column me-2"></i>
 
-							<button type="button" class="btn-close" data-bs-dismiss="modal">
-							</button>
+                    Centro de Reportes Gráficos
 
-						</div>
+                </h4>
 
-						<div class="modal-body">
+                <button
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
 
-							<p class="mb-3">Seleccione el gráfico que desea generar.</p>
+            </div>
 
-							<div class="list-group">
+            <!--======================================
+                        BODY
+            =======================================-->
 
-								<label class="list-group-item"> <input
-									class="form-check-input me-2" type="radio" name="tipoGrafico"
-									value="dashboard" checked> Dashboard Ejecutivo
+            <div class="modal-body">
 
-								</label> <label class="list-group-item"> <input
-									class="form-check-input me-2" type="radio" name="tipoGrafico"
-									value="costosMes"> Costos por mes (Barras)
+                <div class="row g-4">
 
-								</label> <label class="list-group-item"> <input
-									class="form-check-input me-2" type="radio" name="tipoGrafico"
-									value="tipos"> Mantenimientos por tipo (Barras)
+                    <!--======================================
+                            PANEL IZQUIERDO
+                    =======================================-->
 
-								</label> <label class="list-group-item"> <input
-									class="form-check-input me-2" type="radio" name="tipoGrafico"
-									value="estados"> Estados de mantenimiento (Circular)
+                    <div class="col-lg-4">
 
-								</label> <label class="list-group-item"> <input
-									class="form-check-input me-2" type="radio" name="tipoGrafico"
-									value="camiones"> Costos por camión (Barras)
+                        <div class="panel-grafico">
 
-								</label> <label class="list-group-item"> <input
-									class="form-check-input me-2" type="radio" name="tipoGrafico"
-									value="proximos"> Próximos vs Vencidos (Circular)
+                            <h5>
 
-								</label>
+                                <i class="fa-solid fa-sliders"></i>
 
-							</div>
+                                Configuración
 
-						</div>
-						<hr>
+                            </h5>
 
-						<div class="row">
+                            <hr>
 
-							<div class="col-md-6">
+                            <!-- Dataset -->
 
-								<label> Fecha inicio </label> <input type="date"
-									id="fechaGraficoInicio" class="form-control">
+                            <label class="form-label">
 
-							</div>
+                                Información
 
+                            </label>
 
-							<div class="col-md-6">
+                            <select
+                                class="form-select mb-3"
+                                id="datasetGrafico">
 
-								<label> Fecha fin </label> <input type="date"
-									id="fechaGraficoFin" class="form-control">
+                                <option value="tipos">
 
-							</div>
+                                    Mantenimientos por tipo
 
+                                </option>
 
-						</div>
+                                <option value="costosMes">
 
-						<div class="modal-footer">
+                                    Costos por mes
 
-							<button class="btn btn-secondary" data-bs-dismiss="modal">
+                                </option>
 
-								Cancelar</button>
+                                <option value="estados">
 
-							<button class="btn btn-primary" id="btnGenerarGrafico">
+                                    Estados del mantenimiento
 
-								<i class="fa-solid fa-file-pdf"></i> Generar PDF
+                                </option>
 
-							</button>
+                                <option value="camiones">
 
-						</div>
+                                    Costos por camión
 
-					</div>
+                                </option>
 
-				</div>
+                                <option value="proximos">
 
-			</div>
+                                    Próximos vs Vencidos
+
+                                </option>
+
+                            </select>
+
+                            <!-- Tipo -->
+
+                            <label class="form-label">
+
+                                Tipo de gráfico
+
+                            </label>
+
+                            <select
+                                class="form-select mb-4"
+                                id="tipoGrafico">
+
+                                <option value="bar">
+
+                                    Barras
+
+                                </option>
+
+                                <option value="line">
+
+                                    Línea
+
+                                </option>
+
+                                <option value="pie">
+
+                                    Circular
+
+                                </option>
+
+                                <option value="doughnut">
+
+                                    Dona
+
+                                </option>
+
+                                <option value="radar">
+
+                                    Radar
+
+                                </option>
+
+                            </select>
+
+                            <div class="row">
+
+                                <div class="col-6">
+
+                                    <label class="form-label">
+
+                                        Fecha inicio
+
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="fechaGraficoInicio"
+                                        class="form-control">
+
+                                </div>
+
+                                <div class="col-6">
+
+                                    <label class="form-label">
+
+                                        Fecha fin
+
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="fechaGraficoFin"
+                                        class="form-control">
+
+                                </div>
+
+                            </div>
+
+                            <hr>
+
+                            <button
+                                class="btn btn-primary w-100"
+                                id="btnActualizarGrafico">
+
+                                <i class="fa-solid fa-arrows-rotate"></i>
+
+                                Actualizar Vista
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!--======================================
+                            PANEL DERECHO
+                    =======================================-->
+
+                    <div class="col-lg-8">
+
+                        <!-- Cards -->
+
+                        <div class="row g-3 mb-3">
+
+                            <div class="col-md-3">
+
+                                <div class="card-resumen">
+
+                                    <span>Total</span>
+
+                                    <h3 id="cardGraficoTotal">
+
+                                        0
+
+                                    </h3>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-3">
+
+                                <div class="card-resumen">
+
+                                    <span>Gasto</span>
+
+                                    <h3 id="cardGraficoCosto">
+
+                                        L.0
+
+                                    </h3>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-3">
+
+                                <div class="card-resumen">
+
+                                    <span>Próximos</span>
+
+                                    <h3 id="cardGraficoProximos">
+
+                                        0
+
+                                    </h3>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-3">
+
+                                <div class="card-resumen">
+
+                                    <span>Vencidos</span>
+
+                                    <h3 id="cardGraficoVencidos">
+
+                                        0
+
+                                    </h3>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Vista previa -->
+
+                        <div class="contenedor-grafico">
+
+                            <canvas
+                                id="graficoMantenimientos">
+                            </canvas>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!--======================================
+                        FOOTER
+            =======================================-->
+
+            <div class="modal-footer">
+
+                <button
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+
+                    Cancelar
+
+                </button>
+
+                <button
+                    class="btn btn-success"
+                    id="btnGenerarGrafico">
+
+                    <i class="fa-solid fa-file-pdf"></i>
+
+                    Exportar PDF
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 			<!-- =========================================================
                     SCRIPTS
@@ -1769,6 +1990,8 @@ MODAL ELIMINAR MANTENIMIENTO
 				src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 			<script src="/js/mantenimientos.js"></script>
+			
+			<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 
 
