@@ -578,4 +578,16 @@ public class ConductorController {
      return conductorRepository.findByEstado("ACTIVO");
 
  }
+ 
+//==============================================
+//API PARA COMBO DE CONDUCTORES
+//==============================================
+
+@GetMapping("/api")
+@ResponseBody
+public List<Conductor> listarConductoresApi() {
+
+  return conductorRepository.findByEstado("ACTIVO");
+
+}
 }

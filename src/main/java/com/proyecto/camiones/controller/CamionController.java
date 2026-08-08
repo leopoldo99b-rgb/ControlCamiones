@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.proyecto.camiones.model.Camion;
+import com.proyecto.camiones.model.Ruta;
+import com.proyecto.camiones.repository.RutaRepository;
 import com.proyecto.camiones.services.CamionService;
 
 @Controller
@@ -17,6 +19,9 @@ public class CamionController {
 
 	@Autowired
 	private CamionService camionService;
+	
+	@Autowired
+	private RutaRepository rutaRepository;
 
 	@GetMapping("/camiones")
 	public String camiones() {
@@ -215,6 +220,18 @@ public class CamionController {
 
 	    }
 
+
+	}
+	
+	// =====================================================
+	// RUTAS ACTIVAS
+	// =====================================================
+
+	@GetMapping("/rutas/activas")
+	@ResponseBody
+	public List<Ruta> listarRutas(){
+
+	    return rutaRepository.listarRutas();
 
 	}
 }

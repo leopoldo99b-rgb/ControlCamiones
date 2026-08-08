@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Gestión de Viajes</title>
+
+<!-- Bootstrap -->
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+
+<!-- Bootstrap Icons -->
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css"
+	rel="stylesheet">
+
+<!-- DataTables -->
+<link rel="stylesheet"
+	href="https://cdn.datatables.net/2.3.2/css/dataTables.bootstrap5.css">
+
+<!-- CSS -->
+<link rel="stylesheet" href="css/viajes.css">
+
+</head>
+
+<body>
+
+	<div class="container-fluid py-4">
+
+		<!--============================================-->
+		<!-- ENCABEZADO -->
+		<!--============================================-->
+
+		<div class="row align-items-center mb-4">
+
+			<div class="col-lg-8">
+
+				<h2 class="page-title">
+
+					<i class="bi bi-truck"></i> Gestión de Viajes
+
+				</h2>
+
+				<p class="text-muted">Registro, monitoreo y auditoría del
+					cumplimiento de tiempos de viaje.</p>
+
+			</div>
+
+			<div class="col-lg-4 text-end">
+
+				<button id="btnNuevoViaje" class="btn btn-primary"
+					data-bs-toggle="modal" data-bs-target="#modalNuevoViaje">
+
+					<i class="bi bi-plus-circle"></i> Nuevo Viaje
+
+				</button>
+
+			</div>
+
+		</div>
+
+
+		<!--============================================-->
+		<!-- DASHBOARD -->
+		<!--============================================-->
+
+		<div
+			class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-7 g-4 mb-4">
+
+
+			<!-- TOTAL -->
+			<div class="col">
+
+				<div class="card card-dashboard">
+
+					<div class="card-body">
+
+						<div class="card-icon bg-primary">
+							<i class="bi bi-truck"></i>
+						</div>
+
+						<div class="card-info">
+
+							<span>Total Viajes</span>
+
+							<h3 id="lblTotalViajes">0</h3>
+
+						</div>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+
+			<!-- ODT CUMPLIDOS -->
+			<div class="col">
+
+				<div class="card card-dashboard">
+
+					<div class="card-body">
+
+						<div class="card-icon bg-success">
+							<i class="bi bi-check-circle"></i>
+						</div>
+
+						<div class="card-info">
+
+							<span>ODT Cumplidos</span>
+
+							<h3 id="lblODTCumplidos">0</h3>
+
+						</div>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+
+
+			<!-- ODT INCUMPLIDOS -->
+			<div class="col">
+
+				<div class="card card-dashboard">
+
+					<div class="card-body">
+
+						<div class="card-icon bg-danger">
+							<i class="bi bi-x-circle"></i>
+						</div>
+
+						<div class="card-info">
+
+							<span>ODT Incumplidos</span>
+
+							<h3 id="lblODTIncumplidos">0</h3>
+
+						</div>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+
+
+
+			<!-- FURGON CUMPLIDOS -->
+			<div class="col">
+
+				<div class="card card-dashboard">
+
+					<div class="card-body">
+
+						<div class="card-icon bg-info">
+							<i class="bi bi-box-seam"></i>
+						</div>
+
+						<div class="card-info">
+
+							<span>Furgón Cumplidos</span>
+
+							<h3 id="lblFurgonCumplidos">0</h3>
+
+						</div>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+
+
+
+
+			<!-- FURGON INCUMPLIDOS -->
+			<div class="col">
+
+				<div class="card card-dashboard">
+
+					<div class="card-body">
+
+						<div class="card-icon bg-warning">
+							<i class="bi bi-exclamation-circle"></i>
+						</div>
+
+						<div class="card-info">
+
+							<span>Furgón Incumplidos</span>
+
+							<h3 id="lblFurgonIncumplidos">0</h3>
+
+						</div>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+
+
+
+
+
+			<!-- % CUMPLIMIENTO ODT -->
+			<div class="col">
+
+				<div class="card card-dashboard">
+
+					<div class="card-body">
+
+						<div class="card-icon bg-success">
+
+							<i class="bi bi-percent"></i>
+
+						</div>
+
+
+						<div class="card-info">
+
+							<span>% Cumplimiento ODT</span>
+
+							<h3 id="lblPorcentajeODT">0%</h3>
+
+						</div>
+
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+
+
+
+
+
+			<!-- % CUMPLIMIENTO FURGON -->
+			<div class="col">
+
+				<div class="card card-dashboard">
+
+					<div class="card-body">
+
+						<div class="card-icon bg-info">
+
+							<i class="bi bi-percent"></i>
+
+						</div>
+
+
+						<div class="card-info">
+
+							<span>% Cumplimiento Furgón</span>
+
+							<h3 id="lblPorcentajeFurgon">0%</h3>
+
+						</div>
+
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+
+		</div>
+
+
+		<!-- FILTROS DE AUDITORÍA -->
+<!--============================================-->
+
+<div class="card card-filter mb-4">
+
+    <div class="card-header">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <h5 class="mb-0">
+
+                <i class="bi bi-funnel-fill"></i>
+                Auditoría de Viajes
+
+            </h5>
+
+        </div>
+
+    </div>
+
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+
+            <!--=========================================
+            =            FECHA DESDE
+            ==========================================-->
+
+            <div class="col-xl-2 col-lg-3 col-md-6">
+
+                <label
+                    for="txtFechaInicio"
+                    class="form-label">
+
+                    Desde
+
+                </label>
+
+                <input
+                    type="date"
+                    class="form-control"
+                    id="txtFechaInicio">
+
+            </div>
+
+
+            <!--=========================================
+            =            FECHA HASTA
+            ==========================================-->
+
+            <div class="col-xl-2 col-lg-3 col-md-6">
+
+                <label
+                    for="txtFechaFin"
+                    class="form-label">
+
+                    Hasta
+
+                </label>
+
+                <input
+                    type="date"
+                    class="form-control"
+                    id="txtFechaFin">
+
+            </div>
+
+
+            <!--=========================================
+            =            RUTA
+            ==========================================-->
+
+            <div class="col-xl-2 col-lg-3 col-md-6">
+
+                <label
+                    for="cmbRuta"
+                    class="form-label">
+
+                    Ruta
+
+                </label>
+
+                <select
+                    class="form-select"
+                    id="cmbRuta">
+
+                    <option value="">
+                        Todas las rutas
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!--=========================================
+            =            CONDUCTOR
+            ==========================================-->
+
+            <div class="col-xl-2 col-lg-3 col-md-6">
+
+                <label
+                    for="cmbConductor"
+                    class="form-label">
+
+                    Conductor
+
+                </label>
+
+                <select
+                    class="form-select"
+                    id="cmbConductor">
+
+                    <option value="">
+                        Todos los conductores
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!--=========================================
+            =            ESTADO ODT
+            ==========================================-->
+
+            <div class="col-xl-2 col-lg-3 col-md-6">
+
+                <label
+                    for="cmbEstadoODT"
+                    class="form-label">
+
+                    Estado ODT
+
+                </label>
+
+                <select
+                    class="form-select"
+                    id="cmbEstadoODT">
+
+                    <option value="">
+                        Todos
+                    </option>
+
+                    <option value="CUMPLIDO">
+                        Cumplido
+                    </option>
+
+                    <option value="INCUMPLIDO">
+                        Incumplido
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!--=========================================
+            =            ESTADO FURGÓN
+            ==========================================-->
+
+            <div class="col-xl-2 col-lg-3 col-md-6">
+
+                <label
+                    for="cmbEstadoFurgon"
+                    class="form-label">
+
+                    Estado Furgón
+
+                </label>
+
+                <select
+                    class="form-select"
+                    id="cmbEstadoFurgon">
+
+                    <option value="">
+                        Todos
+                    </option>
+
+                    <option value="CUMPLIDO">
+                        Cumplido
+                    </option>
+
+                    <option value="INCUMPLIDO">
+                        Incumplido
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <hr>
+
+
+        <!--=========================================
+        =            BOTONES
+        ==========================================-->
+
+        <div class="d-flex flex-wrap justify-content-end gap-2">
+
+
+            <!-- LIMPIAR -->
+
+            <button
+                type="button"
+                class="btn btn-secondary"
+                id="btnLimpiar">
+
+                <i class="bi bi-eraser"></i>
+                Limpiar
+
+            </button>
+
+
+            <!-- EXPORTAR PDF -->
+
+            <button
+                type="button"
+                class="btn btn-danger"
+                id="btnExportarPDF">
+
+                <i class="bi bi-file-earmark-pdf-fill"></i>
+                PDF
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+		<!--================================================-->
+		<!-- HISTORIAL DE VIAJES -->
+		<!--================================================-->
+
+		<div class="card card-table">
+
+			<div class="card-header">
+
+				<div class="row align-items-center">
+
+					<div class="col-lg-6">
+
+						<h5 class="mb-0">
+
+							<i class="bi bi-clock-history"></i> Historial de Viajes
+
+						</h5>
+
+						<small class="text-muted"> Viajes registrados según los
+							filtros seleccionados. </small>
+
+					</div>
+
+					<div class="col-lg-6 text-end">
+
+						<span class="badge bg-primary fs-6"> Total Registros: <span
+							id="lblRegistros"> 0 </span>
+
+						</span>
+
+					</div>
+
+				</div>
+
+			</div>
+
+			<div class="card-body">
+
+				<div class="table-responsive">
+
+					<table id="tblViajes"
+						class="table table-hover table-striped align-middle">
+
+						<thead>
+
+							<tr>
+
+								<th>#</th>
+
+								<th>Fecha</th>
+
+								<th>Conductor</th>
+
+								<th>Placa</th>
+
+								<th>Furgon</th>
+
+								<th>Origen</th>
+
+								<th>Destino</th>
+
+								<th>Salida</th>
+
+								<th>Llegada</th>
+
+								<th>ODT</th>
+
+								<th>Tiempo Maximo</th>
+
+								<th>Tiempo Excedido</th>
+
+								<th>Estado ODT</th>
+
+								<th>Estado Furgon</th>
+
+								<th class="text-center">Acciones</th>
+
+							</tr>
+
+						</thead>
+
+						<tbody>
+					</table>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+	<!-- =====================================================
+     MODAL NUEVO VIAJE
+====================================================== -->
+
+
+	<div class="modal fade" id="modalNuevoViaje" tabindex="-1">
+
+
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+
+
+			<div class="modal-content">
+
+
+				<div class="modal-header bg-primary text-white">
+
+
+					<h5 class="modal-title">
+
+						<i class="bi bi-truck"></i> Registrar Nuevo Viaje
+
+					</h5>
+
+
+					<button type="button" class="btn-close btn-close-white"
+						data-bs-dismiss="modal"></button>
+
+
+				</div>
+
+
+
+				<form id="formNuevoViaje">
+
+
+					<div class="modal-body">
+
+
+						<div class="row g-3">
+
+
+
+							<!-- FECHA -->
+
+							<div class="col-md-4">
+
+								<label class="form-label"> Fecha </label> <input type="date"
+									class="form-control" id="fecha" name="fecha" required>
+
+							</div>
+
+
+
+							<!-- CONDUCTOR -->
+
+							<div class="col-md-8">
+
+								<label class="form-label"> Conductor </label> <select
+									class="form-select" id="conductor" name="conductor" required>
+
+									<option value="">Seleccionar conductor</option>
+
+
+								</select>
+
+
+							</div>
+
+
+
+
+							<!-- PLACA -->
+
+
+							<div class="col-md-6">
+
+								<label class="form-label">Placa</label> <input type="text"
+									class="form-control" id="placa" list="listaPlacas"
+									placeholder="Escriba o seleccione una placa" required>
+
+								<datalist id="listaPlacas"></datalist>
+
+							</div>
+
+
+
+
+
+							<!-- FURGON -->
+
+
+							<div class="col-md-6">
+
+
+								<label class="form-label"> Furgón </label> <select
+									class="form-select" id="furgon" name="furgon" required>
+
+
+									<option value="">Seleccionar</option>
+
+
+									<option value="CHC">CHC</option>
+
+
+									<option value="CMI">CMI</option>
+
+
+									<option value="LOGITRANS">LOGITRANS</option>
+
+
+									<option value="TRANSPORTES JUAN JOSE">TRANSPORTES JUAN
+										JOSE</option>
+
+
+								</select>
+
+
+							</div>
+
+
+
+
+
+
+							<!-- ORIGEN -->
+
+
+							<div class="col-md-6">
+
+
+								<label class="form-label"> Origen </label> <input type="text"
+									class="form-control" id="origen" name="origen"
+									placeholder="Ingrese origen" required>
+
+
+							</div>
+
+
+
+
+
+
+							<!-- DESTINO -->
+
+
+							<div class="col-md-6">
+
+
+								<label class="form-label"> Destino </label> <select
+									class="form-select" id="destino" name="destino" required>
+
+
+									<option value="">Seleccionar destino</option>
+
+
+								</select>
+
+
+							</div>
+
+
+
+
+
+
+
+							<!-- SALIDA -->
+
+
+							<div class="col-md-4">
+
+
+								<label class="form-label"> Hora Salida </label> <input
+									type="time" class="form-control" id="salida" name="salida"
+									required>
+
+
+							</div>
+
+
+
+
+
+
+
+							<!-- LLEGADA -->
+
+
+							<div class="col-md-4">
+
+
+								<label class="form-label"> Hora Llegada </label> <input
+									type="time" class="form-control" id="llegada" name="llegada"
+									required>
+
+
+							</div>
+
+
+
+
+
+
+							<!-- TIEMPO MAXIMO -->
+
+
+							<div class="col-md-4">
+
+
+								<label class="form-label"> Tiempo Máximo </label> <input
+									type="text" class="form-control" id="tiempo_maximo"
+									name="tiempo_maximo" readonly>
+
+
+							</div>
+
+
+
+						</div>
+
+
+					</div>
+
+
+
+
+
+					<div class="modal-footer">
+
+
+						<button type="button" class="btn btn-secondary"
+							data-bs-dismiss="modal">Cancelar</button>
+
+
+
+						<button type="submit" class="btn btn-primary">
+
+							<i class="bi bi-save"></i> Guardar Viaje
+
+						</button>
+
+
+					</div>
+
+
+
+				</form>
+
+
+			</div>
+
+
+		</div>
+
+
+	</div>
+	<!--================================================-->
+	<!-- Bootstrap -->
+	<!--================================================-->
+
+	<!-- Bootstrap -->
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
+</script>
+
+<!-- JQuery -->
+<script
+    src="https://code.jquery.com/jquery-3.7.1.min.js">
+</script>
+
+<!-- DataTables -->
+<script
+    src="https://cdn.datatables.net/2.3.2/js/dataTables.js">
+</script>
+
+<script
+    src="https://cdn.datatables.net/2.3.2/js/dataTables.bootstrap5.js">
+</script>
+
+<!-- Chart.js -->
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js">
+</script>
+
+<!-- jsPDF -->
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+</script>
+
+<!-- Soporte SVG para jsPDF -->
+<script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/dist/svg2pdf.umd.min.js"></script>
+
+<!-- AutoTable -->
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js">
+</script>
+
+<!-- =====================================================
+     FONT AWESOME
+     ===================================================== -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js"></script>
+
+<!-- JS -->
+<script src="js/viajes.js"></script>
+
+</body>
+
+</html>
