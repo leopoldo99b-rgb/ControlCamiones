@@ -16,36 +16,47 @@ public class viajescontroller {
     private ViajeService viajeService;
 
     @GetMapping("/viajes")
-    public String viajes(){
-
+    public String viajes() {
         return "viajes";
-
     }
 
     @PostMapping("/viajes/guardar")
     @ResponseBody
-    public viajes guardar(@RequestBody viajes viaje){
-
+    public viajes guardar(@RequestBody viajes viaje) {
         return viajeService.guardar(viaje);
-
     }
 
     @GetMapping("/viajes/lista")
     @ResponseBody
-    public List<viajes> listar(){
-
+    public List<viajes> listar() {
         return viajeService.listar();
-
     }
 
     @DeleteMapping("/viajes/eliminar/{id}")
     @ResponseBody
-    public String eliminar(@PathVariable Long id){
+    public String eliminar(@PathVariable Long id) {
 
         viajeService.eliminar(id);
 
         return "ok";
-
     }
 
+    // NUEVO: actualizar viaje
+    @PutMapping("/viajes/actualizar/{id}")
+    @ResponseBody
+    public viajes actualizar(
+            @PathVariable Long id,
+            @RequestBody viajes viaje) {
+
+        return viajeService.actualizar(id, viaje);
+    }
+    
+    @DeleteMapping("/viajes/{id}/nota")
+    @ResponseBody
+    public String eliminarNota(@PathVariable Long id) {
+
+        viajeService.eliminarNota(id);
+
+        return "ok";
+    }
 }

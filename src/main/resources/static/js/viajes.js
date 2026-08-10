@@ -1,10 +1,12 @@
-/*=========================================================
-=            VARIABLES GLOBALES
-=========================================================*/
+/*=========================================================*
+ *=                 VARIABLES GLOBALES
+ *=========================================================*/
 
 const URL_CONDUCTORES = "/conductores/api";
 const URL_CAMIONES = "/camiones/disponibles";
 const URL_RUTAS = "/rutas/activas";
+const URL_VIAJES = "/viajes/lista";
+const URL_GUARDAR_VIAJE = "/viajes/guardar";
 
 const $modalNuevoViaje = $("#modalNuevoViaje");
 
@@ -17,129 +19,333 @@ const $txtTiempoMaximo = $("#tiempo_maximo");
 const $txtSalida = $("#salida");
 const $txtLlegada = $("#llegada");
 
+let viajeSeleccionado = null;
 
-/*=========================================================
-=            EVENTOS
-=========================================================*/
+
+/*=========================================================*
+ *=                 DOCUMENT READY
+ *=========================================================*/
 
 $(document).ready(function () {
-	
-	
-	/*=====================================================
-	=            BOTÓN EXPORTAR PDF
-	=====================================================*/
 
-	$("#btnExportarPDF").on("click", function () {
-
-	    exportarAuditoriaPDF();
-
-	});
-
-/*=====================================================
-=            MODAL NUEVO VIAJE
-=====================================================*/
-
-$modalNuevoViaje.on("shown.bs.modal", function () {
-
-    cargarConductores();
-    cargarPlacas();
-    cargarRutas();
-
-});
+    console.log("========================================");
+    console.log("VIAJES.JS INICIADO");
+    console.log("========================================");
 
 
-/*=====================================================
-=            AUDITORÍA DE VIAJES
-=====================================================*/
+    /*=====================================================
+     =              INICIALIZAR DATATABLE
+     =====================================================*/
 
-cargarFiltrosAuditoria();
-
-
-/*=====================================================
-=            CARGAR VIAJES
-=====================================================*/
-
-cargarViajes();
+    inicializarTabla();
 
 
-/*=====================================================
-=            BOTÓN BUSCAR AUDITORÍA
-=====================================================*/
+    /*=====================================================
+     =              BOTÓN EXPORTAR PDF
+     =====================================================*/
 
-$("#btnBuscar").on("click", function () {
+    $("#btnExportarPDF").on("click", function () {
 
-    aplicarFiltrosAuditoria();
+        if (typeof exportarAuditoriaPDF === "function") {
 
-});
+            exportarAuditoriaPDF();
 
+        } else {
 
-/*=====================================================
-=            BOTÓN LIMPIAR AUDITORÍA
-=====================================================*/
+            console.warn(
+                "La función exportarAuditoriaPDF() no existe."
+            );
 
-$("#btnLimpiar").on("click", function () {
+        }
 
-    $("#txtFechaInicio").val("");
-
-    $("#txtFechaFin").val("");
-
-    $("#cmbRuta").val("");
-
-    $("#cmbConductor").val("");
-
-    $("#cmbEstadoODT").val("");
-
-    $("#cmbEstadoFurgon").val("");
-
-    aplicarFiltrosAuditoria();
-
-});
+    });
 
 
-/*=====================================================
-=            BOTÓN ACTUALIZAR
-=====================================================*/
+    /*=====================================================
+     =              MODAL NUEVO / EDITAR
+     =====================================================*/
 
-$("#btnActualizar").on("click", function () {
+    $modalNuevoViaje.on("shown.bs.modal", function () {
+
+        cargarConductores();
+        cargarPlacas();
+        cargarRutas();
+
+    });
+
+
+    /*=====================================================
+     =              AUDITORÍA
+     =====================================================*/
 
     cargarFiltrosAuditoria();
 
+
+    /*=====================================================
+     =              CARGAR VIAJES
+     =====================================================*/
+
     cargarViajes();
 
+
+    /*=====================================================
+     =              BUSCAR AUDITORÍA
+     =====================================================*/
+
+    $("#btnBuscar").on("click", function () {
+
+        aplicarFiltrosAuditoria();
+
+    });
+
+
+    /*=====================================================
+     =              LIMPIAR AUDITORÍA
+     =====================================================*/
+
+    $("#btnLimpiar").on("click", function () {
+
+        $("#txtFechaInicio").val("");
+        $("#txtFechaFin").val("");
+        $("#cmbRuta").val("");
+        $("#cmbConductor").val("");
+        $("#cmbEstadoODT").val("");
+        $("#cmbEstadoFurgon").val("");
+
+        aplicarFiltrosAuditoria();
+
+    });
+
+
+    /*=====================================================
+     =              ACTUALIZAR
+     =====================================================*/
+
+    $("#btnActualizar").on("click", function () {
+
+        cargarFiltrosAuditoria();
+        cargarViajes();
+
+    });
+
+
+    /*=====================================================
+     =              CAMBIO DE FILTROS
+     =====================================================*/
+
+    $(
+        "#txtFechaInicio, " +
+        "#txtFechaFin, " +
+        "#cmbRuta, " +
+        "#cmbConductor, " +
+        "#cmbEstadoODT, " +
+        "#cmbEstadoFurgon"
+    ).on("change", function () {
+
+        aplicarFiltrosAuditoria();
+
+    });
+
+
+    /*=====================================================
+     =              AGREGAR NOTA
+     =====================================================*/
+
+    $(document).on("click", "#btnAgregarNota", function () {
+
+        if (!viajeSeleccionado) {
+
+            alert("No se ha seleccionado ningún viaje.");
+
+            return;
+
+        }
+
+        abrirModalNota(false);
+
+    });
+
+
+    /*=====================================================
+     =              MODIFICAR NOTA
+     =====================================================*/
+
+    $(document).on("click", "#btnModificarNota", function () {
+
+        if (!viajeSeleccionado) {
+
+            alert("No se ha seleccionado ningún viaje.");
+
+            return;
+
+        }
+
+        abrirModalNota(true);
+
+    });
+
+
+    /*=====================================================
+     =              VER NOTAS
+     =====================================================*/
+
+    $(document).on("click", ".btn-ver-notas", function () {
+
+        const id = $(this).data("id");
+
+        if (!id) {
+
+            alert("No se encontró el ID del viaje.");
+
+            return;
+
+        }
+
+        viajeSeleccionado = id;
+
+        verNotasViaje(id);
+
+    });
+
+
+    /*=====================================================
+     =              FORMULARIO NOTA
+     =====================================================*/
+
+    $(document).on("submit", "#formNotaViaje", function (e) {
+
+        e.preventDefault();
+
+        guardarNotaViaje();
+
+    });
+
+
+    /*=====================================================
+     =              MODAL NUEVO VIAJE
+     =====================================================*/
+
+    $("#modalNuevoViaje").on("hidden.bs.modal", function () {
+
+        /*
+         * No limpiamos aquí porque también se utiliza
+         * para editar viajes.
+         */
+
+    });
+
 });
 
 
-/*=====================================================
-=            CAMBIO DIRECTO DE FILTROS
-=====================================================*/
+/*=========================================================*
+ *=              INICIALIZAR DATATABLE
+ *=========================================================*/
 
-$(
-    "#txtFechaInicio, " +
-    "#txtFechaFin, " +
-    "#cmbRuta, " +
-    "#cmbConductor, " +
-    "#cmbEstadoODT, " +
-    "#cmbEstadoFurgon"
-).on("change", function () {
+function inicializarTabla() {
 
-    aplicarFiltrosAuditoria();
+    if (!$("#tblViajes").length) {
 
-});
+        console.error(
+            "ERROR: No existe la tabla #tblViajes en el HTML."
+        );
 
+        return;
 
-});
+    }
 
 
-/*=========================================================
-=            CONDUCTORES
-=========================================================*/
+    /*
+     * Si ya fue inicializada por otro JS,
+     * no la inicializamos nuevamente.
+     */
+
+    if ($.fn.DataTable.isDataTable("#tblViajes")) {
+
+        console.log(
+            "DataTable ya estaba inicializada."
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "Inicializando DataTable..."
+    );
+
+
+    $("#tblViajes").DataTable({
+
+        language: {
+
+            search: "Buscar:",
+
+            zeroRecords:
+                "No se encontraron viajes",
+
+            emptyTable:
+                "No hay viajes registrados",
+
+            info:
+                "Mostrando _TOTAL_ registros",
+
+            infoEmpty:
+                "Mostrando 0 registros",
+
+            infoFiltered:
+                "(filtrado de _MAX_ registros)"
+
+        },
+
+        /*
+         * =================================================
+         * IMPORTANTE:
+         *
+         * paging: false
+         *
+         * Desactiva completamente la paginación.
+         * Todos los registros aparecen en una sola hoja.
+         * =================================================
+         */
+
+        paging: false,
+
+        ordering: true,
+
+        searching: true,
+
+        responsive: true,
+
+        autoWidth: false,
+
+        columnDefs: [
+
+            {
+                targets: 14,
+                orderable: false,
+                searchable: false
+            }
+
+        ]
+
+    });
+
+}
+
+
+/*=========================================================*
+ *=                  CONDUCTORES
+ *=========================================================*/
 
 function cargarConductores() {
 
     $.ajax({
 
         url: URL_CONDUCTORES,
+
         type: "GET",
+
         dataType: "json",
 
         success: function (conductores) {
@@ -150,12 +356,43 @@ function cargarConductores() {
                 '<option value="">Seleccionar conductor</option>'
             );
 
+
+            if (!Array.isArray(conductores)) {
+
+                console.warn(
+                    "Conductores no es un arreglo:",
+                    conductores
+                );
+
+                return;
+
+            }
+
+
             conductores.forEach(function (conductor) {
 
+                const id =
+                    conductor.id ??
+                    conductor.idConductor ??
+                    "";
+
+
+                const nombre =
+                    (
+                        (conductor.nombre || "") +
+                        " " +
+                        (conductor.apellido || "")
+                    ).trim();
+
+
                 $cmbConductor.append(`
-                    <option value="${conductor.id}">
-                        ${conductor.nombre} ${conductor.apellido}
+
+                    <option value="${escapeHtml(id)}">
+
+                        ${escapeHtml(nombre)}
+
                     </option>
+
                 `);
 
             });
@@ -164,7 +401,11 @@ function cargarConductores() {
 
         error: function (xhr) {
 
-            console.error(xhr.responseText);
+            console.error(
+                "Error cargando conductores:",
+                xhr.status,
+                xhr.responseText
+            );
 
         }
 
@@ -173,26 +414,51 @@ function cargarConductores() {
 }
 
 
-/*=========================================================
-=            CAMIONES
-=========================================================*/
+/*=========================================================*
+ *=                    CAMIONES
+ *=========================================================*/
 
 function cargarPlacas() {
 
     $.ajax({
 
         url: URL_CAMIONES,
+
         type: "GET",
+
         dataType: "json",
 
         success: function (camiones) {
 
             $("#listaPlacas").empty();
 
+
+            if (!Array.isArray(camiones)) {
+
+                console.warn(
+                    "Camiones no es un arreglo:",
+                    camiones
+                );
+
+                return;
+
+            }
+
+
             camiones.forEach(function (camion) {
 
+                if (!camion.placa) {
+
+                    return;
+
+                }
+
+
                 $("#listaPlacas").append(`
-                    <option value="${camion.placa}">
+
+                    <option
+                        value="${escapeHtml(camion.placa)}">
+
                 `);
 
             });
@@ -201,7 +467,11 @@ function cargarPlacas() {
 
         error: function (xhr) {
 
-            console.error(xhr.responseText);
+            console.error(
+                "Error cargando placas:",
+                xhr.status,
+                xhr.responseText
+            );
 
         }
 
@@ -210,16 +480,18 @@ function cargarPlacas() {
 }
 
 
-/*=========================================================
-=            RUTAS
-=========================================================*/
+/*=========================================================*
+ *=                      RUTAS
+ *=========================================================*/
 
 function cargarRutas() {
 
     $.ajax({
 
         url: URL_RUTAS,
+
         type: "GET",
+
         dataType: "json",
 
         success: function (rutas) {
@@ -230,14 +502,38 @@ function cargarRutas() {
                 '<option value="">Seleccionar destino</option>'
             );
 
+
+            if (!Array.isArray(rutas)) {
+
+                console.warn(
+                    "Rutas no es un arreglo:",
+                    rutas
+                );
+
+                return;
+
+            }
+
+
             rutas.forEach(function (ruta) {
 
+                if (!ruta.destino) {
+
+                    return;
+
+                }
+
+
                 $cmbDestino.append(`
+
                     <option
-                        value="${ruta.destino}"
-                        data-odt="${ruta.odt}">
-                        ${ruta.destino}
+                        value="${escapeHtml(ruta.destino)}"
+                        data-odt="${escapeHtml(ruta.odt || "")}">
+
+                        ${escapeHtml(ruta.destino)}
+
                     </option>
+
                 `);
 
             });
@@ -246,7 +542,11 @@ function cargarRutas() {
 
         error: function (xhr) {
 
-            console.error(xhr.responseText);
+            console.error(
+                "Error cargando rutas:",
+                xhr.status,
+                xhr.responseText
+            );
 
         }
 
@@ -255,48 +555,71 @@ function cargarRutas() {
 }
 
 
-/*=========================================================
-=            FILTROS DE AUDITORÍA
-=========================================================*/
+/*=========================================================*
+ *=                FILTROS DE AUDITORÍA
+ *=========================================================*/
 
 function cargarFiltrosAuditoria() {
 
     /*=====================================================
-    =            CARGAR CONDUCTORES
-    =====================================================*/
+     =                  CONDUCTORES
+     =====================================================*/
 
     $.ajax({
 
         url: URL_CONDUCTORES,
+
         type: "GET",
+
         dataType: "json",
 
         success: function (conductores) {
 
-            const $filtroConductor = $("#cmbConductor");
+            const $filtroConductor =
+                $("#cmbConductor");
 
-            const valorActual = $filtroConductor.val();
+
+            const valorActual =
+                $filtroConductor.val();
+
 
             $filtroConductor.empty();
+
 
             $filtroConductor.append(
                 '<option value="">Todos los conductores</option>'
             );
 
+
+            if (!Array.isArray(conductores)) {
+
+                return;
+
+            }
+
+
             conductores.forEach(function (conductor) {
 
                 const nombreCompleto =
-                    (conductor.nombre || "") +
-                    " " +
-                    (conductor.apellido || "");
+                    (
+                        (conductor.nombre || "") +
+                        " " +
+                        (conductor.apellido || "")
+                    ).trim();
+
 
                 $filtroConductor.append(`
-                    <option value="${escapeHtml(nombreCompleto.trim())}">
-                        ${escapeHtml(nombreCompleto.trim())}
+
+                    <option value="${escapeHtml(nombreCompleto)}">
+
+                        ${escapeHtml(nombreCompleto)}
+
                     </option>
+
                 `);
 
             });
+
 
             if (valorActual) {
 
@@ -319,26 +642,41 @@ function cargarFiltrosAuditoria() {
 
 
     /*=====================================================
-    =            CARGAR RUTAS
-    =====================================================*/
+     =                      RUTAS
+     =====================================================*/
 
     $.ajax({
 
         url: URL_RUTAS,
+
         type: "GET",
+
         dataType: "json",
 
         success: function (rutas) {
 
-            const $filtroRuta = $("#cmbRuta");
+            const $filtroRuta =
+                $("#cmbRuta");
 
-            const valorActual = $filtroRuta.val();
+
+            const valorActual =
+                $filtroRuta.val();
+
 
             $filtroRuta.empty();
+
 
             $filtroRuta.append(
                 '<option value="">Todas las rutas</option>'
             );
+
+
+            if (!Array.isArray(rutas)) {
+
+                return;
+
+            }
+
 
             rutas.forEach(function (ruta) {
 
@@ -348,13 +686,19 @@ function cargarFiltrosAuditoria() {
 
                 }
 
+
                 $filtroRuta.append(`
+
                     <option value="${escapeHtml(ruta.destino)}">
+
                         ${escapeHtml(ruta.destino)}
+
                     </option>
+
                 `);
 
             });
+
 
             if (valorActual) {
 
@@ -378,245 +722,40 @@ function cargarFiltrosAuditoria() {
 }
 
 
-/*=========================================================
-=            ESCAPAR HTML
-=========================================================*/
+/*=========================================================*
+ *=                    ESCAPE HTML
+ *=========================================================*/
 
 function escapeHtml(text) {
 
-    if (text === null || text === undefined) {
+    if (
+        text === null ||
+        text === undefined
+    ) {
 
         return "";
 
     }
 
+
     return String(text)
+
         .replace(/&/g, "&amp;")
+
         .replace(/</g, "&lt;")
+
         .replace(/>/g, "&gt;")
+
         .replace(/"/g, "&quot;")
+
         .replace(/'/g, "&#039;");
 
 }
 
 
-
 /*=========================================================*
-=            FILTRADO DE AUDITORÍA DATATABLE
-*=========================================================*/
-
-$.fn.dataTable.ext.search.push(function (
-    settings,
-    data,
-    dataIndex
-) {
-
-    /*=====================================================
-    =            SOLO tblViajes
-    =====================================================*/
-
-    if (
-        !settings.nTable ||
-        settings.nTable.id !== "tblViajes"
-    ) {
-
-        return true;
-
-    }
-
-
-    /*=====================================================
-    =            OBTENER FILTROS
-    =====================================================*/
-
-    const fechaInicio =
-        $("#txtFechaInicio").val();
-
-    const fechaFin =
-        $("#txtFechaFin").val();
-
-    const ruta =
-        $("#cmbRuta").val();
-
-    const conductor =
-        $("#cmbConductor").val();
-
-    const estadoODTFiltro =
-        $("#cmbEstadoODT").val();
-
-    const estadoFurgonFiltro =
-        $("#cmbEstadoFurgon").val();
-
-
-    /*=====================================================
-    =            DATOS DE LA FILA
-    =====================================================*/
-
-    const fechaFila =
-        obtenerTextoCelda(data[1]);
-
-    const conductorFila =
-        obtenerTextoCelda(data[2]);
-
-    const rutaFila =
-        obtenerTextoCelda(data[6]);
-
-
-    /*
-    =====================================================
-    IMPORTANTE:
-
-    data[12] = Estado ODT
-    data[13] = Estado Furgón
-    =====================================================
-    */
-
-    const estadoODTFila =
-        obtenerTextoCelda(data[12])
-            .toUpperCase()
-            .trim();
-
-    const estadoFurgonFila =
-        obtenerTextoCelda(data[13])
-            .toUpperCase()
-            .trim();
-
-
-    /*=====================================================
-    =            FILTRO FECHA INICIO
-    =====================================================*/
-
-    if (fechaInicio) {
-
-        const fechaRegistro =
-            normalizarFecha(fechaFila);
-
-        const fechaDesde =
-            normalizarFecha(fechaInicio);
-
-        if (
-            fechaRegistro &&
-            fechaDesde &&
-            fechaRegistro < fechaDesde
-        ) {
-
-            return false;
-
-        }
-
-    }
-
-
-    /*=====================================================
-    =            FILTRO FECHA FIN
-    =====================================================*/
-
-    if (fechaFin) {
-
-        const fechaRegistro =
-            normalizarFecha(fechaFila);
-
-        const fechaHasta =
-            normalizarFecha(fechaFin);
-
-        if (
-            fechaRegistro &&
-            fechaHasta &&
-            fechaRegistro > fechaHasta
-        ) {
-
-            return false;
-
-        }
-
-    }
-
-
-    /*=====================================================
-    =            FILTRO RUTA
-    =====================================================*/
-
-    if (ruta) {
-
-        if (
-            rutaFila.trim().toUpperCase() !==
-            ruta.trim().toUpperCase()
-        ) {
-
-            return false;
-
-        }
-
-    }
-
-
-    /*=====================================================
-    =            FILTRO CONDUCTOR
-    =====================================================*/
-
-    if (conductor) {
-
-        if (
-            conductorFila.trim().toUpperCase() !==
-            conductor.trim().toUpperCase()
-        ) {
-
-            return false;
-
-        }
-
-    }
-
-
-    /*=====================================================
-    =            FILTRO ESTADO ODT
-    =====================================================*/
-
-    if (estadoODTFiltro) {
-
-        if (
-            estadoODTFila !==
-            estadoODTFiltro.trim().toUpperCase()
-        ) {
-
-            return false;
-
-        }
-
-    }
-
-
-    /*=====================================================
-    =            FILTRO ESTADO FURGÓN
-    =====================================================*/
-
-    if (estadoFurgonFiltro) {
-
-        if (
-            estadoFurgonFila !==
-            estadoFurgonFiltro.trim().toUpperCase()
-        ) {
-
-            return false;
-
-        }
-
-    }
-
-
-    /*=====================================================
-    =            FILA APROBADA
-    =====================================================*/
-
-    return true;
-
-});
-
-
-
-/*=========================================================
-=            OBTENER TEXTO DE CELDA
-=========================================================*/
+ *=                OBTENER TEXTO CELDA
+ *=========================================================*/
 
 function obtenerTextoCelda(valor) {
 
@@ -629,17 +768,21 @@ function obtenerTextoCelda(valor) {
 
     }
 
+
     return $("<div>")
+
         .html(valor)
+
         .text()
+
         .trim();
 
 }
 
 
-/*=========================================================
-=            NORMALIZAR FECHA
-=========================================================*/
+/*=========================================================*
+ *=                   NORMALIZAR FECHA
+ *=========================================================*/
 
 function normalizarFecha(fecha) {
 
@@ -649,12 +792,10 @@ function normalizarFecha(fecha) {
 
     }
 
-    const texto = String(fecha).trim();
 
+    const texto =
+        String(fecha).trim();
 
-    /*=====================================================
-    =            FORMATO YYYY-MM-DD
-    =====================================================*/
 
     if (
         /^\d{4}-\d{2}-\d{2}$/.test(texto)
@@ -665,10 +806,6 @@ function normalizarFecha(fecha) {
     }
 
 
-    /*=====================================================
-    =            FORMATO ISO
-    =====================================================*/
-
     if (
         /^\d{4}-\d{2}-\d{2}T/.test(texto)
     ) {
@@ -678,22 +815,22 @@ function normalizarFecha(fecha) {
     }
 
 
-    /*=====================================================
-    =            FORMATO DD/MM/YYYY
-    =====================================================*/
-
     if (
         /^\d{2}\/\d{2}\/\d{4}$/.test(texto)
     ) {
 
-        const partes = texto.split("/");
+        const partes =
+            texto.split("/");
+
 
         return (
+
             partes[2] +
             "-" +
             partes[1] +
             "-" +
             partes[0]
+
         );
 
     }
@@ -704,9 +841,234 @@ function normalizarFecha(fecha) {
 }
 
 
-/*=========================================================
-=            APLICAR FILTROS
-=========================================================*/
+/*=========================================================*
+ *=                FILTRADO DATATABLE
+ *=========================================================*/
+
+$.fn.dataTable.ext.search.push(
+
+    function (
+        settings,
+        data,
+        dataIndex
+    ) {
+
+        if (
+            !settings.nTable ||
+            settings.nTable.id !== "tblViajes"
+        ) {
+
+            return true;
+
+        }
+
+
+        const fechaInicio =
+            $("#txtFechaInicio").val();
+
+
+        const fechaFin =
+            $("#txtFechaFin").val();
+
+
+        const ruta =
+            $("#cmbRuta").val();
+
+
+        const conductor =
+            $("#cmbConductor").val();
+
+
+        const estadoODTFiltro =
+            $("#cmbEstadoODT").val();
+
+
+        const estadoFurgonFiltro =
+            $("#cmbEstadoFurgon").val();
+
+
+        const fechaFila =
+            obtenerTextoCelda(data[1]);
+
+
+        const conductorFila =
+            obtenerTextoCelda(data[2]);
+
+
+        const rutaFila =
+            obtenerTextoCelda(data[6]);
+
+
+        const estadoODTFila =
+            obtenerTextoCelda(data[12])
+                .toUpperCase()
+                .trim();
+
+
+        const estadoFurgonFila =
+            obtenerTextoCelda(data[13])
+                .toUpperCase()
+                .trim();
+
+
+        /*=================================================
+         =                  FECHA INICIO
+         =================================================*/
+
+        if (fechaInicio) {
+
+            const fechaRegistro =
+                normalizarFecha(fechaFila);
+
+
+            const fechaDesde =
+                normalizarFecha(fechaInicio);
+
+
+            if (
+                fechaRegistro &&
+                fechaDesde &&
+                fechaRegistro < fechaDesde
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*=================================================
+         =                    FECHA FIN
+         =================================================*/
+
+        if (fechaFin) {
+
+            const fechaRegistro =
+                normalizarFecha(fechaFila);
+
+
+            const fechaHasta =
+                normalizarFecha(fechaFin);
+
+
+            if (
+                fechaRegistro &&
+                fechaHasta &&
+                fechaRegistro > fechaHasta
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*=================================================
+         =                       RUTA
+         =================================================*/
+
+        if (ruta) {
+
+            if (
+
+                rutaFila
+                    .trim()
+                    .toUpperCase() !==
+
+                ruta
+                    .trim()
+                    .toUpperCase()
+
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*=================================================
+         =                    CONDUCTOR
+         =================================================*/
+
+        if (conductor) {
+
+            if (
+
+                conductorFila
+                    .trim()
+                    .toUpperCase() !==
+
+                conductor
+                    .trim()
+                    .toUpperCase()
+
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*=================================================
+         =                    ESTADO ODT
+         =================================================*/
+
+        if (estadoODTFiltro) {
+
+            if (
+
+                estadoODTFila !==
+                estadoODTFiltro
+                    .trim()
+                    .toUpperCase()
+
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /*=================================================
+         =                  ESTADO FURGÓN
+         =================================================*/
+
+        if (estadoFurgonFiltro) {
+
+            if (
+
+                estadoFurgonFila !==
+                estadoFurgonFiltro
+                    .trim()
+                    .toUpperCase()
+
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        return true;
+
+    }
+
+);
+
+
+/*=========================================================*
+ *=                 APLICAR FILTROS
+ *=========================================================*/
 
 function aplicarFiltrosAuditoria() {
 
@@ -718,46 +1080,74 @@ function aplicarFiltrosAuditoria() {
 
     }
 
-    const tabla = $("#tblViajes").DataTable();
+
+    const tabla =
+        $("#tblViajes").DataTable();
+
 
     tabla.draw();
+
 
     actualizarDashboard();
 
 }
 
 
-/*=========================================================
-=            CAMBIO DESTINO
-=========================================================*/
+/*=========================================================*
+ *=                  CAMBIO DESTINO
+ *=========================================================*/
 
 $cmbDestino.on("change", function () {
 
-    const odt = $(this)
-        .find("option:selected")
-        .data("odt");
+    const odt =
+        $(this)
+            .find("option:selected")
+            .data("odt");
 
-    $txtTiempoMaximo.val(odt || "");
+
+    $txtTiempoMaximo.val(
+        odt || ""
+    );
 
 });
 
 
-/*=========================================================
-=            FUNCIONES DE TIEMPO
-=========================================================*/
+/*=========================================================*
+ *=                CALCULAR TIEMPO REAL
+ *=========================================================*/
 
-function calcularTiempoReal(horaSalida, horaLlegada) {
+function calcularTiempoReal(
+    horaSalida,
+    horaLlegada
+) {
 
-    const salida = new Date(
-        "2000-01-01T" + horaSalida
-    );
+    if (
+        !horaSalida ||
+        !horaLlegada
+    ) {
 
-    const llegada = new Date(
-        "2000-01-01T" + horaLlegada
-    );
+        return 0;
+
+    }
+
+
+    const salida =
+        new Date(
+            "2000-01-01T" +
+            horaSalida
+        );
+
+
+    const llegada =
+        new Date(
+            "2000-01-01T" +
+            horaLlegada
+        );
+
 
     let minutos =
         (llegada - salida) / 60000;
+
 
     if (minutos < 0) {
 
@@ -765,10 +1155,15 @@ function calcularTiempoReal(horaSalida, horaLlegada) {
 
     }
 
+
     return minutos;
 
 }
 
+
+/*=========================================================*
+ *=                  HORA A MINUTOS
+ *=========================================================*/
 
 function horaAMinutos(hora) {
 
@@ -778,47 +1173,64 @@ function horaAMinutos(hora) {
 
     }
 
-    const partes = hora.split(":");
+
+    const partes =
+        String(hora).split(":");
+
 
     return (
-        parseInt(partes[0]) * 60
-    ) + parseInt(partes[1]);
+
+        parseInt(partes[0] || 0) * 60
+
+    ) +
+
+        parseInt(partes[1] || 0);
 
 }
 
 
+/*=========================================================*
+ *=                 MINUTOS A HORAS
+ *=========================================================*/
+
 function minutosAHoras(minutos) {
 
-    minutos = parseInt(minutos) || 0;
+    minutos =
+        parseInt(minutos) || 0;
 
-    const horas = Math.floor(
-        minutos / 60
-    );
 
-    const mins = minutos % 60;
+    const horas =
+        Math.floor(minutos / 60);
+
+
+    const mins =
+        minutos % 60;
+
 
     return (
+
         horas +
         "h " +
         mins +
         " min"
+
     );
 
 }
 
 
-/*=========================================================
-=            TIEMPO EXCEDIDO
-=========================================================*/
+/*=========================================================*
+ *=                 TIEMPO EXCEDIDO
+ *=========================================================*/
 
 function calcularTiempoExcedido(
     tiempoReal,
     tiempoODT
 ) {
 
-    const odt = horaAMinutos(
-        tiempoODT
-    );
+    const odt =
+        horaAMinutos(tiempoODT);
+
 
     if (tiempoReal <= odt) {
 
@@ -826,14 +1238,15 @@ function calcularTiempoExcedido(
 
     }
 
+
     return tiempoReal - odt;
 
 }
 
 
-/*=========================================================
-=            ESTADO ODT
-=========================================================*/
+/*=========================================================*
+ *=                    ESTADO ODT
+ *=========================================================*/
 
 function obtenerEstadoODT(
     tiempoExcedido
@@ -845,22 +1258,28 @@ function obtenerEstadoODT(
 
     }
 
+
     return "INCUMPLIDO";
 
 }
 
 
-/*=========================================================
-=            ESTADO FURGON
-=========================================================*/
+/*=========================================================*
+ *=                  ESTADO FURGÓN
+ *=========================================================*/
 
 function obtenerEstadoFurgon(furgon) {
 
+    const valor =
+        String(furgon || "")
+            .trim()
+            .toUpperCase();
+
+
     if (
 
-        furgon === "CHC" ||
-
-        furgon === "CMI"
+        valor === "CHC" ||
+        valor === "CMI"
 
     ) {
 
@@ -868,14 +1287,579 @@ function obtenerEstadoFurgon(furgon) {
 
     }
 
+
     return "INCUMPLIDO";
 
 }
 
 
-/*=========================================================
-=            GUARDAR VIAJE
-=========================================================*/
+/*=========================================================*
+ *=              ABRIR MODAL ACCIONES
+ *=========================================================*/
+
+$(document).on(
+    "click",
+    ".btn-editar-viaje",
+    function () {
+
+        const id =
+            $(this).data("id");
+
+
+        if (
+            id === undefined ||
+            id === null ||
+            id === ""
+        ) {
+
+            alert(
+                "No se encontró el ID del viaje."
+            );
+
+            return;
+
+        }
+
+
+        viajeSeleccionado =
+            id;
+
+
+        const elemento =
+            document.getElementById(
+                "modalAccionesViaje"
+            );
+
+
+        if (!elemento) {
+
+            alert(
+                "No existe el modal de acciones."
+            );
+
+            return;
+
+        }
+
+
+        const modal =
+            bootstrap.Modal.getOrCreateInstance(
+                elemento
+            );
+
+
+        modal.show();
+
+    }
+);
+
+
+/*=========================================================*
+ *=              MODIFICAR INFORMACIÓN
+ *=========================================================*/
+
+$(document).on(
+    "click",
+    "#btnModificarInformacion",
+    function () {
+
+        if (!viajeSeleccionado) {
+
+            alert(
+                "No se ha seleccionado ningún viaje."
+            );
+
+            return;
+
+        }
+
+
+        cerrarModalAcciones();
+
+
+        cargarViajeParaEditar(
+            viajeSeleccionado
+        );
+
+    }
+);
+
+
+/*=========================================================*
+ *=              CERRAR MODAL ACCIONES
+ *=========================================================*/
+
+function cerrarModalAcciones() {
+
+    const elemento =
+        document.getElementById(
+            "modalAccionesViaje"
+        );
+
+
+    if (!elemento) {
+
+        return;
+
+    }
+
+
+    const modal =
+        bootstrap.Modal.getInstance(
+            elemento
+        );
+
+
+    if (modal) {
+
+        modal.hide();
+
+    }
+
+}
+
+
+/*=========================================================*
+ *=             OBTENER VIAJE PARA EDITAR
+ *=========================================================*/
+
+function cargarViajeParaEditar(id) {
+
+    $.ajax({
+
+        url: URL_VIAJES,
+
+        type: "GET",
+
+        dataType: "json",
+
+        success: function (viajes) {
+
+            if (!Array.isArray(viajes)) {
+
+                alert(
+                    "El servidor no devolvió una lista válida de viajes."
+                );
+
+                return;
+
+            }
+
+
+            const viaje =
+                viajes.find(function (item) {
+
+                    return String(item.id) ===
+                        String(id);
+
+                });
+
+
+            if (!viaje) {
+
+                alert(
+                    "No se encontró el viaje seleccionado."
+                );
+
+                return;
+
+            }
+
+
+            cargarDatosViajeEnFormulario(
+                viaje
+            );
+
+        },
+
+        error: function (xhr) {
+
+            console.error(
+                "Error obteniendo viaje:",
+                xhr.status,
+                xhr.responseText
+            );
+
+
+            alert(
+                "No se pudo obtener la información del viaje."
+            );
+
+        }
+
+    });
+
+}
+
+
+/*=========================================================*
+ *=            CARGAR DATOS FORMULARIO
+ *=========================================================*/
+
+function cargarDatosViajeEnFormulario(viaje) {
+
+    console.log(
+        "Viaje seleccionado para editar:",
+        viaje
+    );
+
+
+    /*=====================================================
+     =                     FECHA
+     =====================================================*/
+
+    let fecha =
+        viaje.fecha || "";
+
+
+    if (
+        fecha &&
+        String(fecha).includes("T")
+    ) {
+
+        fecha =
+            String(fecha).substring(0, 10);
+
+    }
+
+
+    $("#fecha").val(fecha);
+
+
+    /*=====================================================
+     =                   CONDUCTOR
+     =====================================================*/
+
+    const conductorViaje =
+        String(
+            viaje.conductor || ""
+        )
+            .trim()
+            .toUpperCase();
+
+
+    let conductorEncontrado =
+        false;
+
+
+    $("#conductor option").each(
+        function () {
+
+            const texto =
+                $(this)
+                    .text()
+                    .trim()
+                    .toUpperCase();
+
+
+            if (
+                texto === conductorViaje
+            ) {
+
+                $("#conductor")
+                    .val(
+                        $(this).val()
+                    );
+
+
+                conductorEncontrado =
+                    true;
+
+
+                return false;
+
+            }
+
+        }
+    );
+
+
+    if (!conductorEncontrado) {
+
+        console.warn(
+            "No se encontró el conductor:",
+            viaje.conductor
+        );
+
+    }
+
+
+    /*=====================================================
+     =                      PLACA
+     =====================================================*/
+
+    $("#placa").val(
+        viaje.placa || ""
+    );
+
+
+    /*=====================================================
+     =                     FURGÓN
+     =====================================================*/
+
+    $("#furgon").val(
+        viaje.furgon || ""
+    );
+
+
+    /*=====================================================
+     =                     ORIGEN
+     =====================================================*/
+
+    $("#origen").val(
+        viaje.origen || ""
+    );
+
+
+    /*=====================================================
+     =                    DESTINO
+     =====================================================*/
+
+    $("#destino").val(
+        viaje.destino || ""
+    );
+
+
+    /*=====================================================
+     =                   HORA SALIDA
+     =====================================================*/
+
+    $("#salida").val(
+        obtenerHora(
+            viaje.salida
+        )
+    );
+
+
+    /*=====================================================
+     =                  HORA LLEGADA
+     =====================================================*/
+
+    $("#llegada").val(
+        obtenerHora(
+            viaje.llegada
+        )
+    );
+
+
+    /*=====================================================
+     =                    TIEMPO ODT
+     =====================================================*/
+
+    const tiempoMaximo =
+        viaje.tiempoMaximo ??
+        viaje.tiempo_maximo ??
+        viaje.odt ??
+        "";
+
+
+    $("#tiempo_maximo").val(
+        convertirTiempoParaInput(
+            tiempoMaximo
+        )
+    );
+
+
+    /*=====================================================
+     =                       ID
+     =====================================================*/
+
+    $("#formNuevoViaje").data(
+        "id",
+        viaje.id
+    );
+
+
+    /*=====================================================
+     =                      NOTAS
+     =====================================================*/
+
+    $("#formNuevoViaje").data(
+        "notas",
+        viaje.notas || ""
+    );
+
+
+    /*=====================================================
+     =                     TÍTULO
+     =====================================================*/
+
+    $("#modalNuevoViaje .modal-title")
+        .html(`
+            <i class="bi bi-pencil-square"></i>
+            Modificar Viaje
+        `);
+
+
+    /*=====================================================
+     =                     BOTÓN
+     =====================================================*/
+
+    $("#formNuevoViaje button[type='submit']")
+        .html(`
+            <i class="bi bi-save"></i>
+            Actualizar Viaje
+        `);
+
+
+    /*=====================================================
+     =                  ABRIR MODAL
+     =====================================================*/
+
+    const elemento =
+        document.getElementById(
+            "modalNuevoViaje"
+        );
+
+
+    if (!elemento) {
+
+        alert(
+            "No existe el modalNuevoViaje."
+        );
+
+        return;
+
+    }
+
+
+    const modal =
+        bootstrap.Modal.getOrCreateInstance(
+            elemento
+        );
+
+
+    modal.show();
+
+}
+
+
+/*=========================================================*
+ *=                 CONVERTIR TIEMPO INPUT
+ *=========================================================*/
+
+function convertirTiempoParaInput(valor) {
+
+    if (
+        valor === null ||
+        valor === undefined ||
+        valor === ""
+    ) {
+
+        return "";
+
+    }
+
+
+    /*
+     * Si viene como:
+     *
+     * 02:30
+     *
+     * lo dejamos igual.
+     */
+
+    if (
+        String(valor).includes(":")
+    ) {
+
+        return String(valor).substring(0, 5);
+
+    }
+
+
+    /*
+     * Si viene como número de minutos:
+     *
+     * 150
+     *
+     * lo convertimos a:
+     *
+     * 02:30
+     */
+
+    const minutos =
+        parseInt(valor);
+
+
+    if (!isNaN(minutos)) {
+
+        const horas =
+            Math.floor(minutos / 60);
+
+
+        const mins =
+            minutos % 60;
+
+
+        return (
+
+            String(horas).padStart(2, "0") +
+            ":" +
+            String(mins).padStart(2, "0")
+
+        );
+
+    }
+
+
+    return String(valor);
+
+}
+
+
+/*=========================================================*
+ *=                    OBTENER HORA
+ *=========================================================*/
+
+function obtenerHora(valor) {
+
+    if (!valor) {
+
+        return "";
+
+    }
+
+
+    const texto =
+        String(valor);
+
+
+    if (
+        texto.includes("T")
+    ) {
+
+        const hora =
+            texto.split("T")[1];
+
+
+        return hora
+            ? hora.substring(0, 5)
+            : "";
+
+    }
+
+
+    if (
+        texto.includes(":")
+    ) {
+
+        return texto.substring(
+            0,
+            5
+        );
+
+    }
+
+
+    return texto;
+
+}
+
+
+/*=========================================================*
+ *=             FORMULARIO NUEVO / EDITAR
+ *=========================================================*/
 
 $("#formNuevoViaje").on(
     "submit",
@@ -885,8 +1869,8 @@ $("#formNuevoViaje").on(
 
 
         /*=================================================
-        =            VALIDAR CAMPOS
-        =================================================*/
+         =                    VALIDACIÓN
+         =================================================*/
 
         if (
 
@@ -894,7 +1878,7 @@ $("#formNuevoViaje").on(
 
             $("#conductor").val() === "" ||
 
-            $("#placa").val() === "" ||
+            $("#placa").val().trim() === "" ||
 
             $("#furgon").val() === "" ||
 
@@ -918,8 +1902,8 @@ $("#formNuevoViaje").on(
 
 
         /*=================================================
-        =            CALCULOS
-        =================================================*/
+         =                   CÁLCULOS
+         =================================================*/
 
         const tiempoReal =
             calcularTiempoReal(
@@ -943,34 +1927,55 @@ $("#formNuevoViaje").on(
 
         const estadoODT =
             obtenerEstadoODT(
-
                 tiempoExcedido
-
             );
 
 
         const estadoFurgon =
             obtenerEstadoFurgon(
-
                 $("#furgon").val()
-
             );
 
 
         /*=================================================
-        =            OBJETO
-        =================================================*/
+         =                       ID
+         =================================================*/
+
+        const idViaje =
+            $("#formNuevoViaje")
+                .data("id");
+
+
+        /*=================================================
+         =                      NOTAS
+         =================================================*/
+
+        const notasExistentes =
+            $("#formNuevoViaje")
+                .data("notas") || "";
+
+
+        /*=================================================
+         =                     VIAJE
+         =================================================*/
 
         const viaje = {
+
+            id:
+                idViaje || null,
 
             fecha:
                 $("#fecha").val(),
 
             conductor:
-                $("#conductor option:selected").text().trim(),
+                $("#conductor option:selected")
+                    .text()
+                    .trim(),
 
             placa:
-                $("#placa").val(),
+                $("#placa")
+                    .val()
+                    .trim(),
 
             furgon:
                 $("#furgon").val(),
@@ -979,7 +1984,9 @@ $("#formNuevoViaje").on(
                 estadoFurgon,
 
             origen:
-                $("#origen").val(),
+                $("#origen")
+                    .val()
+                    .trim(),
 
             destino:
                 $("#destino").val(),
@@ -1006,20 +2013,76 @@ $("#formNuevoViaje").on(
                 tiempoExcedido,
 
             estado:
-                estadoODT
+                estadoODT,
+
+            notas:
+                notasExistentes
 
         };
 
 
         /*=================================================
-        =            GUARDAR
-        =================================================*/
+         =                  URL / MÉTODO
+         =================================================*/
+
+        let url =
+            URL_GUARDAR_VIAJE;
+
+
+        let metodo =
+            "POST";
+
+
+        if (idViaje) {
+
+            url =
+                "/viajes/actualizar/" +
+                idViaje;
+
+
+            metodo =
+                "PUT";
+
+        }
+
+
+        console.log(
+            "========================================"
+        );
+
+        console.log(
+            "GUARDANDO VIAJE"
+        );
+
+        console.log(
+            "URL:",
+            url
+        );
+
+        console.log(
+            "Método:",
+            metodo
+        );
+
+        console.log(
+            "Datos:",
+            viaje
+        );
+
+        console.log(
+            "========================================"
+        );
+
+
+        /*=================================================
+         =                     AJAX
+         =================================================*/
 
         $.ajax({
 
-            url: "/viajes/guardar",
+            url: url,
 
-            type: "POST",
+            type: metodo,
 
             contentType:
                 "application/json",
@@ -1030,52 +2093,153 @@ $("#formNuevoViaje").on(
             success:
                 function (response) {
 
-                    agregarFila(response);
-
-                    actualizarDashboard();
-
-
-                    /*=====================================
-                    =            CERRAR MODAL
-                    =====================================*/
-
-                    bootstrap.Modal
-                        .getInstance(
-                            document.getElementById(
-                                "modalNuevoViaje"
-                            )
-                        )
-                        .hide();
+                    console.log(
+                        "Respuesta servidor:",
+                        response
+                    );
 
 
-                    /*=====================================
-                    =            LIMPIAR FORMULARIO
-                    =====================================*/
+                    const elemento =
+                        document.getElementById(
+                            "modalNuevoViaje"
+                        );
+
+
+                    const modal =
+                        bootstrap.Modal.getInstance(
+                            elemento
+                        );
+
+
+                    if (modal) {
+
+                        modal.hide();
+
+                    }
+
 
                     $("#formNuevoViaje")[0]
                         .reset();
+
+
+                    $("#formNuevoViaje")
+                        .removeData("id");
+
+
+                    $("#formNuevoViaje")
+                        .removeData("notas");
+
 
                     $("#tiempo_maximo")
                         .val("");
 
 
-                    /*=====================================
-                    =            RECARGAR FILTROS
-                    =====================================*/
+                    $("#modalNuevoViaje .modal-title")
+                        .html(`
+                            <i class="bi bi-truck"></i>
+                            Registrar Nuevo Viaje
+                        `);
+
+
+                    $("#formNuevoViaje button[type='submit']")
+                        .html(`
+                            <i class="bi bi-save"></i>
+                            Guardar Viaje
+                        `);
+
+
+                    viajeSeleccionado =
+                        null;
+
+
+                    cargarViajes();
+
 
                     cargarFiltrosAuditoria();
 
+
+                    setTimeout(
+                        function () {
+
+                            actualizarDashboard();
+
+                        },
+                        300
+                    );
+
+
+                    alert(
+
+                        idViaje
+
+                            ? "Viaje actualizado correctamente."
+
+                            : "Viaje guardado correctamente."
+
+                    );
+
                 },
+
 
             error:
                 function (xhr) {
 
-                    console.log(
+                    console.error(
+                        "ERROR GUARDANDO VIAJE"
+                    );
+
+                    console.error(
+                        "Status:",
+                        xhr.status
+                    );
+
+                    console.error(
+                        "Respuesta:",
                         xhr.responseText
                     );
 
+
+                    let mensaje =
+                        "Error al guardar el viaje.";
+
+
+                    try {
+
+                        const respuesta =
+                            JSON.parse(
+                                xhr.responseText
+                            );
+
+
+                        if (
+                            respuesta.message
+                        ) {
+
+                            mensaje =
+                                respuesta.message;
+
+                        }
+                        else if (
+                            respuesta.mensaje
+                        ) {
+
+                            mensaje =
+                                respuesta.mensaje;
+
+                        }
+
+                    }
+                    catch (error) {
+
+                        console.warn(
+                            "La respuesta no es JSON."
+                        );
+
+                    }
+
+
                     alert(
-                        "Error al guardar."
+                        mensaje
                     );
 
                 }
@@ -1086,9 +2250,901 @@ $("#formNuevoViaje").on(
 );
 
 
-/*=========================================================
-=            AGREGAR FILA
-=========================================================*/
+/*=========================================================*
+ *=                ABRIR MODAL NOTA
+ *=========================================================*/
+
+function abrirModalNota(modificar) {
+
+    if (!viajeSeleccionado) {
+
+        alert(
+            "No se ha seleccionado ningún viaje."
+        );
+
+        return;
+
+    }
+
+
+    $.ajax({
+
+        url: URL_VIAJES,
+
+        type: "GET",
+
+        dataType: "json",
+
+        success: function (viajes) {
+
+            if (!Array.isArray(viajes)) {
+
+                alert(
+                    "No se pudo obtener la información de los viajes."
+                );
+
+                return;
+
+            }
+
+
+            const viaje =
+                viajes.find(function (item) {
+
+                    return String(item.id) ===
+                        String(viajeSeleccionado);
+
+                });
+
+
+            if (!viaje) {
+
+                alert(
+                    "No se encontró el viaje seleccionado."
+                );
+
+                return;
+
+            }
+
+
+            $("#idViajeNota")
+                .val(viaje.id);
+
+
+            $("#txtNotaViaje")
+                .val(viaje.notas || "");
+
+
+            if (modificar) {
+
+                $("#tituloModalNota")
+                    .html(`
+                        <i class="bi bi-pencil-square"></i>
+                        Modificar nota del viaje
+                    `);
+
+            } else {
+
+                $("#tituloModalNota")
+                    .html(`
+                        <i class="bi bi-sticky"></i>
+                        Agregar nota al viaje
+                    `);
+
+            }
+
+
+            cerrarModalAcciones();
+
+
+            const elemento =
+                document.getElementById(
+                    "modalNotaViaje"
+                );
+
+
+            if (!elemento) {
+
+                alert(
+                    "No existe el modalNotaViaje."
+                );
+
+                return;
+
+            }
+
+
+            const modal =
+                bootstrap.Modal.getOrCreateInstance(
+                    elemento
+                );
+
+
+            modal.show();
+
+        },
+
+        error: function (xhr) {
+
+            console.error(
+                "Error obteniendo viaje para nota:",
+                xhr.status,
+                xhr.responseText
+            );
+
+
+            alert(
+                "No se pudo cargar la información del viaje."
+            );
+
+        }
+
+    });
+
+}
+
+
+/*=========================================================*
+ *=                   GUARDAR NOTA
+ *=========================================================*/
+
+function guardarNotaViaje() {
+
+    const idViaje =
+        $("#idViajeNota").val();
+
+
+    const nota =
+        $("#txtNotaViaje")
+            .val()
+            .trim();
+
+
+    if (!idViaje) {
+
+        alert(
+            "No se encontró el ID del viaje."
+        );
+
+        return;
+
+    }
+
+
+    if (!nota) {
+
+        alert(
+            "Debe escribir una nota."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Primero obtenemos el viaje completo.
+     */
+
+    $.ajax({
+
+        url: URL_VIAJES,
+
+        type: "GET",
+
+        dataType: "json",
+
+        success: function (viajes) {
+
+            if (!Array.isArray(viajes)) {
+
+                alert(
+                    "El servidor no devolvió una lista válida."
+                );
+
+                return;
+
+            }
+
+
+            const viaje =
+                viajes.find(function (item) {
+
+                    return String(item.id) ===
+                        String(idViaje);
+
+                });
+
+
+            if (!viaje) {
+
+                alert(
+                    "No se encontró el viaje."
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * Actualizamos solamente la nota.
+             */
+
+            viaje.notas =
+                nota;
+
+
+            console.log(
+                "Guardando nota:",
+                viaje
+            );
+
+
+            $.ajax({
+
+                url:
+                    "/viajes/actualizar/" +
+                    idViaje,
+
+                type:
+                    "PUT",
+
+                contentType:
+                    "application/json",
+
+                data:
+                    JSON.stringify(viaje),
+
+                success:
+                    function (response) {
+
+                        console.log(
+                            "Nota guardada:",
+                            response
+                        );
+
+
+                        const elemento =
+                            document.getElementById(
+                                "modalNotaViaje"
+                            );
+
+
+                        const modal =
+                            bootstrap.Modal.getInstance(
+                                elemento
+                            );
+
+
+                        if (modal) {
+
+                            modal.hide();
+
+                        }
+
+
+                        $("#formNotaViaje")[0]
+                            .reset();
+
+
+                        $("#idViajeNota")
+                            .val("");
+
+
+                        cargarViajes();
+
+
+                        alert(
+                            "Nota guardada correctamente."
+                        );
+
+                    },
+
+
+                error:
+                    function (xhr) {
+
+                        console.error(
+                            "Error guardando nota:",
+                            xhr.status,
+                            xhr.responseText
+                        );
+
+
+                        let mensaje =
+                            "No se pudo guardar la nota.";
+
+
+                        try {
+
+                            const respuesta =
+                                JSON.parse(
+                                    xhr.responseText
+                                );
+
+
+                            if (
+                                respuesta.message
+                            ) {
+
+                                mensaje =
+                                    respuesta.message;
+
+                            }
+                            else if (
+                                respuesta.mensaje
+                            ) {
+
+                                mensaje =
+                                    respuesta.mensaje;
+
+                            }
+
+                        }
+                        catch (error) {
+
+                            console.warn(
+                                "Respuesta no JSON."
+                            );
+
+                        }
+
+
+                        alert(
+                            mensaje
+                        );
+
+                    }
+
+            });
+
+        },
+
+        error: function (xhr) {
+
+            console.error(
+                "Error obteniendo viaje:",
+                xhr.status,
+                xhr.responseText
+            );
+
+
+            alert(
+                "No se pudo obtener la información actual del viaje."
+            );
+
+        }
+
+    });
+
+}
+
+
+/*=========================================================*
+ *=                  VER NOTAS DEL VIAJE
+ *=========================================================*/
+
+function verNotasViaje(id) {
+
+    $.ajax({
+
+        url: URL_VIAJES,
+
+        type: "GET",
+
+        dataType: "json",
+
+        success: function (viajes) {
+
+            if (!Array.isArray(viajes)) {
+
+                alert(
+                    "No se pudieron cargar las notas."
+                );
+
+                return;
+
+            }
+
+
+            const viaje =
+                viajes.find(function (item) {
+
+                    return String(item.id) ===
+                        String(id);
+
+                });
+
+
+            if (!viaje) {
+
+                alert(
+                    "No se encontró el viaje."
+                );
+
+                return;
+
+            }
+
+
+            mostrarModalNotas(viaje);
+
+        },
+
+        error: function (xhr) {
+
+            console.error(
+                "Error cargando notas:",
+                xhr.status,
+                xhr.responseText
+            );
+
+
+            alert(
+                "No se pudieron cargar las notas."
+            );
+
+        }
+
+    });
+
+}
+
+
+/*=========================================================*
+ *=                 MODAL VISUALIZAR NOTAS
+ *=========================================================*/
+
+function mostrarModalNotas(viaje) {
+
+    /*
+     * Eliminamos modal anterior.
+     */
+
+    $("#modalVisualizarNotas").remove();
+
+
+    const nota =
+        viaje.notas || "";
+
+
+    const conductor =
+        viaje.conductor || "Sin conductor";
+
+
+    const destino =
+        viaje.destino || "Sin destino";
+
+
+    const fecha =
+        viaje.fecha || "";
+
+
+    const modalHTML = `
+
+        <div
+            class="modal fade"
+            id="modalVisualizarNotas"
+            tabindex="-1"
+            aria-hidden="true">
+
+            <div
+                class="modal-dialog modal-dialog-centered modal-lg">
+
+                <div
+                    class="modal-content border-0 shadow-lg">
+
+                    <div
+                        class="modal-header bg-dark text-white">
+
+                        <div>
+
+                            <h5
+                                class="modal-title mb-1">
+
+                                <i
+                                    class="bi bi-journal-text me-2">
+                                </i>
+
+                                Notas del viaje
+
+                            </h5>
+
+                            <small
+                                class="text-white-50">
+
+                                ${escapeHtml(conductor)}
+
+                            </small>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal">
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="modal-body p-4">
+
+                        <div
+                            class="row g-3 mb-4">
+
+                            <div class="col-md-4">
+
+                                <div
+                                    class="bg-light rounded p-3">
+
+                                    <small
+                                        class="text-muted">
+
+                                        <i
+                                            class="bi bi-calendar3 me-1">
+                                        </i>
+
+                                        Fecha
+
+                                    </small>
+
+                                    <div
+                                        class="fw-semibold">
+
+                                        ${escapeHtml(fecha)}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-4">
+
+                                <div
+                                    class="bg-light rounded p-3">
+
+                                    <small
+                                        class="text-muted">
+
+                                        <i
+                                            class="bi bi-person me-1">
+                                        </i>
+
+                                        Conductor
+
+                                    </small>
+
+                                    <div
+                                        class="fw-semibold">
+
+                                        ${escapeHtml(conductor)}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-4">
+
+                                <div
+                                    class="bg-light rounded p-3">
+
+                                    <small
+                                        class="text-muted">
+
+                                        <i
+                                            class="bi bi-geo-alt me-1">
+                                        </i>
+
+                                        Destino
+
+                                    </small>
+
+                                    <div
+                                        class="fw-semibold">
+
+                                        ${escapeHtml(destino)}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            class="border rounded-3 p-4">
+
+                            <div
+                                class="d-flex align-items-center mb-3">
+
+                                <i
+                                    class="bi bi-sticky-fill fs-4 text-warning me-2">
+                                </i>
+
+                                <h6
+                                    class="mb-0">
+
+                                    Nota registrada
+
+                                </h6>
+
+                            </div>
+
+
+                            <div
+                                class="p-3 bg-light rounded">
+
+                                ${
+                                    nota
+                                        ? escapeHtml(nota)
+                                        : `
+                                            <span
+                                                class="text-muted">
+
+                                                Este viaje no tiene
+                                                ninguna nota registrada.
+
+                                            </span>
+                                        `
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+
+                            <i
+                                class="bi bi-x-lg me-1">
+                            </i>
+
+                            Cerrar
+
+                        </button>
+
+
+                        ${
+                            nota
+                            ? `
+
+                                <button
+                                    type="button"
+                                    class="btn btn-danger"
+                                    onclick="eliminarNota(${viaje.id})">
+
+                                    <i
+                                        class="bi bi-trash me-1">
+                                    </i>
+
+                                    Eliminar nota
+
+                                </button>
+
+                              `
+                            : ""
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    $("body").append(
+        modalHTML
+    );
+
+
+    const elemento =
+        document.getElementById(
+            "modalVisualizarNotas"
+        );
+
+
+    const modal =
+        bootstrap.Modal.getOrCreateInstance(
+            elemento
+        );
+
+
+    modal.show();
+
+
+    $(elemento).on(
+        "hidden.bs.modal",
+        function () {
+
+            $(this).remove();
+
+        }
+    );
+
+}
+
+
+/*=========================================================*
+ *=                    ELIMINAR NOTA
+ *=========================================================*/
+
+function eliminarNota(id) {
+
+    if (
+        !confirm(
+            "¿Está seguro de eliminar esta nota?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * Primero obtenemos el viaje completo.
+     */
+
+    $.ajax({
+
+        url: URL_VIAJES,
+
+        type: "GET",
+
+        dataType: "json",
+
+        success: function (viajes) {
+
+            if (!Array.isArray(viajes)) {
+
+                alert(
+                    "No se pudo obtener el viaje."
+                );
+
+                return;
+
+            }
+
+
+            const viaje =
+                viajes.find(function (item) {
+
+                    return String(item.id) ===
+                        String(id);
+
+                });
+
+
+            if (!viaje) {
+
+                alert(
+                    "No se encontró el viaje."
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * Eliminamos la nota.
+             */
+
+            viaje.notas = "";
+
+
+            $.ajax({
+
+                url:
+                    "/viajes/actualizar/" +
+                    id,
+
+                type:
+                    "PUT",
+
+                contentType:
+                    "application/json",
+
+                data:
+                    JSON.stringify(viaje),
+
+                success:
+                    function () {
+
+                        const elemento =
+                            document.getElementById(
+                                "modalVisualizarNotas"
+                            );
+
+
+                        const modal =
+                            bootstrap.Modal.getInstance(
+                                elemento
+                            );
+
+
+                        if (modal) {
+
+                            modal.hide();
+
+                        }
+
+
+                        cargarViajes();
+
+
+                        alert(
+                            "Nota eliminada correctamente."
+                        );
+
+                    },
+
+                error:
+                    function (xhr) {
+
+                        console.error(
+                            "Error eliminando nota:",
+                            xhr.status,
+                            xhr.responseText
+                        );
+
+
+                        alert(
+                            "No se pudo eliminar la nota."
+                        );
+
+                    }
+
+            });
+
+        },
+
+        error: function (xhr) {
+
+            console.error(
+                "Error obteniendo viaje:",
+                xhr.responseText
+            );
+
+
+            alert(
+                "No se pudo obtener el viaje."
+            );
+
+        }
+
+    });
+
+}
+
+
+/*=========================================================*
+ *=                    AGREGAR FILA
+ *=========================================================*/
 
 function agregarFila(viaje) {
 
@@ -1096,29 +3152,23 @@ function agregarFila(viaje) {
         $("#tblViajes").DataTable();
 
 
-    /*=====================================================
-    =            FORMATEAR HORA SALIDA
-    =====================================================*/
+    console.log(
+        "Agregando viaje a tabla:",
+        viaje
+    );
+
 
     const horaSalida =
-        viaje.salida
-            ? viaje.salida.substring(11, 16)
-            : "";
+        obtenerHora(
+            viaje.salida
+        );
 
-
-    /*=====================================================
-    =            FORMATEAR HORA LLEGADA
-    =====================================================*/
 
     const horaLlegada =
-        viaje.llegada
-            ? viaje.llegada.substring(11, 16)
-            : "";
+        obtenerHora(
+            viaje.llegada
+        );
 
-
-    /*=====================================================
-    =            TIEMPO REAL
-    =====================================================*/
 
     const tiempoReal =
         calcularTiempoReal(
@@ -1127,80 +3177,196 @@ function agregarFila(viaje) {
         );
 
 
-    /*=====================================================
-    =            TIEMPO MAXIMO
-    =====================================================*/
-
     let tiempoMaximo =
         viaje.tiempoMaximo;
 
 
     if (
         tiempoMaximo === null ||
-        tiempoMaximo === undefined
+        tiempoMaximo === undefined ||
+        tiempoMaximo === ""
     ) {
 
         tiempoMaximo =
-            horaAMinutos(viaje.odt);
+            horaAMinutos(
+                viaje.odt
+            );
 
     }
 
 
-    /*=====================================================
-    =            TIEMPO EXCEDIDO
-    =====================================================*/
+    /*
+     * IMPORTANTE:
+     *
+     * Si tiempoMaximo viene como "02:30"
+     * lo convertimos a minutos.
+     */
+
+    if (
+        typeof tiempoMaximo === "string" &&
+        tiempoMaximo.includes(":")
+    ) {
+
+        tiempoMaximo =
+            horaAMinutos(
+                tiempoMaximo
+            );
+
+    }
+
 
     const tiempoExcedido =
+
         viaje.tiempoExcedido !== null &&
         viaje.tiempoExcedido !== undefined
-            ? viaje.tiempoExcedido
-            : calcularTiempoExcedido(
+
+            ?
+
+            parseInt(
+                viaje.tiempoExcedido
+            ) || 0
+
+            :
+
+            calcularTiempoExcedido(
                 tiempoReal,
                 viaje.odt
             );
 
 
-    /*=====================================================
-    =            ESTADO ODT
-    =====================================================*/
-
     const estado =
-        viaje.estado ||
-        obtenerEstadoODT(
-            tiempoExcedido
-        );
+        String(
+            viaje.estado ||
+            obtenerEstadoODT(
+                tiempoExcedido
+            )
+        )
+            .toUpperCase();
 
-
-    /*=====================================================
-    =            ESTADO FURGON
-    =====================================================*/
 
     const estadoFurgon =
-        viaje.estadoFurgon ||
-        obtenerEstadoFurgon(
-            viaje.furgon
-        );
+        String(
+            viaje.estadoFurgon ||
+            obtenerEstadoFurgon(
+                viaje.furgon
+            )
+        )
+            .toUpperCase();
+
+
+    const tieneNota =
+        viaje.notas &&
+        String(viaje.notas).trim() !== "";
 
 
     /*=====================================================
-    =            AGREGAR FILA
-    =====================================================*/
+     =                BOTÓN DE NOTAS
+     =====================================================*/
+
+    const botonNota = tieneNota
+
+        ?
+
+        `
+
+            <button
+                type="button"
+                class="btn btn-info btn-sm btn-ver-notas"
+                data-id="${escapeHtml(viaje.id)}"
+                title="Ver notas">
+
+                <i class="bi bi-eye"></i>
+
+            </button>
+
+        `
+
+        :
+
+        `
+
+            <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                disabled
+                title="Este viaje no tiene notas">
+
+                <i class="bi bi-eye-slash"></i>
+
+            </button>
+
+        `;
+
+
+    /*=====================================================
+     =                    BOTONES
+     =====================================================*/
+
+    const botones = `
+
+        <div
+            class="d-flex gap-1 justify-content-center">
+
+            ${botonNota}
+
+
+            <button
+                type="button"
+                class="btn btn-warning btn-sm btn-editar-viaje"
+                data-id="${escapeHtml(viaje.id)}"
+                title="Editar viaje">
+
+                <i class="bi bi-pencil"></i>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                onclick="eliminarViaje(${Number(viaje.id)})"
+                title="Eliminar viaje">
+
+                <i class="bi bi-trash"></i>
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    /*=====================================================
+     =                   AGREGAR FILA
+     =====================================================*/
 
     tabla.row.add([
 
         tabla.rows().count() + 1,
 
-        viaje.fecha,
+        escapeHtml(
+            viaje.fecha || ""
+        ),
 
-        viaje.conductor,
+        escapeHtml(
+            viaje.conductor || ""
+        ),
 
-        viaje.placa,
+        escapeHtml(
+            viaje.placa || ""
+        ),
 
-        viaje.furgon,
+        escapeHtml(
+            viaje.furgon || ""
+        ),
 
-        viaje.origen,
+        escapeHtml(
+            viaje.origen || ""
+        ),
 
-        viaje.destino,
+        escapeHtml(
+            viaje.destino || ""
+        ),
 
         horaSalida,
 
@@ -1214,19 +3380,20 @@ function agregarFila(viaje) {
             tiempoMaximo
         ),
 
-        tiempoExcedido == 0
+        tiempoExcedido === 0
 
             ?
 
-            "<span class='text-success'>0 min</span>"
+            "<span class='text-success fw-semibold'>0 min</span>"
 
             :
 
-            "<span class='text-danger'>+" +
+            "<span class='text-danger fw-semibold'>+" +
             tiempoExcedido +
             " min</span>",
 
-        estado == "CUMPLIDO"
+
+        estado === "CUMPLIDO"
 
             ?
 
@@ -1236,7 +3403,8 @@ function agregarFila(viaje) {
 
             "<span class='badge bg-danger'>INCUMPLIDO</span>",
 
-        estadoFurgon == "CUMPLIDO"
+
+        estadoFurgon === "CUMPLIDO"
 
             ?
 
@@ -1246,53 +3414,40 @@ function agregarFila(viaje) {
 
             "<span class='badge bg-danger'>INCUMPLIDO</span>",
 
-        `
-        <button
-            class="btn btn-warning btn-sm"
-            title="Editar">
 
-            <i class="bi bi-pencil"></i>
+        botones
 
-        </button>
-
-        <button
-            class="btn btn-danger btn-sm"
-            onclick="eliminarViaje(${viaje.id})"
-            title="Eliminar">
-
-            <i class="bi bi-trash"></i>
-
-        </button>
-        `
-
-    ]).draw(false);
+    ]);
 
 }
 
 
-/*=========================================================
-=                    DASHBOARD
-=========================================================*/
+/*=========================================================*
+ *=                 ACTUALIZAR DASHBOARD
+ *=========================================================*/
 
 function actualizarDashboard() {
+
+    if (
+        !$.fn.DataTable.isDataTable(
+            "#tblViajes"
+        )
+    ) {
+
+        return;
+
+    }
+
 
     const tabla =
         $("#tblViajes").DataTable();
 
-
-    /*=====================================================
-    =            SOLO FILAS FILTRADAS
-    =====================================================*/
 
     const filasFiltradas =
         tabla.rows({
             search: "applied"
         });
 
-
-    /*=====================================================
-    =            TOTAL DE VIAJES
-    =====================================================*/
 
     const total =
         filasFiltradas.count();
@@ -1307,19 +3462,11 @@ function actualizarDashboard() {
     let furgonIncumplidos = 0;
 
 
-    /*=====================================================
-    =            RECORRER FILAS FILTRADAS
-    =====================================================*/
-
     filasFiltradas.every(function () {
 
         const fila =
             this.data();
 
-
-        /*=================================================
-        =            ESTADO ODT
-        =================================================*/
 
         const estadoODT =
             $("<div>")
@@ -1337,7 +3484,8 @@ function actualizarDashboard() {
 
         }
 
-        else if (
+
+        if (
             estadoODT === "INCUMPLIDO"
         ) {
 
@@ -1345,10 +3493,6 @@ function actualizarDashboard() {
 
         }
 
-
-        /*=================================================
-        =            ESTADO FURGON
-        =================================================*/
 
         const estadoFurgon =
             $("<div>")
@@ -1366,7 +3510,8 @@ function actualizarDashboard() {
 
         }
 
-        else if (
+
+        if (
             estadoFurgon === "INCUMPLIDO"
         ) {
 
@@ -1377,73 +3522,65 @@ function actualizarDashboard() {
     });
 
 
-    /*=====================================================
-    =            ACTUALIZAR CARDS
-    =====================================================*/
-
     $("#lblTotalViajes")
         .text(total);
+
 
     $("#lblODTCumplidos")
         .text(odtCumplidos);
 
+
     $("#lblODTIncumplidos")
         .text(odtIncumplidos);
+
 
     $("#lblFurgonCumplidos")
         .text(furgonCumplidos);
 
+
     $("#lblFurgonIncumplidos")
         .text(furgonIncumplidos);
 
-
-    /*=====================================================
-    =            PORCENTAJE ODT
-    =====================================================*/
-
-    let porcentajeODT = 0;
 
     const totalODT =
         odtCumplidos +
         odtIncumplidos;
 
 
-    if (totalODT > 0) {
+    const porcentajeODT =
+        totalODT > 0
 
-        porcentajeODT =
+            ?
+
             (
                 odtCumplidos /
                 totalODT
-            ) * 100;
+            ) * 100
 
-    }
+            :
 
+            0;
 
-    /*=====================================================
-    =            PORCENTAJE FURGON
-    =====================================================*/
-
-    let porcentajeFurgon = 0;
 
     const totalFurgon =
         furgonCumplidos +
         furgonIncumplidos;
 
 
-    if (totalFurgon > 0) {
+    const porcentajeFurgon =
+        totalFurgon > 0
 
-        porcentajeFurgon =
+            ?
+
             (
                 furgonCumplidos /
                 totalFurgon
-            ) * 100;
+            ) * 100
 
-    }
+            :
 
+            0;
 
-    /*=====================================================
-    =            MOSTRAR PORCENTAJES
-    =====================================================*/
 
     $("#lblPorcentajeODT")
         .text(
@@ -1459,25 +3596,59 @@ function actualizarDashboard() {
         );
 
 
-    /*=====================================================
-    =            TOTAL REGISTROS
-    =====================================================*/
-
     $("#lblRegistros")
         .text(total);
 
 }
 
 
-/*=========================================================
-=            CARGAR VIAJES
-=========================================================*/
+/*=========================================================*
+ *=                   CARGAR VIAJES
+ *=========================================================*/
 
 function cargarViajes() {
 
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        "CARGANDO VIAJES..."
+    );
+
+    console.log(
+        "URL:",
+        URL_VIAJES
+    );
+
+
+    if (
+        !$("#tblViajes").length
+    ) {
+
+        console.error(
+            "No existe #tblViajes."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Nos aseguramos de que DataTable exista.
+     */
+
+    inicializarTabla();
+
+
+    const tabla =
+        $("#tblViajes").DataTable();
+
+
     $.ajax({
 
-        url: "/viajes/lista",
+        url: URL_VIAJES,
 
         type: "GET",
 
@@ -1486,50 +3657,104 @@ function cargarViajes() {
         success:
             function (viajes) {
 
-                const tabla =
-                    $("#tblViajes").DataTable();
+                console.log(
+                    "Respuesta /viajes/lista:",
+                    viajes
+                );
 
-
-                /*=========================================
-                =            LIMPIAR TABLA
-                =========================================*/
 
                 tabla.clear();
 
 
-                /*=========================================
-                =            AGREGAR VIAJES
-                =========================================*/
+                if (
+                    !Array.isArray(viajes)
+                ) {
+
+                    console.error(
+                        "El backend NO devolvió un Array."
+                    );
+
+                    console.error(
+                        "Respuesta recibida:",
+                        viajes
+                    );
+
+
+                    tabla.draw();
+
+
+                    actualizarDashboard();
+
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "Cantidad de viajes:",
+                    viajes.length
+                );
+
 
                 viajes.forEach(
                     function (viaje) {
 
-                        agregarFila(viaje);
+                        agregarFila(
+                            viaje
+                        );
 
                     }
                 );
 
 
-                /*=========================================
-                =            APLICAR FILTROS
-                =========================================*/
+                /*
+                 * Como paging está desactivado,
+                 * todos los registros se mostrarán
+                 * en una sola hoja.
+                 */
 
                 tabla.draw();
 
 
-                /*=========================================
-                =            DASHBOARD
-                =========================================*/
-
                 actualizarDashboard();
 
+
+                console.log(
+                    "Tabla cargada correctamente."
+                );
+
             },
+
 
         error:
             function (xhr) {
 
-                console.log(
+                console.error(
+                    "========================================"
+                );
+
+                console.error(
+                    "ERROR CARGANDO VIAJES"
+                );
+
+                console.error(
+                    "Status:",
+                    xhr.status
+                );
+
+                console.error(
+                    "Respuesta:",
                     xhr.responseText
+                );
+
+                console.error(
+                    "========================================"
+                );
+
+
+                alert(
+                    "No se pudieron cargar los viajes."
                 );
 
             }
@@ -1539,14 +3764,16 @@ function cargarViajes() {
 }
 
 
-/*=========================================================
-=            ELIMINAR VIAJE
-=========================================================*/
+/*=========================================================*
+ *=                   ELIMINAR VIAJE
+ *=========================================================*/
 
 function eliminarViaje(id) {
 
     if (
-        !confirm("¿Eliminar viaje?")
+        !confirm(
+            "¿Está seguro de eliminar este viaje?"
+        )
     ) {
 
         return;
@@ -1560,12 +3787,18 @@ function eliminarViaje(id) {
             "/viajes/eliminar/" +
             id,
 
-        type: "DELETE",
+        type:
+            "DELETE",
 
         success:
             function () {
 
                 cargarViajes();
+
+                cargarFiltrosAuditoria();
+
+                viajeSeleccionado =
+                    null;
 
             },
 
@@ -1573,8 +3806,11 @@ function eliminarViaje(id) {
             function (xhr) {
 
                 console.error(
+                    "Error eliminando:",
+                    xhr.status,
                     xhr.responseText
                 );
+
 
                 alert(
                     "No se pudo eliminar el viaje."
@@ -1592,6 +3828,7 @@ function eliminarViaje(id) {
  * =========================================================
  *
  * REQUISITOS:
+ *
  * - jsPDF
  * - jsPDF-AutoTable
  *
@@ -1630,7 +3867,7 @@ const PDF_VIAJES_CONFIG = {
  * FUNCIÓN PÚBLICA
  * ========================================================= */
 
-window.exportarAuditoriaPDF = function () {
+window.exportarAuditoriaPDF = async function () {
 
     try {
 
@@ -1691,11 +3928,18 @@ window.exportarAuditoriaPDF = function () {
 
 
         /* -------------------------------------------------
-         * OBTENER DATOS FILTRADOS
+         * OBTENER DATOS
+         *
+         * IMPORTANTE:
+         * Esta función es async porque consulta:
+         *
+         * GET /viajes/lista
+         *
+         * para obtener las notas.
          * ------------------------------------------------- */
 
         const datos =
-            obtenerDatosViajesPDF();
+            await obtenerDatosViajesPDF();
 
 
         if (
@@ -1765,7 +4009,35 @@ window.exportarAuditoriaPDF = function () {
 
 
         /* -------------------------------------------------
-         * PIE
+         * PÁGINA DE NOTAS
+         *
+         * SOLO SE CREA SI EXISTEN VIAJES CON NOTAS.
+         * ------------------------------------------------- */
+
+        const viajesConNotas =
+            obtenerViajesConNotasPDF(
+                datos,
+                filtros
+            );
+
+
+        if (
+            viajesConNotas.length > 0
+        ) {
+
+            doc.addPage();
+
+            dibujarNotasViajesPDF(
+                doc,
+                viajesConNotas,
+                filtros
+            );
+
+        }
+
+
+        /* -------------------------------------------------
+         * PIE DE PÁGINA
          * ------------------------------------------------- */
 
         agregarPiePaginasPDF(
@@ -1804,10 +4076,10 @@ window.exportarAuditoriaPDF = function () {
 
 
 /* =========================================================
- * OBTENER DATOS DE DATATABLE
+ * OBTENER DATOS DE DATATABLE + NOTAS DEL BACKEND
  * ========================================================= */
 
-function obtenerDatosViajesPDF() {
+async function obtenerDatosViajesPDF() {
 
     if (
         typeof $ === "undefined" ||
@@ -1835,113 +4107,502 @@ function obtenerDatosViajesPDF() {
         }).data();
 
 
+    /* -----------------------------------------------------
+     * OBTENER TODOS LOS VIAJES DESDE BACKEND
+     * ----------------------------------------------------- */
+
+    let viajesBackend = [];
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                "/viajes/lista"
+            );
+
+
+        if (
+            !respuesta.ok
+        ) {
+
+            throw new Error(
+                "No se pudieron obtener los viajes."
+            );
+
+        }
+
+
+        viajesBackend =
+            await respuesta.json();
+
+
+    } catch (error) {
+
+        console.error(
+            "Error obteniendo viajes desde /viajes/lista:",
+            error
+        );
+
+        alert(
+            "No se pudieron obtener las notas de los viajes."
+        );
+
+        return [];
+
+    }
+
+
+    /* -----------------------------------------------------
+     * CREAR MAPA DE VIAJES POR ID
+     * ----------------------------------------------------- */
+
+    const mapaViajes =
+        new Map();
+
+
+    viajesBackend.forEach(
+        function (viaje) {
+
+            if (
+                viaje &&
+                viaje.id !== null &&
+                viaje.id !== undefined
+            ) {
+
+                mapaViajes.set(
+                    String(viaje.id),
+                    viaje
+                );
+
+            }
+
+        }
+    );
+
+
     const resultado = [];
 
 
-    filas.each(function (fila) {
+    /* -----------------------------------------------------
+     * RECORRER DATATABLE
+     * ----------------------------------------------------- */
 
-        if (
-            !fila
-        ) {
+    filas.each(
+        function (fila) {
 
-            return;
+            if (
+                !fila
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !Array.isArray(fila)
+            ) {
+
+                return;
+
+            }
+
+
+            /* ---------------------------------------------
+             * BUSCAR ID REAL DEL VIAJE
+             * --------------------------------------------- */
+
+            let idViaje = null;
+
+
+            /*
+             * Primero intentamos obtenerlo desde:
+             *
+             * <tr data-id="123">
+             */
+
+            try {
+
+                const filaDOM =
+                    tabla
+                        .row(fila)
+                        .node();
+
+
+                if (
+                    filaDOM &&
+                    filaDOM.dataset &&
+                    filaDOM.dataset.id
+                ) {
+
+                    idViaje =
+                        filaDOM.dataset.id;
+
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "No se pudo obtener data-id de la fila.",
+                    error
+                );
+
+            }
+
+
+            /*
+             * Como respaldo:
+             *
+             * si la primera columna es realmente
+             * el ID, se utiliza.
+             */
+
+            if (
+                !idViaje
+            ) {
+
+                const posibleId =
+                    obtenerTextoPDF(
+                        fila[0]
+                    );
+
+
+                if (
+                    /^\d+$/.test(
+                        posibleId
+                    )
+                ) {
+
+                    idViaje =
+                        posibleId;
+
+                }
+
+            }
+
+
+            /* ---------------------------------------------
+             * OBTENER VIAJE COMPLETO
+             * --------------------------------------------- */
+
+            const viajeBackend =
+                idViaje
+                    ? mapaViajes.get(
+                        String(idViaje)
+                    )
+                    : null;
+
+
+            /* ---------------------------------------------
+             * OBTENER NOTA
+             * --------------------------------------------- */
+
+            const notas =
+                viajeBackend &&
+                viajeBackend.notas
+                    ? obtenerTextoPDF(
+                        viajeBackend.notas
+                    )
+                    : "";
+
+
+            /* ---------------------------------------------
+             * AGREGAR RESULTADO
+             * --------------------------------------------- */
+
+            resultado.push({
+
+                id:
+                    viajeBackend
+                        ? viajeBackend.id
+                        : idViaje,
+
+                numero:
+                    obtenerTextoPDF(
+                        fila[0]
+                    ),
+
+                fecha:
+                    obtenerTextoPDF(
+                        fila[1]
+                    ),
+
+                conductor:
+                    obtenerTextoPDF(
+                        fila[2]
+                    ),
+
+                placa:
+                    obtenerTextoPDF(
+                        fila[3]
+                    ),
+
+                furgon:
+                    obtenerTextoPDF(
+                        fila[4]
+                    ),
+
+                origen:
+                    obtenerTextoPDF(
+                        fila[5]
+                    ),
+
+                destino:
+                    obtenerTextoPDF(
+                        fila[6]
+                    ),
+
+                salida:
+                    obtenerTextoPDF(
+                        fila[7]
+                    ),
+
+                llegada:
+                    obtenerTextoPDF(
+                        fila[8]
+                    ),
+
+                tiempoReal:
+                    obtenerTextoPDF(
+                        fila[9]
+                    ),
+
+                tiempoMaximo:
+                    obtenerTextoPDF(
+                        fila[10]
+                    ),
+
+                tiempoExcedido:
+                    obtenerTextoPDF(
+                        fila[11]
+                    ),
+
+                estadoODT:
+                    obtenerTextoPDF(
+                        fila[12]
+                    ).toUpperCase(),
+
+                estadoFurgon:
+                    obtenerTextoPDF(
+                        fila[13]
+                    ).toUpperCase(),
+
+                /* -----------------------------------------
+                 * NUEVO
+                 * ----------------------------------------- */
+
+                notas:
+                    notas
+
+            });
 
         }
-
-
-        /*
-         * DataTables puede devolver arrays u objetos.
-         * Este reporte está preparado para el formato
-         * actual de columnas.
-         */
-
-        if (
-            !Array.isArray(fila)
-        ) {
-
-            return;
-
-        }
-
-
-        resultado.push({
-
-            numero:
-                obtenerTextoPDF(
-                    fila[0]
-                ),
-
-            fecha:
-                obtenerTextoPDF(
-                    fila[1]
-                ),
-
-            conductor:
-                obtenerTextoPDF(
-                    fila[2]
-                ),
-
-            placa:
-                obtenerTextoPDF(
-                    fila[3]
-                ),
-
-            furgon:
-                obtenerTextoPDF(
-                    fila[4]
-                ),
-
-            origen:
-                obtenerTextoPDF(
-                    fila[5]
-                ),
-
-            destino:
-                obtenerTextoPDF(
-                    fila[6]
-                ),
-
-            salida:
-                obtenerTextoPDF(
-                    fila[7]
-                ),
-
-            llegada:
-                obtenerTextoPDF(
-                    fila[8]
-                ),
-
-            tiempoReal:
-                obtenerTextoPDF(
-                    fila[9]
-                ),
-
-            tiempoMaximo:
-                obtenerTextoPDF(
-                    fila[10]
-                ),
-
-            tiempoExcedido:
-                obtenerTextoPDF(
-                    fila[11]
-                ),
-
-            estadoODT:
-                obtenerTextoPDF(
-                    fila[12]
-                ).toUpperCase(),
-
-            estadoFurgon:
-                obtenerTextoPDF(
-                    fila[13]
-                ).toUpperCase()
-
-        });
-
-    });
+    );
 
 
     return resultado;
+
+}
+
+
+/* =========================================================
+ * OBTENER SOLO VIAJES CON NOTAS
+ *
+ * REGLAS:
+ *
+ * 1. Debe tener una nota.
+ * 2. Debe estar dentro del período.
+ * 3. Respeta los filtros aplicados en DataTable porque
+ *    "datos" ya viene filtrado.
+ * ========================================================= */
+
+function obtenerViajesConNotasPDF(
+    datos,
+    filtros
+) {
+
+    if (
+        !datos ||
+        datos.length === 0
+    ) {
+
+        return [];
+
+    }
+
+
+    const fechaInicio =
+        filtros.fechaInicio
+            ? convertirFechaPDF(
+                filtros.fechaInicio
+            )
+            : null;
+
+
+    const fechaFin =
+        filtros.fechaFin
+            ? convertirFechaPDF(
+                filtros.fechaFin
+            )
+            : null;
+
+
+    return datos.filter(
+        function (viaje) {
+
+            /* ---------------------------------------------
+             * DEBE TENER NOTA
+             * --------------------------------------------- */
+
+            const nota =
+                obtenerTextoPDF(
+                    viaje.notas
+                );
+
+
+            if (
+                nota === ""
+            ) {
+
+                return false;
+
+            }
+
+
+            /* ---------------------------------------------
+             * FECHA DEL VIAJE
+             * --------------------------------------------- */
+
+            const fechaViaje =
+                convertirFechaPDF(
+                    viaje.fecha
+                );
+
+
+            /*
+             * Si existe fecha de inicio y la fecha
+             * del viaje es menor, no se agrega.
+             */
+
+            if (
+                fechaInicio &&
+                fechaViaje &&
+                fechaViaje < fechaInicio
+            ) {
+
+                return false;
+
+            }
+
+
+            /*
+             * Si existe fecha final y la fecha
+             * del viaje es mayor, no se agrega.
+             */
+
+            if (
+                fechaFin &&
+                fechaViaje &&
+                fechaViaje > fechaFin
+            ) {
+
+                return false;
+
+            }
+
+
+            return true;
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+ * CONVERTIR FECHA PARA COMPARACIÓN
+ * ========================================================= */
+
+function convertirFechaPDF(valor) {
+
+    if (
+        !valor
+    ) {
+
+        return null;
+
+    }
+
+
+    const texto =
+        String(valor)
+            .trim();
+
+
+    /*
+     * YYYY-MM-DD
+     */
+
+    if (
+        /^\d{4}-\d{2}-\d{2}$/.test(
+            texto
+        )
+    ) {
+
+        return texto;
+
+    }
+
+
+    /*
+     * DD/MM/YYYY
+     */
+
+    const partes =
+        texto.split("/");
+
+
+    if (
+        partes.length === 3
+    ) {
+
+        const dia =
+            partes[0].padStart(
+                2,
+                "0"
+            );
+
+
+        const mes =
+            partes[1].padStart(
+                2,
+                "0"
+            );
+
+
+        const anio =
+            partes[2];
+
+
+        if (
+            anio.length === 4
+        ) {
+
+            return (
+                anio +
+                "-" +
+                mes +
+                "-" +
+                dia
+            );
+
+        }
+
+    }
+
+
+    return texto;
 
 }
 
@@ -1985,13 +4646,37 @@ function obtenerTextoPDF(valor) {
      * Eliminar HTML
      */
 
+    if (
+        typeof $ !== "undefined"
+    ) {
+
+        const temporal =
+            $("<div>")
+                .html(textoOriginal);
+
+
+        return temporal
+            .text()
+            .replace(/\s+/g, " ")
+            .trim();
+
+    }
+
+
+    /*
+     * Fallback si jQuery no está disponible.
+     */
+
     const temporal =
-        $("<div>")
-            .html(textoOriginal);
+        document.createElement("div");
+
+
+    temporal.innerHTML =
+        textoOriginal;
 
 
     return temporal
-        .text()
+        .textContent
         .replace(/\s+/g, " ")
         .trim();
 
@@ -2067,11 +4752,6 @@ function calcularEstadisticasPDF(datos) {
 
     let viajesConExceso = 0;
 
-    /*
-     * NUEVO:
-     * Total de minutos reales de recorrido.
-     */
-
     let minutosRecorridoTotal = 0;
 
 
@@ -2082,242 +4762,244 @@ function calcularEstadisticasPDF(datos) {
     const conductores = {};
 
 
-    datos.forEach(function (viaje) {
+    datos.forEach(
+        function (viaje) {
 
-        /* ---------------------------------------------
-         * TIEMPO TOTAL DE RECORRIDO
-         * --------------------------------------------- */
+            /* -----------------------------------------
+             * TIEMPO TOTAL DE RECORRIDO
+             * ----------------------------------------- */
 
-        const minutosRecorrido =
-            extraerMinutosPDF(
-                viaje.tiempoReal
-            );
-
-
-        minutosRecorridoTotal +=
-            minutosRecorrido;
+            const minutosRecorrido =
+                extraerMinutosPDF(
+                    viaje.tiempoReal
+                );
 
 
-        /* ---------------------------------------------
-         * ODT
-         * --------------------------------------------- */
-
-        if (
-            viaje.estadoODT === "CUMPLIDO"
-        ) {
-
-            odtCumplidos++;
-
-        }
-
-        else if (
-            viaje.estadoODT === "INCUMPLIDO"
-        ) {
-
-            odtIncumplidos++;
-
-        }
+            minutosRecorridoTotal +=
+                minutosRecorrido;
 
 
-        /* ---------------------------------------------
-         * FURGÓN
-         * --------------------------------------------- */
+            /* -----------------------------------------
+             * ODT
+             * ----------------------------------------- */
 
-        if (
-            viaje.estadoFurgon === "CUMPLIDO"
-        ) {
+            if (
+                viaje.estadoODT === "CUMPLIDO"
+            ) {
 
-            furgonCumplidos++;
+                odtCumplidos++;
 
-        }
+            }
 
-        else if (
-            viaje.estadoFurgon === "INCUMPLIDO"
-        ) {
+            else if (
+                viaje.estadoODT === "INCUMPLIDO"
+            ) {
 
-            furgonIncumplidos++;
+                odtIncumplidos++;
 
-        }
-
-
-        /* ---------------------------------------------
-         * EXCESO
-         * --------------------------------------------- */
-
-        const excesoMinutos =
-            extraerMinutosPDF(
-                viaje.tiempoExcedido
-            );
+            }
 
 
-        if (
-            excesoMinutos > 0
-        ) {
+            /* -----------------------------------------
+             * FURGÓN
+             * ----------------------------------------- */
 
-            viajesConExceso++;
+            if (
+                viaje.estadoFurgon === "CUMPLIDO"
+            ) {
+
+                furgonCumplidos++;
+
+            }
+
+            else if (
+                viaje.estadoFurgon === "INCUMPLIDO"
+            ) {
+
+                furgonIncumplidos++;
+
+            }
 
 
-            minutosExcedidosTotal +=
-                excesoMinutos;
+            /* -----------------------------------------
+             * EXCESO
+             * ----------------------------------------- */
+
+            const excesoMinutos =
+                extraerMinutosPDF(
+                    viaje.tiempoExcedido
+                );
 
 
             if (
-                excesoMinutos >
-                minutosExcedidosMax
+                excesoMinutos > 0
             ) {
 
-                minutosExcedidosMax =
+                viajesConExceso++;
+
+
+                minutosExcedidosTotal +=
                     excesoMinutos;
+
+
+                if (
+                    excesoMinutos >
+                    minutosExcedidosMax
+                ) {
+
+                    minutosExcedidosMax =
+                        excesoMinutos;
+
+                }
+
+            }
+
+
+            /* -----------------------------------------
+             * RUTA
+             * ----------------------------------------- */
+
+            const nombreRuta =
+                viaje.destino ||
+                "Sin destino";
+
+
+            if (
+                !rutas[nombreRuta]
+            ) {
+
+                rutas[nombreRuta] = {
+
+                    total: 0,
+
+                    cumplidos: 0,
+
+                    incumplidos: 0,
+
+                    exceso: 0
+
+                };
+
+            }
+
+
+            rutas[nombreRuta].total++;
+
+
+            if (
+                viaje.estadoODT === "CUMPLIDO"
+            ) {
+
+                rutas[nombreRuta].cumplidos++;
+
+            }
+
+            else if (
+                viaje.estadoODT === "INCUMPLIDO"
+            ) {
+
+                rutas[nombreRuta].incumplidos++;
+
+            }
+
+
+            rutas[nombreRuta].exceso +=
+                excesoMinutos;
+
+
+            /* -----------------------------------------
+             * FURGÓN
+             * ----------------------------------------- */
+
+            const nombreFurgon =
+                viaje.furgon ||
+                "Sin furgón";
+
+
+            if (
+                !furgones[nombreFurgon]
+            ) {
+
+                furgones[nombreFurgon] = {
+
+                    total: 0,
+
+                    cumplidos: 0,
+
+                    incumplidos: 0
+
+                };
+
+            }
+
+
+            furgones[nombreFurgon].total++;
+
+
+            if (
+                viaje.estadoFurgon === "CUMPLIDO"
+            ) {
+
+                furgones[nombreFurgon].cumplidos++;
+
+            }
+
+            else if (
+                viaje.estadoFurgon === "INCUMPLIDO"
+            ) {
+
+                furgones[nombreFurgon].incumplidos++;
+
+            }
+
+
+            /* -----------------------------------------
+             * CONDUCTOR
+             * ----------------------------------------- */
+
+            const nombreConductor =
+                viaje.conductor ||
+                "Sin conductor";
+
+
+            if (
+                !conductores[nombreConductor]
+            ) {
+
+                conductores[nombreConductor] = {
+
+                    total: 0,
+
+                    cumplidos: 0,
+
+                    incumplidos: 0
+
+                };
+
+            }
+
+
+            conductores[nombreConductor].total++;
+
+
+            if (
+                viaje.estadoODT === "CUMPLIDO"
+            ) {
+
+                conductores[nombreConductor].cumplidos++;
+
+            }
+
+            else if (
+                viaje.estadoODT === "INCUMPLIDO"
+            ) {
+
+                conductores[nombreConductor].incumplidos++;
 
             }
 
         }
-
-
-        /* ---------------------------------------------
-         * RUTA
-         * --------------------------------------------- */
-
-        const nombreRuta =
-            viaje.destino ||
-            "Sin destino";
-
-
-        if (
-            !rutas[nombreRuta]
-        ) {
-
-            rutas[nombreRuta] = {
-
-                total: 0,
-
-                cumplidos: 0,
-
-                incumplidos: 0,
-
-                exceso: 0
-
-            };
-
-        }
-
-
-        rutas[nombreRuta].total++;
-
-
-        if (
-            viaje.estadoODT === "CUMPLIDO"
-        ) {
-
-            rutas[nombreRuta].cumplidos++;
-
-        }
-
-        else if (
-            viaje.estadoODT === "INCUMPLIDO"
-        ) {
-
-            rutas[nombreRuta].incumplidos++;
-
-        }
-
-
-        rutas[nombreRuta].exceso +=
-            excesoMinutos;
-
-
-        /* ---------------------------------------------
-         * FURGÓN
-         * --------------------------------------------- */
-
-        const nombreFurgon =
-            viaje.furgon ||
-            "Sin furgón";
-
-
-        if (
-            !furgones[nombreFurgon]
-        ) {
-
-            furgones[nombreFurgon] = {
-
-                total: 0,
-
-                cumplidos: 0,
-
-                incumplidos: 0
-
-            };
-
-        }
-
-
-        furgones[nombreFurgon].total++;
-
-
-        if (
-            viaje.estadoFurgon === "CUMPLIDO"
-        ) {
-
-            furgones[nombreFurgon].cumplidos++;
-
-        }
-
-        else if (
-            viaje.estadoFurgon === "INCUMPLIDO"
-        ) {
-
-            furgones[nombreFurgon].incumplidos++;
-
-        }
-
-
-        /* ---------------------------------------------
-         * CONDUCTOR
-         * --------------------------------------------- */
-
-        const nombreConductor =
-            viaje.conductor ||
-            "Sin conductor";
-
-
-        if (
-            !conductores[nombreConductor]
-        ) {
-
-            conductores[nombreConductor] = {
-
-                total: 0,
-
-                cumplidos: 0,
-
-                incumplidos: 0
-
-            };
-
-        }
-
-
-        conductores[nombreConductor].total++;
-
-
-        if (
-            viaje.estadoODT === "CUMPLIDO"
-        ) {
-
-            conductores[nombreConductor].cumplidos++;
-
-        }
-
-        else if (
-            viaje.estadoODT === "INCUMPLIDO"
-        ) {
-
-            conductores[nombreConductor].incumplidos++;
-
-        }
-
-    });
+    );
 
 
     const totalODT =
@@ -2359,95 +5041,107 @@ function calcularEstadisticasPDF(datos) {
 
     const rutasArray =
         Object.keys(rutas)
-            .map(function (nombre) {
+            .map(
+                function (nombre) {
 
-                return {
+                    return {
 
-                    nombre: nombre,
+                        nombre: nombre,
 
-                    total:
-                        rutas[nombre].total,
+                        total:
+                            rutas[nombre].total,
 
-                    cumplidos:
-                        rutas[nombre].cumplidos,
+                        cumplidos:
+                            rutas[nombre].cumplidos,
 
-                    incumplidos:
-                        rutas[nombre].incumplidos,
+                        incumplidos:
+                            rutas[nombre].incumplidos,
 
-                    exceso:
-                        rutas[nombre].exceso
+                        exceso:
+                            rutas[nombre].exceso
 
-                };
+                    };
 
-            })
-            .sort(function (a, b) {
+                }
+            )
+            .sort(
+                function (a, b) {
 
-                return (
-                    b.total -
-                    a.total
-                );
+                    return (
+                        b.total -
+                        a.total
+                    );
 
-            });
+                }
+            );
 
 
     const furgonesArray =
         Object.keys(furgones)
-            .map(function (nombre) {
+            .map(
+                function (nombre) {
 
-                return {
+                    return {
 
-                    nombre: nombre,
+                        nombre: nombre,
 
-                    total:
-                        furgones[nombre].total,
+                        total:
+                            furgones[nombre].total,
 
-                    cumplidos:
-                        furgones[nombre].cumplidos,
+                        cumplidos:
+                            furgones[nombre].cumplidos,
 
-                    incumplidos:
-                        furgones[nombre].incumplidos
+                        incumplidos:
+                            furgones[nombre].incumplidos
 
-                };
+                    };
 
-            })
-            .sort(function (a, b) {
+                }
+            )
+            .sort(
+                function (a, b) {
 
-                return (
-                    b.total -
-                    a.total
-                );
+                    return (
+                        b.total -
+                        a.total
+                    );
 
-            });
+                }
+            );
 
 
     const conductoresArray =
         Object.keys(conductores)
-            .map(function (nombre) {
+            .map(
+                function (nombre) {
 
-                return {
+                    return {
 
-                    nombre: nombre,
+                        nombre: nombre,
 
-                    total:
-                        conductores[nombre].total,
+                        total:
+                            conductores[nombre].total,
 
-                    cumplidos:
-                        conductores[nombre].cumplidos,
+                        cumplidos:
+                            conductores[nombre].cumplidos,
 
-                    incumplidos:
-                        conductores[nombre].incumplidos
+                        incumplidos:
+                            conductores[nombre].incumplidos
 
-                };
+                    };
 
-            })
-            .sort(function (a, b) {
+                }
+            )
+            .sort(
+                function (a, b) {
 
-                return (
-                    b.incumplidos -
-                    a.incumplidos
-                );
+                    return (
+                        b.incumplidos -
+                        a.incumplidos
+                    );
 
-            });
+                }
+            );
 
 
     return {
@@ -2492,19 +5186,6 @@ function calcularEstadisticasPDF(datos) {
 
 /* =========================================================
  * EXTRAER MINUTOS
- * =========================================================
- *
- * Soporta formatos como:
- *
- *  - 90 min
- *  - 1 h 30 min
- *  - 1h 30m
- *  - 1 hora 30 minutos
- *  - 01:30
- *  - 01:30:00
- *  - 1.5 h
- *  - 90
- *
  * ========================================================= */
 
 function extraerMinutosPDF(valor) {
@@ -2534,11 +5215,9 @@ function extraerMinutosPDF(valor) {
     }
 
 
-    /*
-     * -----------------------------------------------------
-     * FORMATO HH:MM:SS
-     * -----------------------------------------------------
-     */
+    /* -----------------------------------------------------
+     * HH:MM:SS
+     * ----------------------------------------------------- */
 
     let coincidencia =
         texto.match(
@@ -2580,11 +5259,9 @@ function extraerMinutosPDF(valor) {
     }
 
 
-    /*
-     * -----------------------------------------------------
-     * FORMATO HH:MM
-     * -----------------------------------------------------
-     */
+    /* -----------------------------------------------------
+     * HH:MM
+     * ----------------------------------------------------- */
 
     coincidencia =
         texto.match(
@@ -2618,16 +5295,9 @@ function extraerMinutosPDF(valor) {
     }
 
 
-    /*
-     * -----------------------------------------------------
-     * FORMATO HORAS + MINUTOS
-     *
-     * Ej:
-     * 1 h 30 min
-     * 2 horas 15 minutos
-     * 1h 30m
-     * -----------------------------------------------------
-     */
+    /* -----------------------------------------------------
+     * HORAS + MINUTOS
+     * ----------------------------------------------------- */
 
     const tieneHoras =
         texto.match(
@@ -2684,14 +5354,9 @@ function extraerMinutosPDF(valor) {
     }
 
 
-    /*
-     * -----------------------------------------------------
-     * FORMATO SOLO HORAS
-     *
-     * Ej:
-     * 1.5 h
-     * -----------------------------------------------------
-     */
+    /* -----------------------------------------------------
+     * SOLO HORAS
+     * ----------------------------------------------------- */
 
     coincidencia =
         texto.match(
@@ -2715,15 +5380,9 @@ function extraerMinutosPDF(valor) {
     }
 
 
-    /*
-     * -----------------------------------------------------
-     * FORMATO SOLO MINUTOS
-     *
-     * Ej:
-     * 90 min
-     * 45 minutos
-     * -----------------------------------------------------
-     */
+    /* -----------------------------------------------------
+     * SOLO MINUTOS
+     * ----------------------------------------------------- */
 
     coincidencia =
         texto.match(
@@ -2745,14 +5404,9 @@ function extraerMinutosPDF(valor) {
     }
 
 
-    /*
-     * -----------------------------------------------------
+    /* -----------------------------------------------------
      * NÚMERO PURO
-     *
-     * Se interpreta como minutos para mantener
-     * compatibilidad con el funcionamiento anterior.
-     * -----------------------------------------------------
-     */
+     * ----------------------------------------------------- */
 
     coincidencia =
         texto.match(
@@ -2774,13 +5428,9 @@ function extraerMinutosPDF(valor) {
     }
 
 
-    /*
-     * -----------------------------------------------------
+    /* -----------------------------------------------------
      * ÚLTIMO RECURSO
-     *
-     * Busca un número dentro del texto.
-     * -----------------------------------------------------
-     */
+     * ----------------------------------------------------- */
 
     coincidencia =
         texto.match(
@@ -2809,14 +5459,6 @@ function extraerMinutosPDF(valor) {
 
 /* =========================================================
  * FORMATEAR TIEMPO
- * =========================================================
- *
- * Convierte minutos a:
- *
- *  - 45 min
- *  - 1 h 20 min
- *  - 12 h 35 min
- *
  * ========================================================= */
 
 function formatearDuracionPDF(minutos) {
@@ -2858,11 +5500,7 @@ function formatearDuracionPDF(minutos) {
 
         return (
             horas +
-            (
-                horas === 1
-                    ? " h"
-                    : " h"
-            )
+            " h"
         );
 
     }
@@ -3540,9 +6178,6 @@ function dibujarPaginaResumenPDF(
 
     /* ---------------------------------------------
      * GRÁFICOS
-     *
-     * SE COMPACTA LA ALTURA PARA RESERVAR
-     * ESPACIO REAL AL PIE DE PÁGINA.
      * --------------------------------------------- */
 
     const anchoGrafico =
@@ -3619,19 +6254,11 @@ function dibujarPaginaResumenPDF(
     );
 
 
-    /*
-     * Espacio controlado.
-     */
-
     y += 45;
 
 
     /* ---------------------------------------------
      * CONCLUSIÓN
-     *
-     * CORRECCIÓN PRINCIPAL:
-     * La conclusión queda completamente por encima
-     * del área reservada para el pie.
      * --------------------------------------------- */
 
     const altoConclusion =
@@ -3648,11 +6275,6 @@ function dibujarPaginaResumenPDF(
             PDF_VIAJES_CONFIG.margen * 2
         );
 
-
-    /*
-     * Si por cualquier cambio futuro y quedara
-     * demasiado abajo, se fuerza una posición segura.
-     */
 
     const altoPagina =
         doc.internal.pageSize.getHeight();
@@ -3776,21 +6398,10 @@ function dibujarPaginaResumenPDF(
         );
 
 
-    /*
-     * Solo una línea en esta zona compacta.
-     * La conclusión ya contiene la información
-     * esencial de tiempos.
-     */
-
     doc.text(
         lineasConclusion.slice(0, 1),
         xConclusion + 5,
         y + 9.5
-    );
-
-
-    doc.setLineWidth(
-        0.35
     );
 
 }
@@ -3798,8 +6409,6 @@ function dibujarPaginaResumenPDF(
 
 /* =========================================================
  * TEXTO DE FILTROS
- *
- * Se conserva por compatibilidad.
  * ========================================================= */
 
 function construirTextoFiltrosPDF(
@@ -4045,11 +6654,6 @@ function dibujarGraficoDonutPDF(
         ancho / 2;
 
 
-    /*
-     * Centro ligeramente más alto debido
-     * a la reducción del contenedor.
-     */
-
     const centroY =
         y +
         23;
@@ -4129,7 +6733,7 @@ function dibujarGraficoDonutPDF(
 
 
     /* ---------------------------------------------
-     * CENTRO DEL DONUT
+     * CENTRO
      * --------------------------------------------- */
 
     doc.setFillColor(
@@ -4347,7 +6951,7 @@ function dibujarPaginaAnalisisPDF(
 
 
     /* ---------------------------------------------
-     * INDICADORES DE TIEMPO
+     * INDICADORES
      * --------------------------------------------- */
 
     doc.setFont(
@@ -4391,16 +6995,6 @@ function dibujarPaginaAnalisisPDF(
             12
         ) / 4;
 
-
-    /*
-     * NUEVOS INDICADORES:
-     *
-     * 1. Tiempo total recorrido
-     * 2. Exceso total
-     *
-     * Se sustituyen los valores de minutos
-     * por formatos más legibles.
-     */
 
     const indicadoresTiempo = [
 
@@ -4551,7 +7145,7 @@ function dibujarPaginaAnalisisPDF(
 
 
     /* ---------------------------------------------
-     * TABLA DE RUTAS
+     * TABLA RUTAS
      * --------------------------------------------- */
 
     doc.setFont(
@@ -5415,11 +8009,6 @@ function dibujarDetalleViajesPDF(
         didDrawPage:
             function (data) {
 
-                /*
-                 * ENCABEZADO EN PÁGINAS
-                 * DE CONTINUACIÓN
-                 */
-
                 if (
                     data.pageNumber > 1
                 ) {
@@ -5428,6 +8017,560 @@ function dibujarDetalleViajesPDF(
                         doc,
                         "DETALLE DE VIAJES",
                         "Continuación del listado de viajes."
+                    );
+
+                }
+
+            }
+
+    });
+
+}
+
+
+/* =========================================================
+ * NUEVA PÁGINA - NOTAS DE VIAJES
+ *
+ * SOLO VIAJES QUE:
+ *
+ * 1. TENGAN NOTA
+ * 2. ESTÉN DENTRO DEL PERÍODO
+ * 3. PASEN LOS FILTROS DE LA DATATABLE
+ * ========================================================= */
+
+function dibujarNotasViajesPDF(
+    doc,
+    viajesConNotas,
+    filtros
+) {
+
+    dibujarEncabezadoPDF(
+        doc,
+        "NOTAS Y CAUSAS DE INCUMPLIMIENTO",
+        "Detalle de las notas registradas en los viajes del período seleccionado."
+    );
+
+
+    let y = 30;
+
+
+    /* ---------------------------------------------
+     * PERÍODO
+     * --------------------------------------------- */
+
+    doc.setFont(
+        "helvetica",
+        "normal"
+    );
+
+
+    doc.setFontSize(
+        7
+    );
+
+
+    doc.setTextColor(
+        90,
+        95,
+        100
+    );
+
+
+    const desde =
+        filtros.fechaInicio ||
+        "Sin fecha";
+
+
+    const hasta =
+        filtros.fechaFin ||
+        "Sin fecha";
+
+
+    doc.text(
+        "Período: " +
+        desde +
+        " al " +
+        hasta,
+        PDF_VIAJES_CONFIG.margen,
+        y
+    );
+
+
+    y += 5;
+
+
+    /* ---------------------------------------------
+     * CANTIDAD
+     * --------------------------------------------- */
+
+    doc.setFont(
+        "helvetica",
+        "bold"
+    );
+
+
+    doc.setFontSize(
+        9
+    );
+
+
+    doc.setTextColor(
+        25,
+        55,
+        90
+    );
+
+
+    doc.text(
+        "Viajes con notas: " +
+        viajesConNotas.length,
+        PDF_VIAJES_CONFIG.margen,
+        y
+    );
+
+
+    y += 6;
+
+
+    /* ---------------------------------------------
+     * TABLA
+     * --------------------------------------------- */
+
+    const filas =
+        viajesConNotas.map(
+            function (viaje, indice) {
+
+                const ruta =
+                    (
+                        viaje.origen ||
+                        "Sin origen"
+                    ) +
+                    " → " +
+                    (
+                        viaje.destino ||
+                        "Sin destino"
+                    );
+
+
+                return [
+
+                    String(
+                        indice + 1
+                    ),
+
+                    viaje.fecha,
+
+                    viaje.conductor,
+
+                    viaje.placa,
+
+                    viaje.furgon,
+
+                    ruta,
+
+                    viaje.estadoODT,
+
+                    viaje.estadoFurgon,
+
+                    viaje.tiempoExcedido,
+
+                    viaje.notas
+
+                ];
+
+            }
+        );
+
+
+    doc.autoTable({
+
+        startY: y,
+
+        margin: {
+
+            top: 28,
+
+            bottom: 14,
+
+            left: 7,
+
+            right: 7
+
+        },
+
+        tableWidth:
+            281,
+
+        theme:
+            "grid",
+
+        head: [[
+
+            "#",
+
+            "Fecha",
+
+            "Conductor",
+
+            "Placa",
+
+            "Furgón",
+
+            "Ruta",
+
+            "Estado ODT",
+
+            "Estado Furgón",
+
+            "Exceso",
+
+            "Nota / causa del incumplimiento"
+
+        ]],
+
+        body:
+            filas,
+
+        styles: {
+
+            font:
+                "helvetica",
+
+            fontSize:
+                6.5,
+
+            cellPadding:
+                2,
+
+            overflow:
+                "linebreak",
+
+            valign:
+                "middle",
+
+            lineWidth:
+                0.1,
+
+            lineColor: [
+                220,
+                220,
+                220
+            ]
+
+        },
+
+        headStyles: {
+
+            fillColor: [
+                25,
+                55,
+                90
+            ],
+
+            textColor: [
+                255,
+                255,
+                255
+            ],
+
+            fontStyle:
+                "bold",
+
+            fontSize:
+                6.2,
+
+            halign:
+                "center",
+
+            valign:
+                "middle",
+
+            cellPadding:
+                2
+
+        },
+
+        alternateRowStyles: {
+
+            fillColor: [
+                248,
+                249,
+                251
+            ]
+
+        },
+
+        columnStyles: {
+
+            0: {
+
+                cellWidth:
+                    7,
+
+                halign:
+                    "center"
+
+            },
+
+            1: {
+
+                cellWidth:
+                    18,
+
+                halign:
+                    "center"
+
+            },
+
+            2: {
+
+                cellWidth:
+                    30
+
+            },
+
+            3: {
+
+                cellWidth:
+                    17,
+
+                halign:
+                    "center"
+
+            },
+
+            4: {
+
+                cellWidth:
+                    20,
+
+                halign:
+                    "center"
+
+            },
+
+            5: {
+
+                cellWidth:
+                    35
+
+            },
+
+            6: {
+
+                cellWidth:
+                    20,
+
+                halign:
+                    "center"
+
+            },
+
+            7: {
+
+                cellWidth:
+                    23,
+
+                halign:
+                    "center"
+
+            },
+
+            8: {
+
+                cellWidth:
+                    18,
+
+                halign:
+                    "center"
+
+            },
+
+            9: {
+
+                cellWidth:
+                    93
+
+            }
+
+        },
+
+        didParseCell:
+            function (data) {
+
+                if (
+                    data.section !==
+                    "body"
+                ) {
+
+                    return;
+
+                }
+
+
+                /* -----------------------------------------
+                 * ESTADO ODT
+                 * ----------------------------------------- */
+
+                if (
+                    data.column.index === 6
+                ) {
+
+                    const estado =
+                        obtenerTextoPDF(
+                            data.cell.text
+                        ).toUpperCase();
+
+
+                    if (
+                        estado ===
+                        "INCUMPLIDO"
+                    ) {
+
+                        data.cell.styles.textColor =
+                            [
+                                190,
+                                45,
+                                45
+                            ];
+
+                        data.cell.styles.fontStyle =
+                            "bold";
+
+                    }
+
+                    else if (
+                        estado ===
+                        "CUMPLIDO"
+                    ) {
+
+                        data.cell.styles.textColor =
+                            [
+                                25,
+                                125,
+                                70
+                            ];
+
+                    }
+
+                }
+
+
+                /* -----------------------------------------
+                 * ESTADO FURGÓN
+                 * ----------------------------------------- */
+
+                if (
+                    data.column.index === 7
+                ) {
+
+                    const estado =
+                        obtenerTextoPDF(
+                            data.cell.text
+                        ).toUpperCase();
+
+
+                    if (
+                        estado ===
+                        "INCUMPLIDO"
+                    ) {
+
+                        data.cell.styles.textColor =
+                            [
+                                190,
+                                45,
+                                45
+                            ];
+
+                        data.cell.styles.fontStyle =
+                            "bold";
+
+                    }
+
+                    else if (
+                        estado ===
+                        "CUMPLIDO"
+                    ) {
+
+                        data.cell.styles.textColor =
+                            [
+                                25,
+                                125,
+                                70
+                            ];
+
+                    }
+
+                }
+
+
+                /* -----------------------------------------
+                 * EXCESO
+                 * ----------------------------------------- */
+
+                if (
+                    data.column.index === 8
+                ) {
+
+                    const exceso =
+                        obtenerTextoPDF(
+                            data.cell.text
+                        );
+
+
+                    if (
+                        exceso !== "" &&
+                        exceso !== "0" &&
+                        exceso !== "0 min"
+                    ) {
+
+                        data.cell.styles.textColor =
+                            [
+                                190,
+                                45,
+                                45
+                            ];
+
+                        data.cell.styles.fontStyle =
+                            "bold";
+
+                    }
+
+                }
+
+
+                /* -----------------------------------------
+                 * NOTA
+                 * ----------------------------------------- */
+
+                if (
+                    data.column.index === 9
+                ) {
+
+                    data.cell.styles.fontStyle =
+                        "normal";
+
+                    data.cell.styles.fontSize =
+                        6.5;
+
+                    data.cell.styles.valign =
+                        "top";
+
+                }
+
+            },
+
+        didDrawPage:
+            function (data) {
+
+                if (
+                    data.pageNumber > 1
+                ) {
+
+                    dibujarEncabezadoPDF(
+                        doc,
+                        "NOTAS Y CAUSAS DE INCUMPLIMIENTO",
+                        "Continuación de notas registradas."
                     );
 
                 }
@@ -5473,10 +8616,6 @@ function agregarPiePaginasPDF(
                 .getHeight();
 
 
-        /*
-         * Grosor fino para el pie.
-         */
-
         doc.setLineWidth(
             0.35
         );
@@ -5489,9 +8628,9 @@ function agregarPiePaginasPDF(
         );
 
 
-        /*
-         * Línea del pie.
-         */
+        /* ---------------------------------------------
+         * LÍNEA DEL PIE
+         * --------------------------------------------- */
 
         doc.line(
             PDF_VIAJES_CONFIG.margen,
@@ -5520,9 +8659,9 @@ function agregarPiePaginasPDF(
         );
 
 
-        /*
-         * Texto izquierdo.
-         */
+        /* ---------------------------------------------
+         * TEXTO IZQUIERDO
+         * --------------------------------------------- */
 
         doc.text(
             "Sistema de Gestión de Viajes",
@@ -5531,11 +8670,9 @@ function agregarPiePaginasPDF(
         );
 
 
-        /*
-         * Número de página.
-         *
-         * Se mantiene en una zona exclusiva del pie.
-         */
+        /* ---------------------------------------------
+         * NÚMERO DE PÁGINA
+         * --------------------------------------------- */
 
         doc.text(
             "Página " +
@@ -5583,3 +8720,5 @@ function formatearPorcentajePDF(
     );
 
 }
+
+

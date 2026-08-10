@@ -34,5 +34,25 @@ public class ViajeService {
         viajeRepository.deleteById(id);
 
     }
+    
+    public viajes actualizar(Long id, viajes datos) {
+
+        viajes viaje = viajeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Viaje no encontrado"));
+
+        viaje.setNotas(datos.getNotas());
+
+        return viajeRepository.save(viaje);
+    }
+    
+    public void eliminarNota(Long id) {
+
+        viajes viaje = viajeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Viaje no encontrado"));
+
+        viaje.setNotas(null);
+
+        viajeRepository.save(viaje);
+    }
 
 }

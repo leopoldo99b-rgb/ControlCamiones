@@ -1939,3 +1939,849 @@ button {
 
 
 }
+
+/* =========================================================
+   MODAL - NOTA DEL VIAJE
+   ========================================================= */
+
+#modalNotaViaje .modal-dialog {
+    max-width: 600px;
+    width: calc(100% - 30px);
+    margin: 1.75rem auto;
+}
+
+
+/* =========================================================
+   CONTENIDO DEL MODAL
+   ========================================================= */
+
+#modalNotaViaje .modal-content {
+    border: none;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+#modalNotaViaje .modal-header {
+    position: relative;
+    padding: 20px 24px;
+    border: none;
+    background: linear-gradient(
+        135deg,
+        #198754 0%,
+        #157347 100%
+    ) !important;
+}
+
+
+/* TÍTULO */
+
+#modalNotaViaje .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    margin: 0;
+
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+
+/* ICONO DEL TÍTULO */
+
+#modalNotaViaje .modal-title i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 38px;
+    height: 38px;
+
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, 0.15);
+
+    font-size: 1.2rem;
+}
+
+
+/* BOTÓN CERRAR */
+
+#modalNotaViaje .btn-close {
+    opacity: 0.9;
+    transition: all 0.2s ease;
+}
+
+#modalNotaViaje .btn-close:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
+#modalNotaViaje .modal-body {
+    padding: 26px 24px 20px;
+}
+
+
+/* =========================================================
+   LABEL
+   ========================================================= */
+
+#modalNotaViaje .form-label {
+    display: block;
+
+    margin-bottom: 9px;
+
+    color: #343a40;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   TEXTAREA
+   ========================================================= */
+
+#modalNotaViaje #txtNotaViaje {
+    width: 100%;
+
+    min-height: 150px;
+    max-height: 350px;
+
+    padding: 14px 16px;
+
+    resize: vertical;
+
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+
+    background-color: #f8f9fa;
+
+    color: #212529;
+
+    font-size: 0.95rem;
+    line-height: 1.6;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+}
+
+
+/* PLACEHOLDER */
+
+#modalNotaViaje #txtNotaViaje::placeholder {
+    color: #adb5bd;
+}
+
+
+/* FOCUS */
+
+#modalNotaViaje #txtNotaViaje:focus {
+    outline: none;
+
+    background-color: #ffffff;
+
+    border-color: #198754;
+
+    box-shadow:
+        0 0 0 3px rgba(25, 135, 84, 0.12);
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+#modalNotaViaje .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 18px 24px 22px;
+
+    border-top: 1px solid #edf0f2;
+
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   BOTONES
+   ========================================================= */
+
+#modalNotaViaje .modal-footer .btn {
+    min-height: 42px;
+
+    padding: 9px 18px;
+
+    border-radius: 10px;
+
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+}
+
+
+/* BOTÓN CANCELAR */
+
+#modalNotaViaje .modal-footer .btn-secondary {
+    border: none;
+
+    background: #6c757d;
+}
+
+
+#modalNotaViaje .modal-footer .btn-secondary:hover {
+    background: #5c636a;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 10px rgba(108, 117, 125, 0.25);
+}
+
+
+/* BOTÓN GUARDAR */
+
+#modalNotaViaje .modal-footer .btn-success {
+    border: none;
+
+    background: linear-gradient(
+        135deg,
+        #198754 0%,
+        #157347 100%
+    );
+}
+
+
+#modalNotaViaje .modal-footer .btn-success:hover {
+    background: linear-gradient(
+        135deg,
+        #157347 0%,
+        #146c43 100%
+    );
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 5px 14px rgba(25, 135, 84, 0.30);
+}
+
+
+/* ICONOS DE LOS BOTONES */
+
+#modalNotaViaje .modal-footer .btn i {
+    margin-right: 6px;
+}
+
+
+/* =========================================================
+   ANIMACIÓN DEL MODAL
+   ========================================================= */
+
+#modalNotaViaje.show .modal-dialog {
+    animation: modalNotaEntrada 0.25s ease-out;
+}
+
+
+@keyframes modalNotaEntrada {
+
+    from {
+        opacity: 0;
+        transform: translateY(-15px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLET
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    #modalNotaViaje .modal-dialog {
+        width: calc(100% - 20px);
+        margin: 1rem auto;
+    }
+
+
+    #modalNotaViaje .modal-header {
+        padding: 17px 18px;
+    }
+
+
+    #modalNotaViaje .modal-title {
+        font-size: 1.05rem;
+    }
+
+
+    #modalNotaViaje .modal-title i {
+        width: 34px;
+        height: 34px;
+    }
+
+
+    #modalNotaViaje .modal-body {
+        padding: 22px 18px 16px;
+    }
+
+
+    #modalNotaViaje .modal-footer {
+        padding: 16px 18px 18px;
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE - CELULAR
+   ========================================================= */
+
+@media (max-width: 576px) {
+
+    #modalNotaViaje .modal-dialog {
+        width: calc(100% - 16px);
+
+        margin: 0.5rem auto;
+    }
+
+
+    #modalNotaViaje .modal-content {
+        border-radius: 14px;
+    }
+
+
+    #modalNotaViaje .modal-header {
+        padding: 15px 16px;
+    }
+
+
+    #modalNotaViaje .modal-title {
+        font-size: 1rem;
+        gap: 8px;
+    }
+
+
+    #modalNotaViaje .modal-title i {
+        width: 32px;
+        height: 32px;
+
+        border-radius: 8px;
+
+        font-size: 1rem;
+    }
+
+
+    #modalNotaViaje .modal-body {
+        padding: 20px 16px 14px;
+    }
+
+
+    #modalNotaViaje #txtNotaViaje {
+        min-height: 140px;
+
+        padding: 12px 13px;
+
+        font-size: 0.9rem;
+
+        border-radius: 10px;
+    }
+
+
+    #modalNotaViaje .modal-footer {
+        flex-direction: column-reverse;
+
+        align-items: stretch;
+
+        padding: 14px 16px 16px;
+
+        gap: 8px;
+    }
+
+
+    #modalNotaViaje .modal-footer .btn {
+        width: 100%;
+
+        min-height: 44px;
+    }
+
+}
+
+
+/* =========================================================
+   CELULARES MUY PEQUEÑOS
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+    #modalNotaViaje .modal-dialog {
+        width: calc(100% - 10px);
+    }
+
+
+    #modalNotaViaje .modal-title {
+        font-size: 0.95rem;
+    }
+
+
+    #modalNotaViaje #txtNotaViaje {
+        min-height: 120px;
+    }
+
+}
+
+
+/* =========================================================
+   MODO OSCURO - OPCIONAL
+   Si tu proyecto utiliza dark mode
+   ========================================================= */
+
+@media (prefers-color-scheme: dark) {
+
+    #modalNotaViaje .modal-content {
+        background: #212529;
+        color: #f8f9fa;
+    }
+
+
+    #modalNotaViaje .modal-body {
+        background: #212529;
+    }
+
+
+    #modalNotaViaje .modal-footer {
+        background: #212529;
+        border-top-color: #343a40;
+    }
+
+
+    #modalNotaViaje .form-label {
+        color: #f8f9fa;
+    }
+
+
+    #modalNotaViaje #txtNotaViaje {
+        background: #2b3035;
+
+        border-color: #495057;
+
+        color: #f8f9fa;
+    }
+
+
+    #modalNotaViaje #txtNotaViaje::placeholder {
+        color: #868e96;
+    }
+
+
+    #modalNotaViaje #txtNotaViaje:focus {
+        background: #343a40;
+
+        border-color: #198754;
+
+        box-shadow:
+            0 0 0 3px rgba(25, 135, 84, 0.2);
+    }
+
+}
+
+/* ================================
+   MODAL VER NOTA
+================================ */
+
+.modal-nota-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 9999;
+
+    backdrop-filter: blur(5px);
+}
+
+.modal-nota-overlay.active {
+    display: flex;
+}
+
+
+.modal-nota {
+    width: min(620px, 92%);
+    background: #101414;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.55);
+
+    animation: aparecerNota .2s ease;
+}
+
+
+@keyframes aparecerNota {
+
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+}
+
+
+/* HEADER */
+
+.modal-nota-header {
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 20px 24px;
+
+    background: linear-gradient(
+        135deg,
+        #064e3b,
+        #047857
+    );
+
+    color: white;
+}
+
+
+.modal-nota-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+
+.modal-nota-icon {
+
+    width: 45px;
+    height: 45px;
+
+    border-radius: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(255,255,255,.12);
+
+    font-size: 19px;
+}
+
+
+.modal-nota-title h2 {
+
+    margin: 0;
+
+    font-size: 20px;
+    font-weight: 600;
+
+}
+
+
+.modal-nota-title span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 12px;
+
+    opacity: .75;
+
+}
+
+
+.modal-nota-close {
+
+    width: 38px;
+    height: 38px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: transparent;
+
+    color: white;
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+    transition: .2s;
+
+}
+
+
+.modal-nota-close:hover {
+
+    background: rgba(255,255,255,.15);
+
+}
+
+
+/* BODY */
+
+.modal-nota-body {
+
+    padding: 24px;
+
+}
+
+
+.nota-info-grid {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 12px;
+
+    margin-bottom: 22px;
+
+}
+
+
+.nota-info-item {
+
+    padding: 14px;
+
+    border-radius: 12px;
+
+    background: #181d1d;
+
+    border: 1px solid #252d2d;
+
+}
+
+
+.nota-info-item span {
+
+    display: block;
+
+    font-size: 11px;
+
+    text-transform: uppercase;
+
+    letter-spacing: .6px;
+
+    color: #8b9999;
+
+    margin-bottom: 5px;
+
+}
+
+
+.nota-info-item strong {
+
+    font-size: 14px;
+
+    color: #e8eeee;
+
+}
+
+
+/* NOTA */
+
+.nota-contenedor {
+
+    border: 1px solid #293333;
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+}
+
+
+.nota-label {
+
+    padding: 12px 15px;
+
+    background: #171d1d;
+
+    color: #a9b5b5;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+}
+
+
+.nota-label i {
+
+    margin-right: 7px;
+
+    color: #34d399;
+
+}
+
+
+.nota-texto {
+
+    min-height: 100px;
+
+    padding: 18px;
+
+    color: #e4e9e9;
+
+    line-height: 1.6;
+
+    font-size: 14px;
+
+    white-space: pre-wrap;
+
+}
+
+
+/* FOOTER */
+
+.modal-nota-footer {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 18px 24px;
+
+    background: #0c1010;
+
+    border-top: 1px solid #222828;
+
+}
+
+
+.btn-eliminar-nota,
+.btn-cerrar-nota {
+
+    border: none;
+
+    border-radius: 10px;
+
+    padding: 11px 17px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: .2s;
+
+}
+
+
+.btn-eliminar-nota {
+
+    background: #7f1d1d;
+
+    color: #fecaca;
+
+}
+
+
+.btn-eliminar-nota:hover {
+
+    background: #991b1b;
+
+}
+
+
+.btn-cerrar-nota {
+
+    background: #293333;
+
+    color: #d5dddd;
+
+}
+
+
+.btn-cerrar-nota:hover {
+
+    background: #374242;
+
+}
+
+
+/* BOTON OJO DE LA TABLA */
+
+.btn-ver-nota {
+
+    width: 34px;
+    height: 34px;
+
+    border: 1px solid #245c4a;
+
+    border-radius: 9px;
+
+    background: #12352c;
+
+    color: #6ee7b7;
+
+    cursor: pointer;
+
+    transition: .2s;
+
+}
+
+
+.btn-ver-nota:hover {
+
+    background: #075c43;
+
+    color: white;
+
+    transform: translateY(-1px);
+
+}
+
+
+.acciones-nota {
+
+    text-align: center;
+
+}

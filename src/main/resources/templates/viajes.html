@@ -614,6 +614,100 @@
 		</div>
 
 	</div>
+	
+<!-- MODAL VER NOTA -->
+<div id="modalVerNota" class="modal-nota-overlay">
+
+    <div class="modal-nota">
+
+        <div class="modal-nota-header">
+
+            <div class="modal-nota-title">
+                <div class="modal-nota-icon">
+                    <i class="fa-solid fa-note-sticky"></i>
+                </div>
+
+                <div>
+                    <h2>Nota del viaje</h2>
+                    <span>Información registrada</span>
+                </div>
+            </div>
+
+            <button class="modal-nota-close" onclick="cerrarModalNota()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+
+        <div class="modal-nota-body">
+
+            <div class="nota-info-grid">
+
+                <div class="nota-info-item">
+                    <span>Conductor</span>
+                    <strong id="notaConductor">---</strong>
+                </div>
+
+                <div class="nota-info-item">
+                    <span>Placa</span>
+                    <strong id="notaPlaca">---</strong>
+                </div>
+
+                <div class="nota-info-item">
+                    <span>Fecha</span>
+                    <strong id="notaFecha">---</strong>
+                </div>
+
+                <div class="nota-info-item">
+                    <span>Ruta</span>
+                    <strong id="notaRuta">---</strong>
+                </div>
+
+            </div>
+
+
+            <div class="nota-contenedor">
+
+                <div class="nota-label">
+                    <i class="fa-solid fa-message"></i>
+                    Nota
+                </div>
+
+                <div id="notaTexto" class="nota-texto">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="modal-nota-footer">
+
+            <button 
+                type="button"
+                class="btn-eliminar-nota"
+                onclick="eliminarNotaActual()">
+
+                <i class="fa-solid fa-trash"></i>
+                Eliminar nota
+
+            </button>
+
+            <button 
+                type="button"
+                class="btn-cerrar-nota"
+                onclick="cerrarModalNota()">
+
+                Cerrar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 
 
 	<!-- =====================================================
@@ -872,6 +966,154 @@
 
 
 	</div>
+	
+
+<!-- =====================================================
+     MODAL ACCIONES DEL VIAJE
+====================================================== -->
+<div class="modal fade" id="modalAccionesViaje" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square"></i>
+                    ¿Qué deseas hacer?
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p class="text-muted mb-3">
+                    Selecciona la acción que deseas realizar sobre este viaje.
+                </p>
+
+                <div class="d-grid gap-2">
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="btnModificarInformacion">
+
+                        <i class="bi bi-pencil-square"></i>
+                        Modificar información del viaje
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-success"
+                        id="btnAgregarNota">
+
+                        <i class="bi bi-plus-circle"></i>
+                        Agregar una nota al viaje
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-warning"
+                        id="btnModificarNota">
+
+                        <i class="bi bi-sticky"></i>
+                        Modificar la nota del viaje
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- =====================================================
+     MODAL NOTA DEL VIAJE
+====================================================== -->
+<div class="modal fade" id="modalNotaViaje" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-success text-white">
+
+                <h5 class="modal-title" id="tituloModalNota">
+                    <i class="bi bi-sticky"></i>
+                    Nota del viaje
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <form id="formNotaViaje">
+
+                <div class="modal-body">
+
+                    <input
+                        type="hidden"
+                        id="idViajeNota">
+
+                    <div class="mb-3">
+
+                        <label
+                            for="txtNotaViaje"
+                            class="form-label">
+
+                            Nota
+
+                        </label>
+
+                        <textarea
+                            class="form-control"
+                            id="txtNotaViaje"
+                            rows="6"
+                            placeholder="Escriba la nota del viaje..."
+                            required>
+                        </textarea>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+
+                        Cancelar
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-success">
+
+                        <i class="bi bi-save"></i>
+                        Guardar Nota
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
 	<!--================================================-->
 	<!-- Bootstrap -->
 	<!--================================================-->
