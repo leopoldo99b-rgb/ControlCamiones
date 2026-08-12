@@ -36,20 +36,16 @@
 			<li class="active"><a href="/dashboard"> <i
 					class="fas fa-chart-line"></i> Dashboard
 
-			</a></li>
-
-
-
-
+			</a></li> 
 			<li
 				th:if="${session.usuarioLogueado != null 
         and session.usuarioLogueado.permisos.?[nombre=='VIAJES'].size() > 0}">
 
-				<a href="#"> <i class="fas fa-route"></i> Viajes
-
+				<a href="/viajes2"> <i class="fas fa-route"></i> Viajes
 			</a>
 
-			</li>
+			</li> 
+
 
 
 
@@ -58,7 +54,8 @@
 				th:if="${session.usuarioLogueado != null 
         and session.usuarioLogueado.permisos.?[nombre=='CAMIONES'].size() > 0}">
 
-				<a href="/camiones"> <i class="fas fa-truck-moving"></i> Camiones
+				<a href="/camiones"> <i class="fas fa-truck-moving"></i>
+					Camiones
 
 			</a>
 
