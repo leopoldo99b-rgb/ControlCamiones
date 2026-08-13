@@ -254,11 +254,6 @@ function inicializarTabla() {
     }
 
 
-    /*
-     * Si ya fue inicializada por otro JS,
-     * no la inicializamos nuevamente.
-     */
-
     if ($.fn.DataTable.isDataTable("#tblViajes")) {
 
         console.log(
@@ -298,15 +293,9 @@ function inicializarTabla() {
 
         },
 
+
         /*
-         * =================================================
-         * IMPORTANTE:
-         *
-         * paging: false
-         *
-         * Desactiva completamente la paginación.
-         * Todos los registros aparecen en una sola hoja.
-         * =================================================
+         * Sin paginación.
          */
 
         paging: false,
@@ -319,10 +308,27 @@ function inicializarTabla() {
 
         autoWidth: false,
 
+
+        /*
+         * =================================================
+         * COLUMNAS
+         *
+         * 14 = NOTAS OCULTAS
+         * 15 = ACCIONES
+         * =================================================
+         */
+
         columnDefs: [
 
             {
                 targets: 14,
+                visible: false,
+                searchable: false,
+                orderable: false
+            },
+
+            {
+                targets: 15,
                 orderable: false,
                 searchable: false
             }
@@ -886,6 +892,12 @@ $.fn.dataTable.ext.search.push(
         const estadoFurgonFiltro =
             $("#cmbEstadoFurgon").val();
 
+
+        /*
+         * Los índices 1, 2, 6, 12 y 13
+         * NO cambian porque agregamos Notas
+         * DESPUÉS de Estado Furgón.
+         */
 
         const fechaFila =
             obtenerTextoCelda(data[1]);
@@ -1751,14 +1763,6 @@ function convertirTiempoParaInput(valor) {
     }
 
 
-    /*
-     * Si viene como:
-     *
-     * 02:30
-     *
-     * lo dejamos igual.
-     */
-
     if (
         String(valor).includes(":")
     ) {
@@ -1767,16 +1771,6 @@ function convertirTiempoParaInput(valor) {
 
     }
 
-
-    /*
-     * Si viene como número de minutos:
-     *
-     * 150
-     *
-     * lo convertimos a:
-     *
-     * 02:30
-     */
 
     const minutos =
         parseInt(valor);
@@ -2423,10 +2417,6 @@ function guardarNotaViaje() {
     }
 
 
-    /*
-     * Primero obtenemos el viaje completo.
-     */
-
     $.ajax({
 
         url: URL_VIAJES,
@@ -2467,10 +2457,6 @@ function guardarNotaViaje() {
 
             }
 
-
-            /*
-             * Actualizamos solamente la nota.
-             */
 
             viaje.notas =
                 nota;
@@ -2698,10 +2684,6 @@ function verNotasViaje(id) {
  *=========================================================*/
 
 function mostrarModalNotas(viaje) {
-
-    /*
-     * Eliminamos modal anterior.
-     */
 
     $("#modalVisualizarNotas").remove();
 
@@ -3005,10 +2987,6 @@ function eliminarNota(id) {
     }
 
 
-    /*
-     * Primero obtenemos el viaje completo.
-     */
-
     $.ajax({
 
         url: URL_VIAJES,
@@ -3049,10 +3027,6 @@ function eliminarNota(id) {
 
             }
 
-
-            /*
-             * Eliminamos la nota.
-             */
 
             viaje.notas = "";
 
@@ -3195,13 +3169,6 @@ function agregarFila(viaje) {
     }
 
 
-    /*
-     * IMPORTANTE:
-     *
-     * Si tiempoMaximo viene como "02:30"
-     * lo convertimos a minutos.
-     */
-
     if (
         typeof tiempoMaximo === "string" &&
         tiempoMaximo.includes(":")
@@ -3340,46 +3307,58 @@ function agregarFila(viaje) {
      =                   AGREGAR FILA
      =====================================================*/
 
-    tabla.row.add([
+    const filaViaje = [
 
+        /* 0 - Número */
         tabla.rows().count() + 1,
 
+        /* 1 - Fecha */
         escapeHtml(
             viaje.fecha || ""
         ),
 
+        /* 2 - Conductor */
         escapeHtml(
             viaje.conductor || ""
         ),
 
+        /* 3 - Placa */
         escapeHtml(
             viaje.placa || ""
         ),
 
+        /* 4 - Furgón */
         escapeHtml(
             viaje.furgon || ""
         ),
 
+        /* 5 - Origen */
         escapeHtml(
             viaje.origen || ""
         ),
 
+        /* 6 - Destino */
         escapeHtml(
             viaje.destino || ""
         ),
 
+        /* 7 - Salida */
         horaSalida,
 
+        /* 8 - Llegada */
         horaLlegada,
 
+        /* 9 - Tiempo real */
         minutosAHoras(
             tiempoReal
         ),
 
+        /* 10 - Tiempo máximo */
         minutosAHoras(
             tiempoMaximo
         ),
 
+        /* 11 - Exceso */
         tiempoExcedido === 0
 
             ?
@@ -3392,7 +3371,7 @@ function agregarFila(viaje) {
             tiempoExcedido +
             " min</span>",
 
-
+        /* 12 - Estado ODT */
         estado === "CUMPLIDO"
 
             ?
@@ -3403,7 +3382,7 @@ function agregarFila(viaje) {
 
             "<span class='badge bg-danger'>INCUMPLIDO</span>",
 
-
+        /* 13 - Estado Furgón */
         estadoFurgon === "CUMPLIDO"
 
             ?
@@ -3414,10 +3393,32 @@ function agregarFila(viaje) {
 
             "<span class='badge bg-danger'>INCUMPLIDO</span>",
 
+        /*=================================================
+         * 14 - NOTAS
+         *
+         * ESTA COLUMNA ESTARÁ OCULTA
+         * =================================================*/
+
+        escapeHtml(
+            viaje.notas || ""
+        ),
+
+        /*=================================================
+         * 15 - ACCIONES
+         * =================================================*/
 
         botones
 
-    ]);
+    ];
+
+
+    /*
+     * Agregamos la fila a DataTables.
+     */
+
+    tabla.row.add(
+        filaViaje
+    );
 
 }
 
@@ -3635,10 +3636,6 @@ function cargarViajes() {
     }
 
 
-    /*
-     * Nos aseguramos de que DataTable exista.
-     */
-
     inicializarTabla();
 
 
@@ -3707,12 +3704,6 @@ function cargarViajes() {
                     }
                 );
 
-
-                /*
-                 * Como paging está desactivado,
-                 * todos los registros se mostrarán
-                 * en una sola hoja.
-                 */
 
                 tabla.draw();
 
@@ -3821,7 +3812,6 @@ function eliminarViaje(id) {
     });
 
 }
-
 
 /* =========================================================
  * REPORTE PDF - AUDITORÍA DE VIAJES
@@ -4076,10 +4066,39 @@ window.exportarAuditoriaPDF = async function () {
 
 
 /* =========================================================
- * OBTENER DATOS DE DATATABLE + NOTAS DEL BACKEND
+ * OBTENER DATOS DE DATATABLE PARA PDF
+ *
+ * IMPORTANTE:
+ *
+ * La columna 14 contiene NOTAS.
+ * La columna 14 está oculta visualmente,
+ * pero sigue existiendo dentro de DataTables.
+ *
+ * Estructura:
+ *
+ * 0  Número
+ * 1  Fecha
+ * 2  Conductor
+ * 3  Placa
+ * 4  Furgón
+ * 5  Origen
+ * 6  Destino
+ * 7  Salida
+ * 8  Llegada
+ * 9  Tiempo real
+ * 10 Tiempo máximo
+ * 11 Exceso
+ * 12 Estado ODT
+ * 13 Estado Furgón
+ * 14 NOTAS
+ * 15 Acciones
  * ========================================================= */
 
-async function obtenerDatosViajesPDF() {
+function obtenerDatosViajesPDF() {
+
+    /* -----------------------------------------------------
+     * VERIFICAR DATATABLE
+     * ----------------------------------------------------- */
 
     if (
         typeof $ === "undefined" ||
@@ -4097,314 +4116,240 @@ async function obtenerDatosViajesPDF() {
     }
 
 
+    /* -----------------------------------------------------
+     * OBTENER DATATABLE
+     * ----------------------------------------------------- */
+
     const tabla =
         $("#tblViajes").DataTable();
 
 
-    const filas =
-        tabla.rows({
-            search: "applied"
-        }).data();
-
-
     /* -----------------------------------------------------
-     * OBTENER TODOS LOS VIAJES DESDE BACKEND
+     * RESULTADO
      * ----------------------------------------------------- */
-
-    let viajesBackend = [];
-
-
-    try {
-
-        const respuesta =
-            await fetch(
-                "/viajes/lista"
-            );
-
-
-        if (
-            !respuesta.ok
-        ) {
-
-            throw new Error(
-                "No se pudieron obtener los viajes."
-            );
-
-        }
-
-
-        viajesBackend =
-            await respuesta.json();
-
-
-    } catch (error) {
-
-        console.error(
-            "Error obteniendo viajes desde /viajes/lista:",
-            error
-        );
-
-        alert(
-            "No se pudieron obtener las notas de los viajes."
-        );
-
-        return [];
-
-    }
-
-
-    /* -----------------------------------------------------
-     * CREAR MAPA DE VIAJES POR ID
-     * ----------------------------------------------------- */
-
-    const mapaViajes =
-        new Map();
-
-
-    viajesBackend.forEach(
-        function (viaje) {
-
-            if (
-                viaje &&
-                viaje.id !== null &&
-                viaje.id !== undefined
-            ) {
-
-                mapaViajes.set(
-                    String(viaje.id),
-                    viaje
-                );
-
-            }
-
-        }
-    );
-
 
     const resultado = [];
 
 
     /* -----------------------------------------------------
-     * RECORRER DATATABLE
+     * RECORRER SOLAMENTE LAS FILAS FILTRADAS
+     *
+     * Esto es importante porque el PDF debe respetar
+     * los filtros de auditoría.
      * ----------------------------------------------------- */
 
-    filas.each(
-        function (fila) {
+    tabla.rows({
+        search: "applied"
+    }).every(function () {
 
-            if (
-                !fila
-            ) {
-
-                return;
-
-            }
+        const fila =
+            this.data();
 
 
-            if (
-                !Array.isArray(fila)
-            ) {
+        if (
+            !fila ||
+            !Array.isArray(fila)
+        ) {
 
-                return;
-
-            }
-
-
-            /* ---------------------------------------------
-             * BUSCAR ID REAL DEL VIAJE
-             * --------------------------------------------- */
-
-            let idViaje = null;
-
-
-            /*
-             * Primero intentamos obtenerlo desde:
-             *
-             * <tr data-id="123">
-             */
-
-            try {
-
-                const filaDOM =
-                    tabla
-                        .row(fila)
-                        .node();
-
-
-                if (
-                    filaDOM &&
-                    filaDOM.dataset &&
-                    filaDOM.dataset.id
-                ) {
-
-                    idViaje =
-                        filaDOM.dataset.id;
-
-                }
-
-            } catch (error) {
-
-                console.warn(
-                    "No se pudo obtener data-id de la fila.",
-                    error
-                );
-
-            }
-
-
-            /*
-             * Como respaldo:
-             *
-             * si la primera columna es realmente
-             * el ID, se utiliza.
-             */
-
-            if (
-                !idViaje
-            ) {
-
-                const posibleId =
-                    obtenerTextoPDF(
-                        fila[0]
-                    );
-
-
-                if (
-                    /^\d+$/.test(
-                        posibleId
-                    )
-                ) {
-
-                    idViaje =
-                        posibleId;
-
-                }
-
-            }
-
-
-            /* ---------------------------------------------
-             * OBTENER VIAJE COMPLETO
-             * --------------------------------------------- */
-
-            const viajeBackend =
-                idViaje
-                    ? mapaViajes.get(
-                        String(idViaje)
-                    )
-                    : null;
-
-
-            /* ---------------------------------------------
-             * OBTENER NOTA
-             * --------------------------------------------- */
-
-            const notas =
-                viajeBackend &&
-                viajeBackend.notas
-                    ? obtenerTextoPDF(
-                        viajeBackend.notas
-                    )
-                    : "";
-
-
-            /* ---------------------------------------------
-             * AGREGAR RESULTADO
-             * --------------------------------------------- */
-
-            resultado.push({
-
-                id:
-                    viajeBackend
-                        ? viajeBackend.id
-                        : idViaje,
-
-                numero:
-                    obtenerTextoPDF(
-                        fila[0]
-                    ),
-
-                fecha:
-                    obtenerTextoPDF(
-                        fila[1]
-                    ),
-
-                conductor:
-                    obtenerTextoPDF(
-                        fila[2]
-                    ),
-
-                placa:
-                    obtenerTextoPDF(
-                        fila[3]
-                    ),
-
-                furgon:
-                    obtenerTextoPDF(
-                        fila[4]
-                    ),
-
-                origen:
-                    obtenerTextoPDF(
-                        fila[5]
-                    ),
-
-                destino:
-                    obtenerTextoPDF(
-                        fila[6]
-                    ),
-
-                salida:
-                    obtenerTextoPDF(
-                        fila[7]
-                    ),
-
-                llegada:
-                    obtenerTextoPDF(
-                        fila[8]
-                    ),
-
-                tiempoReal:
-                    obtenerTextoPDF(
-                        fila[9]
-                    ),
-
-                tiempoMaximo:
-                    obtenerTextoPDF(
-                        fila[10]
-                    ),
-
-                tiempoExcedido:
-                    obtenerTextoPDF(
-                        fila[11]
-                    ),
-
-                estadoODT:
-                    obtenerTextoPDF(
-                        fila[12]
-                    ).toUpperCase(),
-
-                estadoFurgon:
-                    obtenerTextoPDF(
-                        fila[13]
-                    ).toUpperCase(),
-
-                /* -----------------------------------------
-                 * NUEVO
-                 * ----------------------------------------- */
-
-                notas:
-                    notas
-
-            });
+            return;
 
         }
+
+
+        /* -------------------------------------------------
+         * NOTAS
+         *
+         * AHORA LAS NOTAS ESTÁN EN LA COLUMNA 14.
+         *
+         * Esta es la modificación principal.
+         * ------------------------------------------------- */
+
+        const notas =
+            obtenerTextoPDF(
+                fila[14]
+            );
+
+
+        /* -------------------------------------------------
+         * ID
+         *
+         * Se intenta obtener del atributo interno si existe.
+         * El PDF no depende de él para imprimir las notas.
+         * ------------------------------------------------- */
+
+        let idViaje = null;
+
+
+        if (
+            fila._viajeId !== undefined &&
+            fila._viajeId !== null
+        ) {
+
+            idViaje =
+                String(
+                    fila._viajeId
+                );
+
+        }
+
+
+        /* -------------------------------------------------
+         * AGREGAR VIAJE
+         * ------------------------------------------------- */
+
+        resultado.push({
+
+            id:
+                idViaje,
+
+
+            /* ---------------------------------------------
+             * COLUMNAS
+             * --------------------------------------------- */
+
+            numero:
+                obtenerTextoPDF(
+                    fila[0]
+                ),
+
+
+            fecha:
+                obtenerTextoPDF(
+                    fila[1]
+                ),
+
+
+            conductor:
+                obtenerTextoPDF(
+                    fila[2]
+                ),
+
+
+            placa:
+                obtenerTextoPDF(
+                    fila[3]
+                ),
+
+
+            furgon:
+                obtenerTextoPDF(
+                    fila[4]
+                ),
+
+
+            origen:
+                obtenerTextoPDF(
+                    fila[5]
+                ),
+
+
+            destino:
+                obtenerTextoPDF(
+                    fila[6]
+                ),
+
+
+            salida:
+                obtenerTextoPDF(
+                    fila[7]
+                ),
+
+
+            llegada:
+                obtenerTextoPDF(
+                    fila[8]
+                ),
+
+
+            tiempoReal:
+                obtenerTextoPDF(
+                    fila[9]
+                ),
+
+
+            tiempoMaximo:
+                obtenerTextoPDF(
+                    fila[10]
+                ),
+
+
+            tiempoExcedido:
+                obtenerTextoPDF(
+                    fila[11]
+                ),
+
+
+            estadoODT:
+                obtenerTextoPDF(
+                    fila[12]
+                )
+                .toUpperCase(),
+
+
+            estadoFurgon:
+                obtenerTextoPDF(
+                    fila[13]
+                )
+                .toUpperCase(),
+
+
+            /* ---------------------------------------------
+             * NOTAS
+             *
+             * COLUMNA OCULTA 14
+             * --------------------------------------------- */
+
+            notas:
+                notas
+
+        });
+
+    });
+
+
+    /* -----------------------------------------------------
+     * DEBUG
+     * ----------------------------------------------------- */
+
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        "DATOS PREPARADOS PARA PDF"
+    );
+
+    console.log(
+        "Total:",
+        resultado.length
+    );
+
+    console.log(
+        "Viajes con notas:",
+        resultado.filter(
+            function (viaje) {
+
+                return obtenerTextoPDF(
+                    viaje.notas
+                ) !== "";
+
+            }
+        ).length
+    );
+
+    console.log(
+        "========================================"
+    );
+
+
+    console.log(
+        resultado
     );
 
 
     return resultado;
 
 }
-
 
 /* =========================================================
  * OBTENER SOLO VIAJES CON NOTAS
@@ -8145,7 +8090,7 @@ function dibujarNotasViajesPDF(
                         viaje.origen ||
                         "Sin origen"
                     ) +
-                    " → " +
+                    " -- " +
                     (
                         viaje.destino ||
                         "Sin destino"

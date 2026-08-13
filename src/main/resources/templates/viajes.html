@@ -287,241 +287,167 @@
 
 
 		<!-- FILTROS DE AUDITORÍA -->
-<!--============================================-->
+		<!--============================================-->
 
-<div class="card card-filter mb-4">
+		<div class="card card-filter mb-4">
 
-    <div class="card-header">
+			<div class="card-header">
 
-        <div class="d-flex justify-content-between align-items-center">
+				<div class="d-flex justify-content-between align-items-center">
 
-            <h5 class="mb-0">
+					<h5 class="mb-0">
 
-                <i class="bi bi-funnel-fill"></i>
-                Auditoría de Viajes
+						<i class="bi bi-funnel-fill"></i> Auditoría de Viajes
 
-            </h5>
+					</h5>
 
-        </div>
+				</div>
 
-    </div>
-
-
-    <div class="card-body">
-
-        <div class="row g-3">
+			</div>
 
 
-            <!--=========================================
+			<div class="card-body">
+
+				<div class="row g-3">
+
+
+					<!--=========================================
             =            FECHA DESDE
             ==========================================-->
 
-            <div class="col-xl-2 col-lg-3 col-md-6">
+					<div class="col-xl-2 col-lg-3 col-md-6">
 
-                <label
-                    for="txtFechaInicio"
-                    class="form-label">
+						<label for="txtFechaInicio" class="form-label"> Desde </label> <input
+							type="date" class="form-control" id="txtFechaInicio">
 
-                    Desde
-
-                </label>
-
-                <input
-                    type="date"
-                    class="form-control"
-                    id="txtFechaInicio">
-
-            </div>
+					</div>
 
 
-            <!--=========================================
+					<!--=========================================
             =            FECHA HASTA
             ==========================================-->
 
-            <div class="col-xl-2 col-lg-3 col-md-6">
+					<div class="col-xl-2 col-lg-3 col-md-6">
 
-                <label
-                    for="txtFechaFin"
-                    class="form-label">
+						<label for="txtFechaFin" class="form-label"> Hasta </label> <input
+							type="date" class="form-control" id="txtFechaFin">
 
-                    Hasta
-
-                </label>
-
-                <input
-                    type="date"
-                    class="form-control"
-                    id="txtFechaFin">
-
-            </div>
+					</div>
 
 
-            <!--=========================================
+					<!--=========================================
             =            RUTA
             ==========================================-->
 
-            <div class="col-xl-2 col-lg-3 col-md-6">
+					<div class="col-xl-2 col-lg-3 col-md-6">
 
-                <label
-                    for="cmbRuta"
-                    class="form-label">
+						<label for="cmbRuta" class="form-label"> Ruta </label> <select
+							class="form-select" id="cmbRuta">
 
-                    Ruta
+							<option value="">Todas las rutas</option>
 
-                </label>
+						</select>
 
-                <select
-                    class="form-select"
-                    id="cmbRuta">
-
-                    <option value="">
-                        Todas las rutas
-                    </option>
-
-                </select>
-
-            </div>
+					</div>
 
 
-            <!--=========================================
+					<!--=========================================
             =            CONDUCTOR
             ==========================================-->
 
-            <div class="col-xl-2 col-lg-3 col-md-6">
+					<div class="col-xl-2 col-lg-3 col-md-6">
 
-                <label
-                    for="cmbConductor"
-                    class="form-label">
+						<label for="cmbConductor" class="form-label"> Conductor </label> <select
+							class="form-select" id="cmbConductor">
 
-                    Conductor
+							<option value="">Todos los conductores</option>
 
-                </label>
+						</select>
 
-                <select
-                    class="form-select"
-                    id="cmbConductor">
-
-                    <option value="">
-                        Todos los conductores
-                    </option>
-
-                </select>
-
-            </div>
+					</div>
 
 
-            <!--=========================================
+					<!--=========================================
             =            ESTADO ODT
             ==========================================-->
 
-            <div class="col-xl-2 col-lg-3 col-md-6">
+					<div class="col-xl-2 col-lg-3 col-md-6">
 
-                <label
-                    for="cmbEstadoODT"
-                    class="form-label">
+						<label for="cmbEstadoODT" class="form-label"> Estado ODT </label>
 
-                    Estado ODT
+						<select class="form-select" id="cmbEstadoODT">
 
-                </label>
+							<option value="">Todos</option>
 
-                <select
-                    class="form-select"
-                    id="cmbEstadoODT">
+							<option value="CUMPLIDO">Cumplido</option>
 
-                    <option value="">
-                        Todos
-                    </option>
+							<option value="INCUMPLIDO">Incumplido</option>
 
-                    <option value="CUMPLIDO">
-                        Cumplido
-                    </option>
+						</select>
 
-                    <option value="INCUMPLIDO">
-                        Incumplido
-                    </option>
-
-                </select>
-
-            </div>
+					</div>
 
 
-            <!--=========================================
+					<!--=========================================
             =            ESTADO FURGÓN
             ==========================================-->
 
-            <div class="col-xl-2 col-lg-3 col-md-6">
+					<div class="col-xl-2 col-lg-3 col-md-6">
 
-                <label
-                    for="cmbEstadoFurgon"
-                    class="form-label">
+						<label for="cmbEstadoFurgon" class="form-label"> Estado
+							Furgón </label> <select class="form-select" id="cmbEstadoFurgon">
 
-                    Estado Furgón
+							<option value="">Todos</option>
 
-                </label>
+							<option value="CUMPLIDO">Cumplido</option>
 
-                <select
-                    class="form-select"
-                    id="cmbEstadoFurgon">
+							<option value="INCUMPLIDO">Incumplido</option>
 
-                    <option value="">
-                        Todos
-                    </option>
+						</select>
 
-                    <option value="CUMPLIDO">
-                        Cumplido
-                    </option>
+					</div>
 
-                    <option value="INCUMPLIDO">
-                        Incumplido
-                    </option>
-
-                </select>
-
-            </div>
-
-        </div>
+				</div>
 
 
-        <hr>
+				<hr>
 
 
-        <!--=========================================
+				<!--=========================================
         =            BOTONES
         ==========================================-->
 
-        <div class="d-flex flex-wrap justify-content-end gap-2">
+				<div class="d-flex flex-wrap justify-content-end gap-2">
 
 
-            <!-- LIMPIAR -->
+					<!-- LIMPIAR -->
 
-            <button
-                type="button"
-                class="btn btn-secondary"
-                id="btnLimpiar">
+					<button type="button" class="btn btn-secondary" id="btnLimpiar">
 
-                <i class="bi bi-eraser"></i>
-                Limpiar
+						<i class="bi bi-eraser"></i> Limpiar
 
-            </button>
+					</button>
 
 
-            <!-- EXPORTAR PDF -->
+					<!-- EXPORTAR PDF -->
 
-            <button
-                type="button"
-                class="btn btn-danger"
-                id="btnExportarPDF">
+					<button type="button" class="btn btn-danger" id="btnExportarPDF">
 
-                <i class="bi bi-file-earmark-pdf-fill"></i>
-                PDF
+						<i class="bi bi-file-earmark-pdf-fill"></i> PDF
 
-            </button>
+					</button>
 
-        </div>
+					<button type="button" id="btnPresentacion" class="btn btn-primary">
 
-    </div>
+						<i class="bi bi-easel2"></i> Presentación
 
-</div>
+					</button>
+
+				</div>
+
+			</div>
+
+		</div>
 
 		<!--================================================-->
 		<!-- HISTORIAL DE VIAJES -->
@@ -597,6 +523,8 @@
 								<th>Estado ODT</th>
 
 								<th>Estado Furgon</th>
+								
+									<th>notas</th>
 
 								<th class="text-center">Acciones</th>
 
@@ -614,100 +542,85 @@
 		</div>
 
 	</div>
-	
-<!-- MODAL VER NOTA -->
-<div id="modalVerNota" class="modal-nota-overlay">
 
-    <div class="modal-nota">
+	<!-- MODAL VER NOTA -->
+	<div id="modalVerNota" class="modal-nota-overlay">
 
-        <div class="modal-nota-header">
+		<div class="modal-nota">
 
-            <div class="modal-nota-title">
-                <div class="modal-nota-icon">
-                    <i class="fa-solid fa-note-sticky"></i>
-                </div>
+			<div class="modal-nota-header">
 
-                <div>
-                    <h2>Nota del viaje</h2>
-                    <span>Información registrada</span>
-                </div>
-            </div>
+				<div class="modal-nota-title">
+					<div class="modal-nota-icon">
+						<i class="fa-solid fa-note-sticky"></i>
+					</div>
 
-            <button class="modal-nota-close" onclick="cerrarModalNota()">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+					<div>
+						<h2>Nota del viaje</h2>
+						<span>Información registrada</span>
+					</div>
+				</div>
 
-        </div>
+				<button class="modal-nota-close" onclick="cerrarModalNota()">
+					<i class="fa-solid fa-xmark"></i>
+				</button>
 
-
-        <div class="modal-nota-body">
-
-            <div class="nota-info-grid">
-
-                <div class="nota-info-item">
-                    <span>Conductor</span>
-                    <strong id="notaConductor">---</strong>
-                </div>
-
-                <div class="nota-info-item">
-                    <span>Placa</span>
-                    <strong id="notaPlaca">---</strong>
-                </div>
-
-                <div class="nota-info-item">
-                    <span>Fecha</span>
-                    <strong id="notaFecha">---</strong>
-                </div>
-
-                <div class="nota-info-item">
-                    <span>Ruta</span>
-                    <strong id="notaRuta">---</strong>
-                </div>
-
-            </div>
+			</div>
 
 
-            <div class="nota-contenedor">
+			<div class="modal-nota-body">
 
-                <div class="nota-label">
-                    <i class="fa-solid fa-message"></i>
-                    Nota
-                </div>
+				<div class="nota-info-grid">
 
-                <div id="notaTexto" class="nota-texto">
-                </div>
+					<div class="nota-info-item">
+						<span>Conductor</span> <strong id="notaConductor">---</strong>
+					</div>
 
-            </div>
+					<div class="nota-info-item">
+						<span>Placa</span> <strong id="notaPlaca">---</strong>
+					</div>
 
-        </div>
+					<div class="nota-info-item">
+						<span>Fecha</span> <strong id="notaFecha">---</strong>
+					</div>
+
+					<div class="nota-info-item">
+						<span>Ruta</span> <strong id="notaRuta">---</strong>
+					</div>
+
+				</div>
 
 
-        <div class="modal-nota-footer">
+				<div class="nota-contenedor">
 
-            <button 
-                type="button"
-                class="btn-eliminar-nota"
-                onclick="eliminarNotaActual()">
+					<div class="nota-label">
+						<i class="fa-solid fa-message"></i> Nota
+					</div>
 
-                <i class="fa-solid fa-trash"></i>
-                Eliminar nota
+					<div id="notaTexto" class="nota-texto"></div>
 
-            </button>
+				</div>
 
-            <button 
-                type="button"
-                class="btn-cerrar-nota"
-                onclick="cerrarModalNota()">
+			</div>
 
-                Cerrar
 
-            </button>
+			<div class="modal-nota-footer">
 
-        </div>
+				<button type="button" class="btn-eliminar-nota"
+					onclick="eliminarNotaActual()">
 
-    </div>
+					<i class="fa-solid fa-trash"></i> Eliminar nota
 
-</div>
+				</button>
+
+				<button type="button" class="btn-cerrar-nota"
+					onclick="cerrarModalNota()">Cerrar</button>
+
+			</div>
+
+		</div>
+
+	</div>
 
 
 	<!-- =====================================================
@@ -966,203 +879,171 @@
 
 
 	</div>
-	
 
-<!-- =====================================================
+
+	<!-- =====================================================
      MODAL ACCIONES DEL VIAJE
 ====================================================== -->
-<div class="modal fade" id="modalAccionesViaje" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+	<div class="modal fade" id="modalAccionesViaje" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
 
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">
-                    <i class="bi bi-pencil-square"></i>
-                    ¿Qué deseas hacer?
-                </h5>
+				<div class="modal-header bg-warning">
+					<h5 class="modal-title">
+						<i class="bi bi-pencil-square"></i> ¿Qué deseas hacer?
+					</h5>
 
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal">
-                </button>
-            </div>
+					<button type="button" class="btn-close" data-bs-dismiss="modal">
+					</button>
+				</div>
 
-            <div class="modal-body">
+				<div class="modal-body">
 
-                <p class="text-muted mb-3">
-                    Selecciona la acción que deseas realizar sobre este viaje.
-                </p>
+					<p class="text-muted mb-3">Selecciona la acción que deseas
+						realizar sobre este viaje.</p>
 
-                <div class="d-grid gap-2">
+					<div class="d-grid gap-2">
 
-                    <button
-                        type="button"
-                        class="btn btn-primary"
-                        id="btnModificarInformacion">
+						<button type="button" class="btn btn-primary"
+							id="btnModificarInformacion">
 
-                        <i class="bi bi-pencil-square"></i>
-                        Modificar información del viaje
+							<i class="bi bi-pencil-square"></i> Modificar información del
+							viaje
 
-                    </button>
+						</button>
 
-                    <button
-                        type="button"
-                        class="btn btn-success"
-                        id="btnAgregarNota">
+						<button type="button" class="btn btn-success" id="btnAgregarNota">
 
-                        <i class="bi bi-plus-circle"></i>
-                        Agregar una nota al viaje
+							<i class="bi bi-plus-circle"></i> Agregar una nota al viaje
 
-                    </button>
+						</button>
 
-                    <button
-                        type="button"
-                        class="btn btn-warning"
-                        id="btnModificarNota">
+						<button type="button" class="btn btn-warning"
+							id="btnModificarNota">
 
-                        <i class="bi bi-sticky"></i>
-                        Modificar la nota del viaje
+							<i class="bi bi-sticky"></i> Modificar la nota del viaje
 
-                    </button>
+						</button>
 
-                </div>
+					</div>
 
-            </div>
+				</div>
 
-        </div>
-    </div>
-</div>
+			</div>
+		</div>
+	</div>
 
 
-<!-- =====================================================
+	<!-- =====================================================
      MODAL NOTA DEL VIAJE
 ====================================================== -->
-<div class="modal fade" id="modalNotaViaje" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+	<div class="modal fade" id="modalNotaViaje" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
 
-            <div class="modal-header bg-success text-white">
+				<div class="modal-header bg-success text-white">
 
-                <h5 class="modal-title" id="tituloModalNota">
-                    <i class="bi bi-sticky"></i>
-                    Nota del viaje
-                </h5>
+					<h5 class="modal-title" id="tituloModalNota">
+						<i class="bi bi-sticky"></i> Nota del viaje
+					</h5>
 
-                <button
-                    type="button"
-                    class="btn-close btn-close-white"
-                    data-bs-dismiss="modal">
-                </button>
+					<button type="button" class="btn-close btn-close-white"
+						data-bs-dismiss="modal"></button>
 
-            </div>
+				</div>
 
-            <form id="formNotaViaje">
+				<form id="formNotaViaje">
 
-                <div class="modal-body">
+					<div class="modal-body">
 
-                    <input
-                        type="hidden"
-                        id="idViajeNota">
+						<input type="hidden" id="idViajeNota">
 
-                    <div class="mb-3">
+						<div class="mb-3">
 
-                        <label
-                            for="txtNotaViaje"
-                            class="form-label">
+							<label for="txtNotaViaje" class="form-label"> Nota </label>
 
-                            Nota
-
-                        </label>
-
-                        <textarea
-                            class="form-control"
-                            id="txtNotaViaje"
-                            rows="6"
-                            placeholder="Escriba la nota del viaje..."
-                            required>
+							<textarea class="form-control" id="txtNotaViaje" rows="6"
+								placeholder="Escriba la nota del viaje..." required>
                         </textarea>
 
-                    </div>
+						</div>
 
-                </div>
+					</div>
 
-                <div class="modal-footer">
+					<div class="modal-footer">
 
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal">
+						<button type="button" class="btn btn-secondary"
+							data-bs-dismiss="modal">Cancelar</button>
 
-                        Cancelar
+						<button type="submit" class="btn btn-success">
 
-                    </button>
+							<i class="bi bi-save"></i> Guardar Nota
 
-                    <button
-                        type="submit"
-                        class="btn btn-success">
+						</button>
 
-                        <i class="bi bi-save"></i>
-                        Guardar Nota
+					</div>
 
-                    </button>
+				</form>
 
-                </div>
-
-            </form>
-
-        </div>
-    </div>
-</div>
+			</div>
+		</div>
+	</div>
 	<!--================================================-->
 	<!-- Bootstrap -->
 	<!--================================================-->
 
 	<!-- Bootstrap -->
-<script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
-</script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js">
+		
+	</script>
 
-<!-- JQuery -->
-<script
-    src="https://code.jquery.com/jquery-3.7.1.min.js">
-</script>
+	<!-- JQuery -->
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js">
+		
+	</script>
 
-<!-- DataTables -->
-<script
-    src="https://cdn.datatables.net/2.3.2/js/dataTables.js">
-</script>
+	<!-- DataTables -->
+	<script src="https://cdn.datatables.net/2.3.2/js/dataTables.js">
+		
+	</script>
 
-<script
-    src="https://cdn.datatables.net/2.3.2/js/dataTables.bootstrap5.js">
-</script>
+	<script
+		src="https://cdn.datatables.net/2.3.2/js/dataTables.bootstrap5.js">
+		
+	</script>
 
-<!-- Chart.js -->
-<script
-    src="https://cdn.jsdelivr.net/npm/chart.js">
-</script>
+	<!-- Chart.js -->
+	<script src="https://cdn.jsdelivr.net/npm/chart.js">
+		
+	</script>
 
-<!-- jsPDF -->
-<script
-    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
-</script>
+	<!-- jsPDF -->
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+		
+	</script>
 
-<!-- Soporte SVG para jsPDF -->
-<script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/dist/svg2pdf.umd.min.js"></script>
+	<!-- Soporte SVG para jsPDF -->
+	<script
+		src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/dist/svg2pdf.umd.min.js"></script>
 
-<!-- AutoTable -->
-<script
-    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js">
-</script>
+	<!-- AutoTable -->
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js">
+		
+	</script>
 
-<!-- =====================================================
+	<!-- =====================================================
      FONT AWESOME
      ===================================================== -->
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js"></script>
 
-<!-- JS -->
-<script src="js/viajes.js"></script>
+	<!-- JS -->
+	<script src="js/viajes.js"></script>
+	<script src="/js/viajes-presentacion.js"></script>
 
 </body>
 
