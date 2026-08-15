@@ -2743,6 +2743,23 @@ function convertirFechaParaInput(
 
 
 /* =========================================================
+ * DESTINOS.JS
+ * CONTROL DE RECORRIDOS, FILTROS, TABLA Y PAGINACIÓN
+ * ========================================================= */
+
+
+/* =========================================================
+ * VARIABLES DE FILTRO
+ * ========================================================= */
+
+let filtrosAplicados = {
+    texto: "",
+    fechaDesde: "",
+    fechaHasta: ""
+};
+
+
+/* =========================================================
  * CARGAR RECORRIDOS DESDE BD
  *
  * GET /api/recorridos
@@ -2752,24 +2769,17 @@ async function cargarRecorridos() {
 
     try {
 
-        console.log(
-            "Cargando recorridos desde BD..."
-        );
+        console.log("Cargando recorridos desde BD...");
 
-
-        const respuesta =
-            await fetch(
-                URL_RECORRIDOS,
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
+        const respuesta = await fetch(
+            URL_RECORRIDOS,
+            {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
                 }
-            );
-
+            }
+        );
 
         if (!respuesta.ok) {
 
@@ -2778,37 +2788,25 @@ async function cargarRecorridos() {
             );
         }
 
+        const datos = await respuesta.json();
 
-        const datos =
-            await respuesta.json();
+        if (Array.isArray(datos)) {
 
-
-        if (
-            Array.isArray(datos)
-        ) {
-
-            recorridosBD =
-                datos;
+            recorridosBD = datos;
 
         } else {
 
-            recorridosBD =
-                [];
+            recorridosBD = [];
         }
-
 
         console.log(
             "Recorridos cargados:",
             recorridosBD
         );
 
-
-        paginaActual =
-            1;
-
+        paginaActual = 1;
 
         renderizarRecorridos();
-
 
     } catch (error) {
 
@@ -2817,13 +2815,432 @@ async function cargarRecorridos() {
             error
         );
 
-
-        recorridosBD =
-            [];
-
+        recorridosBD = [];
 
         renderizarRecorridos();
     }
+}
+
+
+/* =========================================================
+ * INICIALIZAR FILTROS
+ * ========================================================= */
+
+function inicializarFiltrosRecorridos() {
+
+    const buscador =
+        document.getElementById(
+            "buscadorViajes"
+        );
+
+    const fechaDesde =
+        document.getElementById(
+            "fechaDesde"
+        );
+
+    const fechaHasta =
+        document.getElementById(
+            "fechaHasta"
+        );
+
+    const btnAplicar =
+        document.getElementById(
+            "btnAplicarFiltros"
+        );
+
+    const btnLimpiar =
+        document.getElementById(
+            "btnLimpiarFiltros"
+        );
+
+
+    /* =====================================================
+     * BUSCADOR
+     *
+     * Al escribir se aplica automáticamente.
+     * ===================================================== */
+
+    if (buscador) {
+
+        buscador.addEventListener(
+            "input",
+            function () {
+
+                filtrosAplicados.texto =
+                    this.value
+                        .trim()
+                        .toLowerCase();
+
+                paginaActual = 1;
+
+                renderizarRecorridos();
+            }
+        );
+    }
+
+
+    /* =====================================================
+     * BOTÓN APLICAR
+     * ===================================================== */
+
+    if (btnAplicar) {
+
+        btnAplicar.addEventListener(
+            "click",
+            function () {
+
+                aplicarFiltros();
+            }
+        );
+    }
+
+
+    /* =====================================================
+     * BOTÓN LIMPIAR
+     * ===================================================== */
+
+    if (btnLimpiar) {
+
+        btnLimpiar.addEventListener(
+            "click",
+            function () {
+
+                limpiarFiltros();
+            }
+        );
+    }
+
+
+    /* =====================================================
+     * ENTER EN BUSCADOR
+     * ===================================================== */
+
+    if (buscador) {
+
+        buscador.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (event.key === "Enter") {
+
+                    event.preventDefault();
+
+                    aplicarFiltros();
+                }
+            }
+        );
+    }
+}
+
+
+/* =========================================================
+ * APLICAR FILTROS
+ * ========================================================= */
+
+function aplicarFiltros() {
+
+    const buscador =
+        document.getElementById(
+            "buscadorViajes"
+        );
+
+    const fechaDesde =
+        document.getElementById(
+            "fechaDesde"
+        );
+
+    const fechaHasta =
+        document.getElementById(
+            "fechaHasta"
+        );
+
+
+    const texto =
+        buscador
+            ? buscador.value
+                .trim()
+                .toLowerCase()
+            : "";
+
+
+    const desde =
+        fechaDesde
+            ? fechaDesde.value
+            : "";
+
+
+    const hasta =
+        fechaHasta
+            ? fechaHasta.value
+            : "";
+
+
+    /* =====================================================
+     * VALIDAR RANGO
+     * ===================================================== */
+
+    if (
+        desde &&
+        hasta &&
+        desde > hasta
+    ) {
+
+        mostrarMensajeError(
+            "La fecha 'Desde' no puede ser posterior a la fecha 'Hasta'."
+        );
+
+        return;
+    }
+
+
+    filtrosAplicados = {
+
+        texto: texto,
+
+        fechaDesde: desde,
+
+        fechaHasta: hasta
+    };
+
+
+    paginaActual = 1;
+
+    renderizarRecorridos();
+}
+
+
+/* =========================================================
+ * LIMPIAR FILTROS
+ * ========================================================= */
+
+function limpiarFiltros() {
+
+    const buscador =
+        document.getElementById(
+            "buscadorViajes"
+        );
+
+    const fechaDesde =
+        document.getElementById(
+            "fechaDesde"
+        );
+
+    const fechaHasta =
+        document.getElementById(
+            "fechaHasta"
+        );
+
+
+    if (buscador) {
+
+        buscador.value = "";
+    }
+
+
+    if (fechaDesde) {
+
+        fechaDesde.value = "";
+    }
+
+
+    if (fechaHasta) {
+
+        fechaHasta.value = "";
+    }
+
+
+    filtrosAplicados = {
+
+        texto: "",
+
+        fechaDesde: "",
+
+        fechaHasta: ""
+    };
+
+
+    paginaActual = 1;
+
+    renderizarRecorridos();
+}
+
+
+/* =========================================================
+ * OBTENER RECORRIDOS FILTRADOS
+ * ========================================================= */
+
+function obtenerRecorridosFiltrados() {
+
+    if (
+        !Array.isArray(recorridosBD)
+    ) {
+
+        return [];
+    }
+
+
+    const textoBusqueda =
+        filtrosAplicados.texto
+            .trim()
+            .toLowerCase();
+
+
+    const fechaDesde =
+        filtrosAplicados.fechaDesde;
+
+
+    const fechaHasta =
+        filtrosAplicados.fechaHasta;
+
+
+    return recorridosBD.filter(
+        recorrido => {
+
+            /* =============================================
+             * FILTRO DE TEXTO
+             * ============================================= */
+
+            if (textoBusqueda) {
+
+                const texto =
+                    construirTextoBusqueda(
+                        recorrido
+                    );
+
+                if (
+                    !texto.includes(
+                        textoBusqueda
+                    )
+                ) {
+
+                    return false;
+                }
+            }
+
+
+            /* =============================================
+             * FECHA DEL RECORRIDO
+             * ============================================= */
+
+            const fechaRecorrido =
+                obtenerFechaISO(
+                    recorrido.fecha
+                );
+
+
+            /* =============================================
+             * FECHA DESDE
+             * ============================================= */
+
+            if (
+                fechaDesde &&
+                fechaRecorrido
+            ) {
+
+                if (
+                    fechaRecorrido <
+                    fechaDesde
+                ) {
+
+                    return false;
+                }
+            }
+
+
+            /* =============================================
+             * FECHA HASTA
+             * ============================================= */
+
+            if (
+                fechaHasta &&
+                fechaRecorrido
+            ) {
+
+                if (
+                    fechaRecorrido >
+                    fechaHasta
+                ) {
+
+                    return false;
+                }
+            }
+
+
+            return true;
+        }
+    );
+}
+
+
+/* =========================================================
+ * NORMALIZAR FECHA A YYYY-MM-DD
+ * ========================================================= */
+
+function obtenerFechaISO(
+    fecha
+) {
+
+    if (!fecha) {
+
+        return "";
+    }
+
+
+    let texto =
+        String(fecha)
+            .trim();
+
+
+    /*
+     * ISO:
+     * 2026-01-25
+     */
+
+    if (
+        /^\d{4}-\d{2}-\d{2}$/.test(
+            texto
+        )
+    ) {
+
+        return texto;
+    }
+
+
+    /*
+     * ISO con hora:
+     * 2026-01-25T00:00:00
+     */
+
+    if (
+        texto.includes("T")
+    ) {
+
+        return texto
+            .split("T")[0];
+    }
+
+
+    /*
+     * Fecha DD/MM/YYYY
+     */
+
+    const formatoLatino =
+        texto.match(
+            /^(\d{2})\/(\d{2})\/(\d{4})$/
+        );
+
+
+    if (formatoLatino) {
+
+        return (
+            `${formatoLatino[3]}-` +
+            `${formatoLatino[2]}-` +
+            `${formatoLatino[1]}`
+        );
+    }
+
+
+    return "";
 }
 
 
@@ -2849,14 +3266,58 @@ function renderizarRecorridos() {
     }
 
 
-    tbody.innerHTML =
-        "";
+    tbody.innerHTML = "";
 
+
+    /* =====================================================
+     * OBTENER FILTRADOS
+     * ===================================================== */
+
+    const recorridosFiltrados =
+        obtenerRecorridosFiltrados();
+
+
+    const totalRegistros =
+        recorridosFiltrados.length;
+
+
+    /* =====================================================
+     * SIN RESULTADOS
+     * ===================================================== */
 
     if (
-        !Array.isArray(recorridosBD) ||
-        recorridosBD.length === 0
+        totalRegistros === 0
     ) {
+
+        const fila =
+            document.createElement("tr");
+
+
+        const celda =
+            document.createElement("td");
+
+
+        celda.colSpan = 13;
+
+        celda.className =
+            "text-center py-5";
+
+
+        celda.innerHTML = `
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+            No se encontraron recorridos.
+        `;
+
+
+        fila.appendChild(
+            celda
+        );
+
+
+        tbody.appendChild(
+            fila
+        );
+
 
         actualizarContadorTabla(
             0,
@@ -2879,51 +3340,8 @@ function renderizarRecorridos() {
 
 
     /* =====================================================
-     * BUSCADOR
+     * CALCULAR PAGINACIÓN
      * ===================================================== */
-
-    const buscador =
-        document.getElementById(
-            "buscadorViajes"
-        );
-
-
-    const textoBusqueda =
-        buscador
-            ? buscador.value
-                .trim()
-                .toLowerCase()
-            : "";
-
-
-    const recorridosFiltrados =
-        recorridosBD.filter(
-            recorrido => {
-
-                if (
-                    !textoBusqueda
-                ) {
-
-                    return true;
-                }
-
-
-                const texto =
-                    construirTextoBusqueda(
-                        recorrido
-                    );
-
-
-                return texto.includes(
-                    textoBusqueda
-                );
-            }
-        );
-
-
-    const totalRegistros =
-        recorridosFiltrados.length;
-
 
     const totalPaginas =
         Math.max(
@@ -2933,6 +3351,14 @@ function renderizarRecorridos() {
                 REGISTROS_POR_PAGINA
             )
         );
+
+
+    if (
+        paginaActual < 1
+    ) {
+
+        paginaActual = 1;
+    }
 
 
     if (
@@ -2946,7 +3372,9 @@ function renderizarRecorridos() {
 
 
     const inicio =
-        (paginaActual - 1) *
+        (
+            paginaActual - 1
+        ) *
         REGISTROS_POR_PAGINA;
 
 
@@ -2994,6 +3422,10 @@ function renderizarRecorridos() {
 
     /* =====================================================
      * TOTALES
+     *
+     * IMPORTANTE:
+     * Los totales corresponden a TODOS los registros
+     * filtrados, no solamente a la página actual.
      * ===================================================== */
 
     actualizarTotalesRecorridos(
@@ -3031,15 +3463,25 @@ function construirTextoBusqueda(
 
         recorrido.rutaDestino,
 
+        recorrido.ruta,
+
+        recorrido.destino,
+
         recorrido.remision,
 
         recorrido.kmRecorridos,
 
+        recorrido.kilometros,
+
         recorrido.bandaPorKm,
+
+        recorrido.banda,
 
         recorrido.cantidadPeajes,
 
         recorrido.ejesCamion,
+
+        recorrido.ejes,
 
         recorrido.subtotal,
 
@@ -3090,6 +3532,16 @@ function crearFilaRecorrido(
         document.createElement("tr");
 
 
+    if (
+        recorrido.id !== null &&
+        recorrido.id !== undefined
+    ) {
+
+        fila.id =
+            `fila-${recorrido.id}`;
+    }
+
+
     const fecha =
         formatearFecha(
             recorrido.fecha
@@ -3097,24 +3549,31 @@ function crearFilaRecorrido(
 
 
     const motorista =
-        recorrido.motorista ?? "";
+        recorrido.motorista ??
+        "";
 
 
     const unidad =
-        recorrido.unidad ?? "";
+        recorrido.unidad ??
+        "";
 
 
     const destino =
-        recorrido.rutaDestino ?? "";
+        recorrido.rutaDestino ??
+        recorrido.ruta ??
+        recorrido.destino ??
+        "";
 
 
     const remision =
-        recorrido.remision ?? "";
+        recorrido.remision ??
+        "";
 
 
     const km =
         parseFloat(
-            recorrido.kmRecorridos
+            recorrido.kmRecorridos ??
+            recorrido.kilometros
         ) || 0;
 
 
@@ -3163,55 +3622,66 @@ function crearFilaRecorrido(
         fecha
     );
 
+
     agregarCelda(
         fila,
         motorista
     );
+
 
     agregarCelda(
         fila,
         unidad
     );
 
+
     agregarCelda(
         fila,
         destino
     );
+
 
     agregarCelda(
         fila,
         remision
     );
 
+
     agregarCelda(
         fila,
         formatoNumero(km)
     );
+
 
     agregarCelda(
         fila,
         formatoMoneda(subtotal)
     );
 
+
     agregarCelda(
         fila,
         formatoMoneda(isv)
     );
+
 
     agregarCelda(
         fila,
         formatoMoneda(tarifa)
     );
 
+
     agregarCelda(
         fila,
         cantidadPeajes
     );
 
+
     agregarCelda(
         fila,
         formatoMoneda(valorPeaje)
     );
+
 
     agregarCelda(
         fila,
@@ -3236,7 +3706,7 @@ function crearFilaRecorrido(
 
 
     /* =====================================================
-     * BOTÓN EDITAR
+     * EDITAR
      * ===================================================== */
 
     const btnEditar =
@@ -3271,7 +3741,7 @@ function crearFilaRecorrido(
 
 
     /* =====================================================
-     * BOTÓN ELIMINAR
+     * ELIMINAR
      * ===================================================== */
 
     const btnEliminar =
@@ -3457,9 +3927,13 @@ function actualizarTotalesRecorridos(
 ) {
 
     let totalKm = 0;
+
     let totalSubtotal = 0;
+
     let totalIsv = 0;
+
     let totalTarifa = 0;
+
     let totalPeajes = 0;
 
 
@@ -3476,7 +3950,8 @@ function actualizarTotalesRecorridos(
 
             totalKm +=
                 parseFloat(
-                    recorrido.kmRecorridos
+                    recorrido.kmRecorridos ??
+                    recorrido.kilometros
                 ) || 0;
 
 
@@ -3601,6 +4076,10 @@ function colocarTotalesTabla(
     }
 
 
+    /* =====================================================
+     * RESUMEN SUPERIOR
+     * ===================================================== */
+
     const resumenKm =
         document.getElementById(
             "resumenKm"
@@ -3654,9 +4133,13 @@ function actualizarTotalesTabla(
 ) {
 
     let totalKm = 0;
+
     let totalSubtotal = 0;
+
     let totalIsv = 0;
+
     let totalTarifa = 0;
+
     let totalPeajes = 0;
 
 
@@ -3756,6 +4239,69 @@ function obtenerNumeroCelda(
         : numero;
 }
 
+
+/* =========================================================
+ * MOSTRAR ERROR
+ *
+ * Usa el modal de error que ya existe en tu HTML.
+ * ========================================================= */
+
+function mostrarMensajeError(
+    mensaje
+) {
+
+    const elemento =
+        document.getElementById(
+            "mensajeError"
+        );
+
+
+    if (elemento) {
+
+        elemento.textContent =
+            mensaje;
+    }
+
+
+    const modalElemento =
+        document.getElementById(
+            "modalError"
+        );
+
+
+    if (
+        modalElemento &&
+        typeof bootstrap !== "undefined"
+    ) {
+
+        const modal =
+            bootstrap.Modal.getOrCreateInstance(
+                modalElemento
+            );
+
+
+        modal.show();
+
+    } else {
+
+        alert(mensaje);
+    }
+}
+
+
+/* =========================================================
+ * INICIALIZACIÓN
+ * ========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        inicializarFiltrosRecorridos();
+
+        cargarRecorridos();
+    }
+);
 
 /* =========================================================
  * GENERAR PAGINACIÓN
@@ -4192,14 +4738,18 @@ window.mostrarModalError =
 	
 	
 	/* =========================================================
-	   EXPORTAR TABLA A PDF
-	   ========================================================= */
+	 * EXPORTAR RECORRIDOS COMPLETOS A PDF
+	 *
+	 * IMPORTANTE:
+	 * Este PDF NO utiliza las filas visibles de la tabla HTML.
+	 * Utiliza directamente recorridosBD para evitar el problema
+	 * de la paginación.
+	 * ========================================================= */
 
 	document.addEventListener("DOMContentLoaded", function () {
 
 	    const btnPDF =
 	        document.getElementById("btnExportarPDF");
-
 
 	    if (!btnPDF) {
 
@@ -4208,9 +4758,7 @@ window.mostrarModalError =
 	        );
 
 	        return;
-
 	    }
-
 
 	    btnPDF.addEventListener(
 	        "click",
@@ -4221,14 +4769,14 @@ window.mostrarModalError =
 
 
 	/* =========================================================
-	   FUNCIÓN PRINCIPAL
-	   ========================================================= */
+	 * FUNCIÓN PRINCIPAL
+	 * ========================================================= */
 
 	function exportarPDF() {
 
 	    /* =====================================================
-	       VALIDAR jsPDF
-	       ===================================================== */
+	     * VALIDAR jsPDF
+	     * ===================================================== */
 
 	    if (
 	        typeof window.jspdf === "undefined" ||
@@ -4240,23 +4788,71 @@ window.mostrarModalError =
 	        );
 
 	        return;
-
 	    }
 
 
-	    const { jsPDF } =
-	        window.jspdf;
+	    if (
+	        typeof window.jspdf.jsPDF !== "function"
+	    ) {
+
+	        alert(
+	            "La librería jsPDF no está disponible correctamente."
+	        );
+
+	        return;
+	    }
+
+
+	    const {
+	        jsPDF
+	    } = window.jspdf;
 
 
 	    /* =====================================================
-	       OBTENER FILTROS
-	       ===================================================== */
+	     * VALIDAR autoTable
+	     * ===================================================== */
+
+	    if (
+	        typeof jsPDF.API.autoTable !== "function"
+	    ) {
+
+	        alert(
+	            "No se pudo cargar el complemento AutoTable para PDF."
+	        );
+
+	        return;
+	    }
+
+
+	    /* =====================================================
+	     * VALIDAR DATOS
+	     * ===================================================== */
+
+	    if (
+	        !Array.isArray(recorridosBD)
+	    ) {
+
+	        alert(
+	            "No existen recorridos cargados para generar el PDF."
+	        );
+
+	        return;
+	    }
+
+
+	    /* =====================================================
+	     * OBTENER FILTROS DE FECHA
+	     * ===================================================== */
 
 	    const fechaDesdeElement =
-	        document.getElementById("fechaDesde");
+	        document.getElementById(
+	            "fechaDesde"
+	        );
 
 	    const fechaHastaElement =
-	        document.getElementById("fechaHasta");
+	        document.getElementById(
+	            "fechaHasta"
+	        );
 
 
 	    const fechaDesde =
@@ -4272,8 +4868,8 @@ window.mostrarModalError =
 
 
 	    /* =====================================================
-	       VALIDAR RANGO
-	       ===================================================== */
+	     * VALIDAR RANGO
+	     * ===================================================== */
 
 	    if (
 	        fechaDesde &&
@@ -4286,250 +4882,112 @@ window.mostrarModalError =
 	        );
 
 	        return;
-
 	    }
 
 
 	    /* =====================================================
-	       OBTENER FILAS
-	       ===================================================== */
+	     * OBTENER TEXTO DEL BUSCADOR
+	     * ===================================================== */
 
-	    const filas =
-	        document.querySelectorAll(
-	            "#tablaViajesBody tr"
+	    const buscador =
+	        document.getElementById(
+	            "buscadorViajes"
 	        );
 
 
-	    const datos = [];
-
-
-	    filas.forEach(function (fila) {
-
-	        /* =================================================
-	           IGNORAR FILA VACÍA
-	           ================================================= */
-
-	        if (
-	            fila.id ===
-	            "filaSinRegistros"
-	        ) {
-
-	            return;
-
-	        }
-
-
-	        /* =================================================
-	           IGNORAR FILAS OCULTAS POR BÚSQUEDA
-	           ================================================= */
-
-	        if (
-	            fila.style.display === "none"
-	        ) {
-
-	            return;
-
-	        }
-
-
-	        const celdas =
-	            fila.querySelectorAll("td");
-
-
-	        /*
-	         * La tabla debe tener:
-	         *
-	         * 0 fecha
-	         * 1 motorista
-	         * 2 unidad
-	         * 3 destino
-	         * 4 remisión
-	         * 5 km
-	         * 6 subtotal
-	         * 7 isv
-	         * 8 tarifa
-	         * 9 cantidad peajes
-	         * 10 valor peaje
-	         * 11 total peajes
-	         * 12 acciones
-	         */
-
-	        if (
-	            celdas.length < 13
-	        ) {
-
-	            return;
-
-	        }
-
-
-	        /* =================================================
-	           FECHA
-	           ================================================= */
-
-	        const fecha =
-	            celdas[0]
-	                .textContent
-	                .trim();
-
-
-	        let fechaComparacion =
-	            convertirFechaComparacion(fecha);
-
-
-	        /* =================================================
-	           FILTRO DESDE
-	           ================================================= */
-
-	        if (
-	            fechaDesde &&
-	            fechaComparacion < fechaDesde
-	        ) {
-
-	            return;
-
-	        }
-
-
-	        /* =================================================
-	           FILTRO HASTA
-	           ================================================= */
-
-	        if (
-	            fechaHasta &&
-	            fechaComparacion > fechaHasta
-	        ) {
-
-	            return;
-
-	        }
-
-
-	        /* =================================================
-	           OBTENER DATOS
-	           ================================================= */
-
-	        const motorista =
-	            celdas[1]
-	                .textContent
-	                .trim();
-
-
-	        const unidad =
-	            celdas[2]
-	                .textContent
-	                .trim();
-
-
-	        const destino =
-	            celdas[3]
-	                .textContent
-	                .trim();
-
-
-	        const remision =
-	            celdas[4]
-	                .textContent
-	                .trim();
-
-
-	        const km =
-	            celdas[5]
-	                .textContent
-	                .trim();
-
-
-	        const subtotal =
-	            celdas[6]
-	                .textContent
-	                .trim();
-
-
-	        const isv =
-	            celdas[7]
-	                .textContent
-	                .trim();
-
-
-	        const tarifa =
-	            celdas[8]
-	                .textContent
-	                .trim();
-
-
-	        const cantidadPeajes =
-	            celdas[9]
-	                .textContent
-	                .trim();
-
-
-	        const valorPeaje =
-	            celdas[10]
-	                .textContent
-	                .trim();
-
-
-	        const totalPeajes =
-	            celdas[11]
-	                .textContent
-	                .trim();
-
-
-	        /* =================================================
-	           AGREGAR FILA
-	           ================================================= */
-
-	        datos.push([
-
-	            fecha,
-
-	            motorista,
-
-	            unidad,
-
-	            destino,
-
-	            remision,
-
-	            km,
-
-	            subtotal,
-
-	            isv,
-
-	            tarifa,
-
-	            cantidadPeajes,
-
-	            valorPeaje,
-
-	            totalPeajes
-
-	        ]);
-
-	    });
+	    const textoBusqueda =
+	        buscador
+	            ? buscador.value
+	                .trim()
+	                .toLowerCase()
+	            : "";
 
 
 	    /* =====================================================
-	       VALIDAR RESULTADOS
-	       ===================================================== */
+	     * FILTRAR DIRECTAMENTE LOS DATOS DE BD
+	     * ===================================================== */
+
+	    const recorridosPDF =
+	        recorridosBD.filter(
+	            recorrido => {
+
+	                /* =========================================
+	                 * FILTRO DE FECHA
+	                 * ========================================= */
+
+	                const fecha =
+	                    convertirFechaBD(
+	                        recorrido.fecha
+	                    );
+
+
+	                if (
+	                    fechaDesde &&
+	                    fecha < fechaDesde
+	                ) {
+
+	                    return false;
+	                }
+
+
+	                if (
+	                    fechaHasta &&
+	                    fecha > fechaHasta
+	                ) {
+
+	                    return false;
+	                }
+
+
+	                /* =========================================
+	                 * FILTRO DEL BUSCADOR
+	                 * ========================================= */
+
+	                if (
+	                    textoBusqueda
+	                ) {
+
+	                    const texto =
+	                        construirTextoBusqueda(
+	                            recorrido
+	                        );
+
+
+	                    if (
+	                        !texto.includes(
+	                            textoBusqueda
+	                        )
+	                    ) {
+
+	                        return false;
+	                    }
+	                }
+
+
+	                return true;
+	            }
+	        );
+
+
+	    /* =====================================================
+	     * VALIDAR RESULTADOS
+	     * ===================================================== */
 
 	    if (
-	        datos.length === 0
+	        recorridosPDF.length === 0
 	    ) {
 
 	        alert(
-	            "No existen recorridos dentro del rango de fechas seleccionado."
+	            "No existen recorridos que coincidan con los filtros seleccionados."
 	        );
 
 	        return;
-
 	    }
 
 
 	    /* =====================================================
-	       CREAR PDF
-	       ===================================================== */
+	     * CREAR PDF
+	     * ===================================================== */
 
 	    const doc =
 	        new jsPDF({
@@ -4539,13 +4997,51 @@ window.mostrarModalError =
 	            unit: "mm",
 
 	            format: "legal"
-
 	        });
 
 
 	    /* =====================================================
-	       ENCABEZADO
-	       ===================================================== */
+	     * INFORMACIÓN DEL DOCUMENTO
+	     * ===================================================== */
+
+	    const anchoPagina =
+	        doc.internal.pageSize.getWidth();
+
+
+	    const altoPagina =
+	        doc.internal.pageSize.getHeight();
+
+
+	    /* =====================================================
+	     * ENCABEZADO PROFESIONAL
+	     * ===================================================== */
+
+	    doc.setFillColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.rect(
+	        0,
+	        0,
+	        anchoPagina,
+	        30,
+	        "F"
+	    );
+
+
+	    /* =====================================================
+	     * TÍTULO
+	     * ===================================================== */
+
+	    doc.setTextColor(
+	        255,
+	        255,
+	        255
+	    );
+
 
 	    doc.setFont(
 	        "helvetica",
@@ -4553,15 +5049,21 @@ window.mostrarModalError =
 	    );
 
 
-	    doc.setFontSize(18);
+	    doc.setFontSize(
+	        18
+	    );
 
 
 	    doc.text(
 	        "CONTROL DE RUTAS Y PEAJES",
-	        14,
-	        15
+	        15,
+	        13
 	    );
 
+
+	    /* =====================================================
+	     * SUBTÍTULO
+	     * ===================================================== */
 
 	    doc.setFont(
 	        "helvetica",
@@ -4569,22 +5071,40 @@ window.mostrarModalError =
 	    );
 
 
-	    doc.setFontSize(10);
+	    doc.setFontSize(
+	        9
+	    );
 
 
 	    doc.text(
-	        "Reporte de recorridos registrados",
-	        14,
-	        22
+	        "Reporte detallado de recorridos",
+	        15,
+	        20
 	    );
 
 
 	    /* =====================================================
-	       RANGO
-	       ===================================================== */
+	     * CANTIDAD DE REGISTROS
+	     * ===================================================== */
+
+	    doc.setFontSize(
+	        9
+	    );
+
+
+	    doc.text(
+	        `Registros: ${recorridosPDF.length}`,
+	        anchoPagina - 65,
+	        13
+	    );
+
+
+	    /* =====================================================
+	     * RANGO DE FECHAS
+	     * ===================================================== */
 
 	    let textoRango =
-	        "Periodo: Todos los registros";
+	        "Todos los registros";
 
 
 	    if (
@@ -4593,7 +5113,7 @@ window.mostrarModalError =
 	    ) {
 
 	        textoRango =
-	            `Periodo: ${formatearFechaPDF(fechaDesde)} al ${formatearFechaPDF(fechaHasta)}`;
+	            `${formatearFechaPDF(fechaDesde)} al ${formatearFechaPDF(fechaHasta)}`;
 
 	    }
 
@@ -4602,7 +5122,7 @@ window.mostrarModalError =
 	    ) {
 
 	        textoRango =
-	            `Desde: ${formatearFechaPDF(fechaDesde)}`;
+	            `Desde ${formatearFechaPDF(fechaDesde)}`;
 
 	    }
 
@@ -4611,21 +5131,25 @@ window.mostrarModalError =
 	    ) {
 
 	        textoRango =
-	            `Hasta: ${formatearFechaPDF(fechaHasta)}`;
-
+	            `Hasta ${formatearFechaPDF(fechaHasta)}`;
 	    }
 
 
+	    doc.setFontSize(
+	        8
+	    );
+
+
 	    doc.text(
-	        textoRango,
-	        14,
-	        29
+	        `Periodo: ${textoRango}`,
+	        anchoPagina - 95,
+	        20
 	    );
 
 
 	    /* =====================================================
-	       FECHA DE GENERACIÓN
-	       ===================================================== */
+	     * FECHA DE GENERACIÓN
+	     * ===================================================== */
 
 	    const ahora =
 	        new Date();
@@ -4647,21 +5171,299 @@ window.mostrarModalError =
 	        );
 
 
+	    doc.setTextColor(
+	        80,
+	        80,
+	        80
+	    );
+
+
+	    doc.setFontSize(
+	        8
+	    );
+
+
 	    doc.text(
 	        `Generado: ${fechaGeneracion} ${horaGeneracion}`,
-	        14,
-	        35
+	        15,
+	        37
 	    );
 
 
 	    /* =====================================================
-	       TABLA PDF
-	       ===================================================== */
+	     * CONSTRUIR DATOS PARA TABLA
+	     * ===================================================== */
+
+	    const datos =
+	        recorridosPDF.map(
+	            recorrido => {
+
+	                const fecha =
+	                    formatearFecha(
+	                        recorrido.fecha
+	                    );
+
+
+	                const motorista =
+	                    recorrido.motorista ?? "";
+
+
+	                const unidad =
+	                    recorrido.unidad ?? "";
+
+
+	                const destino =
+	                    recorrido.rutaDestino ?? "";
+
+
+	                const remision =
+	                    recorrido.remision ?? "";
+
+
+	                const km =
+	                    parseFloat(
+	                        recorrido.kmRecorridos
+	                    ) || 0;
+
+
+	                const subtotal =
+	                    parseFloat(
+	                        recorrido.subtotal
+	                    ) || 0;
+
+
+	                const isv =
+	                    parseFloat(
+	                        recorrido.isv
+	                    ) || 0;
+
+
+	                const tarifa =
+	                    parseFloat(
+	                        recorrido.tarifa
+	                    ) || 0;
+
+
+	                const cantidadPeajes =
+	                    parseInt(
+	                        recorrido.cantidadPeajes
+	                    ) || 0;
+
+
+	                const valorPeaje =
+	                    parseFloat(
+	                        recorrido.valorPeaje
+	                    ) || 0;
+
+
+	                const totalPeajes =
+	                    parseFloat(
+	                        recorrido.totalPeajes
+	                    ) || 0;
+
+
+	                return [
+
+	                    fecha,
+
+	                    motorista,
+
+	                    unidad,
+
+	                    destino,
+
+	                    remision,
+
+	                    formatoNumeroPDF(km),
+
+	                    formatoMonedaPDF(subtotal),
+
+	                    formatoMonedaPDF(isv),
+
+	                    formatoMonedaPDF(tarifa),
+
+	                    cantidadPeajes,
+
+	                    formatoMonedaPDF(valorPeaje),
+
+	                    formatoMonedaPDF(totalPeajes)
+	                ];
+	            }
+	        );
+
+
+	    /* =====================================================
+	     * CALCULAR TOTALES GENERALES
+	     * ===================================================== */
+
+	    let totalKm = 0;
+
+	    let totalSubtotal = 0;
+
+	    let totalIsv = 0;
+
+	    let totalTarifa = 0;
+
+	    let totalPeajes = 0;
+
+	    let totalCantidadPeajes = 0;
+
+
+	    recorridosPDF.forEach(
+	        recorrido => {
+
+	            totalKm +=
+	                parseFloat(
+	                    recorrido.kmRecorridos
+	                ) || 0;
+
+
+	            totalSubtotal +=
+	                parseFloat(
+	                    recorrido.subtotal
+	                ) || 0;
+
+
+	            totalIsv +=
+	                parseFloat(
+	                    recorrido.isv
+	                ) || 0;
+
+
+	            totalTarifa +=
+	                parseFloat(
+	                    recorrido.tarifa
+	                ) || 0;
+
+
+	            totalPeajes +=
+	                parseFloat(
+	                    recorrido.totalPeajes
+	                ) || 0;
+
+
+	            totalCantidadPeajes +=
+	                parseInt(
+	                    recorrido.cantidadPeajes
+	                ) || 0;
+	        }
+	    );
+
+
+	    /* =====================================================
+	     * TOTAL GENERAL
+	     *
+	     * SUBTOTAL
+	     * + TARIFA
+	     * + IMPUESTOS
+	     * + PEAJES
+	     * ===================================================== */
+
+	    const totalGeneral =
+	        totalSubtotal +
+	        totalTarifa +
+	        totalIsv +
+	        totalPeajes;
+
+
+	    /* =====================================================
+	     * FILA DE TOTALES
+	     * ===================================================== */
+
+	    const filaTotales = [
+
+	        {
+	            content: "TOTAL GENERAL",
+	            colSpan: 5,
+	            styles: {
+	                halign: "right",
+	                fontStyle: "bold"
+	            }
+	        },
+
+	        {
+	            content:
+	                formatoNumeroPDF(
+	                    totalKm
+	                ),
+	            styles: {
+	                halign: "right",
+	                fontStyle: "bold"
+	            }
+	        },
+
+	        {
+	            content:
+	                formatoMonedaPDF(
+	                    totalSubtotal
+	                ),
+	            styles: {
+	                halign: "right",
+	                fontStyle: "bold"
+	            }
+	        },
+
+	        {
+	            content:
+	                formatoMonedaPDF(
+	                    totalIsv
+	                ),
+	            styles: {
+	                halign: "right",
+	                fontStyle: "bold"
+	            }
+	        },
+
+	        {
+	            content:
+	                formatoMonedaPDF(
+	                    totalTarifa
+	                ),
+	            styles: {
+	                halign: "right",
+	                fontStyle: "bold"
+	            }
+	        },
+
+	        {
+	            content:
+	                String(
+	                    totalCantidadPeajes
+	                ),
+	            styles: {
+	                halign: "center",
+	                fontStyle: "bold"
+	            }
+	        },
+
+	        {
+	            content: "—",
+	            styles: {
+	                halign: "right",
+	                fontStyle: "bold"
+	            }
+	        },
+
+	        {
+	            content:
+	                formatoMonedaPDF(
+	                    totalPeajes
+	                ),
+	            styles: {
+	                halign: "right",
+	                fontStyle: "bold"
+	            }
+	        }
+	    ];
+
+
+	    /* =====================================================
+	     * GENERAR TABLA
+	     * ===================================================== */
 
 	    doc.autoTable({
 
-	        startY: 41,
-
+	        startY: 42,
 
 	        head: [[
 
@@ -4675,30 +5477,50 @@ window.mostrarModalError =
 	            "ISV",
 	            "TARIFA",
 	            "PEAJES",
-	            "VALOR",
-	            "TOTAL PEAJE"
+	            "VALOR PEAJE",
+	            "TOTAL PEAJES"
 
 	        ]],
 
-
 	        body: datos,
 
+	        foot: [
+	            filaTotales
+	        ],
 
 	        theme: "grid",
 
+	        margin: {
+
+	            top: 42,
+
+	            right: 10,
+
+	            bottom: 15,
+
+	            left: 10
+	        },
 
 	        styles: {
 
+	            font: "helvetica",
+
 	            fontSize: 7,
 
-	            cellPadding: 2,
+	            cellPadding: 1.8,
+
+	            lineWidth: 0.15,
 
 	            overflow: "linebreak",
 
-	            valign: "middle"
+	            valign: "middle",
 
+	            textColor: [
+	                40,
+	                40,
+	                40
+	            ]
 	        },
-
 
 	        headStyles: {
 
@@ -4706,15 +5528,60 @@ window.mostrarModalError =
 
 	            fontStyle: "bold",
 
-	            halign: "center"
+	            halign: "center",
 
+	            valign: "middle",
+
+	            textColor: [
+	                255,
+	                255,
+	                255
+	            ],
+
+	            fillColor: [
+	                31,
+	                41,
+	                55
+	            ],
+
+	            lineWidth: 0.2
 	        },
 
+	        footStyles: {
+
+	            fontSize: 7,
+
+	            fontStyle: "bold",
+
+	            textColor: [
+	                255,
+	                255,
+	                255
+	            ],
+
+	            fillColor: [
+	                55,
+	                65,
+	                81
+	            ],
+
+	            lineWidth: 0.25
+	        },
+
+	        alternateRowStyles: {
+
+	            fillColor: [
+	                248,
+	                250,
+	                252
+	            ]
+	        },
 
 	        columnStyles: {
 
 	            0: {
-	                cellWidth: 22
+	                cellWidth: 21,
+	                halign: "center"
 	            },
 
 	            1: {
@@ -4730,7 +5597,7 @@ window.mostrarModalError =
 	            },
 
 	            4: {
-	                cellWidth: 25
+	                cellWidth: 24
 	            },
 
 	            5: {
@@ -4749,17 +5616,17 @@ window.mostrarModalError =
 	            },
 
 	            8: {
-	                cellWidth: 25,
+	                cellWidth: 24,
 	                halign: "right"
 	            },
 
 	            9: {
-	                cellWidth: 18,
+	                cellWidth: 16,
 	                halign: "center"
 	            },
 
 	            10: {
-	                cellWidth: 22,
+	                cellWidth: 25,
 	                halign: "right"
 	            },
 
@@ -4767,9 +5634,12 @@ window.mostrarModalError =
 	                cellWidth: 28,
 	                halign: "right"
 	            }
-
 	        },
 
+
+	        /* =================================================
+	         * PIE DE PÁGINA
+	         * ================================================= */
 
 	        didDrawPage: function () {
 
@@ -4777,7 +5647,32 @@ window.mostrarModalError =
 	                doc.internal.getNumberOfPages();
 
 
-	            doc.setFontSize(8);
+	            const ancho =
+	                doc.internal.pageSize.getWidth();
+
+
+	            const alto =
+	                doc.internal.pageSize.getHeight();
+
+
+	            doc.setDrawColor(
+	                200,
+	                200,
+	                200
+	            );
+
+
+	            doc.setLineWidth(
+	                0.2
+	            );
+
+
+	            doc.line(
+	                10,
+	                alto - 12,
+	                ancho - 10,
+	                alto - 12
+	            );
 
 
 	            doc.setFont(
@@ -4786,87 +5681,101 @@ window.mostrarModalError =
 	            );
 
 
-	            doc.text(
-
-	                `Página ${pagina}`,
-
-	                doc.internal.pageSize.getWidth() - 30,
-
-	                doc.internal.pageSize.getHeight() - 8
-
+	            doc.setFontSize(
+	                7
 	            );
 
+
+	            doc.setTextColor(
+	                100,
+	                100,
+	                100
+	            );
+
+
+	            doc.text(
+	                "Control de Rutas y Peajes",
+	                10,
+	                alto - 7
+	            );
+
+
+	            doc.text(
+	                `Página ${pagina}`,
+	                ancho - 28,
+	                alto - 7
+	            );
 	        }
 
 	    });
 
 
 	    /* =====================================================
-	       CALCULAR TOTALES
-	       ===================================================== */
+	     * RESUMEN FINANCIERO
+	     * FORMATO FACTURA
+	     *
+	     * ALINEADO A LA IZQUIERDA
+	     * ===================================================== */
 
-	    let totalKm = 0;
-
-	    let totalSubtotal = 0;
-
-	    let totalIsv = 0;
-
-	    let totalTarifa = 0;
-
-	    let totalPeajes = 0;
-
-
-	    datos.forEach(function (fila) {
-
-	        totalKm +=
-	            numero(fila[5]);
-
-
-	        totalSubtotal +=
-	            numero(fila[6]);
-
-
-	        totalIsv +=
-	            numero(fila[7]);
-
-
-	        totalTarifa +=
-	            numero(fila[8]);
-
-
-	        totalPeajes +=
-	            numero(fila[11]);
-
-	    });
+	    let finalY =
+	        doc.lastAutoTable.finalY + 10;
 
 
 	    /* =====================================================
-	       POSICIÓN DE TOTALES
-	       ===================================================== */
-
-	    let finalY =
-	        doc.lastAutoTable.finalY + 8;
-
-
-	    const altoPagina =
-	        doc.internal.pageSize.getHeight();
-
+	     * VERIFICAR ESPACIO
+	     * ===================================================== */
 
 	    if (
 	        finalY >
-	        altoPagina - 30
+	        altoPagina - 75
 	    ) {
 
 	        doc.addPage();
 
-	        finalY = 15;
-
+	        finalY = 20;
 	    }
 
 
 	    /* =====================================================
-	       TÍTULO TOTALES
-	       ===================================================== */
+	     * DIMENSIONES DEL RESUMEN
+	     * ===================================================== */
+
+	    const anchoFactura =
+	        95;
+
+
+	    const altoFila =
+	        9;
+
+
+	    /*
+	     * IMPORTANTE:
+	     *
+	     * El resumen tipo factura queda alineado
+	     * completamente a la izquierda de la página.
+	     *
+	     * Antes estaba calculado así:
+	     *
+	     * anchoPagina - anchoFactura - 10
+	     *
+	     * lo cual lo colocaba a la derecha.
+	     *
+	     * Ahora utilizamos directamente 10 mm.
+	     */
+
+	    const xFactura = 10;
+
+
+	    /* =====================================================
+	     * TÍTULO
+	     * ===================================================== */
+
+	    doc.setTextColor(
+	        31,
+	        41,
+	        55
+	    );
+
 
 	    doc.setFont(
 	        "helvetica",
@@ -4874,19 +5783,319 @@ window.mostrarModalError =
 	    );
 
 
-	    doc.setFontSize(10);
+	    doc.setFontSize(
+	        11
+	    );
 
 
 	    doc.text(
-	        "TOTALES DEL PERIODO",
-	        14,
+	        "RESUMEN FINANCIERO",
+	        xFactura,
 	        finalY
 	    );
 
 
 	    /* =====================================================
-	       VALORES
-	       ===================================================== */
+	     * ENCABEZADO DE FACTURA
+	     * ===================================================== */
+
+	    const yTabla =
+	        finalY + 5;
+
+
+	    doc.setFillColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.setDrawColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.rect(
+	        xFactura,
+	        yTabla,
+	        anchoFactura,
+	        altoFila,
+	        "FD"
+	    );
+
+
+	    doc.setTextColor(
+	        255,
+	        255,
+	        255
+	    );
+
+
+	    doc.setFont(
+	        "helvetica",
+	        "bold"
+	    );
+
+
+	    doc.setFontSize(
+	        7
+	    );
+
+
+	    doc.text(
+	        "CONCEPTO",
+	        xFactura + 4,
+	        yTabla + 6
+	    );
+
+
+	    doc.text(
+	        "VALOR",
+	        xFactura + anchoFactura - 4,
+	        yTabla + 6,
+	        {
+	            align: "right"
+	        }
+	    );
+
+
+	    /* =====================================================
+	     * FILAS DEL RESUMEN
+	     * ===================================================== */
+
+	    const filasResumen = [
+
+	        {
+	            concepto: "Subtotal",
+	            valor: totalSubtotal
+	        },
+
+	        {
+	            concepto: "Tarifa",
+	            valor: totalTarifa
+	        },
+
+	        {
+	            concepto: "Impuestos",
+	            valor: totalIsv
+	        },
+
+	        {
+	            concepto: "Peajes",
+	            valor: totalPeajes
+	        }
+	    ];
+
+
+	    let yFila =
+	        yTabla + altoFila;
+
+
+	    filasResumen.forEach(
+	        (fila, index) => {
+
+	            /* =============================================
+	             * FILA ALTERNADA
+	             * ============================================= */
+
+	            if (
+	                index % 2 === 0
+	            ) {
+
+	                doc.setFillColor(
+	                    248,
+	                    250,
+	                    252
+	                );
+
+	            }
+
+	            else {
+
+	                doc.setFillColor(
+	                    255,
+	                    255,
+	                    255
+	                );
+	            }
+
+
+	            doc.setDrawColor(
+	                210,
+	                214,
+	                220
+	            );
+
+
+	            doc.rect(
+	                xFactura,
+	                yFila,
+	                anchoFactura,
+	                altoFila,
+	                "FD"
+	            );
+
+
+	            /* =============================================
+	             * CONCEPTO
+	             * ============================================= */
+
+	            doc.setTextColor(
+	                60,
+	                60,
+	                60
+	            );
+
+
+	            doc.setFont(
+	                "helvetica",
+	                "normal"
+	            );
+
+
+	            doc.setFontSize(
+	                8
+	            );
+
+
+	            doc.text(
+	                fila.concepto,
+	                xFactura + 4,
+	                yFila + 6
+	            );
+
+
+	            /* =============================================
+	             * VALOR
+	             * ============================================= */
+
+	            doc.text(
+	                formatoMonedaPDF(
+	                    fila.valor
+	                ),
+	                xFactura + anchoFactura - 4,
+	                yFila + 6,
+	                {
+	                    align: "right"
+	                }
+	            );
+
+
+	            yFila +=
+	                altoFila;
+	        }
+	    );
+
+
+	    /* =====================================================
+	     * LÍNEA ANTES DEL TOTAL
+	     * ===================================================== */
+
+	    doc.setDrawColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.setLineWidth(
+	        0.5
+	    );
+
+
+	    doc.line(
+	        xFactura,
+	        yFila,
+	        xFactura + anchoFactura,
+	        yFila
+	    );
+
+
+	    /* =====================================================
+	     * TOTAL GENERAL
+	     * ===================================================== */
+
+	    doc.setFillColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.setDrawColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.rect(
+	        xFactura,
+	        yFila,
+	        anchoFactura,
+	        12,
+	        "FD"
+	    );
+
+
+	    doc.setTextColor(
+	        255,
+	        255,
+	        255
+	    );
+
+
+	    doc.setFont(
+	        "helvetica",
+	        "bold"
+	    );
+
+
+	    doc.setFontSize(
+	        9
+	    );
+
+
+	    doc.text(
+	        "TOTAL",
+	        xFactura + 4,
+	        yFila + 8
+	    );
+
+
+	    doc.setFontSize(
+	        10
+	    );
+
+
+	    doc.text(
+	        formatoMonedaPDF(
+	            totalGeneral
+	        ),
+	        xFactura + anchoFactura - 4,
+	        yFila + 8,
+	        {
+	            align: "right"
+	        }
+	    );
+
+
+	    /* =====================================================
+	     * INFORMACIÓN FINAL
+	     * ===================================================== */
+
+	    const finalResumenY =
+	        yFila + 20;
+
+
+	    doc.setTextColor(
+	        100,
+	        100,
+	        100
+	    );
+
 
 	    doc.setFont(
 	        "helvetica",
@@ -4894,47 +6103,21 @@ window.mostrarModalError =
 	    );
 
 
-	    doc.setFontSize(9);
-
-
-	    doc.text(
-	        `KM: ${totalKm.toFixed(2)}`,
-	        14,
-	        finalY + 7
+	    doc.setFontSize(
+	        7
 	    );
 
 
 	    doc.text(
-	        `Subtotal: L ${totalSubtotal.toFixed(2)}`,
-	        65,
-	        finalY + 7
-	    );
-
-
-	    doc.text(
-	        `ISV: L ${totalIsv.toFixed(2)}`,
-	        125,
-	        finalY + 7
-	    );
-
-
-	    doc.text(
-	        `Tarifa: L ${totalTarifa.toFixed(2)}`,
-	        175,
-	        finalY + 7
-	    );
-
-
-	    doc.text(
-	        `Total peajes: L ${totalPeajes.toFixed(2)}`,
-	        235,
-	        finalY + 7
+	        `Total de recorridos incluidos: ${recorridosPDF.length}`,
+	        xFactura,
+	        finalResumenY
 	    );
 
 
 	    /* =====================================================
-	       NOMBRE DEL ARCHIVO
-	       ===================================================== */
+	     * NOMBRE DEL ARCHIVO
+	     * ===================================================== */
 
 	    let nombreArchivo =
 	        "reporte_rutas_peajes";
@@ -4968,91 +6151,167 @@ window.mostrarModalError =
 
 	    }
 
+	    else {
+
+	        nombreArchivo +=
+	            "_todos";
+	    }
+
+
+	    if (
+	        textoBusqueda
+	    ) {
+
+	        nombreArchivo +=
+	            "_filtrado";
+	    }
+
 
 	    nombreArchivo +=
 	        ".pdf";
 
 
 	    /* =====================================================
-	       GUARDAR PDF
-	       ===================================================== */
+	     * GUARDAR PDF
+	     * ===================================================== */
 
 	    doc.save(
 	        nombreArchivo
 	    );
-
 	}
 
 
 	/* =========================================================
-	   CONVERTIR FECHA PARA COMPARACIÓN
-	   ========================================================= */
+	 * CONVERTIR FECHA DE BD A YYYY-MM-DD
+	 * ========================================================= */
 
-	function convertirFechaComparacion(fecha) {
+	function convertirFechaBD(
+	    fecha
+	) {
 
 	    if (!fecha) {
 
 	        return "";
-
 	    }
 
 
-	    fecha =
-	        fecha.trim();
+	    const texto =
+	        String(fecha)
+	            .trim();
 
 
 	    /* =====================================================
-	       FORMATO yyyy-MM-dd
-	       ===================================================== */
+	     * YYYY-MM-DD
+	     * ===================================================== */
 
 	    if (
-	        /^\d{4}-\d{2}-\d{2}$/.test(fecha)
+	        /^\d{4}-\d{2}-\d{2}$/.test(
+	            texto
+	        )
 	    ) {
 
-	        return fecha;
-
+	        return texto;
 	    }
 
 
 	    /* =====================================================
-	       FORMATO dd/MM/yyyy
-	       ===================================================== */
+	     * YYYY-MM-DDTHH:mm:ss
+	     * ===================================================== */
 
 	    if (
-	        /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)
+	        texto.includes("T")
+	    ) {
+
+	        return convertirFechaBD(
+	            texto.split("T")[0]
+	        );
+	    }
+
+
+	    /* =====================================================
+	     * DD/MM/YYYY
+	     * ===================================================== */
+
+	    if (
+	        /^\d{2}\/\d{2}\/\d{4}$/.test(
+	            texto
+	        )
 	    ) {
 
 	        const partes =
-	            fecha.split("/");
+	            texto.split("/");
 
 
 	        return (
-	            `${partes[2]}-${partes[1]}-${partes[0]}`
+	            `${partes[2]}-` +
+	            `${partes[1]}-` +
+	            `${partes[0]}`
 	        );
-
 	    }
 
 
-	    return fecha;
-
+	    return texto;
 	}
 
 
 	/* =========================================================
-	   FORMATEAR FECHA PARA PDF
-	   ========================================================= */
+	 * FORMATEAR FECHA
+	 * ========================================================= */
 
-	function formatearFechaPDF(fecha) {
+	function formatearFecha(
+	    fecha
+	) {
 
 	    if (!fecha) {
 
 	        return "";
+	    }
 
+
+	    const fechaNormalizada =
+	        convertirFechaBD(
+	            fecha
+	        );
+
+
+	    if (
+	        /^\d{4}-\d{2}-\d{2}$/.test(
+	            fechaNormalizada
+	        )
+	    ) {
+
+	        const partes =
+	            fechaNormalizada.split("-");
+
+
+	        return (
+	            `${partes[2]}/` +
+	            `${partes[1]}/` +
+	            `${partes[0]}`
+	        );
+	    }
+
+
+	    return String(fecha);
+	}
+
+
+	/* =========================================================
+	 * FORMATEAR FECHA PARA PDF
+	 * ========================================================= */
+
+	function formatearFechaPDF(
+	    fecha
+	) {
+
+	    if (!fecha) {
+
+	        return "";
 	    }
 
 
 	    const partes =
-	        fecha.split("-");
+	        String(fecha).split("-");
 
 
 	    if (
@@ -5060,47 +6319,59 @@ window.mostrarModalError =
 	    ) {
 
 	        return fecha;
-
 	    }
 
 
 	    return (
-	        `${partes[2]}/${partes[1]}/${partes[0]}`
+	        `${partes[2]}/` +
+	        `${partes[1]}/` +
+	        `${partes[0]}`
 	    );
-
 	}
 
 
 	/* =========================================================
-	   CONVERTIR A NÚMERO
-	   ========================================================= */
+	 * FORMATO NÚMERO
+	 * ========================================================= */
 
-	function numero(valor) {
+	function formatoNumeroPDF(
+	    valor
+	) {
 
-	    if (
-	        valor === null ||
-	        valor === undefined
-	    ) {
-
-	        return 0;
-
-	    }
+	    const numero =
+	        parseFloat(valor) || 0;
 
 
-	    let limpio =
-	        String(valor)
-	            .replace(/L/g, "")
-	            .replace(/,/g, "")
-	            .replace(/\s/g, "")
-	            .trim();
+	    return numero.toLocaleString(
+	        "es-HN",
+	        {
+	            minimumFractionDigits: 2,
+	            maximumFractionDigits: 2
+	        }
+	    );
+	}
 
 
-	    const resultado =
-	        parseFloat(limpio);
+	/* =========================================================
+	 * FORMATO MONEDA
+	 * ========================================================= */
+
+	function formatoMonedaPDF(
+	    valor
+	) {
+
+	    const numero =
+	        parseFloat(valor) || 0;
 
 
-	    return isNaN(resultado)
-	        ? 0
-	        : resultado;
-
+	    return (
+	        "L " +
+	        numero.toLocaleString(
+	            "es-HN",
+	            {
+	                minimumFractionDigits: 2,
+	                maximumFractionDigits: 2
+	            }
+	        )
+	    );
 	}

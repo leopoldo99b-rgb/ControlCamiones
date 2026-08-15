@@ -1560,1153 +1560,441 @@
 
 						<tbody id="tablaViajesBody">
 
-
-
-
-
-
-
 							<!-- =================================================
-
                          SIN REGISTROS
-
                          ================================================= -->
 
-
-
-
 							<tr th:if="${#lists.isEmpty(recorridos)}" id="filaSinRegistros">
-
-
-
 
 								<td colspan="13" class="text-center py-5"><i
 									class="bi bi-inbox fs-2 d-block mb-2"> </i> No hay recorridos
 									registrados.</td>
 
-
-
-
 							</tr>
 
-
-
-
-
-
-
 							<!-- =================================================
-
                          REGISTROS
-
                          ================================================= -->
-
-
-
 
 							<tr th:each="viaje : ${recorridos}" th:id="'fila-' + ${viaje.id}">
 
-
-
-
-
-
-
 								<!-- FECHA -->
-
-
-
 
 								<td th:text="${viaje.fecha}">\-</td>
 
-
-
-
-
-
-
 								<!-- MOTORISTA -->
-
-
-
 
 								<td><strong th:text="${viaje.motorista}"> \- </strong></td>
 
-
-
-
-
-
-
 								<!-- UNIDAD -->
-
-
-
 
 								<td><span class="unit-badge" th:text="${viaje.unidad}">
 
-
-
-
 										\- </span></td>
-
-
-
-
-
-
 
 								<!-- DESTINO -->
 
-
-
-
 								<td th:text="${viaje.ruta}">\-</td>
-
-
-
-
-
-
 
 								<!-- REMISIÓN -->
 
-
-
-
 								<td th:text="${viaje.remision}">\-</td>
-
-
-
-
-
-
 
 								<!-- KM -->
 
-
-
-
 								<td th:text="${viaje.kilometros}">0.00</td>
-
-
-
-
-
-
 
 								<!-- SUBTOTAL -->
 
-
-
-
 								<td>L <span th:text="${viaje.subtotal}"> 0.00 </span>
 
-
-
-
 								</td>
-
-
-
-
-
-
 
 								<!-- ISV -->
 
-
-
-
 								<td>L <span th:text="${viaje.isv}"> 0.00 </span>
 
-
-
-
 								</td>
-
-
-
-
-
-
 
 								<!-- TARIFA -->
 
-
-
-
 								<td>L <span th:text="${viaje.tarifa}"> 0.00 </span>
-
-
-
 
 								</td>
 
-
-
-
-
-
-
 								<!-- CANTIDAD PEAJES -->
-
-
-
 
 								<td><span class="toll-count"
 									th:text="${viaje.cantidadPeajes}"> 0 </span></td>
 
-
-
-
-
-
-
 								<!-- VALOR PEAJE -->
-
-
-
 
 								<td>L <span th:text="${viaje.valorPeaje}"> 0.00 </span>
 
-
-
-
 								</td>
 
-
-
-
-
-
-
 								<!-- TOTAL PEAJES -->
-
-
-
 
 								<td class="total-cell">L <span
 									th:text="${viaje.totalPeajes}"> 0.00 </span>
 
-
-
-
 								</td>
-
-
-
-
-
-
 
 								<!-- ACCIONES -->
 
-
-
-
 								<td>
-
-
-
 
 									<div class="d-flex gap-2">
 
 
-
-
-
-
-
 										<!-- EDITAR -->
-
-
-
 
 										<button type="button"
 											class="btn btn-sm btn-outline-primary btn-editar-viaje"
 											th:data-id="${viaje.id}" title="Editar">
 
-
-
-
 											<i class="bi bi-pencil"></i>
-
-
-
 
 										</button>
 
 
-
-
-
-
-
 										<!-- ELIMINAR -->
-
-
-
 
 										<button type="button"
 											class="btn btn-sm btn-outline-danger btn-eliminar-viaje"
 											th:data-id="${viaje.id}" title="Eliminar">
 
-
-
-
 											<i class="bi bi-trash"></i>
-
-
-
 
 										</button>
 
-
-
-
 									</div>
-
-
-
 
 								</td>
 
-
-
-
 							</tr>
-
-
-
 
 						</tbody>
 
-
-
-
-
-
-
 						<!-- =================================================
-
                          TOTALES
-
                          ================================================= -->
-
-
-
 
 						<tfoot>
 
-
-
-
 							<tr>
-
-
-
-
+							
 								<td colspan="5">TOTALES</td>
-
-
-
 
 								<td id="totalKmTabla">0.00</td>
 
-
-
-
 								<td id="totalSubtotalTabla">L 0.00</td>
-
-
-
 
 								<td id="totalIsvTabla">L 0.00</td>
 
-
-
-
 								<td id="totalTarifaTabla">L 0.00</td>
-
-
-
 
 								<td colspan="2"></td>
 
-
-
-
 								<td id="totalPeajesTabla">L 0.00</td>
 
-
-
-
 								<td></td>
-
-
-
-
 							</tr>
-
-
-
 
 						</tfoot>
 
-
-
-
 					</table>
-
-
-
 
 				</div>
 
-
-
-
-
-
-
 				<!-- =================================================
-
                  PAGINACIÓN
-
                  ================================================= -->
 
-
-
-
 				<div class="table-footer">
-
-
-
 
 					<span> Mostrando <strong id="registrosMostrados"> 0
 
 					</strong> de <strong id="registrosTotales"> 0 </strong> registros
 
-
-
-
 					</span>
-
-
-
-
-
-
 
 					<nav aria-label="Paginación">
 
-
-
-
 						<ul class="pagination pagination-sm mb-0" id="paginacionViajes">
-
-
-
 
 						</ul>
 
-
-
-
 					</nav>
-
-
-
 
 				</div>
 
-
-
-
 			</section>
 
-
-
-
-
-
-
 			<!-- =====================================================
-
              MODAL ELIMINAR
-
-             ===================================================== -->
-
-
-
+             ==================================================== -->
 
 			<div class="modal fade" id="modalEliminar" tabindex="-1"
 				aria-labelledby="modalEliminarLabel" aria-hidden="true">
 
-
-
-
 				<div class="modal-dialog modal-dialog-centered">
-
-
-
 
 					<div class="modal-content border-0 shadow-lg">
 
-
-
-
 						<div class="modal-header border-0">
 
-
-
-
 							<div class="d-flex align-items-center gap-3">
-
-
-
 
 								<div
 									class="bg-danger bg-opacity-10 text-danger rounded-circle p-3">
 
-
-
-
 									<i class="bi bi-trash3 fs-4"></i>
-
-
-
 
 								</div>
 
-
-
-
 								<div>
-
-
-
 
 									<h5 class="modal-title fw-bold" id="modalEliminarLabel">
 
-
-
-
 										Eliminar recorrido</h5>
-
-
-
 
 									<small class="text-muted"> Esta acción no se puede
 										deshacer </small>
 
-
-
-
 								</div>
 
-
-
-
 							</div>
-
-
-
-
-
-
 
 							<button type="button" class="btn-close" data-bs-dismiss="modal"
 								aria-label="Cerrar"></button>
 
-
-
-
 						</div>
 
-
-
-
-
-
-
 						<div class="modal-body px-4">
-
-
-
 
 							<p class="mb-2">¿Estás seguro de que deseas eliminar este
 								recorrido?</p>
 
-
-
-
 							<div
 								class="alert alert-warning d-flex align-items-center gap-2 mb-0">
-
-
-
 
 								<i class="bi bi-exclamation-triangle-fill"></i> <span> El
 									registro será eliminado permanentemente. </span>
 
-
-
-
 							</div>
-
-
-
 
 						</div>
 
-
-
-
-
-
-
 						<div class="modal-footer border-0">
-
-
-
 
 							<button type="button" class="btn btn-light px-4"
 								data-bs-dismiss="modal">Cancelar</button>
 
-
-
-
-
-
-
 							<button type="button" id="btnConfirmarEliminar"
 								class="btn btn-danger px-4">
 
-
-
-
 								<i class="bi bi-trash3 me-2"></i> Eliminar recorrido
-
-
-
 
 							</button>
 
-
-
-
 						</div>
-
-
-
 
 					</div>
 
-
-
-
 				</div>
-
-
-
 
 			</div>
 
-
-
-
-
-
-
 			<!-- =====================================================
-
              MODAL EDITAR
-
              ===================================================== -->
-
-
-
 
 			<div class="modal fade" id="modalEditar" tabindex="-1"
 				aria-labelledby="modalEditarLabel" aria-hidden="true">
 
-
-
-
 				<div class="modal-dialog modal-dialog-centered">
-
-
-
 
 					<div class="modal-content border-0 shadow-lg">
 
-
-
-
 						<div class="modal-header border-0">
 
-
-
-
 							<div class="d-flex align-items-center gap-3">
-
-
-
 
 								<div
 									class="bg-primary bg-opacity-10 text-primary rounded-circle p-3">
 
-
-
-
 									<i class="bi bi-pencil-square fs-4"></i>
-
-
-
 
 								</div>
 
-
-
-
 								<div>
-
-
-
 
 									<h5 class="modal-title fw-bold" id="modalEditarLabel">
 
-
-
-
 										Confirmar modificación</h5>
-
-
-
 
 									<small class="text-muted"> Revisa los datos antes de
 										guardar </small>
 
-
-
-
 								</div>
 
-
-
-
 							</div>
-
-
-
-
-
-
 
 							<button type="button" class="btn-close" data-bs-dismiss="modal"
 								aria-label="Cerrar"></button>
 
-
-
-
 						</div>
 
-
-
-
-
-
-
 						<div class="modal-body px-4">
-
-
-
 
 							<p class="mb-3">¿Deseas guardar los cambios realizados en
 								este recorrido?</p>
 
-
-
-
 							<div
 								class="alert alert-primary d-flex align-items-center gap-2 mb-0">
-
-
-
 
 								<i class="bi bi-info-circle-fill"></i> <span> Los
 									cálculos de subtotal, ISV, tarifa y peajes serán recalculados
 
 									automáticamente. </span>
 
-
-
-
 							</div>
-
-
-
 
 						</div>
 
-
-
-
-
-
-
 						<div class="modal-footer border-0">
-
-
-
 
 							<button type="button" class="btn btn-light px-4"
 								data-bs-dismiss="modal">Cancelar</button>
 
-
-
-
-
-
-
 							<button type="button" id="btnConfirmarEditar"
 								class="btn btn-primary px-4">
 
-
-
-
 								<i class="bi bi-check2-circle me-2"></i> Guardar cambios
 
-
-
-
 							</button>
-
-
-
-
 						</div>
-
-
-
-
 					</div>
-
-
-
-
 				</div>
-
-
-
-
 			</div>
 
-
-
-
-
-
-
 			<!-- =====================================================
-
              MODAL ÉXITO
-
              ===================================================== -->
-
-
-
 
 			<div class="modal fade" id="modalExito" tabindex="-1"
 				aria-labelledby="modalExitoLabel" aria-hidden="true">
 
-
-
-
 				<div class="modal-dialog modal-dialog-centered">
-
-
-
 
 					<div class="modal-content border-0 shadow-lg">
 
-
-
-
 						<div class="modal-body text-center p-5">
-
-
-
 
 							<div
 								class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3">
 
-
-
-
 								<i class="bi bi-check-circle-fill fs-1"></i>
 
-
-
-
 							</div>
-
-
-
 
 							<h4 class="fw-bold mb-2" id="modalExitoLabel">Operación
 								realizada</h4>
 
-
-
-
 							<p class="text-muted mb-4" id="mensajeExito">La operación se
 								realizó correctamente.</p>
-
-
-
 
 							<button type="button" class="btn btn-success px-4"
 								data-bs-dismiss="modal">Continuar</button>
 
-
-
-
 						</div>
-
-
-
 
 					</div>
 
-
-
-
 				</div>
-
-
-
 
 			</div>
 
-
-
-
-
-
-
 			<!-- =====================================================
-
              MODAL ERROR
-
              ===================================================== -->
-
-
-
 
 			<div class="modal fade" id="modalError" tabindex="-1"
 				aria-labelledby="modalErrorLabel" aria-hidden="true">
 
-
-
-
 				<div class="modal-dialog modal-dialog-centered">
-
-
-
 
 					<div class="modal-content border-0 shadow-lg">
 
-
-
-
 						<div class="modal-body text-center p-5">
-
-
-
 
 							<div
 								class="bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3">
 
-
-
-
 								<i class="bi bi-x-circle-fill fs-1"></i>
 
-
-
-
 							</div>
-
-
-
 
 							<h4 class="fw-bold mb-2" id="modalErrorLabel">Ocurrió un
 								problema</h4>
 
-
-
-
 							<p class="text-muted mb-4" id="mensajeError">No se pudo
 								completar la operación.</p>
 
-
-
-
 							<button type="button" class="btn btn-danger px-4"
 								data-bs-dismiss="modal">Cerrar</button>
-
-
-
-
 						</div>
-
-
-
 
 					</div>
 
-
-
-
 				</div>
-
-
-
 
 			</div>
 
-
-
-
-
-
-
 			<!-- =====================================================
-
              FOOTER
-
              ===================================================== -->
-
-
-
 
 			<footer class="page-footer"> Sistema de gestión de
 				transporte · 2026 </footer>
 
-
-
-
-
-
-
 		</main>
-
-
-
 
 	</div>
 
-
-
-
-
-
-
 	<!-- =========================================================
-
      BOOTSTRAP JS
-
      ========================================================= -->
-
-
-
-
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
 		
 	</script>
 
-
-
-
-
-
-
 	<!-- =========================================================
-
      jsPDF
-
      ========================================================= -->
-
-
-
 
 	<script
 		src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
 		
 	</script>
 
-
-
-
-
-
-
 	<!-- =========================================================
-
      jsPDF AutoTable
-
      ========================================================= -->
-
-
-
 
 	<script
 		src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js">
 		
 	</script>
 
-
-
-
-
-
-
 	<!-- =========================================================
-
      JAVASCRIPT PROPIO
-
      ========================================================= -->
-
-
-
-
 	<script th:src="@{/js/Destinos.js}" src="/js/Destinos.js">
 		
 	</script>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </body>
-
-
-
-
 </html>
-
-
