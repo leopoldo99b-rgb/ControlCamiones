@@ -4744,6 +4744,17 @@ window.mostrarModalError =
 	 * Este PDF NO utiliza las filas visibles de la tabla HTML.
 	 * Utiliza directamente recorridosBD para evitar el problema
 	 * de la paginación.
+	 *
+	 * RESUMEN FINANCIERO:
+	 *
+	 * TOTAL DEL PERÍODO
+	 * = SUBTOTAL + IMPUESTOS
+	 *
+	 * TOTAL GENERAL DEL PERÍODO
+	 * = TOTAL DEL PERÍODO + PEAJES
+	 *
+	 * La TARIFA se muestra en la tabla y en sus totales,
+	 * pero NO forma parte del cálculo del Total del Período.
 	 * ========================================================= */
 
 	document.addEventListener("DOMContentLoaded", function () {
@@ -4848,6 +4859,7 @@ window.mostrarModalError =
 	        document.getElementById(
 	            "fechaDesde"
 	        );
+
 
 	    const fechaHastaElement =
 	        document.getElementById(
@@ -5351,23 +5363,34 @@ window.mostrarModalError =
 
 
 	    /* =====================================================
-	     * TOTAL GENERAL
+	     * CÁLCULOS FINANCIEROS
 	     *
-	     * SUBTOTAL
-	     * + TARIFA
-	     * + IMPUESTOS
-	     * + PEAJES
+	     * IMPORTANTE:
+	     *
+	     * TOTAL DEL PERÍODO
+	     * = SUBTOTAL + IMPUESTOS
+	     *
+	     * TOTAL GENERAL DEL PERÍODO
+	     * = TOTAL DEL PERÍODO + PEAJES
+	     *
+	     * LA TARIFA NO PARTICIPA EN ESTOS CÁLCULOS.
 	     * ===================================================== */
 
-	    const totalGeneral =
+	    const totalPeriodo =
 	        totalSubtotal +
-	        totalTarifa +
-	        totalIsv +
+	        totalIsv;
+
+
+	    const totalGeneralPeriodo =
+	        totalPeriodo +
 	        totalPeajes;
 
 
 	    /* =====================================================
-	     * FILA DE TOTALES
+	     * FILA DE TOTALES DE LA TABLA
+	     *
+	     * Esta fila solamente resume las columnas.
+	     * La Tarifa continúa visible y con su propio total.
 	     * ===================================================== */
 
 	    const filaTotales = [
@@ -5712,9 +5735,27 @@ window.mostrarModalError =
 
 	    /* =====================================================
 	     * RESUMEN FINANCIERO
+	     *
 	     * FORMATO FACTURA
 	     *
 	     * ALINEADO A LA IZQUIERDA
+	     *
+	     * ESTRUCTURA:
+	     *
+	     * ┌─────────────────────────────────┐
+	     * │ CONCEPTO              VALOR      │
+	     * ├─────────────────────────────────┤
+	     * │ Subtotal              L XXX.XX   │
+	     * │ Impuestos             L XXX.XX   │
+	     * ├─────────────────────────────────┤
+	     * │ TOTAL DEL PERÍODO     L XXX.XX   │
+	     * └─────────────────────────────────┘
+	     *
+	     * ┌─────────────────────────────────┐
+	     * │ Peajes                L XXX.XX   │
+	     * ├─────────────────────────────────┤
+	     * │ TOTAL GENERAL         L XXX.XX   │
+	     * └─────────────────────────────────┘
 	     * ===================================================== */
 
 	    let finalY =
@@ -5727,7 +5768,7 @@ window.mostrarModalError =
 
 	    if (
 	        finalY >
-	        altoPagina - 75
+	        altoPagina - 85
 	    ) {
 
 	        doc.addPage();
@@ -5749,21 +5790,12 @@ window.mostrarModalError =
 
 
 	    /*
-	     * IMPORTANTE:
-	     *
-	     * El resumen tipo factura queda alineado
-	     * completamente a la izquierda de la página.
-	     *
-	     * Antes estaba calculado así:
-	     *
-	     * anchoPagina - anchoFactura - 10
-	     *
-	     * lo cual lo colocaba a la derecha.
-	     *
-	     * Ahora utilizamos directamente 10 mm.
+	     * El resumen queda completamente alineado
+	     * a la izquierda de la página.
 	     */
 
-	    const xFactura = 10;
+	    const xFactura =
+	        10;
 
 
 	    /* =====================================================
@@ -5862,7 +5894,10 @@ window.mostrarModalError =
 
 
 	    /* =====================================================
-	     * FILAS DEL RESUMEN
+	     * FILAS DEL PRIMER RECUADRO
+	     *
+	     * SUBTOTAL
+	     * IMPUESTOS
 	     * ===================================================== */
 
 	    const filasResumen = [
@@ -5873,19 +5908,10 @@ window.mostrarModalError =
 	        },
 
 	        {
-	            concepto: "Tarifa",
-	            valor: totalTarifa
-	        },
-
-	        {
 	            concepto: "Impuestos",
 	            valor: totalIsv
-	        },
-
-	        {
-	            concepto: "Peajes",
-	            valor: totalPeajes
 	        }
+
 	    ];
 
 
@@ -5990,7 +6016,7 @@ window.mostrarModalError =
 
 
 	    /* =====================================================
-	     * LÍNEA ANTES DEL TOTAL
+	     * LÍNEA ANTES DEL TOTAL DEL PERÍODO
 	     * ===================================================== */
 
 	    doc.setDrawColor(
@@ -6014,7 +6040,9 @@ window.mostrarModalError =
 
 
 	    /* =====================================================
-	     * TOTAL GENERAL
+	     * TOTAL DEL PERÍODO
+	     *
+	     * SUBTOTAL + IMPUESTOS
 	     * ===================================================== */
 
 	    doc.setFillColor(
@@ -6059,7 +6087,7 @@ window.mostrarModalError =
 
 
 	    doc.text(
-	        "TOTAL",
+	        "TOTAL DEL PERÍODO",
 	        xFactura + 4,
 	        yFila + 8
 	    );
@@ -6072,7 +6100,242 @@ window.mostrarModalError =
 
 	    doc.text(
 	        formatoMonedaPDF(
-	            totalGeneral
+	            totalPeriodo
+	        ),
+	        xFactura + anchoFactura - 4,
+	        yFila + 8,
+	        {
+	            align: "right"
+	        }
+	    );
+
+
+	    /* =====================================================
+	     * SEGUNDO RECUADRO
+	     *
+	     * TOTAL DEL PERÍODO + PEAJES
+	     * ===================================================== */
+
+	    yFila +=
+	        12 + 5;
+
+
+	    /* =====================================================
+	     * ENCABEZADO DEL SEGUNDO RECUADRO
+	     * ===================================================== */
+
+	    doc.setFillColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.setDrawColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.rect(
+	        xFactura,
+	        yFila,
+	        anchoFactura,
+	        altoFila,
+	        "FD"
+	    );
+
+
+	    doc.setTextColor(
+	        255,
+	        255,
+	        255
+	    );
+
+
+	    doc.setFont(
+	        "helvetica",
+	        "bold"
+	    );
+
+
+	    doc.setFontSize(
+	        7
+	    );
+
+
+	    doc.text(
+	        "CONCEPTO",
+	        xFactura + 4,
+	        yFila + 6
+	    );
+
+
+	    doc.text(
+	        "VALOR",
+	        xFactura + anchoFactura - 4,
+	        yFila + 6,
+	        {
+	            align: "right"
+	        }
+	    );
+
+
+	    yFila +=
+	        altoFila;
+
+
+	    /* =====================================================
+	     * FILA PEAJES
+	     * ===================================================== */
+
+	    doc.setFillColor(
+	        248,
+	        250,
+	        252
+	    );
+
+
+	    doc.setDrawColor(
+	        210,
+	        214,
+	        220
+	    );
+
+
+	    doc.rect(
+	        xFactura,
+	        yFila,
+	        anchoFactura,
+	        altoFila,
+	        "FD"
+	    );
+
+
+	    doc.setTextColor(
+	        60,
+	        60,
+	        60
+	    );
+
+
+	    doc.setFont(
+	        "helvetica",
+	        "normal"
+	    );
+
+
+	    doc.setFontSize(
+	        8
+	    );
+
+
+	    doc.text(
+	        "Peajes",
+	        xFactura + 4,
+	        yFila + 6
+	    );
+
+
+	    doc.text(
+	        formatoMonedaPDF(
+	            totalPeajes
+	        ),
+	        xFactura + anchoFactura - 4,
+	        yFila + 6,
+	        {
+	            align: "right"
+	        }
+	    );
+
+
+	    /* =====================================================
+	     * TOTAL GENERAL DEL PERÍODO
+	     *
+	     * TOTAL DEL PERÍODO + PEAJES
+	     * ===================================================== */
+
+	    yFila +=
+	        altoFila;
+
+
+	    doc.setDrawColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.setLineWidth(
+	        0.5
+	    );
+
+
+	    doc.line(
+	        xFactura,
+	        yFila,
+	        xFactura + anchoFactura,
+	        yFila
+	    );
+
+
+	    doc.setFillColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.setDrawColor(
+	        31,
+	        41,
+	        55
+	    );
+
+
+	    doc.rect(
+	        xFactura,
+	        yFila,
+	        anchoFactura,
+	        12,
+	        "FD"
+	    );
+
+
+	    doc.setTextColor(
+	        255,
+	        255,
+	        255
+	    );
+
+
+	    doc.setFont(
+	        "helvetica",
+	        "bold"
+	    );
+
+
+	    doc.setFontSize(
+	        9
+	    );
+
+
+	    doc.text(
+	        "TOTAL GENERAL DEL PERÍODO",
+	        xFactura + 4,
+	        yFila + 8
+	    );
+
+
+	    doc.setFontSize(
+	        10
+	    );
+
+
+	    doc.text(
+	        formatoMonedaPDF(
+	            totalGeneralPeriodo
 	        ),
 	        xFactura + anchoFactura - 4,
 	        yFila + 8,
@@ -6375,3 +6638,4 @@ window.mostrarModalError =
 	        )
 	    );
 	}
+	

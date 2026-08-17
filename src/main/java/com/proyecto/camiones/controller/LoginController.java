@@ -1,11 +1,12 @@
 package com.proyecto.camiones.controller;
 
-
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.proyecto.camiones.model.Usuario;
 import com.proyecto.camiones.repository.UsuarioRepository;
@@ -13,47 +14,64 @@ import com.proyecto.camiones.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpSession;
 
 
-
 @Controller
 public class LoginController {
 
 
-
     private final UsuarioRepository usuarioRepository;
 
+    private final DashboardController dashboardController;
 
 
     public LoginController(
-            UsuarioRepository usuarioRepository
-    ){
+            UsuarioRepository usuarioRepository,
+            DashboardController dashboardController
+    ) {
 
-        this.usuarioRepository = usuarioRepository;
+        this.usuarioRepository =
+                usuarioRepository;
+
+        this.dashboardController =
+                dashboardController;
 
     }
 
 
-
-
+    /* =====================================================
+     * LOGIN
+     * ===================================================== */
 
     @GetMapping("/")
-    public String login(){
+    public String login() {
 
         return "login";
 
     }
 
 
-
-
-
-
+    /* =====================================================
+     * DASHBOARD
+     *
+     * IMPORTANTE:
+     *
+     * Este es el ÚNICO lugar donde se define:
+     *
+     * GET /dashboard
+     *
+     * DashboardController NO debe tener
+     * @GetMapping("/dashboard").
+     * ===================================================== */
 
     @GetMapping("/dashboard")
     public String dashboard(
             HttpSession session,
             Model model
-    ){
+    ) {
 
+
+        /* =================================================
+         * USUARIO DE SESIÓN
+         * ================================================= */
 
         Usuario usuarioSesion =
                 (Usuario) session.getAttribute(
@@ -61,8 +79,15 @@ public class LoginController {
                 );
 
 
+        /*
+         * Si no existe usuario en sesión,
+         * regresar al login.
+         */
 
-        if(usuarioSesion == null || usuarioSesion.getId() == null){
+        if (
+                usuarioSesion == null ||
+                usuarioSesion.getId() == null
+        ) {
 
             session.invalidate();
 
@@ -71,60 +96,54 @@ public class LoginController {
         }
 
 
-
-
-
-        /*
-         * Recuperar usuario actualizado
-         * desde BD
-         */
+        /* =================================================
+         * RECUPERAR USUARIO ACTUALIZADO
+         * DESDE BASE DE DATOS
+         * ================================================= */
 
         Usuario usuarioActualizado =
                 usuarioRepository
-                .findById(
-                        usuarioSesion.getId()
-                )
-                .orElse(null);
+                        .findById(
+                                usuarioSesion.getId()
+                        )
+                        .orElse(null);
 
 
+        /*
+         * Si el usuario ya no existe,
+         * cerrar sesión.
+         */
 
-
-        if(usuarioActualizado == null){
-
+        if (usuarioActualizado == null) {
 
             session.invalidate();
 
-
             return "redirect:/";
 
-
         }
 
 
+        /* =================================================
+         * CARGAR PERMISOS
+         *
+         * Esto evita problemas de LazyInitialization
+         * cuando Thymeleaf acceda a los permisos.
+         * ================================================= */
 
-
-
-
-        /*
-         * Cargar permisos
-         * antes de enviarlo a Thymeleaf
-         */
-
-        if(usuarioActualizado.getPermisos()!=null){
+        if (
+                usuarioActualizado.getPermisos() != null
+        ) {
 
             usuarioActualizado
-            .getPermisos()
-            .size();
+                    .getPermisos()
+                    .size();
 
         }
 
 
-
-
-
-        /*
-         * Actualizar sesión
-         */
+        /* =================================================
+         * ACTUALIZAR USUARIO EN SESIÓN
+         * ================================================= */
 
         session.setAttribute(
                 "usuarioLogueado",
@@ -132,9 +151,9 @@ public class LoginController {
         );
 
 
-
-
-
+        /* =================================================
+         * USUARIO PARA THYMELEAF
+         * ================================================= */
 
         model.addAttribute(
                 "usuario",
@@ -142,72 +161,74 @@ public class LoginController {
         );
 
 
+        /* =================================================
+         * CARGAR DATOS DEL DASHBOARD
+         *
+         * Aquí DashboardController solamente prepara
+         * las estadísticas. NO maneja ninguna URL.
+         * ================================================= */
+
+        dashboardController
+                .cargarDatosDashboard(
+                        model
+                );
 
 
-
+        /* =================================================
+         * MOSTRAR DASHBOARD
+         * ================================================= */
 
         return "dashboard";
-
 
     }
 
 
-
-
-
-
-
-
+    /* =====================================================
+     * LOGIN
+     * ===================================================== */
 
     @PostMapping("/login")
     public String ingresar(
 
-
             @RequestParam("usuario")
             String username,
-
 
             @RequestParam("password")
             String password,
 
-
             HttpSession session,
-
 
             Model model
 
+    ) {
 
-    ){
 
-
+        /* =================================================
+         * BUSCAR USUARIO
+         * ================================================= */
 
         Usuario usuario =
-
                 usuarioRepository
-                .findByUsuarioAndPassword(
-                        username,
-                        password
-                );
+                        .findByUsuarioAndPassword(
+                                username,
+                                password
+                        );
 
 
+        /* =================================================
+         * USUARIO ENCONTRADO
+         * ================================================= */
+
+        if (usuario != null) {
 
 
-
-
-
-
-        if(usuario != null){
-
-
-
-            /*
-             * Registrar inicio de actividad
-             */
+            /* =============================================
+             * REGISTRAR ÚLTIMA ACTIVIDAD
+             * ============================================= */
 
             usuario.setUltimaActividad(
                     LocalDateTime.now()
             );
-
 
 
             usuarioRepository.save(
@@ -215,31 +236,27 @@ public class LoginController {
             );
 
 
+            /* =============================================
+             * INICIALIZAR PERMISOS
+             *
+             * Evita problemas al acceder a los permisos
+             * posteriormente desde Thymeleaf.
+             * ============================================= */
 
+            if (
+                    usuario.getPermisos() != null
+            ) {
 
-
-
-
-            /*
-             * Inicializar permisos
-             */
-
-            if(usuario.getPermisos()!=null){
-
-                usuario.getPermisos().size();
+                usuario
+                        .getPermisos()
+                        .size();
 
             }
 
 
-
-
-
-
-
-
-            /*
-             * Guardar usuario en sesión
-             */
+            /* =============================================
+             * GUARDAR USUARIO EN SESIÓN
+             * ============================================= */
 
             session.setAttribute(
                     "usuarioLogueado",
@@ -247,23 +264,18 @@ public class LoginController {
             );
 
 
-
-
-
-
+            /* =============================================
+             * IR AL DASHBOARD
+             * ============================================= */
 
             return "redirect:/dashboard";
-
 
         }
 
 
-
-
-
-
-
-
+        /* =================================================
+         * LOGIN INCORRECTO
+         * ================================================= */
 
         model.addAttribute(
                 "error",
@@ -271,45 +283,37 @@ public class LoginController {
         );
 
 
-
         return "login";
-
 
     }
 
 
-
-
-
-
-
-
+    /* =====================================================
+     * CERRAR SESIÓN
+     * ===================================================== */
 
     @GetMapping("/logout")
     public String cerrarSesion(
             HttpSession session
-    ){
+    ) {
 
 
+        /* =================================================
+         * RECUPERAR USUARIO
+         * ================================================= */
 
         Usuario usuario =
-
                 (Usuario) session.getAttribute(
                         "usuarioLogueado"
                 );
 
 
+        /* =================================================
+         * REGISTRAR ÚLTIMA ACTIVIDAD
+         * ================================================= */
 
+        if (usuario != null) {
 
-
-        if(usuario != null){
-
-
-
-            /*
-             * Guardamos última actividad
-             * antes de cerrar
-             */
 
             usuario.setUltimaActividad(
                     LocalDateTime.now()
@@ -320,26 +324,22 @@ public class LoginController {
                     usuario
             );
 
-
         }
 
 
-
-
-
+        /* =================================================
+         * INVALIDAR SESIÓN
+         * ================================================= */
 
         session.invalidate();
 
 
-
+        /* =================================================
+         * REGRESAR AL LOGIN
+         * ================================================= */
 
         return "redirect:/";
 
-
     }
-
-
-
-
 
 }
