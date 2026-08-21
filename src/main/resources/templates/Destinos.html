@@ -1,2000 +1,1850 @@
-
-
-
 <!DOCTYPE html>
-
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 
-
-
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Control de Rutas y Peajes</title>
 
-
-
-<meta charset="UTF-8">
-
-
-
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
-
-
-<title>Control de Rutas y Peajes</title>
-
-
-
-
-<!-- =====================================================
-
+    <!-- =====================================================
          BOOTSTRAP 5
-
          ===================================================== -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
 
-<link
-	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-	rel="stylesheet">
-
-
-
-
-<!-- =====================================================
-
+    <!-- =====================================================
          BOOTSTRAP ICONS
-
          ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-<link rel="stylesheet"
-	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-
-
-
-<!-- =====================================================
-
+    <!-- =====================================================
          CSS PROPIO
-
          ===================================================== -->
-
-<link th:href="@{/css/Destinos.css}" href="/css/Destinos.css"
-	rel="stylesheet">
-
-
-
-
+    <link
+        th:href="@{/css/Destinos.css}"
+        href="/css/Destinos.css"
+        rel="stylesheet">
 </head>
-
-
-
-
-
-
 
 <body>
 
+<div class="app-shell">
 
-
-
-	<div class="app-shell">
-
-
-
-
-		<!-- =====================================================
-
+    <!-- =====================================================
          CONTENIDO PRINCIPAL
-
          ===================================================== -->
+    <main class="main-content">
 
-
-
-
-		<main class="main-content">
-
-
-
-
-
-
-
-			<!-- =================================================
-
+        <!-- =================================================
              HEADER
-
              ================================================= -->
+        <header class="topbar">
+
+            <div class="topbar-info">
+
+                <div class="breadcrumb-custom">
+                    Dashboard
+                    <span>/</span>
+                    Operaciones
+                    <span>/</span>
+                    Rutas y peajes
+                </div>
+
+                <h1>
+                    Control de rutas y peajes
+                </h1>
+
+                <p>
+                    Registra recorridos, calcula tarifas y controla los costos
+                    de peaje.
+                </p>
+
+            </div>
+
+            <div class="topbar-actions">
+
+                <a
+                    th:href="@{/dashboard}"
+                    href="/dashboard"
+                    class="btn btn-dashboard">
+
+                    <i class="bi bi-arrow-left me-2"></i>
+                    Volver al Dashboard
+
+                </a>
+
+            </div>
+
+        </header>
 
 
-
-
-			<header class="topbar">
-
-
-
-
-				<div class="topbar-info">
-
-
-
-
-					<div class="breadcrumb-custom">
-
-						Dashboard <span>/</span> Operaciones <span>/</span> Rutas y peajes
-
-					</div>
-
-
-
-
-					<h1>Control de rutas y peajes</h1>
-
-
-
-
-					<p>Registra recorridos, calcula tarifas y controla los costos
-						de peaje.</p>
-
-
-
-
-				</div>
-
-
-
-
-
-
-
-				<div class="topbar-actions">
-
-
-
-
-					<a th:href="@{/dashboard}" href="/dashboard"
-						class="btn btn-dashboard"> <i class="bi bi-arrow-left me-2"></i>
-
-
-
-
-						Volver al Dashboard
-
-
-
-
-					</a>
-
-
-
-
-				</div>
-
-
-
-
-			</header>
-
-
-
-
-
-
-
-			<!-- =================================================
-
+        <!-- =================================================
              RESUMEN
-
              ================================================= -->
+        <section class="summary-grid">
 
+            <!-- KM -->
+            <div class="summary-card">
 
+                <div class="summary-icon blue">
+                    <i class="bi bi-signpost-2"></i>
+                </div>
 
+                <div>
+                    <span>
+                        KM registrados
+                    </span>
 
-			<section class="summary-grid">
+                    <strong id="resumenKm">
+                        0.00 km
+                    </strong>
+                </div>
 
+            </div>
 
 
+            <!-- SUBTOTAL -->
+            <div class="summary-card">
 
-				<!-- KM -->
+                <div class="summary-icon green">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
 
-				<div class="summary-card">
+                <div>
+                    <span>
+                        Subtotal
+                    </span>
 
+                    <strong id="resumenSubtotal">
+                        L 0.00
+                    </strong>
+                </div>
 
+            </div>
 
 
-					<div class="summary-icon blue">
+            <!-- BANDA -->
+            <div class="summary-card">
 
-						<i class="bi bi-signpost-2"></i>
+                <div class="summary-icon orange">
+                    <i class="bi bi-percent"></i>
+                </div>
 
-					</div>
+                <div>
+                    <span>
+                        Banda vigente
+                    </span>
 
+                    <strong id="resumenBanda">
+                        L 0.00 / km
+                    </strong>
+                </div>
 
+            </div>
 
 
-					<div>
+            <!-- PEAJES -->
+            <div class="summary-card">
 
+                <div class="summary-icon purple">
+                    <i class="bi bi-cone-striped"></i>
+                </div>
 
+                <div>
+                    <span>
+                        Total peajes
+                    </span>
 
+                    <strong id="resumenPeajes">
+                        L 0.00
+                    </strong>
+                </div>
 
-						<span> KM registrados </span> <strong id="resumenKm">
+            </div>
 
-							0.00 km </strong>
+        </section>
 
 
-
-
-					</div>
-
-
-
-
-				</div>
-
-
-
-
-
-
-
-				<!-- SUBTOTAL -->
-
-				<div class="summary-card">
-
-
-
-
-					<div class="summary-icon green">
-
-						<i class="bi bi-cash-stack"></i>
-
-					</div>
-
-
-
-
-					<div>
-
-
-
-
-						<span> Subtotal </span> <strong id="resumenSubtotal"> L
-							0.00 </strong>
-
-
-
-
-					</div>
-
-
-
-
-				</div>
-
-
-
-
-
-
-
-				<!-- BANDA -->
-
-				<div class="summary-card">
-
-
-
-
-					<div class="summary-icon orange">
-
-						<i class="bi bi-percent"></i>
-
-					</div>
-
-
-
-
-					<div>
-
-
-
-
-						<span> Banda vigente </span> <strong id="resumenBanda"> L
-							0.00 / km </strong>
-
-
-
-
-					</div>
-
-
-
-
-				</div>
-
-
-
-
-
-
-
-				<!-- PEAJES -->
-
-				<div class="summary-card">
-
-
-
-
-					<div class="summary-icon purple">
-
-						<i class="bi bi-cone-striped"></i>
-
-					</div>
-
-
-
-
-					<div>
-
-
-
-
-						<span> Total peajes </span> <strong id="resumenPeajes"> L
-							0.00 </strong>
-
-
-
-
-					</div>
-
-
-
-
-				</div>
-
-
-
-
-			</section>
-
-
-
-
-
-
-
-			<!-- =================================================
-
+        <!-- =================================================
              FORMULARIO
-
              ================================================= -->
+        <section class="content-card form-card">
+
+            <!-- ENCABEZADO -->
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        NUEVO REGISTRO
+                    </span>
+
+                    <h2>
+                        Registrar recorrido
+                    </h2>
+
+                    <p>
+                        Selecciona la información del viaje. Los valores
+                        calculados quedarán listos para procesarse.
+                    </p>
+
+                </div>
+
+                <div class="formula-badge">
+
+                    <i class="bi bi-calculator"></i>
+
+                    Banda:
+
+                    <strong id="bandaVigenteTexto">
+                        L 0.00 / km
+                    </strong>
+
+                </div>
+
+            </div>
 
 
-
-
-			<section class="content-card form-card">
-
-
-
-
-
-
-
-				<!-- ENCABEZADO -->
-
-
-
-
-				<div class="section-heading">
-
-
-
-
-					<div>
-
-
-
-
-						<span class="eyebrow"> NUEVO REGISTRO </span>
-
-
-
-
-						<h2>Registrar recorrido</h2>
-
-
-
-
-						<p>Selecciona la información del viaje. Los valores calculados
-							quedarán listos para procesarse.</p>
-
-
-
-
-					</div>
-
-
-
-
-
-
-
-					<div class="formula-badge">
-
-
-
-
-						<i class="bi bi-calculator"></i> Banda: <strong
-							id="bandaVigenteTexto"> L 0.00 / km </strong>
-
-
-
-
-					</div>
-
-
-
-
-				</div>
-
-
-
-
-
-
-
-				<!-- =================================================
-
+            <!-- =================================================
                  FORMULARIO
-
                  ================================================= -->
+            <form
+                id="formViaje"
+                th:action="@{/viajes2/guardar}"
+                action="/viajes2/guardar"
+                method="post">
+
+                <!-- ID PARA EDICIÓN -->
+                <input
+                    type="hidden"
+                    id="idViaje"
+                    name="id"
+                    value="">
 
 
-
-
-				<form id="formViaje" th:action="@{/viajes2/guardar}"
-					action="/viajes2/guardar" method="post">
-
-
-
-
-
-
-
-					<!-- ID PARA EDICIÓN -->
-
-
-
-
-					<input type="hidden" id="idViaje" name="id" value="">
-
-
-
-
-
-
-
-					<!-- =================================================
-
+                <!-- =================================================
                      01 - INFORMACIÓN DEL VIAJE
-
                      ================================================= -->
+                <div class="form-section-title">
 
+                    <span>
+                        01
+                    </span>
 
+                    Información del viaje
 
+                </div>
 
-					<div class="form-section-title">
 
+                <div class="row g-3">
 
+                    <!-- FECHA -->
+                    <div class="col-lg-3 col-md-6">
 
+                        <label
+                            for="fecha"
+                            class="form-label">
 
-						<span> 01 </span> Información del viaje
+                            Fecha
 
+                        </label>
 
+                        <div class="input-icon">
 
+                            <i class="bi bi-calendar3"></i>
 
-					</div>
+                            <input
+                                id="fecha"
+                                type="date"
+                                name="fecha"
+                                class="form-control"
+                                required>
 
+                        </div>
 
+                    </div>
 
 
+                    <!-- MOTORISTA -->
+                    <div class="col-lg-4 col-md-6">
 
+                        <label
+                            for="motorista"
+                            class="form-label">
 
+                            Motorista
 
-					<div class="row g-3">
+                        </label>
 
+                        <select
+                            id="motorista"
+                            name="motorista"
+                            class="form-select"
+                            required>
 
+                            <option
+                                value=""
+                                selected
+                                disabled>
 
+                                Seleccionar motorista
 
+                            </option>
 
+                            <option
+                                th:each="motorista : ${motoristas}"
+                                th:value="${motorista.nombre}"
+                                th:text="${motorista.nombre}">
 
+                            </option>
 
-						<!-- FECHA -->
+                        </select>
 
+                    </div>
 
 
+                    <!-- FURGÓN -->
+                    <div class="col-lg-3 col-md-6">
 
-						<div class="col-lg-3 col-md-6">
+                        <label
+                            for="furgon"
+                            class="form-label">
 
+                            Furgón
 
+                        </label>
 
+                        <div class="d-flex gap-2">
 
-							<label for="fecha" class="form-label"> Fecha </label>
+                            <select
+                                id="furgon"
+                                name="furgon"
+                                class="form-select"
+                                required>
 
+                                <option
+                                    value=""
+                                    selected
+                                    disabled>
 
+                                    Seleccione furgón
 
+                                </option>
 
-							<div class="input-icon">
+                                <option
+                                    th:each="furgon : ${furgones}"
+                                    th:value="${furgon.furgon}"
+                                    th:text="${furgon.furgon}"
+                                    th:data-ejes="${furgon.ejes}">
 
+                                </option>
 
+                            </select>
 
+                            <button
+                                type="button"
+                                id="btnNuevoFurgon"
+                                class="btn btn-outline-primary"
+                                title="Registrar nuevo furgón">
 
-								<i class="bi bi-calendar3"></i> <input id="fecha" type="date"
-									name="fecha" class="form-control" required>
+                                <i class="bi bi-plus-lg"></i>
 
+                            </button>
 
+                        </div>
 
+                        <div class="field-help">
 
-							</div>
+                            <i class="bi bi-info-circle"></i>
 
+                            Selecciona el furgón utilizado en el recorrido.
 
+                        </div>
 
+                    </div>
 
-						</div>
 
+                    <!-- EJES -->
+                    <div class="col-lg-2 col-md-6">
 
+                        <label
+                            for="ejesCamion"
+                            class="form-label">
 
+                            Ejes del camión
 
+                        </label>
 
+                        <input
+                            id="ejesCamion"
+                            type="text"
+                            name="ejes"
+                            class="form-control"
+                            placeholder="Automático"
+                            readonly
+                            required>
 
+                        <div class="field-help">
 
-						<!-- MOTORISTA -->
+                            <i class="bi bi-lock-fill"></i>
 
+                            Se asigna automáticamente según el furgón.
 
+                        </div>
 
+                    </div>
 
-						<div class="col-lg-5 col-md-6">
 
+                    <!-- =================================================
+                         RUTA / DESTINO
+                         ================================================= -->
+                    <div class="col-lg-6 col-md-8">
 
+                        <label
+                            for="ruta"
+                            class="form-label">
 
+                            Ruta / destino
 
-							<label for="motorista" class="form-label"> Motorista </label> <select
-								id="motorista" name="motorista" class="form-select" required>
+                        </label>
 
+                        <!--
+                            BOTÓN NUEVA RUTA ELIMINADO.
+                            La ruta ahora ocupa todo el ancho disponible.
+                        -->
 
+                        <select
+                            id="ruta"
+                            name="ruta"
+                            class="form-select"
+                            required>
 
+                            <option
+                                value=""
+                                selected
+                                disabled>
 
-								<option value="" selected disabled>Seleccionar
-									motorista</option>
+                                Seleccione una ruta
 
+                            </option>
 
+                            <!--
+                                Se cargan desde la entidad Destino.
+                                El valor enviado será el nombre del destino.
+                            -->
 
+                            <option
+                                th:each="destino : ${destinos}"
+                                th:value="${destino.destino}"
+                                th:text="${destino.destino}"
+                                th:data-km="${destino.km}"
+                                th:data-galones="${destino.galones}"
+                                th:data-peajes="${destino.peajes}">
 
-								<option th:each="motorista : ${motoristas}"
-									th:value="${motorista.nombre}" th:text="${motorista.nombre}">
+                            </option>
 
+                        </select>
 
+                        <div class="field-help">
 
+                            <i class="bi bi-info-circle"></i>
 
-								</option>
+                            Los kilómetros y peajes de la ruta se cargarán
+                            automáticamente.
 
+                        </div>
 
+                    </div>
 
 
-							</select>
+                    <!-- KM -->
+                    <div class="col-lg-2 col-md-4">
 
+                        <label
+                            for="kmRecorridos"
+                            class="form-label">
 
+                            KM recorridos
 
+                        </label>
 
-						</div>
+                        <div class="calculated-input">
 
+                            <input
+                                id="kmRecorridos"
+                                type="number"
+                                name="kilometros"
+                                class="form-control"
+                                placeholder="0.00"
+                                min="0"
+                                step="0.01"
+                                readonly>
 
+                            <span>
+                                KM
+                            </span>
 
+                        </div>
 
+                    </div>
 
 
+                    <!-- REMISIÓN -->
+                    <div class="col-lg-2 col-md-6">
 
-						<!-- UNIDAD -->
+                        <label
+                            for="remision"
+                            class="form-label">
 
+                            Remisión
 
+                        </label>
 
+                        <input
+                            id="remision"
+                            type="text"
+                            name="remision"
+                            class="form-control"
+                            placeholder="Ej. 190087">
 
-						<div class="col-lg-2 col-md-6">
+                    </div>
 
 
+                    <!-- BANDA -->
+                    <div class="col-lg-2 col-md-6">
 
+                        <label
+                            for="bandaPorKm"
+                            class="form-label">
 
-							<label for="unidad" class="form-label"> Unidad </label> <select
-								id="unidad" name="unidad" class="form-select" required>
+                            Banda por KM
 
+                        </label>
 
+                        <div class="money-input">
 
+                            <span>
+                                L
+                            </span>
 
-								<option value="" selected disabled>Seleccionar</option>
+                            <input
+                                id="bandaPorKm"
+                                type="number"
+                                name="banda"
+                                class="form-control"
+                                placeholder="0.00"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                                required>
 
+                        </div>
 
+                        <div class="field-help">
 
+                            <i class="bi bi-info-circle"></i>
 
-								<option th:each="camion : ${camiones}"
-									th:value="${camion.placa}" th:text="${camion.placa}">
+                            Ingresa el valor de la banda por cada KM.
 
+                        </div>
 
+                    </div>
 
+                </div>
 
-								</option>
 
-
-
-
-							</select>
-
-
-
-
-						</div>
-
-
-
-
-
-
-
-						<!-- EJES -->
-
-
-
-
-						<div class="col-lg-2 col-md-6">
-
-
-
-
-							<label for="ejesCamion" class="form-label"> Ejes del
-								camión </label> <select id="ejesCamion" name="ejes" class="form-select"
-								required>
-
-
-
-
-								<option value="" selected disabled>Seleccionar</option>
-
-
-
-
-								<option value="2">2 ejes</option>
-
-
-
-
-								<option value="3">3 ejes</option>
-
-
-
-
-							</select>
-
-
-
-
-						</div>
-
-
-
-
-
-
-
-						<!-- DESTINO -->
-
-
-
-
-						<div class="col-lg-4 col-md-6">
-
-
-
-
-							<label for="ruta" class="form-label"> Ruta / destino </label> <select
-								id="ruta" name="ruta" class="form-select" required>
-
-
-
-
-								<option value="" selected disabled>Cargando rutas...</option>
-
-
-
-
-							</select>
-
-
-
-
-							<div class="field-help">
-
-
-
-
-								<i class="bi bi-info-circle"></i> Los kilómetros y peajes de la
-								ruta se cargarán automáticamente.
-
-
-
-
-							</div>
-
-
-
-
-						</div>
-
-
-
-
-
-
-
-						<!-- KM -->
-
-
-
-
-						<div class="col-lg-2 col-md-6">
-
-
-
-
-							<label for="kmRecorridos" class="form-label"> KM
-								recorridos </label>
-
-
-
-
-							<div class="calculated-input">
-
-
-
-
-								<input id="kmRecorridos" type="number" name="kilometros"
-									class="form-control" placeholder="0.00" min="0" step="0.01"
-									readonly> <span> KM </span>
-
-
-
-
-							</div>
-
-
-
-
-						</div>
-
-
-
-
-
-
-
-						<!-- REMISIÓN -->
-
-
-
-
-						<div class="col-lg-3 col-md-6">
-
-
-
-
-							<label for="remision" class="form-label"> Remisión </label> <input
-								id="remision" type="text" name="remision" class="form-control"
-								placeholder="Ej. 190087">
-
-
-
-
-						</div>
-
-
-
-
-
-
-
-						<!-- BANDA -->
-
-
-
-
-						<div class="col-lg-3 col-md-6">
-
-
-
-
-							<label for="bandaPorKm" class="form-label"> Banda por KM
-
-
-
-
-							</label>
-
-
-
-
-							<div class="money-input">
-
-
-
-
-								<span> L </span> <input id="bandaPorKm" type="number"
-									name="banda" class="form-control" placeholder="0.00" min="0"
-									step="0.01" value="0" required>
-
-
-
-
-							</div>
-
-
-
-
-							<div class="field-help">
-
-
-
-
-								<i class="bi bi-info-circle"></i> Ingresa el valor de la banda
-								por cada KM.
-
-
-
-
-							</div>
-
-
-
-
-						</div>
-
-
-
-
-					</div>
-
-
-
-
-
-
-
-					<!-- =================================================
-
+                <!-- =================================================
                      02 - CÁLCULO DE TARIFA
-
                      ================================================= -->
+                <div class="form-section-title mt-4">
 
+                    <span>
+                        02
+                    </span>
 
+                    Cálculo de tarifa
 
+                </div>
 
-					<div class="form-section-title mt-4">
 
+                <div class="calculation-grid">
 
+                    <!-- SUBTOTAL -->
+                    <div class="calc-box">
 
+                        <div class="calc-label">
 
-						<span> 02 </span> Cálculo de tarifa
+                            <span>
+                                Subtotal
+                            </span>
 
+                            <i class="bi bi-question-circle"></i>
 
+                        </div>
 
+                        <small>
+                            Banda × kilómetros
+                        </small>
 
-					</div>
+                        <strong id="subtotalTexto">
+                            L 0.00
+                        </strong>
 
+                        <input
+                            id="subtotal"
+                            type="hidden"
+                            name="subtotal"
+                            value="0">
 
+                    </div>
 
 
+                    <div class="calc-operator">
+                        +
+                    </div>
 
 
+                    <!-- ISV -->
+                    <div class="calc-box">
 
-					<div class="calculation-grid">
+                        <div class="calc-label">
 
+                            <span>
+                                ISV
+                            </span>
 
+                            <span class="percent-tag">
+                                15%
+                            </span>
 
+                        </div>
 
+                        <small>
+                            Impuesto sobre subtotal
+                        </small>
 
+                        <strong id="isvTexto">
+                            L 0.00
+                        </strong>
 
+                        <input
+                            id="isv"
+                            type="hidden"
+                            name="isv"
+                            value="0">
 
-						<!-- SUBTOTAL -->
+                    </div>
 
 
+                    <div class="calc-operator">
+                        =
+                    </div>
 
 
-						<div class="calc-box">
+                    <!-- TARIFA -->
+                    <div class="calc-box total-box">
 
+                        <div class="calc-label">
 
+                            <span>
+                                Tarifa
+                            </span>
 
+                            <i class="bi bi-check-circle-fill"></i>
 
-							<div class="calc-label">
+                        </div>
 
+                        <small>
+                            Subtotal + ISV
+                        </small>
 
+                        <strong id="tarifaTexto">
+                            L 0.00
+                        </strong>
 
+                        <input
+                            id="tarifa"
+                            type="hidden"
+                            name="tarifa"
+                            value="0">
 
-								<span> Subtotal </span> <i class="bi bi-question-circle"></i>
+                    </div>
 
+                </div>
 
 
-
-							</div>
-
-
-
-
-							<small> Banda × kilómetros </small> <strong id="subtotalTexto">
-
-								L 0.00 </strong> <input id="subtotal" type="hidden" name="subtotal"
-								value="0">
-
-
-
-
-						</div>
-
-
-
-
-
-
-
-						<div class="calc-operator">\+</div>
-
-
-
-
-
-
-
-						<!-- ISV -->
-
-
-
-
-						<div class="calc-box">
-
-
-
-
-							<div class="calc-label">
-
-
-
-
-								<span> ISV </span> <span class="percent-tag"> 15% </span>
-
-
-
-
-							</div>
-
-
-
-
-							<small> Impuesto sobre subtotal </small> <strong id="isvTexto">
-
-								L 0.00 </strong> <input id="isv" type="hidden" name="isv" value="0">
-
-
-
-
-						</div>
-
-
-
-
-
-
-
-						<div class="calc-operator">=</div>
-
-
-
-
-
-
-
-						<!-- TARIFA -->
-
-
-
-
-						<div class="calc-box total-box">
-
-
-
-
-							<div class="calc-label">
-
-
-
-
-								<span> Tarifa </span> <i class="bi bi-check-circle-fill"></i>
-
-
-
-
-							</div>
-
-
-
-
-							<small> Subtotal + ISV </small> <strong id="tarifaTexto">
-
-								L 0.00 </strong> <input id="tarifa" type="hidden" name="tarifa" value="0">
-
-
-
-
-						</div>
-
-
-
-
-					</div>
-
-
-
-
-
-
-
-					<!-- =================================================
-
+                <!-- =================================================
                      03 - PEAJES
-
                      ================================================= -->
+                <div class="form-section-title mt-4">
 
+                    <span>
+                        03
+                    </span>
 
+                    Peajes
 
+                </div>
 
-					<div class="form-section-title mt-4">
 
+                <div class="row g-3 align-items-end">
 
+                    <!-- CANTIDAD -->
+                    <div class="col-lg-4 col-md-6">
 
+                        <label
+                            for="cantidadPeajes"
+                            class="form-label">
 
-						<span> 03 </span> Peajes
+                            Cantidad de peajes
 
+                        </label>
 
+                        <input
+                            id="cantidadPeajes"
+                            type="number"
+                            name="cantidadPeajes"
+                            class="form-control"
+                            min="0"
+                            step="1"
+                            value="0"
+                            readonly>
 
+                    </div>
 
-					</div>
 
+                    <!-- VALOR PEAJE -->
+                    <div class="col-lg-4 col-md-6">
 
+                        <label class="form-label">
 
+                            Valor por peaje
 
+                        </label>
 
+                        <div class="toll-options">
 
+                            <!-- 2 EJES -->
+                            <div
+                                class="toll-option"
+                                data-ejes="2"
+                                data-valor="224">
 
-					<div class="row g-3 align-items-end">
+                                <span>
+                                    2 ejes
+                                </span>
 
+                                <strong>
+                                    L 224.00
+                                </strong>
 
+                            </div>
 
 
+                            <!-- 3 EJES -->
+                            <div
+                                class="toll-option"
+                                data-ejes="3"
+                                data-valor="269">
 
+                                <span>
+                                    3 ejes
+                                </span>
 
+                                <strong>
+                                    L 269.00
+                                </strong>
 
-						<!-- CANTIDAD -->
+                            </div>
 
+                        </div>
 
 
+                        <input
+                            id="valorPeaje"
+                            type="hidden"
+                            name="valorPeaje"
+                            value="0">
 
-						<div class="col-lg-4 col-md-6">
+                    </div>
 
 
+                    <!-- TOTAL PEAJES -->
+                    <div class="col-lg-4 col-md-12">
 
+                        <div class="toll-total">
 
-							<label for="cantidadPeajes" class="form-label"> Cantidad
-								de peajes </label> <input id="cantidadPeajes" type="number"
-								name="cantidadPeajes" class="form-control" min="0" step="1"
-								value="0" readonly>
+                            <div>
 
+                                <span>
+                                    Total peajes
+                                </span>
 
+                                <small>
+                                    Cantidad × valor por peaje
+                                </small>
 
+                            </div>
 
-						</div>
+                            <strong id="totalPeajesTexto">
+                                L 0.00
+                            </strong>
 
+                            <input
+                                id="totalPeajes"
+                                type="hidden"
+                                name="totalPeajes"
+                                value="0">
 
+                        </div>
 
+                    </div>
 
+                </div>
 
 
-
-						<!-- VALOR PEAJE -->
-
-
-
-
-						<div class="col-lg-4 col-md-6">
-
-
-
-
-							<label class="form-label"> Valor por peaje </label>
-
-
-
-
-							<div class="toll-options">
-
-
-
-
-
-
-
-								<!-- 2 EJES -->
-
-
-
-
-								<div class="toll-option" data-ejes="2" data-valor="224">
-
-
-
-
-									<span> 2 ejes </span> <strong> L 224.00 </strong>
-
-
-
-
-								</div>
-
-
-
-
-
-
-
-								<!-- 3 EJES -->
-
-
-
-
-								<div class="toll-option" data-ejes="3" data-valor="269">
-
-
-
-
-									<span> 3 ejes </span> <strong> L 269.00 </strong>
-
-
-
-
-								</div>
-
-
-
-
-							</div>
-
-
-
-
-
-
-
-							<input id="valorPeaje" type="hidden" name="valorPeaje" value="0">
-
-
-
-
-						</div>
-
-
-
-
-
-
-
-						<!-- TOTAL PEAJES -->
-
-
-
-
-						<div class="col-lg-4 col-md-12">
-
-
-
-
-							<div class="toll-total">
-
-
-
-
-								<div>
-
-
-
-
-									<span> Total peajes </span> <small> Cantidad × valor
-										por peaje </small>
-
-
-
-
-								</div>
-
-
-
-
-								<strong id="totalPeajesTexto"> L 0.00 </strong> <input
-									id="totalPeajes" type="hidden" name="totalPeajes" value="0">
-
-
-
-
-							</div>
-
-
-
-
-						</div>
-
-
-
-
-					</div>
-
-
-
-
-
-
-
-					<!-- =================================================
-
+                <!-- =================================================
                      CAMPOS OCULTOS
-
                      ================================================= -->
+                <input
+                    type="hidden"
+                    id="valorPeajeHidden"
+                    name="valorPeajeHidden"
+                    value="0">
 
 
-
-
-					<input type="hidden" id="valorPeajeHidden" name="valorPeajeHidden"
-						value="0">
-
-
-
-
-
-
-
-					<!-- =================================================
-
+                <!-- =================================================
                      BOTONES
-
                      ================================================= -->
+                <div class="form-actions">
+
+                    <button
+                        id="btnCancelar"
+                        type="button"
+                        class="btn btn-outline-secondary">
+
+                        <i class="bi bi-x-lg me-2"></i>
+
+                        Cancelar
+
+                    </button>
 
 
+                    <button
+                        id="btnGuardar"
+                        type="submit"
+                        class="btn btn-primary px-4">
+
+                        <i class="bi bi-check2-circle me-2"></i>
+
+                        Guardar recorrido
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
 
 
-					<div class="form-actions">
-
-
-
-
-						<button id="btnCancelar" type="button"
-							class="btn btn-outline-secondary">
-
-
-
-
-							<i class="bi bi-x-lg me-2"></i> Cancelar
-
-
-
-
-						</button>
-
-
-
-
-
-
-
-						<button id="btnGuardar" type="submit" class="btn btn-primary px-4">
-
-
-
-
-							<i class="bi bi-check2-circle me-2"></i> Guardar recorrido
-
-
-
-
-						</button>
-
-
-
-
-					</div>
-
-
-
-
-
-
-
-				</form>
-
-
-
-
-			</section>
-
-
-
-
-
-
-
-			<!-- =====================================================
-
+        <!-- =====================================================
              HISTORIAL
-
              ===================================================== -->
+        <section class="content-card table-card">
 
+            <!-- ENCABEZADO -->
+            <div class="section-heading table-heading">
 
+                <div>
 
+                    <span class="eyebrow">
+                        HISTORIAL
+                    </span>
 
-			<section class="content-card table-card">
+                    <h2>
+                        Recorridos registrados
+                    </h2>
 
+                    <p>
+                        Consulta y administra los recorridos ingresados.
+                    </p>
 
+                </div>
 
 
+                <div class="table-tools d-flex flex-wrap align-items-end gap-2">
 
+                    <!-- BUSCADOR -->
+                    <div
+                        class="search-box flex-grow-1"
+                        style="min-width: 260px;">
 
+                        <i class="bi bi-search"></i>
 
-				<!-- ENCABEZADO -->
+                        <input
+                            id="buscadorViajes"
+                            type="search"
+                            placeholder="Buscar motorista, destino..."
+                            autocomplete="off">
 
+                    </div>
 
 
+                    <!-- RANGO DE FECHAS -->
+                    <div class="filter-field">
 
-				<div class="section-heading table-heading">
+                        <label
+                            for="fechaDesde"
+                            class="form-label mb-1">
 
+                            Desde
 
+                        </label>
 
+                        <input
+                            type="date"
+                            id="fechaDesde"
+                            class="form-control"
+                            aria-label="Fecha desde">
 
-					<div>
+                    </div>
 
 
+                    <div class="filter-field">
 
+                        <label
+                            for="fechaHasta"
+                            class="form-label mb-1">
 
-						<span class="eyebrow"> HISTORIAL </span>
+                            Hasta
 
+                        </label>
 
+                        <input
+                            type="date"
+                            id="fechaHasta"
+                            class="form-control"
+                            aria-label="Fecha hasta">
 
+                    </div>
 
-						<h2>Recorridos registrados</h2>
 
+                    <!-- APLICAR -->
+                    <button
+                        type="button"
+                        id="btnAplicarFiltros"
+                        class="btn btn-primary">
 
+                        <i class="bi bi-filter me-1"></i>
 
+                        Aplicar
 
-						<p>Consulta y administra los recorridos ingresados.</p>
+                    </button>
 
 
+                    <!-- LIMPIAR -->
+                    <button
+                        type="button"
+                        id="btnLimpiarFiltros"
+                        class="btn btn-outline-secondary">
 
+                        <i class="bi bi-x-circle me-1"></i>
 
-					</div>
+                        Limpiar
 
+                    </button>
 
 
+                    <!-- EXPORTAR PDF -->
+                    <button
+                        id="btnExportarPDF"
+                        type="button"
+                        class="btn btn-danger">
 
+                        <i class="bi bi-file-earmark-pdf me-2"></i>
 
+                        Exportar PDF
 
+                    </button>
 
-					<div class="table-tools d-flex flex-wrap align-items-end gap-2">
 
-						<!-- BUSCADOR -->
+                    <!-- EXPORTAR EXCEL -->
+                    <button
+                        id="btnExportarExcel"
+                        type="button"
+                        class="btn btn-success">
 
-						<div class="search-box flex-grow-1" style="min-width: 260px;">
+                        <i class="bi bi-file-earmark-excel me-2"></i>
 
-							<i class="bi bi-search"></i> <input id="buscadorViajes"
-								type="search" placeholder="Buscar motorista, unidad, destino..."
-								autocomplete="off">
+                        Exportar Excel
 
-						</div>
+                    </button>
 
-						<!-- RANGO DE FECHAS -->
+                </div>
 
-						<div class="filter-field">
+            </div>
 
-							<label for="fechaDesde" class="form-label mb-1"> Desde </label> <input
-								type="date" id="fechaDesde" class="form-control"
-								aria-label="Fecha desde">
 
-						</div>
-
-						<div class="filter-field">
-
-							<label for="fechaHasta" class="form-label mb-1"> Hasta </label> <input
-								type="date" id="fechaHasta" class="form-control"
-								aria-label="Fecha hasta">
-
-						</div>
-
-						<!-- APLICAR -->
-
-						<button type="button" id="btnAplicarFiltros"
-							class="btn btn-primary">
-							<i class="bi bi-filter me-1"></i> Aplicar
-						</button>
-
-						<!-- LIMPIAR -->
-
-						<button type="button" id="btnLimpiarFiltros"
-							class="btn btn-outline-secondary">
-							<i class="bi bi-x-circle me-1"></i> Limpiar
-						</button>
-
-						<!-- EXPORTAR PDF -->
-
-						<button id="btnExportarPDF" type="button" class="btn btn-danger">
-							<i class="bi bi-file-earmark-pdf me-2"></i> Exportar PDF
-						</button>
-
-					</div>
-
-
-				</div>
-
-
-				<!-- =================================================
-
+            <!-- =================================================
                  TABLA
                  ================================================= -->
+            <div class="table-responsive">
 
-				<!-- =================================================
+                <table
+                    class="table professional-table align-middle"
+                    id="tablaViajes">
 
-                 TABLA
+                    <thead>
 
-                 ================================================= -->
+                    <tr>
 
+                        <th>FECHA</th>
+                        <th>MOTORISTA</th>
+                        <th>DESTINO</th>
+                        <th>REMISIÓN</th>
+                        <th>KM</th>
+                        <th>SUBTOTAL</th>
+                        <th>ISV</th>
+                        <th>TARIFA</th>
+                        <th>PEAJE</th>
+                        <th>VALOR</th>
+                        <th>TOTAL PEAJE</th>
+                        <th>ACCIONES</th>
 
+                    </tr>
 
+                    </thead>
 
-				<div class="table-responsive">
 
+                    <tbody id="tablaViajesBody">
 
+                    <!-- SIN REGISTROS -->
+                    <tr
+                        th:if="${#lists.isEmpty(recorridos)}"
+                        id="filaSinRegistros">
 
+                        <td
+                            colspan="12"
+                            class="text-center py-5">
 
-					<table class="table professional-table align-middle"
-						id="tablaViajes">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
 
+                            No hay recorridos registrados.
 
+                        </td>
 
+                    </tr>
 
 
+                    <!-- REGISTROS -->
+                    <tr
+                        th:each="viaje : ${recorridos}"
+                        th:id="'fila-' + ${viaje.id}">
 
+                        <!-- FECHA -->
+                        <td th:text="${viaje.fecha}">
+                            -
+                        </td>
 
-						<thead>
 
+                        <!-- MOTORISTA -->
+                        <td>
 
+                            <strong th:text="${viaje.motorista}">
+                                -
+                            </strong>
 
+                        </td>
 
-							<tr>
 
+                        <!-- DESTINO -->
+                        <td th:text="${viaje.ruta}">
+                            -
+                        </td>
 
 
+                        <!-- REMISIÓN -->
+                        <td th:text="${viaje.remision}">
+                            -
+                        </td>
 
-								<th>FECHA</th>
 
+                        <!-- KM -->
+                        <td th:text="${viaje.kilometros}">
+                            0.00
+                        </td>
 
 
+                        <!-- SUBTOTAL -->
+                        <td>
 
-								<th>MOTORISTA</th>
+                            L
 
+                            <span th:text="${viaje.subtotal}">
+                                0.00
+                            </span>
 
+                        </td>
 
 
-								<th>UNIDAD</th>
+                        <!-- ISV -->
+                        <td>
 
+                            L
 
+                            <span th:text="${viaje.isv}">
+                                0.00
+                            </span>
 
+                        </td>
 
-								<th>DESTINO</th>
 
+                        <!-- TARIFA -->
+                        <td>
 
+                            L
 
+                            <span th:text="${viaje.tarifa}">
+                                0.00
+                            </span>
 
-								<th>REMISIÓN</th>
+                        </td>
 
 
+                        <!-- CANTIDAD PEAJES -->
+                        <td>
 
+                            <span
+                                class="toll-count"
+                                th:text="${viaje.cantidadPeajes}">
 
-								<th>KM</th>
+                                0
 
+                            </span>
 
+                        </td>
 
 
-								<th>SUBTOTAL</th>
+                        <!-- VALOR PEAJE -->
+                        <td>
 
+                            L
 
+                            <span th:text="${viaje.valorPeaje}">
+                                0.00
+                            </span>
 
+                        </td>
 
-								<th>ISV</th>
 
+                        <!-- TOTAL PEAJES -->
+                        <td class="total-cell">
 
+                            L
 
+                            <span th:text="${viaje.totalPeajes}">
+                                0.00
+                            </span>
 
-								<th>TARIFA</th>
+                        </td>
 
 
+                        <!-- ACCIONES -->
+                        <td>
 
+                            <div class="d-flex gap-2">
 
-								<th>PEAJE</th>
+                                <!-- EDITAR -->
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-primary btn-editar-viaje"
+                                    th:data-id="${viaje.id}"
+                                    title="Editar">
 
+                                    <i class="bi bi-pencil"></i>
 
+                                </button>
 
 
-								<th>VALOR</th>
+                                <!-- ELIMINAR -->
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger btn-eliminar-viaje"
+                                    th:data-id="${viaje.id}"
+                                    title="Eliminar">
 
+                                    <i class="bi bi-trash"></i>
 
+                                </button>
 
+                            </div>
 
-								<th>TOTAL PEAJE</th>
+                        </td>
 
+                    </tr>
 
+                    </tbody>
 
 
-								<th>ACCIONES</th>
-
-
-
-
-							</tr>
-
-
-
-
-						</thead>
-
-
-
-
-
-
-
-						<tbody id="tablaViajesBody">
-
-							<!-- =================================================
-                         SIN REGISTROS
-                         ================================================= -->
-
-							<tr th:if="${#lists.isEmpty(recorridos)}" id="filaSinRegistros">
-
-								<td colspan="13" class="text-center py-5"><i
-									class="bi bi-inbox fs-2 d-block mb-2"> </i> No hay recorridos
-									registrados.</td>
-
-							</tr>
-
-							<!-- =================================================
-                         REGISTROS
-                         ================================================= -->
-
-							<tr th:each="viaje : ${recorridos}" th:id="'fila-' + ${viaje.id}">
-
-								<!-- FECHA -->
-
-								<td th:text="${viaje.fecha}">\-</td>
-
-								<!-- MOTORISTA -->
-
-								<td><strong th:text="${viaje.motorista}"> \- </strong></td>
-
-								<!-- UNIDAD -->
-
-								<td><span class="unit-badge" th:text="${viaje.unidad}">
-
-										\- </span></td>
-
-								<!-- DESTINO -->
-
-								<td th:text="${viaje.ruta}">\-</td>
-
-								<!-- REMISIÓN -->
-
-								<td th:text="${viaje.remision}">\-</td>
-
-								<!-- KM -->
-
-								<td th:text="${viaje.kilometros}">0.00</td>
-
-								<!-- SUBTOTAL -->
-
-								<td>L <span th:text="${viaje.subtotal}"> 0.00 </span>
-
-								</td>
-
-								<!-- ISV -->
-
-								<td>L <span th:text="${viaje.isv}"> 0.00 </span>
-
-								</td>
-
-								<!-- TARIFA -->
-
-								<td>L <span th:text="${viaje.tarifa}"> 0.00 </span>
-
-								</td>
-
-								<!-- CANTIDAD PEAJES -->
-
-								<td><span class="toll-count"
-									th:text="${viaje.cantidadPeajes}"> 0 </span></td>
-
-								<!-- VALOR PEAJE -->
-
-								<td>L <span th:text="${viaje.valorPeaje}"> 0.00 </span>
-
-								</td>
-
-								<!-- TOTAL PEAJES -->
-
-								<td class="total-cell">L <span
-									th:text="${viaje.totalPeajes}"> 0.00 </span>
-
-								</td>
-
-								<!-- ACCIONES -->
-
-								<td>
-
-									<div class="d-flex gap-2">
-
-
-										<!-- EDITAR -->
-
-										<button type="button"
-											class="btn btn-sm btn-outline-primary btn-editar-viaje"
-											th:data-id="${viaje.id}" title="Editar">
-
-											<i class="bi bi-pencil"></i>
-
-										</button>
-
-
-										<!-- ELIMINAR -->
-
-										<button type="button"
-											class="btn btn-sm btn-outline-danger btn-eliminar-viaje"
-											th:data-id="${viaje.id}" title="Eliminar">
-
-											<i class="bi bi-trash"></i>
-
-										</button>
-
-									</div>
-
-								</td>
-
-							</tr>
-
-						</tbody>
-
-						<!-- =================================================
+                    <!-- =================================================
                          TOTALES
                          ================================================= -->
+                    <tfoot>
 
-						<tfoot>
+                    <tr>
 
-							<tr>
-							
-								<td colspan="5">TOTALES</td>
+                        <td colspan="4">
+                            TOTALES
+                        </td>
 
-								<td id="totalKmTabla">0.00</td>
+                        <td id="totalKmTabla">
+                            0.00
+                        </td>
 
-								<td id="totalSubtotalTabla">L 0.00</td>
+                        <td id="totalSubtotalTabla">
+                            L 0.00
+                        </td>
 
-								<td id="totalIsvTabla">L 0.00</td>
+                        <td id="totalIsvTabla">
+                            L 0.00
+                        </td>
 
-								<td id="totalTarifaTabla">L 0.00</td>
+                        <td id="totalTarifaTabla">
+                            L 0.00
+                        </td>
 
-								<td colspan="2"></td>
+                        <td colspan="2">
+                        </td>
 
-								<td id="totalPeajesTabla">L 0.00</td>
+                        <td id="totalPeajesTabla">
+                            L 0.00
+                        </td>
 
-								<td></td>
-							</tr>
+                        <td>
+                        </td>
 
-						</tfoot>
+                    </tr>
 
-					</table>
+                    </tfoot>
 
-				</div>
+                </table>
 
-				<!-- =================================================
+            </div>
+
+
+            <!-- =================================================
                  PAGINACIÓN
                  ================================================= -->
+            <div class="table-footer">
 
-				<div class="table-footer">
+                <span>
 
-					<span> Mostrando <strong id="registrosMostrados"> 0
+                    Mostrando
 
-					</strong> de <strong id="registrosTotales"> 0 </strong> registros
+                    <strong id="registrosMostrados">
+                        0
+                    </strong>
 
-					</span>
+                    de
 
-					<nav aria-label="Paginación">
+                    <strong id="registrosTotales">
+                        0
+                    </strong>
 
-						<ul class="pagination pagination-sm mb-0" id="paginacionViajes">
+                    registros
 
-						</ul>
+                </span>
 
-					</nav>
 
-				</div>
+                <nav aria-label="Paginación">
 
-			</section>
+                    <ul
+                        class="pagination pagination-sm mb-0"
+                        id="paginacionViajes">
 
-			<!-- =====================================================
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             MODAL NUEVO FURGÓN
+             ===================================================== -->
+        <div
+            class="modal fade"
+            id="modalNuevoFurgon"
+            tabindex="-1"
+            aria-labelledby="modalNuevoFurgonLabel"
+            aria-hidden="true">
+
+            <div class="modal-dialog modal-dialog-centered">
+
+                <div class="modal-content border-0 shadow-lg">
+
+                    <!-- HEADER -->
+                    <div class="modal-header border-0">
+
+                        <div class="d-flex align-items-center gap-3">
+
+                            <div
+                                class="bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+
+                                <i class="bi bi-truck fs-4"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <h5
+                                    class="modal-title fw-bold"
+                                    id="modalNuevoFurgonLabel">
+
+                                    Registrar nuevo furgón
+
+                                </h5>
+
+                                <small class="text-muted">
+
+                                    Ingresa los datos del furgón
+
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- BODY -->
+                    <div class="modal-body px-4">
+
+                        <!-- FURGÓN -->
+                        <div class="mb-3">
+
+                            <label
+                                for="nuevoFurgon"
+                                class="form-label">
+
+                                Furgón / Placa
+
+                            </label>
+
+                            <input
+                                type="text"
+                                id="nuevoFurgon"
+                                class="form-control"
+                                placeholder="Ej. 567ABC"
+                                maxlength="50"
+                                autocomplete="off">
+
+                        </div>
+
+
+                        <!-- EJES -->
+                        <div class="mb-3">
+
+                            <label
+                                for="nuevoEjes"
+                                class="form-label">
+
+                                Cantidad de ejes
+
+                            </label>
+
+                            <select
+                                id="nuevoEjes"
+                                class="form-select">
+
+                                <option
+                                    value=""
+                                    selected
+                                    disabled>
+
+                                    Seleccione cantidad de ejes
+
+                                </option>
+
+                                <option value="2">
+                                    2 ejes
+                                </option>
+
+                                <option value="3">
+                                    3 ejes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- MENSAJE -->
+                        <div
+                            id="mensajeNuevoFurgon"
+                            class="alert d-none"
+                            role="alert">
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- FOOTER -->
+                    <div class="modal-footer border-0">
+
+                        <button
+                            type="button"
+                            class="btn btn-light px-4"
+                            data-bs-dismiss="modal">
+
+                            Cancelar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="btnGuardarFurgon"
+                            class="btn btn-primary px-4">
+
+                            <i class="bi bi-check2-circle me-2"></i>
+
+                            Guardar furgón
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
              MODAL ELIMINAR
-             ==================================================== -->
+             ===================================================== -->
+        <div
+            class="modal fade"
+            id="modalEliminar"
+            tabindex="-1"
+            aria-labelledby="modalEliminarLabel"
+            aria-hidden="true">
 
-			<div class="modal fade" id="modalEliminar" tabindex="-1"
-				aria-labelledby="modalEliminarLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
 
-				<div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
 
-					<div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header border-0">
 
-						<div class="modal-header border-0">
+                        <div class="d-flex align-items-center gap-3">
 
-							<div class="d-flex align-items-center gap-3">
+                            <div
+                                class="bg-danger bg-opacity-10 text-danger rounded-circle p-3">
 
-								<div
-									class="bg-danger bg-opacity-10 text-danger rounded-circle p-3">
+                                <i class="bi bi-trash3 fs-4"></i>
 
-									<i class="bi bi-trash3 fs-4"></i>
+                            </div>
 
-								</div>
 
-								<div>
+                            <div>
 
-									<h5 class="modal-title fw-bold" id="modalEliminarLabel">
+                                <h5
+                                    class="modal-title fw-bold"
+                                    id="modalEliminarLabel">
 
-										Eliminar recorrido</h5>
+                                    Eliminar recorrido
 
-									<small class="text-muted"> Esta acción no se puede
-										deshacer </small>
+                                </h5>
 
-								</div>
+                                <small class="text-muted">
 
-							</div>
+                                    Esta acción no se puede deshacer
 
-							<button type="button" class="btn-close" data-bs-dismiss="modal"
-								aria-label="Cerrar"></button>
+                                </small>
 
-						</div>
+                            </div>
 
-						<div class="modal-body px-4">
+                        </div>
 
-							<p class="mb-2">¿Estás seguro de que deseas eliminar este
-								recorrido?</p>
 
-							<div
-								class="alert alert-warning d-flex align-items-center gap-2 mb-0">
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
 
-								<i class="bi bi-exclamation-triangle-fill"></i> <span> El
-									registro será eliminado permanentemente. </span>
+                        </button>
 
-							</div>
+                    </div>
 
-						</div>
 
-						<div class="modal-footer border-0">
+                    <div class="modal-body px-4">
 
-							<button type="button" class="btn btn-light px-4"
-								data-bs-dismiss="modal">Cancelar</button>
+                        <p class="mb-2">
 
-							<button type="button" id="btnConfirmarEliminar"
-								class="btn btn-danger px-4">
+                            ¿Estás seguro de que deseas eliminar este
+                            recorrido?
 
-								<i class="bi bi-trash3 me-2"></i> Eliminar recorrido
+                        </p>
 
-							</button>
 
-						</div>
+                        <div
+                            class="alert alert-warning d-flex align-items-center gap-2 mb-0">
 
-					</div>
+                            <i class="bi bi-exclamation-triangle-fill"></i>
 
-				</div>
+                            <span>
+                                El registro será eliminado permanentemente.
+                            </span>
 
-			</div>
+                        </div>
 
-			<!-- =====================================================
+                    </div>
+
+
+                    <div class="modal-footer border-0">
+
+                        <button
+                            type="button"
+                            class="btn btn-light px-4"
+                            data-bs-dismiss="modal">
+
+                            Cancelar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="btnConfirmarEliminar"
+                            class="btn btn-danger px-4">
+
+                            <i class="bi bi-trash3 me-2"></i>
+
+                            Eliminar recorrido
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
              MODAL EDITAR
              ===================================================== -->
+        <div
+            class="modal fade"
+            id="modalEditar"
+            tabindex="-1"
+            aria-labelledby="modalEditarLabel"
+            aria-hidden="true">
 
-			<div class="modal fade" id="modalEditar" tabindex="-1"
-				aria-labelledby="modalEditarLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
 
-				<div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
 
-					<div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header border-0">
 
-						<div class="modal-header border-0">
+                        <div class="d-flex align-items-center gap-3">
 
-							<div class="d-flex align-items-center gap-3">
+                            <div
+                                class="bg-primary bg-opacity-10 text-primary rounded-circle p-3">
 
-								<div
-									class="bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                                <i class="bi bi-pencil-square fs-4"></i>
 
-									<i class="bi bi-pencil-square fs-4"></i>
+                            </div>
 
-								</div>
 
-								<div>
+                            <div>
 
-									<h5 class="modal-title fw-bold" id="modalEditarLabel">
+                                <h5
+                                    class="modal-title fw-bold"
+                                    id="modalEditarLabel">
 
-										Confirmar modificación</h5>
+                                    Confirmar modificación
 
-									<small class="text-muted"> Revisa los datos antes de
-										guardar </small>
+                                </h5>
 
-								</div>
+                                <small class="text-muted">
 
-							</div>
+                                    Revisa los datos antes de guardar
 
-							<button type="button" class="btn-close" data-bs-dismiss="modal"
-								aria-label="Cerrar"></button>
+                                </small>
 
-						</div>
+                            </div>
 
-						<div class="modal-body px-4">
+                        </div>
 
-							<p class="mb-3">¿Deseas guardar los cambios realizados en
-								este recorrido?</p>
 
-							<div
-								class="alert alert-primary d-flex align-items-center gap-2 mb-0">
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
 
-								<i class="bi bi-info-circle-fill"></i> <span> Los
-									cálculos de subtotal, ISV, tarifa y peajes serán recalculados
+                        </button>
 
-									automáticamente. </span>
+                    </div>
 
-							</div>
 
-						</div>
+                    <div class="modal-body px-4">
 
-						<div class="modal-footer border-0">
+                        <p class="mb-3">
 
-							<button type="button" class="btn btn-light px-4"
-								data-bs-dismiss="modal">Cancelar</button>
+                            ¿Deseas guardar los cambios realizados en
+                            este recorrido?
 
-							<button type="button" id="btnConfirmarEditar"
-								class="btn btn-primary px-4">
+                        </p>
 
-								<i class="bi bi-check2-circle me-2"></i> Guardar cambios
 
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
+                        <div
+                            class="alert alert-primary d-flex align-items-center gap-2 mb-0">
 
-			<!-- =====================================================
+                            <i class="bi bi-info-circle-fill"></i>
+
+                            <span>
+
+                                Los cálculos de subtotal, ISV, tarifa y
+                                peajes serán recalculados automáticamente.
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-footer border-0">
+
+                        <button
+                            type="button"
+                            class="btn btn-light px-4"
+                            data-bs-dismiss="modal">
+
+                            Cancelar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="btnConfirmarEditar"
+                            class="btn btn-primary px-4">
+
+                            <i class="bi bi-check2-circle me-2"></i>
+
+                            Guardar cambios
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
              MODAL ÉXITO
              ===================================================== -->
+        <div
+            class="modal fade"
+            id="modalExito"
+            tabindex="-1"
+            aria-labelledby="modalExitoLabel"
+            aria-hidden="true">
 
-			<div class="modal fade" id="modalExito" tabindex="-1"
-				aria-labelledby="modalExitoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
 
-				<div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
 
-					<div class="modal-content border-0 shadow-lg">
+                    <div class="modal-body text-center p-5">
 
-						<div class="modal-body text-center p-5">
+                        <div
+                            class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3">
 
-							<div
-								class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3">
+                            <i class="bi bi-check-circle-fill fs-1"></i>
 
-								<i class="bi bi-check-circle-fill fs-1"></i>
+                        </div>
 
-							</div>
 
-							<h4 class="fw-bold mb-2" id="modalExitoLabel">Operación
-								realizada</h4>
+                        <h4
+                            class="fw-bold mb-2"
+                            id="modalExitoLabel">
 
-							<p class="text-muted mb-4" id="mensajeExito">La operación se
-								realizó correctamente.</p>
+                            Operación realizada
 
-							<button type="button" class="btn btn-success px-4"
-								data-bs-dismiss="modal">Continuar</button>
+                        </h4>
 
-						</div>
 
-					</div>
+                        <p
+                            class="text-muted mb-4"
+                            id="mensajeExito">
 
-				</div>
+                            La operación se realizó correctamente.
 
-			</div>
+                        </p>
 
-			<!-- =====================================================
+
+                        <button
+                            type="button"
+                            class="btn btn-success px-4"
+                            data-bs-dismiss="modal">
+
+                            Continuar
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
              MODAL ERROR
              ===================================================== -->
+        <div
+            class="modal fade"
+            id="modalError"
+            tabindex="-1"
+            aria-labelledby="modalErrorLabel"
+            aria-hidden="true">
 
-			<div class="modal fade" id="modalError" tabindex="-1"
-				aria-labelledby="modalErrorLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
 
-				<div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
 
-					<div class="modal-content border-0 shadow-lg">
+                    <div class="modal-body text-center p-5">
 
-						<div class="modal-body text-center p-5">
+                        <div
+                            class="bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3">
 
-							<div
-								class="bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3">
+                            <i class="bi bi-x-circle-fill fs-1"></i>
 
-								<i class="bi bi-x-circle-fill fs-1"></i>
+                        </div>
 
-							</div>
 
-							<h4 class="fw-bold mb-2" id="modalErrorLabel">Ocurrió un
-								problema</h4>
+                        <h4
+                            class="fw-bold mb-2"
+                            id="modalErrorLabel">
 
-							<p class="text-muted mb-4" id="mensajeError">No se pudo
-								completar la operación.</p>
+                            Ocurrió un problema
 
-							<button type="button" class="btn btn-danger px-4"
-								data-bs-dismiss="modal">Cerrar</button>
-						</div>
+                        </h4>
 
-					</div>
 
-				</div>
+                        <p
+                            class="text-muted mb-4"
+                            id="mensajeError">
 
-			</div>
+                            No se pudo completar la operación.
 
-			<!-- =====================================================
+                        </p>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-danger px-4"
+                            data-bs-dismiss="modal">
+
+                            Cerrar
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
              FOOTER
              ===================================================== -->
+        <footer class="page-footer">
 
-			<footer class="page-footer"> Sistema de gestión de
-				transporte · 2026 </footer>
+            Sistema de gestión de transporte · 2026
 
-		</main>
+        </footer>
 
-	</div>
+    </main>
 
-	<!-- =========================================================
+</div>
+
+
+<!-- =========================================================
      BOOTSTRAP JS
      ========================================================= -->
-	<script
-		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-		
-	</script>
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
 
-	<!-- =========================================================
+
+<!-- =========================================================
      jsPDF
      ========================================================= -->
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+</script>
 
-	<script
-		src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
-		
-	</script>
 
-	<!-- =========================================================
+<!-- =========================================================
      jsPDF AutoTable
      ========================================================= -->
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js">
+</script>
 
-	<script
-		src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js">
-		
-	</script>
 
-	<!-- =========================================================
+<!-- =========================================================
+     XLSX
+     ========================================================= -->
+<script
+    src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js">
+</script>
+
+
+<!-- =========================================================
      JAVASCRIPT PROPIO
      ========================================================= -->
-	<script th:src="@{/js/Destinos.js}" src="/js/Destinos.js">
-		
-	</script>
+<script
+    th:src="@{/js/Destinos.js}"
+    src="/js/Destinos.js">
+</script>
 
 </body>
 </html>

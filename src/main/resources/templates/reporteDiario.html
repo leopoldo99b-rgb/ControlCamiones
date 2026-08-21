@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Programación de Viajes</title>
+
+<!-- CSS -->
+<link rel="stylesheet" href="/css/reporteDiario.css">
+
+<!-- FONT AWESOME -->
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<!-- GOOGLE FONT -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link
+	href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+	rel="stylesheet">
+
+</head>
+
+<body>
+
+	<div class="pagina">
+
+		<!-- =====================================================
+         ENCABEZADO
+    ====================================================== -->
+
+		<header class="topbar">
+
+			<div class="topbar-left">
+
+				<div class="topbar-icon">
+
+					<i class="fa-solid fa-truck-fast"></i>
+
+				</div>
+
+				<div>
+
+					<h1>Programación de Viajes</h1>
+
+					<p>Administración y control de viajes de transporte</p>
+
+				</div>
+
+			</div>
+
+
+			<a href="/dashboard" class="btn-dashboard"> <i
+				class="fa-solid fa-arrow-left"></i> Dashboard
+
+			</a>
+
+		</header>
+
+
+		<!-- =====================================================
+         CONTENIDO
+    ====================================================== -->
+
+		<main class="contenido">
+
+
+			<!-- =================================================
+             PESTAÑAS
+        ================================================== -->
+
+			<div class="pestanas">
+
+				<button class="pestana activa" type="button" data-tab="viajes">
+
+					<i class="fa-solid fa-truck-fast"></i> Viajes
+
+				</button>
+
+
+				<button class="pestana" type="button" data-tab="destinos">
+
+					<i class="fa-solid fa-location-dot"></i> Destinos
+
+				</button>
+
+
+				<button class="pestana" type="button" data-tab="rutas">
+
+					<i class="fa-solid fa-route"></i> Rutas y horarios
+
+				</button>
+
+			</div>
+
+
+
+			<!-- =================================================
+             TAB VIAJES
+        ================================================== -->
+
+			<section id="tab-viajes" class="hoja-tab activa">
+
+
+				<!-- CABECERA -->
+
+				<section class="cabecera">
+
+					<div>
+
+						<div class="subtitulo">
+
+							<i class="fa-solid fa-calendar-days"></i> REGISTROS DE VIAJES
+
+						</div>
+
+
+						<h2>Viajes programados</h2>
+
+
+						<p>Consulta, registra, modifica y elimina viajes.</p>
+
+					</div>
+
+
+					<div class="cabecera-acciones">
+
+
+						<button class="btn-exportar btn-imagen" type="button">
+
+							<i class="fa-solid fa-image"></i> Crear imagen
+
+						</button>
+
+
+						<button class="btn-crear" type="button" data-bs-toggle="modal"
+							data-bs-target="#modalViaje">
+
+							<i class="fa-solid fa-plus"></i> Nuevo viaje
+
+						</button>
+
+					</div>
+
+				</section>
+
+
+
+				<!-- =================================================
+                 FILTROS
+            ================================================== -->
+
+				<section class="panel-filtros">
+
+
+					<div class="filtro filtro-busqueda">
+
+						<label> Buscar viaje </label>
+
+
+						<div class="input-icon">
+
+							<i class="fa-solid fa-magnifying-glass"></i> <input type="text"
+								placeholder="Destino, placa o motorista...">
+
+						</div>
+
+					</div>
+
+
+
+					<div class="filtro">
+
+						<label> Fecha </label> <input type="date">
+
+					</div>
+
+
+
+					<div class="filtro">
+
+						<label> Estado </label> <select>
+
+							<option value="">Todos</option>
+
+							<option value="PROGRAMADO">Programado</option>
+
+							<option value="EN_CURSO">En curso</option>
+
+							<option value="FINALIZADO">Finalizado</option>
+
+							<option value="CANCELADO">Cancelado</option>
+
+						</select>
+
+					</div>
+
+
+
+					<button class="btn-limpiar" type="button">
+
+						<i class="fa-solid fa-filter-circle-xmark"></i> Limpiar
+
+					</button>
+
+				</section>
+
+
+
+				<!-- =================================================
+                 RESUMEN
+            ================================================== -->
+
+				<section class="resumen">
+
+    <div class="resumen-card">
+        <div class="resumen-icon azul">
+            <i class="fa-solid fa-calendar-check"></i>
+        </div>
+
+        <div>
+            <span>Viajes programados</span>
+            <strong id="totalViajesProgramados">0</strong>
+        </div>
+    </div>
+
+
+    <div class="resumen-card">
+        <div class="resumen-icon verde">
+            <i class="fa-solid fa-route"></i>
+        </div>
+
+        <div>
+            <span>Rutas activas</span>
+            <strong id="totalRutasActivas">0</strong>
+        </div>
+    </div>
+
+
+    <div class="resumen-card">
+        <div class="resumen-icon naranja">
+            <i class="fa-solid fa-location-dot"></i>
+        </div>
+
+        <div>
+            <span>Destinos activos</span>
+            <strong id="totalDestinosActivos">0</strong>
+        </div>
+    </div>
+
+</section>
+
+
+				<!-- =================================================
+                 TABLA VIAJES
+            ================================================== -->
+
+				<section class="panel-tabla">
+
+
+					<div class="tabla-header">
+
+						<div>
+
+							<div class="tabla-etiqueta">
+
+								<i class="fa-solid fa-list"></i> REGISTROS
+
+							</div>
+
+
+							<h3>Lista de viajes</h3>
+
+						</div>
+
+
+						<div class="cantidad-registros">
+
+							<strong> 0 </strong> registros
+
+						</div>
+
+					</div>
+
+
+
+					<div class="tabla-responsive">
+
+						<table class="tabla-viajes">
+
+
+							<thead>
+
+								<tr>
+
+									<th class="col-fecha">FECHA</th>
+
+									<th class="col-destino">DESTINO INICIAL</th>
+
+									<th class="col-destino">DESTINO FINAL</th>
+
+									<th class="col-placa">PLACA</th>
+
+									<th class="col-motorista">MOTORISTA</th>
+
+									<th class="col-telefono">TELÉFONO</th>
+
+									<th class="col-estado">ESTADO</th>
+
+									<th class="col-acciones">ACCIONES</th>
+
+								</tr>
+
+							</thead>
+
+
+							<!-- =================================================
+                             IMPORTANTE
+                             EL JAVASCRIPT INSERTARÁ AQUÍ LOS VIAJES
+                        ================================================== -->
+
+							<tbody id="tbodyViajes">
+
+								<!--
+                                Los registros se generan desde
+                                reporteDiario.js
+                            -->
+
+							</tbody>
+
+
+						</table>
+
+					</div>
+
+				</section>
+
+			</section>
+
+
+
+			<!-- =====================================================
+             TAB DESTINOS
+        ====================================================== -->
+
+			<section id="tab-destinos" class="hoja-tab">
+
+
+				<section class="cabecera">
+
+					<div>
+
+						<div class="subtitulo">
+
+							<i class="fa-solid fa-location-dot"></i> CATÁLOGO
+
+						</div>
+
+
+						<h2>Destinos</h2>
+
+
+						<p>Administra los destinos disponibles para los viajes.</p>
+
+					</div>
+
+
+					<div class="cabecera-acciones">
+
+
+						<button class="btn-exportar btn-pdf" type="button">
+
+							<i class="fa-solid fa-file-pdf"></i> Crear PDF
+
+						</button>
+
+
+						<button class="btn-crear" type="button" data-bs-toggle="modal"
+							data-bs-target="#modalDestino">
+
+							<i class="fa-solid fa-plus"></i> Nuevo destino
+
+						</button>
+
+					</div>
+
+				</section>
+
+
+
+				<section class="panel-tabla">
+
+					<div class="tabla-header">
+
+						<div>
+
+							<div class="tabla-etiqueta">
+
+								<i class="fa-solid fa-location-dot"></i> CATÁLOGO DE DESTINOS
+
+							</div>
+
+
+							<h3>Destinos registrados</h3>
+
+						</div>
+
+
+						<div class="cantidad-registros">
+
+							<strong> 0 </strong> destinos
+
+						</div>
+
+					</div>
+
+
+
+					<div class="tabla-responsive">
+
+						<table class="tabla-admin">
+
+
+							<thead>
+
+								<tr>
+
+									<th>DESTINO</th>
+
+									<th>KM</th>
+
+									<th>GALONES</th>
+
+									<th>PEAJES</th>
+
+									<th class="th-acciones">ACCIONES</th>
+
+								</tr>
+
+							</thead>
+
+
+							<tbody>
+
+								<tr>
+
+									<td>
+
+										<div class="dato-principal">
+
+											<div class="dato-icon destino-icon">
+
+												<i class="fa-solid fa-location-dot"></i>
+
+											</div>
+
+											<strong> Siguatepeque </strong>
+
+										</div>
+
+									</td>
+
+
+									<td><span class="dato-numero"> 120.00 km </span></td>
+
+
+									<td><span class="dato-numero"> 18.50 gal </span></td>
+
+
+									<td>2</td>
+
+
+									<td>
+
+										<div class="acciones-tabla">
+
+
+											<button class="btn-accion editar" type="button"
+												data-bs-toggle="modal" data-bs-target="#modalDestino">
+
+												<i class="fa-solid fa-pen"></i>
+
+											</button>
+
+
+											<button class="btn-accion eliminar" type="button"
+												data-bs-toggle="modal"
+												data-bs-target="#modalEliminarDestino">
+
+												<i class="fa-solid fa-trash"></i>
+
+											</button>
+
+										</div>
+
+									</td>
+
+								</tr>
+
+
+								<tr>
+
+									<td>
+
+										<div class="dato-principal">
+
+											<div class="dato-icon destino-icon">
+
+												<i class="fa-solid fa-location-dot"></i>
+
+											</div>
+
+											<strong> La Ceiba </strong>
+
+										</div>
+
+									</td>
+
+
+									<td><span class="dato-numero"> 200.00 km </span></td>
+
+
+									<td><span class="dato-numero"> 30.00 gal </span></td>
+
+
+									<td>3</td>
+
+
+									<td>
+
+										<div class="acciones-tabla">
+
+
+											<button class="btn-accion editar" type="button"
+												data-bs-toggle="modal" data-bs-target="#modalDestino">
+
+												<i class="fa-solid fa-pen"></i>
+
+											</button>
+
+
+											<button class="btn-accion eliminar" type="button"
+												data-bs-toggle="modal"
+												data-bs-target="#modalEliminarDestino">
+
+												<i class="fa-solid fa-trash"></i>
+
+											</button>
+
+										</div>
+
+									</td>
+
+								</tr>
+
+							</tbody>
+
+						</table>
+
+					</div>
+
+				</section>
+
+			</section>
+
+
+
+			<!-- =====================================================
+             TAB RUTAS
+        ====================================================== -->
+
+			<section id="tab-rutas" class="hoja-tab">
+
+
+				<section class="cabecera">
+
+					<div>
+
+						<div class="subtitulo">
+
+							<i class="fa-solid fa-route"></i> CONFIGURACIÓN
+
+						</div>
+
+
+						<h2>Rutas y tiempos de recorrido</h2>
+
+
+						<p>Configura las rutas y el tiempo promedio que tarda un
+							vehículo en completar cada ruta.</p>
+
+					</div>
+
+
+					<div class="cabecera-acciones">
+
+
+						<button class="btn-exportar btn-pdf" type="button">
+
+							<i class="fa-solid fa-file-pdf"></i> Crear PDF
+
+						</button>
+
+
+						<button class="btn-crear btn-ruta" type="button"
+							data-bs-toggle="modal" data-bs-target="#modalRuta">
+
+							<i class="fa-solid fa-plus"></i> Nueva ruta
+
+						</button>
+
+					</div>
+
+				</section>
+
+
+
+				<section class="panel-tabla">
+
+					<div class="tabla-header">
+
+						<div>
+
+							<div class="tabla-etiqueta">
+
+								<i class="fa-solid fa-route"></i> CONFIGURACIÓN
+
+							</div>
+
+
+							<h3>Rutas y tiempos registrados</h3>
+
+						</div>
+
+
+						<div class="cantidad-registros">
+
+							<strong> 0 </strong> rutas
+
+						</div>
+
+					</div>
+
+
+
+					<div class="tabla-responsive">
+
+						<table class="tabla-admin tabla-rutas">
+
+
+							<thead>
+
+								<tr>
+
+									<th>RUTA</th>
+
+									<th>TIEMPO PROMEDIO</th>
+
+									<th>ESTADO</th>
+
+									<th class="th-acciones">ACCIONES</th>
+
+								</tr>
+
+							</thead>
+
+
+							<tbody>
+
+								<tr>
+
+									<td>
+
+										<div class="dato-principal">
+
+											<div class="dato-icon ruta-icon">
+
+												<i class="fa-solid fa-route"></i>
+
+											</div>
+
+
+											<strong> San Pedro Sula - Siguatepeque </strong>
+
+										</div>
+
+									</td>
+
+
+									<td><span class="hora"> <i
+											class="fa-regular fa-clock"></i> 02:00
+
+									</span></td>
+
+
+									<td><span class="estado activo"> <span
+											class="estado-punto"></span> Activa
+
+									</span></td>
+
+
+									<td>
+
+										<div class="acciones-tabla">
+
+
+											<button class="btn-accion editar" type="button"
+												data-bs-toggle="modal" data-bs-target="#modalRuta"
+												title="Editar ruta">
+
+												<i class="fa-solid fa-pen"></i>
+
+											</button>
+
+
+											<button class="btn-accion eliminar" type="button"
+												data-bs-toggle="modal" data-bs-target="#modalEliminarRuta"
+												title="Eliminar ruta">
+
+												<i class="fa-solid fa-trash"></i>
+
+											</button>
+
+										</div>
+
+									</td>
+
+								</tr>
+
+							</tbody>
+
+						</table>
+
+					</div>
+
+				</section>
+
+			</section>
+
+		</main>
+
+	</div>
+
+
+
+	<!-- =========================================================
+     MODAL VIAJE
+========================================================= -->
+	<div class="modal fade" id="modalViaje" tabindex="-1"
+		aria-hidden="true">
+
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+
+			<div class="modal-content">
+
+				<!-- HEADER -->
+				<div class="modal-header">
+
+					<div>
+						<div class="modal-etiqueta">
+							<i class="fa-solid fa-truck-fast"></i> PROGRAMACIÓN
+						</div>
+
+						<h5 class="modal-title">Registrar viaje</h5>
+					</div>
+
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="Cerrar"></button>
+
+				</div>
+
+
+				<!-- FORMULARIO -->
+				<form id="formViaje">
+
+					<div class="modal-body">
+
+						<!-- ID OCULTO -->
+						<input type="hidden" name="id" id="idViaje">
+
+
+						<!-- FECHA -->
+						<div class="campo-form">
+
+							<label for="fechaViaje"> Fecha <span>*</span>
+							</label> <input type="date" id="fechaViaje" name="fecha"
+								class="campo-input" required>
+
+						</div>
+
+
+						<!-- =================================================
+                         DESTINO INICIAL / DESTINO FINAL
+                    ================================================== -->
+						<div class="fila-form">
+
+							<!-- DESTINO INICIAL -->
+							<div class="campo-form">
+
+								<label for="destinoInicial"> Destino inicial <span>*</span>
+								</label>
+
+								<div class="input-form">
+
+									<i class="fa-solid fa-location-dot"></i> <input type="text"
+										id="destinoInicial" name="destinoInicial" class="campo-input"
+										placeholder="Escribir destino inicial" autocomplete="off"
+										required>
+
+								</div>
+
+							</div>
+
+
+							<!-- DESTINO FINAL -->
+							<div class="campo-form">
+
+								<label for="destinoFinal"> Destino final <span>*</span>
+								</label> <select id="destinoFinal" name="destinoFinal"
+									class="campo-input" required>
+
+									<option value="" disabled selected>Seleccionar destino
+									</option>
+
+									<!--
+                                    JavaScript cargará aquí
+                                    los destinos registrados
+                                -->
+
+								</select>
+
+							</div>
+
+						</div>
+
+
+						<!-- =================================================
+                         MOTORISTA / PLACA
+                    ================================================== -->
+						<div class="fila-form">
+
+							<!-- MOTORISTA -->
+							<div class="campo-form">
+
+								<label for="motorista"> Motorista <span>*</span>
+								</label> <select id="motorista" name="motorista" class="campo-input"
+									required>
+
+									<option value="" disabled selected>Seleccionar
+										motorista</option>
+
+									<!--
+                                    Los motoristas registrados
+                                    se cargarán desde JavaScript
+                                -->
+
+								</select>
+
+							</div>
+
+
+							<!-- PLACA BLOQUEADA -->
+							<div class="campo-form">
+
+								<label for="vehiculo"> Placa </label>
+
+								<div class="input-form">
+
+									<i class="fa-solid fa-car"></i> <input type="text"
+										id="vehiculo" name="placa" class="campo-input"
+										placeholder="Se obtiene del motorista" readonly>
+
+								</div>
+
+								<small> Se obtiene automáticamente del motorista
+									seleccionado. </small>
+
+							</div>
+
+						</div>
+
+
+						<!-- =================================================
+                         TELEFONO / ESTADO
+                    ================================================== -->
+						<div class="fila-form">
+
+							<!-- TELEFONO BLOQUEADO -->
+							<div class="campo-form">
+
+								<label for="telefonoMotorista"> Teléfono </label>
+
+								<div class="input-form">
+
+									<i class="fa-solid fa-phone"></i> <input type="text"
+										id="telefonoMotorista" name="telefono"
+										placeholder="Se obtiene del motorista" readonly>
+
+								</div>
+
+								<small> Se obtiene automáticamente del motorista
+									seleccionado. </small>
+
+							</div>
+
+
+							<!-- ESTADO -->
+							<div class="campo-form">
+
+								<label for="estadoViaje"> Estado </label> <select
+									id="estadoViaje" name="estado" class="campo-input">
+
+									<option value="PROGRAMADO">Programado</option>
+
+									<option value="EN_CURSO">En curso</option>
+
+									<option value="FINALIZADO">Finalizado</option>
+
+									<option value="CANCELADO">Cancelado</option>
+
+								</select>
+
+							</div>
+
+						</div>
+
+					</div>
+
+
+					<!-- FOOTER -->
+					<div class="modal-footer">
+
+						<button type="button" class="btn-cancelar" data-bs-dismiss="modal">
+
+							Cancelar</button>
+
+
+						<button type="submit" class="btn-guardar">
+
+							<i class="fa-solid fa-floppy-disk"></i> Guardar viaje
+
+						</button>
+
+					</div>
+
+				</form>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+	<!-- =========================================================
+     MODAL DESTINO
+========================================================= -->
+
+	<div class="modal fade" id="modalDestino" tabindex="-1"
+		aria-hidden="true">
+
+		<div class="modal-dialog modal-dialog-centered">
+
+			<div class="modal-content">
+
+
+				<div class="modal-header">
+
+					<div>
+
+						<div class="modal-etiqueta">
+
+							<i class="fa-solid fa-location-dot"></i> CATÁLOGO DE DESTINOS
+
+						</div>
+
+
+						<h5 class="modal-title">Registrar destino</h5>
+
+					</div>
+
+
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="Cerrar"></button>
+
+				</div>
+
+
+
+				<form id="formDestino">
+
+
+					<div class="modal-body">
+
+
+						<div class="campo-form">
+
+							<label for="nombreDestino"> Destino <span>*</span>
+
+							</label>
+
+
+							<div class="input-form">
+
+								<i class="fa-solid fa-location-dot"></i> <input type="text"
+									id="nombreDestino" name="destino"
+									placeholder="Ej. Siguatepeque" required>
+
+							</div>
+
+						</div>
+
+
+
+						<div class="fila-form">
+
+
+							<div class="campo-form">
+
+								<label for="kilometros"> Kilómetros <span>*</span>
+
+								</label>
+
+
+								<div class="input-form">
+
+									<i class="fa-solid fa-road"></i> <input type="number"
+										id="kilometros" name="kilometros" step="0.01" min="0"
+										placeholder="120.00" required>
+
+								</div>
+
+							</div>
+
+
+
+							<div class="campo-form">
+
+								<label for="galones"> Galones </label>
+
+
+								<div class="input-form">
+
+									<i class="fa-solid fa-gas-pump"></i> <input type="number"
+										id="galones" name="galones" step="0.01" min="0"
+										placeholder="18.50">
+
+								</div>
+
+							</div>
+
+						</div>
+
+
+
+						<div class="campo-form">
+
+							<label for="peajes"> Peajes <span>*</span>
+
+							</label>
+
+
+							<div class="input-form">
+
+								<i class="fa-solid fa-money-bill-transfer"></i> <input
+									type="number" id="peajes" name="peajes" min="0" placeholder="0"
+									required>
+
+							</div>
+
+						</div>
+
+					</div>
+
+
+
+					<div class="modal-footer">
+
+						<button type="button" class="btn-cancelar" data-bs-dismiss="modal">
+
+							Cancelar</button>
+
+
+						<button type="submit" class="btn-guardar">
+
+							<i class="fa-solid fa-floppy-disk"></i> Guardar destino
+
+						</button>
+
+					</div>
+
+				</form>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+
+	<!-- =========================================================
+     MODAL RUTA
+========================================================= -->
+
+	<div class="modal fade" id="modalRuta" tabindex="-1" aria-hidden="true">
+
+		<div class="modal-dialog modal-dialog-centered">
+
+			<div class="modal-content">
+
+
+				<div class="modal-header">
+
+					<div>
+
+						<div class="modal-etiqueta">
+
+							<i class="fa-solid fa-route"></i> CONFIGURACIÓN DE RUTAS
+
+						</div>
+
+
+						<h5 class="modal-title">Registrar ruta</h5>
+
+					</div>
+
+
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="Cerrar"></button>
+
+				</div>
+
+
+
+				<form id="formRuta">
+
+
+					<div class="modal-body">
+
+
+						<div class="campo-form">
+
+							<label for="destinoRuta"> Nombre de la ruta <span>*</span>
+
+							</label>
+
+
+							<div class="input-form">
+
+								<i class="fa-solid fa-route"></i> <input type="text"
+									id="destinoRuta" name="destino"
+									placeholder="Ej. San Pedro Sula - Siguatepeque"
+									autocomplete="off" required>
+
+							</div>
+
+
+							<small> Escribe el nombre de la ruta. </small>
+
+						</div>
+
+
+
+						<div class="campo-form">
+
+							<label for="odt"> Tiempo promedio de recorrido <span>*</span>
+
+							</label>
+
+
+							<div class="input-form">
+
+								<i class="fa-regular fa-clock"></i> <input type="time" id="odt"
+									name="odt" step="60" required>
+
+							</div>
+
+
+							<small> Formato HH:mm. Ejemplo: 02:00. </small>
+
+						</div>
+
+
+
+						<div class="campo-form">
+
+							<label for="estadoRuta"> Estado </label> <select
+								class="campo-input" id="estadoRuta" name="estado">
+
+								<option value="ACTIVA">Activa</option>
+
+								<option value="INACTIVA">Inactiva</option>
+
+							</select>
+
+						</div>
+
+					</div>
+
+
+
+					<div class="modal-footer">
+
+						<button type="button" class="btn-cancelar" data-bs-dismiss="modal">
+
+							Cancelar</button>
+
+
+						<button type="submit" class="btn-guardar">
+
+							<i class="fa-solid fa-floppy-disk"></i> Guardar ruta
+
+						</button>
+
+					</div>
+
+				</form>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+
+	<!-- =========================================================
+     MODAL ELIMINAR VIAJE
+========================================================= -->
+
+	<div class="modal fade" id="modalEliminarViaje" tabindex="-1"
+		aria-hidden="true">
+
+		<div class="modal-dialog modal-dialog-centered">
+
+			<div class="modal-content">
+
+
+				<div class="modal-eliminar">
+
+
+					<div class="icono-eliminar">
+
+						<i class="fa-solid fa-trash"></i>
+
+					</div>
+
+
+					<h4>¿Eliminar viaje?</h4>
+
+
+					<p>
+
+						Esta acción eliminará el viaje seleccionado. <br> Esta acción
+						no se puede deshacer.
+
+					</p>
+
+
+					<div class="acciones-eliminar">
+
+
+						<button type="button" class="btn-cancelar" data-bs-dismiss="modal">
+
+							Cancelar</button>
+
+
+						<button type="button" class="btn-confirmar-eliminar">
+
+							<i class="fa-solid fa-trash"></i> Eliminar
+
+						</button>
+
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+
+	<!-- =========================================================
+     MODAL ELIMINAR DESTINO
+========================================================= -->
+
+	<div class="modal fade" id="modalEliminarDestino" tabindex="-1"
+		aria-hidden="true">
+
+		<div class="modal-dialog modal-dialog-centered">
+
+			<div class="modal-content">
+
+
+				<div class="modal-eliminar">
+
+
+					<div class="icono-eliminar">
+
+						<i class="fa-solid fa-location-dot"></i>
+
+					</div>
+
+
+					<h4>¿Eliminar destino?</h4>
+
+
+					<p>Se eliminará el destino seleccionado.</p>
+
+
+					<div class="acciones-eliminar">
+
+
+						<button type="button" class="btn-cancelar" data-bs-dismiss="modal">
+
+							Cancelar</button>
+
+
+						<button type="button" class="btn-confirmar-eliminar">
+
+							<i class="fa-solid fa-trash"></i> Eliminar
+
+						</button>
+
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+
+	<!-- =========================================================
+     MODAL ELIMINAR RUTA
+========================================================= -->
+
+	<div class="modal fade" id="modalEliminarRuta" tabindex="-1"
+		aria-hidden="true">
+
+		<div class="modal-dialog modal-dialog-centered">
+
+			<div class="modal-content">
+
+
+				<div class="modal-eliminar">
+
+
+					<div class="icono-eliminar">
+
+						<i class="fa-solid fa-route"></i>
+
+					</div>
+
+
+					<h4>¿Eliminar ruta?</h4>
+
+
+					<p>Se eliminará esta ruta y su tiempo promedio de recorrido.</p>
+
+
+					<div class="acciones-eliminar">
+
+
+						<button type="button" class="btn-cancelar" data-bs-dismiss="modal">
+
+							Cancelar</button>
+
+
+						<button type="button" class="btn-confirmar-eliminar">
+
+							<i class="fa-solid fa-trash"></i> Eliminar
+
+						</button>
+
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+
+	<!-- =========================================================
+     BOOTSTRAP
+========================================================= -->
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+	<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+	<script src="/js/reporteDiario.js"></script>
+
+
+</body>
+
+</html>

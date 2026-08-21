@@ -1,4 +1,3 @@
-
 package com.proyecto.camiones.services;
 
 import java.math.BigDecimal;
@@ -99,8 +98,6 @@ public class RecorridoService {
     //
     // IMPORTANTE:
     //
-    // NO guardamos directamente "datos".
-    //
     // Primero buscamos el registro original y después
     // copiamos solamente los campos editables.
     //
@@ -157,11 +154,6 @@ public class RecorridoService {
         );
 
 
-        existente.setUnidad(
-            datos.getUnidad()
-        );
-
-
         existente.setEjesCamion(
             datos.getEjesCamion()
         );
@@ -193,17 +185,10 @@ public class RecorridoService {
 
 
         // =================================================
-        // NO HACER ESTO:
+        // NO MODIFICAR createdAt
         //
-        // existente.setCreatedAt(
-        //     datos.getCreatedAt()
-        // );
-        //
-        // Porque el frontend normalmente no manda
-        // createdAt y podría sobrescribirse con null.
-        //
-        // Al utilizar "existente", el createdAt original
-        // permanece intacto.
+        // Se conserva el createdAt original porque
+        // estamos trabajando sobre "existente".
         // =================================================
 
 

@@ -1,23 +1,20 @@
-
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Control de Viajes | Dashboard</title>
+<title>Control de Viajes | Dashboard</title>
 
-    <link rel="stylesheet"
-          href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/dashboard.css">
 
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 
@@ -25,1187 +22,828 @@
 <body>
 
 
-<!-- =========================================================
+	<!-- =========================================================
      SIDEBAR
      ========================================================= -->
 
-<aside
-    class="sidebar"
-    id="sidebar"
-    aria-label="Menú principal">
+	<aside class="sidebar" id="sidebar" aria-label="Menú principal">
 
-    <!-- =====================================================
+		<!-- =====================================================
          BRAND
          ===================================================== -->
 
-    <div class="brand">
+		<div class="brand">
 
-        <div class="brand-icon" aria-hidden="true">
-            <i class="fas fa-truck-fast"></i>
-        </div>
+			<div class="brand-icon" aria-hidden="true">
+				<i class="fas fa-truck-fast"></i>
+			</div>
 
-        <div class="brand-text">
+			<div class="brand-text">
 
-            <strong>Control</strong>
+				<strong>Control</strong> <span>Viajes</span>
 
-            <span>Viajes</span>
+			</div>
 
-        </div>
-
-    </div>
+		</div>
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          USUARIO
          ===================================================== -->
 
-    <div class="sidebar-user">
+		<div class="sidebar-user">
 
-        <img
-            th:if="${session.usuarioLogueado != null and session.usuarioLogueado.imagenPerfil != null}"
-            th:src="${session.usuarioLogueado.imagenPerfil}"
-            alt="Perfil del usuario">
-
-        <img
-            th:unless="${session.usuarioLogueado != null and session.usuarioLogueado.imagenPerfil != null}"
-            src="/imgs/perfil.png"
-            alt="Perfil del usuario">
+			<img
+				th:if="${session.usuarioLogueado != null and session.usuarioLogueado.imagenPerfil != null}"
+				th:src="${session.usuarioLogueado.imagenPerfil}"
+				alt="Perfil del usuario"> <img
+				th:unless="${session.usuarioLogueado != null and session.usuarioLogueado.imagenPerfil != null}"
+				src="/imgs/perfil.png" alt="Perfil del usuario">
 
 
-        <div>
+			<div>
 
-            <strong
-                th:if="${session.usuarioLogueado != null}"
-                th:text="${session.usuarioLogueado.nombre}">
-                Usuario
-            </strong>
+				<strong th:if="${session.usuarioLogueado != null}"
+					th:text="${session.usuarioLogueado.nombre}"> Usuario </strong> <strong
+					th:unless="${session.usuarioLogueado != null}"> Invitado </strong>
 
-            <strong
-                th:unless="${session.usuarioLogueado != null}">
-                Invitado
-            </strong>
+				<span> Sesión activa </span>
 
-            <span>
-                Sesión activa
-            </span>
+			</div>
 
-        </div>
-
-    </div>
+		</div>
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          MENU
          ===================================================== -->
 
-    <nav
-        class="sidebar-nav"
-        aria-label="Navegación">
+		<nav class="sidebar-nav" aria-label="Navegación">
 
-        <div class="nav-title">
-            PRINCIPAL
-        </div>
+			<div class="nav-title">PRINCIPAL</div>
 
 
-        <!-- DASHBOARD -->
+			<!-- DASHBOARD -->
 
-        <a
-            href="/dashboard"
-            class="nav-item active"
-            aria-current="page">
+			<a th:href="@{/dashboard}" class="nav-item active" aria-current="page">
 
-            <i class="fas fa-chart-pie" aria-hidden="true"></i>
+				<i class="fas fa-chart-pie" aria-hidden="true"></i> <span>Dashboard</span>
 
-            <span>Dashboard</span>
-
-        </a>
+			</a>
 
 
-        <!-- VIAJES -->
+			<!-- VIAJES -->
 
-        <a
-            href="/viajes2"
-            class="nav-item"
-            th:if="${session.usuarioLogueado != null
+			<a th:href="@{/viajes2}" class="nav-item"
+				th:if="${session.usuarioLogueado != null
             and session.usuarioLogueado.permisos != null
             and session.usuarioLogueado.permisos.?[nombre=='VIAJES'].size() > 0}">
 
-            <i class="fas fa-route" aria-hidden="true"></i>
+				<i class="fas fa-route" aria-hidden="true"></i> <span>Viajes</span>
 
-            <span>Viajes</span>
-
-        </a>
+			</a>
 
 
-        <!-- CAMIONES -->
+			<!-- CAMIONES -->
 
-        <a
-            href="/camiones"
-            class="nav-item"
-            th:if="${session.usuarioLogueado != null
+			<a th:href="@{/camiones}" class="nav-item"
+				th:if="${session.usuarioLogueado != null
             and session.usuarioLogueado.permisos != null
             and session.usuarioLogueado.permisos.?[nombre=='CAMIONES'].size() > 0}">
 
-            <i class="fas fa-truck-moving" aria-hidden="true"></i>
+				<i class="fas fa-truck-moving" aria-hidden="true"></i> <span>Camiones</span>
 
-            <span>Camiones</span>
-
-        </a>
+			</a>
 
 
-        <!-- CONDUCTORES -->
+			<!-- CONDUCTORES -->
 
-        <a
-            href="/conductores"
-            class="nav-item"
-            th:if="${session.usuarioLogueado != null
+			<a th:href="@{/conductores}" class="nav-item"
+				th:if="${session.usuarioLogueado != null
             and session.usuarioLogueado.permisos != null
             and session.usuarioLogueado.permisos.?[nombre=='CONDUCTORES'].size() > 0}">
 
-            <i class="fas fa-id-card" aria-hidden="true"></i>
+				<i class="fas fa-id-card" aria-hidden="true"></i> <span>Conductores</span>
 
-            <span>Conductores</span>
-
-        </a>
+			</a>
 
 
-        <div class="nav-title nav-title-space">
-            OPERACIONES
-        </div>
+			<div class="nav-title nav-title-space">OPERACIONES</div>
 
 
-        <!-- COMBUSTIBLE -->
+			<!-- COMBUSTIBLE -->
 
-        <a
-            href="#"
-            class="nav-item"
-            th:if="${session.usuarioLogueado != null
+			<a th:href="@{/combustible}" class="nav-item"
+				th:if="${session.usuarioLogueado != null
             and session.usuarioLogueado.permisos != null
             and session.usuarioLogueado.permisos.?[nombre=='COMBUSTIBLE'].size() > 0}">
 
-            <i class="fas fa-gas-pump" aria-hidden="true"></i>
+				<i class="fas fa-gas-pump" aria-hidden="true"></i> <span>Combustible</span>
 
-            <span>Combustible</span>
-
-        </a>
+			</a>
 
 
-        <!-- REPORTES -->
+			<!-- REPORTES -->
 
-        <a
-            href="#"
-            class="nav-item"
-            th:if="${session.usuarioLogueado != null
-            and session.usuarioLogueado.permisos != null
-            and session.usuarioLogueado.permisos.?[nombre=='REPORTES'].size() > 0}">
+			<a th:href="@{/reportes}" class="nav-item"
+				th:if="${session.usuarioLogueado != null
+    and session.usuarioLogueado.permisos != null
+    and session.usuarioLogueado.permisos.?[nombre=='REPORTES'].size() > 0}">
 
-            <i class="fas fa-file-lines" aria-hidden="true"></i>
+				<i class="fas fa-file-lines" aria-hidden="true"></i> <span>Reportes</span>
 
-            <span>Reportes</span>
+			</a>
 
-        </a>
+			<!-- USUARIOS -->
 
-
-        <!-- USUARIOS -->
-
-        <a
-            href="/usuarios"
-            class="nav-item"
-            th:if="${session.usuarioLogueado != null
+            <!-- CORRECCIÓN: th:href="@{/usuarios}" llama al @GetMapping del UsuarioController -->
+			<a th:href="@{/usuarios}" class="nav-item"
+				th:if="${session.usuarioLogueado != null
             and session.usuarioLogueado.permisos != null
             and session.usuarioLogueado.permisos.?[nombre=='USUARIOS'].size() > 0}">
 
-            <i class="fas fa-user-shield" aria-hidden="true"></i>
+				<i class="fas fa-user-shield" aria-hidden="true"></i> <span>Usuarios</span>
 
-            <span>Usuarios</span>
-
-        </a>
+			</a>
 
 
-        <!-- NOTAS -->
+			<!-- NOTAS -->
 
-        <a
-            href="/notas"
-            class="nav-item">
+			<a th:href="@{/notas}" class="nav-item"> <i class="fas fa-note-sticky"
+				aria-hidden="true"></i> <span>Notas</span>
 
-            <i class="fas fa-note-sticky" aria-hidden="true"></i>
+			</a>
 
-            <span>Notas</span>
-
-        </a>
-
-    </nav>
+		</nav>
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          SIDEBAR FOOTER
          ===================================================== -->
 
-    <div class="sidebar-bottom">
+		<div class="sidebar-bottom">
 
-        <div class="security-box">
+			<div class="security-box">
 
-            <div class="security-icon" aria-hidden="true">
+				<div class="security-icon" aria-hidden="true">
 
-                <i class="fas fa-shield-halved"></i>
+					<i class="fas fa-shield-halved"></i>
 
-            </div>
+				</div>
 
-            <div>
+				<div>
 
-                <strong>
-                    Sistema protegido
-                </strong>
+					<strong> Sistema protegido </strong> <span> Control de
+						operaciones </span>
 
-                <span>
-                    Control de operaciones
-                </span>
+				</div>
 
-            </div>
-
-        </div>
+			</div>
 
 
-        <a
-            href="/logout"
-            class="logout-sidebar">
+			<a th:href="@{/logout}" class="logout-sidebar"> <i
+				class="fas fa-right-from-bracket" aria-hidden="true"></i> <span>
+					Cerrar sesión </span>
 
-            <i
-                class="fas fa-right-from-bracket"
-                aria-hidden="true"></i>
+			</a>
 
-            <span>
-                Cerrar sesión
-            </span>
+		</div>
 
-        </a>
-
-    </div>
-
-</aside>
+	</aside>
 
 
-<!-- =========================================================
+	<!-- =========================================================
      OVERLAY DEL MENU
      ========================================================= -->
 
-<div
-    class="sidebar-overlay"
-    id="sidebar-overlay"
-    aria-hidden="true">
-</div>
+	<div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true">
+	</div>
 
 
-<!-- =========================================================
+	<!-- =========================================================
      CONTENIDO PRINCIPAL
      ========================================================= -->
 
-<div class="main" id="main">
+	<div class="main" id="main">
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          TOPBAR
          ===================================================== -->
 
-    <header class="topbar">
+		<header class="topbar">
 
-        <div class="topbar-left">
+			<div class="topbar-left">
 
-            <button
-                type="button"
-                id="menu-btn"
-                class="menu-btn"
-                aria-label="Abrir menú"
-                aria-controls="sidebar"
-                aria-expanded="false">
+				<button type="button" id="menu-btn" class="menu-btn"
+					aria-label="Abrir menú" aria-controls="sidebar"
+					aria-expanded="false">
 
-                <i
-                    class="fas fa-bars"
-                    aria-hidden="true">
-                </i>
+					<i class="fas fa-bars" aria-hidden="true"> </i>
 
-            </button>
+				</button>
 
 
-            <div class="page-title">
+				<div class="page-title">
 
-                <span>
-                    PANEL DE CONTROL
-                </span>
+					<span> PANEL DE CONTROL </span>
 
-                <h1>
-                    Dashboard
-                </h1>
+					<h1>Dashboard</h1>
 
-            </div>
+				</div>
 
-        </div>
+			</div>
 
 
-        <div class="topbar-right">
+			<div class="topbar-right">
 
-            <div class="date-box">
+				<div class="date-box">
 
-                <i
-                    class="far fa-calendar"
-                    aria-hidden="true">
-                </i>
+					<i class="far fa-calendar" aria-hidden="true"> </i>
 
-                <div>
+					<div>
 
-                    <span>
-                        Hoy
-                    </span>
+						<span> Hoy </span> <strong id="fechaActual"> -- </strong>
 
-                    <strong id="fechaActual">
-                        --
-                    </strong>
+					</div>
 
-                </div>
+				</div>
 
-            </div>
+			</div>
 
-        </div>
-
-    </header>
+		</header>
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          DASHBOARD
          ===================================================== -->
 
-    <main class="dashboard-content">
+		<main class="dashboard-content">
 
 
-        <!-- =================================================
+			<!-- =================================================
              BIENVENIDA
              ================================================= -->
 
-        <section class="welcome-section">
+			<section class="welcome-section">
 
-            <div class="welcome-text">
+				<div class="welcome-text">
 
-                <span class="section-label">
-                    RESUMEN GENERAL
-                </span>
+					<span class="section-label"> RESUMEN GENERAL </span>
 
-                <h2>
-                    Bienvenido al panel de control
-                </h2>
+					<h2>Bienvenido al panel de control</h2>
 
-                <p>
-                    Consulta de forma rápida el estado general
-                    de las operaciones de la empresa.
-                </p>
+					<p>Consulta de forma rápida el estado general de las
+						operaciones de la empresa.</p>
 
-            </div>
+				</div>
 
 
-            <div class="welcome-actions">
+				<div class="welcome-actions">
 
-                <a
-                    href="/viajes"
-                    class="primary-button">
+					<a th:href="@{/viajes}" class="primary-button"> <i
+						class="fas fa-plus" aria-hidden="true"> </i> Nuevo viaje
 
-                    <i
-                        class="fas fa-plus"
-                        aria-hidden="true">
-                    </i>
+					</a>
 
-                    Nuevo viaje
+				</div>
 
-                </a>
-
-            </div>
-
-        </section>
+			</section>
 
 
-        <!-- =================================================
+			<!-- =================================================
              KPI
              ================================================= -->
 
-        <section
-            class="kpi-grid"
-            aria-label="Indicadores principales">
+			<section class="kpi-grid" aria-label="Indicadores principales">
 
 
-            <!-- VIAJES -->
+				<!-- VIAJES -->
 
-            <article class="kpi-card blue">
+				<article class="kpi-card blue">
 
-                <div class="kpi-header">
+					<div class="kpi-header">
 
-                    <div class="kpi-icon">
+						<div class="kpi-icon">
 
-                        <i
-                            class="fas fa-route"
-                            aria-hidden="true">
-                        </i>
+							<i class="fas fa-route" aria-hidden="true"> </i>
 
-                    </div>
+						</div>
 
-                    <span class="kpi-tag">
-                        OPERACIONES
-                    </span>
+						<span class="kpi-tag"> OPERACIONES </span>
 
-                </div>
+					</div>
 
 
-                <div
-                    class="kpi-number"
-                    th:text="${totalViajes}">
-                    0
-                </div>
+					<div class="kpi-number" th:text="${totalViajes}">0</div>
 
 
-                <div class="kpi-label">
-                    Viajes registrados
-                </div>
+					<div class="kpi-label">Viajes registrados</div>
 
 
-                <a
-                    href="/viajes"
-                    class="kpi-link">
+					<a th:href="@{/viajes}" class="kpi-link"> Ver viajes <i
+						class="fas fa-arrow-right" aria-hidden="true"> </i>
 
-                    Ver viajes
+					</a>
 
-                    <i
-                        class="fas fa-arrow-right"
-                        aria-hidden="true">
-                    </i>
+				</article>
 
-                </a>
 
-            </article>
+				<!-- CAMIONES -->
 
+				<article class="kpi-card green">
 
-            <!-- CAMIONES -->
+					<div class="kpi-header">
 
-            <article class="kpi-card green">
+						<div class="kpi-icon">
 
-                <div class="kpi-header">
+							<i class="fas fa-truck" aria-hidden="true"> </i>
 
-                    <div class="kpi-icon">
+						</div>
 
-                        <i
-                            class="fas fa-truck"
-                            aria-hidden="true">
-                        </i>
+						<span class="kpi-tag"> FLOTA </span>
 
-                    </div>
+					</div>
 
-                    <span class="kpi-tag">
-                        FLOTA
-                    </span>
 
-                </div>
+					<div class="kpi-number" th:text="${totalCamiones}">0</div>
 
 
-                <div
-                    class="kpi-number"
-                    th:text="${totalCamiones}">
-                    0
-                </div>
+					<div class="kpi-label">Camiones registrados</div>
 
 
-                <div class="kpi-label">
-                    Camiones registrados
-                </div>
+					<div class="kpi-extra">
 
+						<span> <i class="fas fa-circle" aria-hidden="true"> </i>
 
-                <div class="kpi-extra">
+							Registrados
 
-                    <span>
+						</span> <strong th:text="${totalCamiones}"> 0 </strong>
 
-                        <i
-                            class="fas fa-circle"
-                            aria-hidden="true">
-                        </i>
+					</div>
 
-                        Registrados
+				</article>
 
-                    </span>
 
-                    <strong
-                        th:text="${totalCamiones}">
-                        0
-                    </strong>
+				<!-- CONDUCTORES -->
 
-                </div>
+				<article class="kpi-card purple">
 
-            </article>
+					<div class="kpi-header">
 
+						<div class="kpi-icon">
 
-            <!-- CONDUCTORES -->
+							<i class="fas fa-users" aria-hidden="true"> </i>
 
-            <article class="kpi-card purple">
+						</div>
 
-                <div class="kpi-header">
+						<span class="kpi-tag"> PERSONAL </span>
 
-                    <div class="kpi-icon">
+					</div>
 
-                        <i
-                            class="fas fa-users"
-                            aria-hidden="true">
-                        </i>
 
-                    </div>
+					<div class="kpi-number" th:text="${totalConductores}">0</div>
 
-                    <span class="kpi-tag">
-                        PERSONAL
-                    </span>
 
-                </div>
+					<div class="kpi-label">Conductores registrados</div>
 
 
-                <div
-                    class="kpi-number"
-                    th:text="${totalConductores}">
-                    0
-                </div>
+					<div class="kpi-extra">
 
+						<span> <i class="fas fa-circle" aria-hidden="true"> </i>
 
-                <div class="kpi-label">
-                    Conductores registrados
-                </div>
+							Activos
 
+						</span> <strong th:text="${totalConductoresActivos}"> 0 </strong>
 
-                <div class="kpi-extra">
+					</div>
 
-                    <span>
+				</article>
 
-                        <i
-                            class="fas fa-circle"
-                            aria-hidden="true">
-                        </i>
 
-                        Activos
+				<!-- ASIGNACIONES -->
 
-                    </span>
+				<article class="kpi-card orange">
 
-                    <strong
-                        th:text="${totalConductoresActivos}">
-                        0
-                    </strong>
+					<div class="kpi-header">
 
-                </div>
+						<div class="kpi-icon">
 
-            </article>
+							<i class="fas fa-clipboard-check" aria-hidden="true"> </i>
 
+						</div>
 
-            <!-- ASIGNACIONES -->
+						<span class="kpi-tag"> EN CURSO </span>
 
-            <article class="kpi-card orange">
+					</div>
 
-                <div class="kpi-header">
 
-                    <div class="kpi-icon">
+					<div class="kpi-number" th:text="${totalAsignacionesActivas}">
+						0</div>
 
-                        <i
-                            class="fas fa-clipboard-check"
-                            aria-hidden="true">
-                        </i>
 
-                    </div>
+					<div class="kpi-label">Asignaciones activas</div>
 
-                    <span class="kpi-tag">
-                        EN CURSO
-                    </span>
 
-                </div>
+					<div class="kpi-extra">
 
+						<span> <i class="fas fa-bolt" aria-hidden="true"> </i>
 
-                <div
-                    class="kpi-number"
-                    th:text="${totalAsignacionesActivas}">
-                    0
-                </div>
+							Estado
 
+						</span> <strong> Activas </strong>
 
-                <div class="kpi-label">
-                    Asignaciones activas
-                </div>
+					</div>
 
+				</article>
 
-                <div class="kpi-extra">
+			</section>
 
-                    <span>
 
-                        <i
-                            class="fas fa-bolt"
-                            aria-hidden="true">
-                        </i>
-
-                        Estado
-
-                    </span>
-
-                    <strong>
-                        Activas
-                    </strong>
-
-                </div>
-
-            </article>
-
-        </section>
-
-
-        <!-- =================================================
+			<!-- =================================================
              GRÁFICA + DESTINOS
              ================================================= -->
 
-        <section class="main-grid">
+			<section class="main-grid">
 
 
-            <!-- GRÁFICA -->
+				<!-- GRÁFICA -->
 
-            <div class="dashboard-panel chart-panel">
+				<div class="dashboard-panel chart-panel">
 
-                <div class="panel-header">
+					<div class="panel-header">
 
-                    <div>
+						<div>
 
-                        <span class="panel-label">
-                            OPERACIONES
-                        </span>
+							<span class="panel-label"> OPERACIONES </span>
 
-                        <h3>
-                            Actividad de viajes
-                        </h3>
+							<h3>Actividad de viajes</h3>
 
-                        <p>
-                            Viajes registrados durante los últimos días.
-                        </p>
+							<p>Viajes registrados durante los últimos días.</p>
 
-                    </div>
+						</div>
 
-                </div>
+					</div>
 
 
-                <div class="chart-container">
+					<div class="chart-container">
 
-                    <canvas
-                        id="graficaViajes"
-                        aria-label="Gráfica de actividad de viajes">
+						<canvas id="graficaViajes"
+							aria-label="Gráfica de actividad de viajes">
                     </canvas>
 
-                </div>
+					</div>
 
-            </div>
-
-
-            <!-- DESTINOS -->
-
-            <div class="dashboard-panel destinations-panel">
-
-                <div class="panel-header">
-
-                    <div>
-
-                        <span class="panel-label">
-                            RUTAS
-                        </span>
-
-                        <h3>
-                            Destinos y recorridos
-                        </h3>
-
-                        <p>
-                            Resumen de la información registrada.
-                        </p>
-
-                    </div>
-
-                </div>
+				</div>
 
 
-                <div class="destination-stats">
+				<!-- DESTINOS -->
+
+				<div class="dashboard-panel destinations-panel">
+
+					<div class="panel-header">
+
+						<div>
+
+							<span class="panel-label"> RUTAS </span>
+
+							<h3>Destinos y recorridos</h3>
+
+							<p>Resumen de la información registrada.</p>
+
+						</div>
+
+					</div>
 
 
-                    <!-- DESTINOS -->
-
-                    <div class="destination-stat">
-
-                        <div class="destination-icon blue">
-
-                            <i
-                                class="fas fa-location-dot"
-                                aria-hidden="true">
-                            </i>
-
-                        </div>
+					<div class="destination-stats">
 
 
-                        <div class="destination-info">
+						<!-- DESTINOS -->
 
-                            <strong
-                                th:text="${totalDestinos}">
-                                0
-                            </strong>
+						<div class="destination-stat">
 
-                            <span>
-                                Destinos registrados
-                            </span>
+							<div class="destination-icon blue">
 
-                        </div>
+								<i class="fas fa-location-dot" aria-hidden="true"> </i>
 
-                    </div>
+							</div>
 
 
-                    <!-- RECORRIDOS -->
+							<div class="destination-info">
 
-                    <div class="destination-stat">
+								<strong th:text="${totalDestinos}"> 0 </strong> <span>
+									Destinos registrados </span>
 
-                        <div class="destination-icon orange">
+							</div>
 
-                            <i
-                                class="fas fa-road"
-                                aria-hidden="true">
-                            </i>
-
-                        </div>
+						</div>
 
 
-                        <div class="destination-info">
+						<!-- RECORRIDOS -->
 
-                            <strong
-                                th:text="${totalRecorridos}">
-                                0
-                            </strong>
+						<div class="destination-stat">
 
-                            <span>
-                                Recorridos registrados
-                            </span>
+							<div class="destination-icon orange">
 
-                        </div>
+								<i class="fas fa-road" aria-hidden="true"> </i>
 
-                    </div>
-
-                </div>
+							</div>
 
 
-                <div class="destination-message">
+							<div class="destination-info">
 
-                    <div
-                        class="message-icon"
-                        aria-hidden="true">
+								<strong th:text="${totalRecorridos}"> 0 </strong> <span>
+									Recorridos registrados </span>
 
-                        <i class="fas fa-route"></i>
+							</div>
 
-                    </div>
+						</div>
 
-
-                    <div>
-
-                        <strong>
-                            Información operativa
-                        </strong>
-
-                        <span>
-                            Los destinos y recorridos registrados
-                            forman parte de la operación diaria.
-                        </span>
-
-                    </div>
-
-                </div>
+					</div>
 
 
-                <a
-                    href="/viajes2"
-                    class="panel-action">
+					<div class="destination-message">
 
-                    Consultar recorridos
+						<div class="message-icon" aria-hidden="true">
 
-                    <i
-                        class="fas fa-arrow-right"
-                        aria-hidden="true">
-                    </i>
+							<i class="fas fa-route"></i>
 
-                </a>
-
-            </div>
-
-        </section>
+						</div>
 
 
-        <!-- =================================================
+						<div>
+
+							<strong> Información operativa </strong> <span> Los
+								destinos y recorridos registrados forman parte de la operación
+								diaria. </span>
+
+						</div>
+
+					</div>
+
+
+					<a th:href="@{/viajes2}" class="panel-action"> Consultar recorridos <i
+						class="fas fa-arrow-right" aria-hidden="true"> </i>
+
+					</a>
+
+				</div>
+
+			</section>
+
+
+			<!-- =================================================
              RESUMEN OPERATIVO
              ================================================= -->
 
-        <section class="summary-grid">
+			<section class="summary-grid">
 
 
-            <!-- RESUMEN VIAJES -->
+				<!-- RESUMEN VIAJES -->
 
-            <div class="dashboard-panel summary-panel">
+				<div class="dashboard-panel summary-panel">
 
-                <div class="panel-header">
+					<div class="panel-header">
 
-                    <div>
+						<div>
 
-                        <span class="panel-label">
-                            OPERACIONES
-                        </span>
+							<span class="panel-label"> OPERACIONES </span>
 
-                        <h3>
-                            Resumen de viajes
-                        </h3>
+							<h3>Resumen de viajes</h3>
 
-                    </div>
+						</div>
 
 
-                    <a
-                        href="/viajes"
-                        class="panel-link">
+						<a th:href="@{/viajes}" class="panel-link"> Ver viajes <i
+							class="fas fa-arrow-right" aria-hidden="true"> </i>
 
-                        Ver viajes
+						</a>
 
-                        <i
-                            class="fas fa-arrow-right"
-                            aria-hidden="true">
-                        </i>
+					</div>
 
-                    </a>
 
-                </div>
+					<div class="summary-main">
 
+						<div class="summary-icon blue">
 
-                <div class="summary-main">
+							<i class="fas fa-route" aria-hidden="true"> </i>
 
-                    <div class="summary-icon blue">
+						</div>
 
-                        <i
-                            class="fas fa-route"
-                            aria-hidden="true">
-                        </i>
 
-                    </div>
+						<div>
 
+							<strong th:text="${totalViajes}"> 0 </strong> <span>
+								Viajes registrados </span>
 
-                    <div>
+						</div>
 
-                        <strong
-                            th:text="${totalViajes}">
-                            0
-                        </strong>
+					</div>
 
-                        <span>
-                            Viajes registrados
-                        </span>
 
-                    </div>
+					<div class="summary-message">
 
-                </div>
+						<i class="fas fa-circle-check" aria-hidden="true"> </i> <span>
+							Información disponible en el módulo de viajes. </span>
 
+					</div>
 
-                <div class="summary-message">
+				</div>
 
-                    <i
-                        class="fas fa-circle-check"
-                        aria-hidden="true">
-                    </i>
 
-                    <span>
-                        Información disponible en el módulo
-                        de viajes.
-                    </span>
+				<!-- RESUMEN PERSONAL -->
 
-                </div>
+				<div class="dashboard-panel summary-panel">
 
-            </div>
+					<div class="panel-header">
 
+						<div>
 
-            <!-- RESUMEN PERSONAL -->
+							<span class="panel-label"> PERSONAL </span>
 
-            <div class="dashboard-panel summary-panel">
+							<h3>Estado del personal</h3>
 
-                <div class="panel-header">
+						</div>
 
-                    <div>
 
-                        <span class="panel-label">
-                            PERSONAL
-                        </span>
+						<a th:href="@{/conductores}" class="panel-link"> Gestionar <i
+							class="fas fa-arrow-right" aria-hidden="true"> </i>
 
-                        <h3>
-                            Estado del personal
-                        </h3>
+						</a>
 
-                    </div>
+					</div>
 
 
-                    <a
-                        href="/conductores"
-                        class="panel-link">
+					<div class="summary-main">
 
-                        Gestionar
+						<div class="summary-icon purple">
 
-                        <i
-                            class="fas fa-arrow-right"
-                            aria-hidden="true">
-                        </i>
+							<i class="fas fa-user-check" aria-hidden="true"> </i>
 
-                    </a>
+						</div>
 
-                </div>
 
+						<div>
 
-                <div class="summary-main">
+							<strong th:text="${totalConductoresActivos}"> 0 </strong> <span>
+								Conductores activos </span>
 
-                    <div class="summary-icon purple">
+						</div>
 
-                        <i
-                            class="fas fa-user-check"
-                            aria-hidden="true">
-                        </i>
+					</div>
 
-                    </div>
 
+					<div class="summary-message">
 
-                    <div>
+						<i class="fas fa-user-shield" aria-hidden="true"> </i> <span>
+							Personal operativo disponible para las operaciones actuales. </span>
 
-                        <strong
-                            th:text="${totalConductoresActivos}">
-                            0
-                        </strong>
+					</div>
 
-                        <span>
-                            Conductores activos
-                        </span>
+				</div>
 
-                    </div>
+			</section>
 
-                </div>
 
-
-                <div class="summary-message">
-
-                    <i
-                        class="fas fa-user-shield"
-                        aria-hidden="true">
-                    </i>
-
-                    <span>
-                        Personal operativo disponible para
-                        las operaciones actuales.
-                    </span>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =================================================
+			<!-- =================================================
              ACCESOS
              ================================================= -->
 
-        <section class="access-section">
+			<section class="access-section">
 
-            <div class="section-heading">
+				<div class="section-heading">
 
-                <div>
+					<div>
 
-                    <span class="panel-label">
-                        ACCESOS
-                    </span>
+						<span class="panel-label"> ACCESOS </span>
 
-                    <h3>
-                        Módulos principales
-                    </h3>
+						<h3>Módulos principales</h3>
 
-                </div>
+					</div>
 
-            </div>
+				</div>
 
 
-            <div class="access-grid">
+				<div class="access-grid">
 
 
-                <!-- VIAJES -->
+					<!-- VIAJES -->
 
-                <a
-                    href="/viajes"
-                    class="access-card">
+					<a th:href="@{/viajes}" class="access-card">
 
-                    <div class="access-icon blue">
+						<div class="access-icon blue">
 
-                        <i
-                            class="fas fa-route"
-                            aria-hidden="true">
-                        </i>
+							<i class="fas fa-route" aria-hidden="true"> </i>
 
-                    </div>
+						</div>
 
 
-                    <div class="access-text">
+						<div class="access-text">
 
-                        <strong>
-                            Viajes
-                        </strong>
+							<strong> Viajes </strong> <span> Gestionar recorridos y
+								operaciones </span>
 
-                        <span>
-                            Gestionar recorridos y operaciones
-                        </span>
+						</div> <i class="fas fa-chevron-right" aria-hidden="true"> </i>
 
-                    </div>
+					</a>
 
 
-                    <i
-                        class="fas fa-chevron-right"
-                        aria-hidden="true">
-                    </i>
+					<!-- CAMIONES -->
 
-                </a>
+					<a th:href="@{/camiones}" class="access-card">
 
+						<div class="access-icon green">
 
-                <!-- CAMIONES -->
+							<i class="fas fa-truck-moving" aria-hidden="true"> </i>
 
-                <a
-                    href="/camiones"
-                    class="access-card">
-
-                    <div class="access-icon green">
-
-                        <i
-                            class="fas fa-truck-moving"
-                            aria-hidden="true">
-                        </i>
-
-                    </div>
+						</div>
 
 
-                    <div class="access-text">
+						<div class="access-text">
 
-                        <strong>
-                            Camiones
-                        </strong>
+							<strong> Camiones </strong> <span> Consultar la flota
+								registrada </span>
 
-                        <span>
-                            Consultar la flota registrada
-                        </span>
+						</div> <i class="fas fa-chevron-right" aria-hidden="true"> </i>
 
-                    </div>
+					</a>
 
 
-                    <i
-                        class="fas fa-chevron-right"
-                        aria-hidden="true">
-                    </i>
+					<!-- CONDUCTORES -->
 
-                </a>
+					<a th:href="@{/conductores}" class="access-card">
 
+						<div class="access-icon purple">
 
-                <!-- CONDUCTORES -->
+							<i class="fas fa-users" aria-hidden="true"> </i>
 
-                <a
-                    href="/conductores"
-                    class="access-card">
-
-                    <div class="access-icon purple">
-
-                        <i
-                            class="fas fa-users"
-                            aria-hidden="true">
-                        </i>
-
-                    </div>
+						</div>
 
 
-                    <div class="access-text">
+						<div class="access-text">
 
-                        <strong>
-                            Conductores
-                        </strong>
+							<strong> Conductores </strong> <span> Administrar personal
+								operativo </span>
 
-                        <span>
-                            Administrar personal operativo
-                        </span>
+						</div> <i class="fas fa-chevron-right" aria-hidden="true"> </i>
 
-                    </div>
+					</a>
 
+				</div>
 
-                    <i
-                        class="fas fa-chevron-right"
-                        aria-hidden="true">
-                    </i>
-
-                </a>
-
-            </div>
-
-        </section>
+			</section>
 
 
-        <!-- =================================================
+			<!-- =================================================
              FOOTER
              ================================================= -->
 
-        <footer class="dashboard-footer">
+			<footer class="dashboard-footer">
 
-            <div>
+				<div>
 
-                <strong>
-                    Control de Viajes
-                </strong>
+					<strong> Control de Viajes </strong> <span> Sistema de
+						gestión de operaciones </span>
 
-                <span>
-                    Sistema de gestión de operaciones
-                </span>
-
-            </div>
+				</div>
 
 
-            <div>
+				<div>
 
-                <span>
-                    © 2026
-                </span>
+					<span> © 2026 </span> <span class="footer-separator"> • </span> <span>
+						Todos los derechos reservados </span>
 
-                <span class="footer-separator">
-                    •
-                </span>
+				</div>
 
-                <span>
-                    Todos los derechos reservados
-                </span>
+			</footer>
 
-            </div>
+		</main>
 
-        </footer>
-
-    </main>
-
-</div>
+	</div>
 
 
-<!-- =========================================================
+	<!-- =========================================================
      DATOS PARA CHART.JS
      ========================================================= -->
 
-<script th:inline="javascript">
+	<script th:inline="javascript">
+		window.viajesLabels =
+		/*[[${viajesLabels}]]*/[];
 
-    window.viajesLabels =
-        /*[[${viajesLabels}]]*/ [];
-
-    window.viajesData =
-        /*[[${viajesData}]]*/ [];
-
-</script>
+		window.viajesData =
+		/*[[${viajesData}]]*/[];
+	</script>
 
 
-<!-- =========================================================
+	<!-- =========================================================
      JAVASCRIPT DEL DASHBOARD
      
      IMPORTANTE:
      Se carga UNA SOLA VEZ.
      ========================================================= -->
 
-<script src="/js/dashboard.js"></script>
+	<script src="/js/dashboard.js"></script>
 
 
 </body>

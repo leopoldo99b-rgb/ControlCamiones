@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Módulo de Reportes</title>
+
+    <!-- =====================================================
+         CSS
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="/css/reportes.css">
+
+    <!-- =====================================================
+         ICONOS
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- =====================================================
+         GOOGLE FONT
+         ===================================================== -->
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+</head>
+
+
+<body>
+
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+
+<header class="topbar">
+
+    <div class="logo">
+
+        <div class="logo-icon">
+
+            <i class="fa-solid fa-chart-pie"></i>
+
+        </div>
+
+        <span>
+            Módulo de Reportes
+        </span>
+
+    </div>
+
+
+    <div class="usuario">
+
+        <a
+            href="/dashboard"
+            class="btn-back">
+
+            <i class="fa-solid fa-arrow-left"></i>
+
+            <span>
+                Dashboard
+            </span>
+
+        </a>
+
+    </div>
+
+</header>
+
+
+<!-- =========================================================
+     HERO
+     ========================================================= -->
+
+<section class="hero">
+
+    <!-- DECORACIÓN IZQUIERDA -->
+    <div class="hero-left">
+
+        <div class="hero-decoration">
+
+            <i class="fa-solid fa-file-lines"></i>
+
+        </div>
+
+    </div>
+
+
+    <!-- CONTENIDO -->
+    <div class="hero-center">
+
+        <span class="badge">
+
+            <i class="fa-solid fa-chart-line"></i>
+
+            Centro de Reportes
+
+        </span>
+
+
+        <h1>
+
+            Gestión de
+            <span>Reportes</span>
+
+        </h1>
+
+
+        <p>
+
+            Programa viajes y consulta información detallada
+            del monitoreo de las operaciones.
+
+        </p>
+
+
+        <div class="linea"></div>
+
+    </div>
+
+
+    <!-- DECORACIÓN DERECHA -->
+    <div class="hero-right">
+
+        <div class="gps">
+
+            <i class="fa-solid fa-location-crosshairs"></i>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     TARJETAS
+     ========================================================= -->
+
+<section class="cards">
+
+
+    <!-- =====================================================
+         CARD 1 - PROGRAMAR VIAJES
+         ===================================================== -->
+
+    <div class="card azul">
+
+        <div class="icon-circle">
+
+            <i class="fa-solid fa-calendar-days"></i>
+
+        </div>
+
+
+        <h2>
+            Programar viajes
+        </h2>
+
+
+        <p>
+
+            Programa y organiza los viajes de la flota,
+            estableciendo fechas, rutas, vehículos y conductores.
+
+        </p>
+
+
+        <div class="imagen">
+
+            <img
+                src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png"
+                alt="Programar viajes">
+
+        </div>
+
+
+        <a
+            href="/programar-viajes"
+            class="card-btn">
+
+            Programar viajes
+
+            <span>
+
+                <i class="fa-solid fa-arrow-right"></i>
+
+            </span>
+
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         CARD 2 - REPORTE DE MONITOREO
+         ===================================================== -->
+
+    <div class="card verde">
+
+        <div class="icon-circle">
+
+            <i class="fa-solid fa-location-dot"></i>
+
+        </div>
+
+
+        <h2>
+            Reporte de monitoreo
+        </h2>
+
+
+        <p>
+
+            Consulta el estado de los viajes, recorridos,
+            ubicaciones y principales indicadores de operación.
+
+        </p>
+
+
+        <div class="imagen">
+
+            <img
+                src="https://cdn-icons-png.flaticon.com/512/854/854878.png"
+                alt="Reporte de monitoreo">
+
+        </div>
+
+
+        <a
+            href="/reporte-monitoreo"
+            class="card-btn">
+
+            Ver reporte
+
+            <span>
+
+                <i class="fa-solid fa-arrow-right"></i>
+
+            </span>
+
+        </a>
+
+    </div>
+
+
+</section>
+
+
+<!-- =========================================================
+     PANEL INFERIOR
+     ========================================================= -->
+
+<section class="panel-info">
+
+    <div class="info-icon">
+
+        <i class="fa-solid fa-chart-column"></i>
+
+    </div>
+
+
+    <div>
+
+        <h3>
+            Control y seguimiento de operaciones
+        </h3>
+
+
+        <p>
+
+            Organiza tus viajes y consulta información
+            de monitoreo para mejorar el control de la operación.
+
+        </p>
+
+    </div>
+
+
+    <i class="fa-solid fa-chart-line grafico"></i>
+
+</section>
+
+
+<!-- =========================================================
+     BOTÓN FLOTANTE
+     ========================================================= -->
+
+<button
+    class="btn-top"
+    type="button"
+    aria-label="Volver arriba">
+
+    <i class="fa-solid fa-arrow-up"></i>
+
+</button>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script src="/js/camiones-menu.js"></script>
+
+</body>
+
+</html>

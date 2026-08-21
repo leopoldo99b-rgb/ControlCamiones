@@ -27,9 +27,6 @@ public class Recorrido {
     @Column(name = "motorista", nullable = false, length = 150)
     private String motorista;
 
-    @Column(name = "unidad", nullable = false, length = 50)
-    private String unidad;
-
     @Column(name = "ejes_camion", nullable = false)
     private Integer ejesCamion;
 
@@ -70,11 +67,14 @@ public class Recorrido {
     private LocalDateTime updatedAt;
 
 
+    // =====================================================
+    // EVENTOS JPA
+    // =====================================================
+
     @PrePersist
     protected void onCreate() {
 
-        LocalDateTime ahora =
-                LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now();
 
         createdAt = ahora;
         updatedAt = ahora;
@@ -84,14 +84,13 @@ public class Recorrido {
     @PreUpdate
     protected void onUpdate() {
 
-        updatedAt =
-                LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
 
-    // =========================
+    // =====================================================
     // GETTERS Y SETTERS
-    // =========================
+    // =====================================================
 
     public Long getId() {
         return id;
@@ -117,15 +116,6 @@ public class Recorrido {
 
     public void setMotorista(String motorista) {
         this.motorista = motorista;
-    }
-
-
-    public String getUnidad() {
-        return unidad;
-    }
-
-    public void setUnidad(String unidad) {
-        this.unidad = unidad;
     }
 
 

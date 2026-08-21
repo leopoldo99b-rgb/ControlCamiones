@@ -1,4 +1,3 @@
-
 package com.proyecto.camiones.controller;
 
 import java.math.BigDecimal;
@@ -18,11 +17,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.proyecto.camiones.model.Camion;
 import com.proyecto.camiones.model.Conductor;
-import com.proyecto.camiones.model.Destino;
+import com.proyecto.camiones.model.Furgon;
 import com.proyecto.camiones.model.Recorrido;
 import com.proyecto.camiones.repository.ConductorRepository;
 import com.proyecto.camiones.services.CamionService;
-import com.proyecto.camiones.services.DestinoService;
+import com.proyecto.camiones.services.FurgonService;
 import com.proyecto.camiones.services.RecorridoService;
 
 @Controller
@@ -39,14 +38,15 @@ public class DestinosController {
     private ConductorRepository conductorRepository;
 
     @Autowired
-    private DestinoService destinoService;
+    private RecorridoService recorridoService;
 
     @Autowired
-    private RecorridoService recorridoService;
+    private FurgonService furgonService;
 
 
     // =====================================================
     // ABRIR PÁGINA DESTINOS
+    //
     // GET /viajes2
     // =====================================================
 
@@ -59,6 +59,7 @@ public class DestinosController {
 
     // =====================================================
     // CONDUCTORES ACTIVOS
+    //
     // GET /viajes2/conductores
     // =====================================================
 
@@ -90,6 +91,7 @@ public class DestinosController {
 
     // =====================================================
     // CAMIONES DISPONIBLES
+    //
     // GET /viajes2/camiones
     // =====================================================
 
@@ -120,77 +122,8 @@ public class DestinosController {
 
 
     // =====================================================
-    // LISTAR DESTINOS
-    // GET /api/destinos
-    // =====================================================
-
-    @GetMapping("/api/destinos")
-    @ResponseBody
-    public ResponseEntity<List<Destino>> listarDestinos() {
-
-        try {
-
-            List<Destino> destinos =
-                    destinoService.listarTodos();
-
-            return ResponseEntity.ok(
-                destinos
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return ResponseEntity
-                    .internalServerError()
-                    .build();
-        }
-    }
-
-
-    // =====================================================
-    // BUSCAR DESTINO POR ID
-    // GET /api/destinos/{id}
-    // =====================================================
-
-    @GetMapping("/api/destinos/{id}")
-    @ResponseBody
-    public ResponseEntity<?> buscarDestino(
-            @PathVariable Long id
-    ) {
-
-        try {
-
-            Destino destino =
-                    destinoService.buscarPorId(id);
-
-            if (destino == null) {
-
-                return ResponseEntity
-                        .notFound()
-                        .build();
-            }
-
-            return ResponseEntity.ok(
-                destino
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return ResponseEntity
-                    .internalServerError()
-                    .body(
-                        "Error al buscar destino: "
-                        + obtenerMensajeError(e)
-                    );
-        }
-    }
-
-
-    // =====================================================
     // LISTAR RECORRIDOS
+    //
     // GET /api/recorridos
     // =====================================================
 
@@ -203,9 +136,7 @@ public class DestinosController {
             List<Recorrido> recorridos =
                     recorridoService.listarTodos();
 
-            return ResponseEntity.ok(
-                recorridos
-            );
+            return ResponseEntity.ok(recorridos);
 
         } catch (Exception e) {
 
@@ -213,15 +144,14 @@ public class DestinosController {
 
             return ResponseEntity
                     .internalServerError()
-                    .body(
-                        new ArrayList<>()
-                    );
+                    .body(new ArrayList<>());
         }
     }
 
 
     // =====================================================
     // BUSCAR RECORRIDO POR ID
+    //
     // GET /api/recorridos/{id}
     // =====================================================
 
@@ -233,6 +163,15 @@ public class DestinosController {
 
         try {
 
+            if (id == null || id <= 0) {
+
+                return ResponseEntity
+                        .badRequest()
+                        .body(
+                            "El ID del recorrido no es válido."
+                        );
+            }
+
             Recorrido recorrido =
                     recorridoService.buscarPorId(id);
 
@@ -243,9 +182,7 @@ public class DestinosController {
                         .build();
             }
 
-            return ResponseEntity.ok(
-                recorrido
-            );
+            return ResponseEntity.ok(recorrido);
 
         } catch (Exception e) {
 
@@ -263,6 +200,7 @@ public class DestinosController {
 
     // =====================================================
     // GUARDAR RECORRIDO
+    //
     // POST /api/recorridos
     // =====================================================
 
@@ -274,44 +212,18 @@ public class DestinosController {
 
         try {
 
-            // =================================================
-            // VALIDAR
-            // =================================================
-
             ResponseEntity<?> error =
-                    validarRecorrido(
-                        recorrido
-                    );
+                    validarRecorrido(recorrido);
 
             if (error != null) {
 
                 return error;
             }
 
-
-            // =================================================
-            // IMPORTANTE
-            //
-            // El Service calcula:
-            //
-            // subtotal
-            // ISV
-            // tarifa
-            // valorPeaje
-            // totalPeajes
-            //
-            // antes de guardar.
-            // =================================================
-
             Recorrido guardado =
-                    recorridoService.guardar(
-                        recorrido
-                    );
+                    recorridoService.guardar(recorrido);
 
-
-            return ResponseEntity.ok(
-                guardado
-            );
+            return ResponseEntity.ok(guardado);
 
         } catch (Exception e) {
 
@@ -329,6 +241,7 @@ public class DestinosController {
 
     // =====================================================
     // ACTUALIZAR RECORRIDO
+    //
     // PUT /api/recorridos/{id}
     // =====================================================
 
@@ -341,11 +254,7 @@ public class DestinosController {
 
         try {
 
-            // =================================================
-            // VALIDAR ID
-            // =================================================
-
-            if (id == null) {
+            if (id == null || id <= 0) {
 
                 return ResponseEntity
                         .badRequest()
@@ -354,15 +263,8 @@ public class DestinosController {
                         );
             }
 
-
-            // =================================================
-            // VERIFICAR QUE EXISTA
-            // =================================================
-
             Recorrido existente =
-                    recorridoService.buscarPorId(
-                        id
-                    );
+                    recorridoService.buscarPorId(id);
 
             if (existente == null) {
 
@@ -371,35 +273,13 @@ public class DestinosController {
                         .build();
             }
 
-
-            // =================================================
-            // VALIDAR DATOS
-            // =================================================
-
             ResponseEntity<?> error =
-                    validarRecorrido(
-                        recorrido
-                    );
+                    validarRecorrido(recorrido);
 
             if (error != null) {
 
                 return error;
             }
-
-
-            // =================================================
-            // IMPORTANTE
-            //
-            // NO usamos:
-            //
-            // recorridoService.guardar(recorrido)
-            //
-            // porque eso puede intentar reemplazar
-            // created_at con NULL.
-            //
-            // Usamos modificar(), que primero busca
-            // el registro original y conserva created_at.
-            // =================================================
 
             Recorrido actualizado =
                     recorridoService.modificar(
@@ -407,10 +287,7 @@ public class DestinosController {
                         recorrido
                     );
 
-
-            return ResponseEntity.ok(
-                actualizado
-            );
+            return ResponseEntity.ok(actualizado);
 
         } catch (Exception e) {
 
@@ -428,6 +305,7 @@ public class DestinosController {
 
     // =====================================================
     // ELIMINAR RECORRIDO
+    //
     // DELETE /api/recorridos/{id}
     // =====================================================
 
@@ -439,14 +317,17 @@ public class DestinosController {
 
         try {
 
-            // =================================================
-            // VERIFICAR QUE EXISTA
-            // =================================================
+            if (id == null || id <= 0) {
+
+                return ResponseEntity
+                        .badRequest()
+                        .body(
+                            "El ID del recorrido no es válido."
+                        );
+            }
 
             Recorrido existente =
-                    recorridoService.buscarPorId(
-                        id
-                    );
+                    recorridoService.buscarPorId(id);
 
             if (existente == null) {
 
@@ -455,15 +336,7 @@ public class DestinosController {
                         .build();
             }
 
-
-            // =================================================
-            // ELIMINAR
-            // =================================================
-
-            recorridoService.eliminar(
-                id
-            );
-
+            recorridoService.eliminar(id);
 
             return ResponseEntity.ok(
                 "Recorrido eliminado correctamente."
@@ -484,6 +357,170 @@ public class DestinosController {
 
 
     // =====================================================
+    // FURGONES
+    //
+    // GET /api/furgones
+    // =====================================================
+
+    @GetMapping("/api/furgones")
+    @ResponseBody
+    public ResponseEntity<?> listarFurgones() {
+
+        try {
+
+            List<Furgon> furgones =
+                    furgonService.listarTodos();
+
+            return ResponseEntity.ok(furgones);
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return ResponseEntity
+                    .internalServerError()
+                    .body(
+                        "Error al cargar los furgones: "
+                        + obtenerMensajeError(e)
+                    );
+        }
+    }
+
+
+    // =====================================================
+    // GUARDAR FURGÓN
+    //
+    // POST /api/furgones
+    // =====================================================
+
+    @PostMapping("/api/furgones")
+    @ResponseBody
+    public ResponseEntity<?> guardarFurgon(
+            @RequestBody Furgon furgon
+    ) {
+
+        try {
+
+            // -------------------------------------------------
+            // VALIDAR OBJETO
+            // -------------------------------------------------
+
+            if (furgon == null) {
+
+                return ResponseEntity
+                        .badRequest()
+                        .body(
+                            "Los datos del furgón son obligatorios."
+                        );
+            }
+
+
+            // -------------------------------------------------
+            // VALIDAR NÚMERO / PLACA
+            // -------------------------------------------------
+
+            if (
+                furgon.getFurgon() == null ||
+                furgon.getFurgon().trim().isEmpty()
+            ) {
+
+                return ResponseEntity
+                        .badRequest()
+                        .body(
+                            "La placa o código del furgón es obligatorio."
+                        );
+            }
+
+
+            // -------------------------------------------------
+            // NORMALIZAR
+            // -------------------------------------------------
+
+            String numeroFurgon =
+                    furgon.getFurgon()
+                          .trim()
+                          .toUpperCase();
+
+            furgon.setFurgon(numeroFurgon);
+
+
+            // -------------------------------------------------
+            // VALIDAR EJES
+            // -------------------------------------------------
+
+            if (furgon.getEjes() == null) {
+
+                return ResponseEntity
+                        .badRequest()
+                        .body(
+                            "La cantidad de ejes es obligatoria."
+                        );
+            }
+
+
+            if (
+                furgon.getEjes() != 2 &&
+                furgon.getEjes() != 3
+            ) {
+
+                return ResponseEntity
+                        .badRequest()
+                        .body(
+                            "Los ejes deben ser 2 o 3."
+                        );
+            }
+
+
+            // -------------------------------------------------
+            // VERIFICAR DUPLICADO
+            // -------------------------------------------------
+
+            Furgon existente =
+                    furgonService.buscarPorFurgon(
+                        numeroFurgon
+                    );
+
+            if (existente != null) {
+
+                return ResponseEntity
+                        .badRequest()
+                        .body(
+                            "El furgón "
+                            + numeroFurgon
+                            + " ya existe."
+                        );
+            }
+
+
+            // -------------------------------------------------
+            // GUARDAR
+            // -------------------------------------------------
+
+            Furgon guardado =
+                    furgonService.guardar(furgon);
+
+
+            // -------------------------------------------------
+            // RESPUESTA
+            // -------------------------------------------------
+
+            return ResponseEntity.ok(guardado);
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return ResponseEntity
+                    .internalServerError()
+                    .body(
+                        "Error al guardar el furgón: "
+                        + obtenerMensajeError(e)
+                    );
+        }
+    }
+
+
+    // =====================================================
     // VALIDAR RECORRIDO
     // =====================================================
 
@@ -491,9 +528,9 @@ public class DestinosController {
             Recorrido recorrido
     ) {
 
-        // =================================================
+        // -------------------------------------------------
         // OBJETO
-        // =================================================
+        // -------------------------------------------------
 
         if (recorrido == null) {
 
@@ -505,13 +542,11 @@ public class DestinosController {
         }
 
 
-        // =================================================
+        // -------------------------------------------------
         // FECHA
-        // =================================================
+        // -------------------------------------------------
 
-        if (
-            recorrido.getFecha() == null
-        ) {
+        if (recorrido.getFecha() == null) {
 
             return ResponseEntity
                     .badRequest()
@@ -521,15 +556,13 @@ public class DestinosController {
         }
 
 
-        // =================================================
+        // -------------------------------------------------
         // MOTORISTA
-        // =================================================
+        // -------------------------------------------------
 
         if (
             recorrido.getMotorista() == null ||
-            recorrido.getMotorista()
-                     .trim()
-                     .isEmpty()
+            recorrido.getMotorista().trim().isEmpty()
         ) {
 
             return ResponseEntity
@@ -540,32 +573,11 @@ public class DestinosController {
         }
 
 
-        // =================================================
-        // UNIDAD
-        // =================================================
-
-        if (
-            recorrido.getUnidad() == null ||
-            recorrido.getUnidad()
-                     .trim()
-                     .isEmpty()
-        ) {
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                        "La unidad es obligatoria."
-                    );
-        }
-
-
-        // =================================================
+        // -------------------------------------------------
         // EJES
-        // =================================================
+        // -------------------------------------------------
 
-        if (
-            recorrido.getEjesCamion() == null
-        ) {
+        if (recorrido.getEjesCamion() == null) {
 
             return ResponseEntity
                     .badRequest()
@@ -588,15 +600,13 @@ public class DestinosController {
         }
 
 
-        // =================================================
-        // RUTA
-        // =================================================
+        // -------------------------------------------------
+        // RUTA / DESTINO
+        // -------------------------------------------------
 
         if (
             recorrido.getRutaDestino() == null ||
-            recorrido.getRutaDestino()
-                     .trim()
-                     .isEmpty()
+            recorrido.getRutaDestino().trim().isEmpty()
         ) {
 
             return ResponseEntity
@@ -607,13 +617,11 @@ public class DestinosController {
         }
 
 
-        // =================================================
-        // KM
-        // =================================================
+        // -------------------------------------------------
+        // KILÓMETROS
+        // -------------------------------------------------
 
-        if (
-            recorrido.getKmRecorridos() == null
-        ) {
+        if (recorrido.getKmRecorridos() == null) {
 
             return ResponseEntity
                     .badRequest()
@@ -625,9 +633,7 @@ public class DestinosController {
 
         if (
             recorrido.getKmRecorridos()
-                     .compareTo(
-                         BigDecimal.ZERO
-                     ) < 0
+                     .compareTo(BigDecimal.ZERO) < 0
         ) {
 
             return ResponseEntity
@@ -638,13 +644,11 @@ public class DestinosController {
         }
 
 
-        // =================================================
-        // BANDA
-        // =================================================
+        // -------------------------------------------------
+        // BANDA POR KM
+        // -------------------------------------------------
 
-        if (
-            recorrido.getBandaPorKm() == null
-        ) {
+        if (recorrido.getBandaPorKm() == null) {
 
             return ResponseEntity
                     .badRequest()
@@ -656,9 +660,7 @@ public class DestinosController {
 
         if (
             recorrido.getBandaPorKm()
-                     .compareTo(
-                         BigDecimal.ZERO
-                     ) <= 0
+                     .compareTo(BigDecimal.ZERO) <= 0
         ) {
 
             return ResponseEntity
@@ -669,23 +671,17 @@ public class DestinosController {
         }
 
 
-        // =================================================
-        // CANTIDAD DE PEAJES
-        // =================================================
+        // -------------------------------------------------
+        // PEAJES
+        // -------------------------------------------------
 
-        if (
-            recorrido.getCantidadPeajes() == null
-        ) {
+        if (recorrido.getCantidadPeajes() == null) {
 
-            recorrido.setCantidadPeajes(
-                0
-            );
+            recorrido.setCantidadPeajes(0);
         }
 
 
-        if (
-            recorrido.getCantidadPeajes() < 0
-        ) {
+        if (recorrido.getCantidadPeajes() < 0) {
 
             return ResponseEntity
                     .badRequest()
@@ -707,28 +703,21 @@ public class DestinosController {
             Exception e
     ) {
 
-        Throwable causa =
-                e;
+        Throwable causa = e;
 
-        String mensaje =
-                e.getMessage();
+        String mensaje = e.getMessage();
 
 
-        while (
-            causa.getCause() != null
-        ) {
+        while (causa.getCause() != null) {
 
-            causa =
-                    causa.getCause();
-
+            causa = causa.getCause();
 
             if (
                 causa.getMessage() != null &&
                 !causa.getMessage().isBlank()
             ) {
 
-                mensaje =
-                    causa.getMessage();
+                mensaje = causa.getMessage();
             }
         }
 

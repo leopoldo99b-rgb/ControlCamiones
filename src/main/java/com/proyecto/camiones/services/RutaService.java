@@ -1,28 +1,37 @@
 package com.proyecto.camiones.services;
 
-import com.proyecto.camiones.model.Destino;
-import com.proyecto.camiones.repository.DestinoRepository;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.proyecto.camiones.model.Ruta;
+import com.proyecto.camiones.repository.RutaRepository;
 
 @Service
-public class DestinoService {
+public class RutaService {
 
     @Autowired
-    private DestinoRepository destinoRepository;
+    private RutaRepository rutaRepository;
 
 
     // =====================================================
-    // LISTAR TODOS
+    // LISTAR TODAS
     // =====================================================
 
-    public List<Destino> listarTodos() {
+    public List<Ruta> listarTodos() {
 
-        return destinoRepository.findAll();
+        return rutaRepository.findAll();
+    }
 
+
+    // =====================================================
+    // LISTAR RUTAS ACTIVAS / ORDENADAS
+    // =====================================================
+
+    public List<Ruta> listarRutas() {
+
+        return rutaRepository.listarRutas();
     }
 
 
@@ -30,11 +39,11 @@ public class DestinoService {
     // BUSCAR POR ID
     // =====================================================
 
-    public Destino buscarPorId(Long id) {
+    public Ruta buscarPorId(Long id) {
 
-        return destinoRepository.findById(id)
+        return rutaRepository
+                .findById(id)
                 .orElse(null);
-
     }
 
 
@@ -42,10 +51,9 @@ public class DestinoService {
     // GUARDAR
     // =====================================================
 
-    public Destino guardar(Destino destino) {
+    public Ruta guardar(Ruta ruta) {
 
-        return destinoRepository.save(destino);
-
+        return rutaRepository.save(ruta);
     }
 
 
@@ -53,23 +61,22 @@ public class DestinoService {
     // MODIFICAR
     // =====================================================
 
-    public Destino modificar(Long id, Destino destino) {
+    public Ruta modificar(Long id, Ruta datos) {
 
-        Destino existente =
-                destinoRepository.findById(id)
+        Ruta existente =
+                rutaRepository
+                        .findById(id)
                         .orElse(null);
 
         if (existente == null) {
             return null;
         }
 
-        existente.setDestino(destino.getDestino());
-        existente.setKm(destino.getKm());
-        existente.setGalones(destino.getGalones());
-        existente.setPeajes(destino.getPeajes());
+        existente.setDestino(datos.getDestino());
+        existente.setOdt(datos.getOdt());
+        existente.setEstado(datos.getEstado());
 
-        return destinoRepository.save(existente);
-
+        return rutaRepository.save(existente);
     }
 
 
@@ -79,8 +86,6 @@ public class DestinoService {
 
     public void eliminar(Long id) {
 
-        destinoRepository.deleteById(id);
-
+        rutaRepository.deleteById(id);
     }
-
 }
