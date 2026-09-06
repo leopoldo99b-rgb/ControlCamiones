@@ -1,0 +1,1631 @@
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Control de Combustible</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- CSS propio -->
+    <link rel="stylesheet" href="../css/combustible.css">
+
+</head>
+
+<body>
+
+<div class="fuel-page">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="page-header">
+
+        <div class="header-content">
+
+            <span class="page-kicker">
+
+                <i class="bi bi-fuel-pump-fill"></i>
+
+                CONTROL DE FLOTA
+
+            </span>
+
+            <h1>
+                Control de Combustible
+            </h1>
+
+            <p>
+                Control de abastecimientos, consumo autorizado y costo por viaje.
+            </p>
+
+        </div>
+
+        <button
+            type="button"
+            class="btn btn-primary btn-register"
+            data-bs-toggle="modal"
+            data-bs-target="#modalCombustible">
+
+            <i class="bi bi-plus-lg"></i>
+
+            Registrar abastecimiento
+
+        </button>
+
+    </header>
+
+
+    <!-- =====================================================
+         AVISO IMPORTANTE
+    ====================================================== -->
+
+    <section class="control-notice">
+
+        <div class="notice-icon">
+
+            <i class="bi bi-info-circle-fill"></i>
+
+        </div>
+
+        <div class="notice-content">
+
+            <strong>
+                Control basado en rutas programadas
+            </strong>
+
+            <p>
+                Los kilómetros y galones corresponden a los valores previamente
+                establecidos para cada destino. No es necesario ingresar
+                kilometraje inicial ni final del vehículo.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         PRECIOS VIGENTES
+    ====================================================== -->
+
+    <section class="price-section">
+
+        <div class="section-title">
+
+            <div>
+
+                <span class="section-kicker">
+
+                    <i class="bi bi-cash-coin"></i>
+
+                    PRECIOS
+
+                </span>
+
+                <h2>
+                    Precios vigentes de combustible
+                </h2>
+
+                <p>
+                    Estos precios se utilizarán únicamente para nuevos abastecimientos.
+                </p>
+
+            </div>
+
+            <span class="last-update">
+
+                <i class="bi bi-clock-history"></i>
+
+                <span id="ultimaActualizacion">
+                    Sin actualización
+                </span>
+
+            </span>
+
+        </div>
+
+
+        <div class="row g-4">
+
+            <!-- =================================================
+                 DIESEL
+            ================================================== -->
+
+            <div class="col-xl-4 col-md-6">
+
+                <div class="fuel-price-card diesel-card">
+
+                    <div class="fuel-card-top">
+
+                        <div class="fuel-icon">
+
+                            <i class="bi bi-fuel-pump-fill"></i>
+
+                        </div>
+
+                        <span class="fuel-status">
+                            Activo
+                        </span>
+
+                    </div>
+
+
+                    <div class="fuel-info">
+
+                        <span class="fuel-name">
+                            Diésel
+                        </span>
+
+                        <div class="fuel-price">
+
+                            <small>
+                                L.
+                            </small>
+
+                            <span id="precioDiesel">
+                                --
+                            </span>
+
+                        </div>
+
+                        <span class="price-label">
+                            Precio por galón
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-edit-price"
+                        data-fuel="diesel"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalPrecio">
+
+                        <i class="bi bi-pencil"></i>
+
+                        Editar precio
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 REGULAR
+            ================================================== -->
+
+            <div class="col-xl-4 col-md-6">
+
+                <div class="fuel-price-card regular-card">
+
+                    <div class="fuel-card-top">
+
+                        <div class="fuel-icon">
+
+                            <i class="bi bi-fuel-pump-fill"></i>
+
+                        </div>
+
+                        <span class="fuel-status">
+                            Activo
+                        </span>
+
+                    </div>
+
+
+                    <div class="fuel-info">
+
+                        <span class="fuel-name">
+                            Gasolina Regular
+                        </span>
+
+                        <div class="fuel-price">
+
+                            <small>
+                                L.
+                            </small>
+
+                            <span id="precioRegular">
+                                --
+                            </span>
+
+                        </div>
+
+                        <span class="price-label">
+                            Precio por galón
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-edit-price"
+                        data-fuel="regular"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalPrecio">
+
+                        <i class="bi bi-pencil"></i>
+
+                        Editar precio
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 SUPER
+            ================================================== -->
+
+            <div class="col-xl-4 col-md-6">
+
+                <div class="fuel-price-card super-card">
+
+                    <div class="fuel-card-top">
+
+                        <div class="fuel-icon">
+
+                            <i class="bi bi-fuel-pump-fill"></i>
+
+                        </div>
+
+                        <span class="fuel-status">
+                            Activo
+                        </span>
+
+                    </div>
+
+
+                    <div class="fuel-info">
+
+                        <span class="fuel-name">
+                            Gasolina Súper
+                        </span>
+
+                        <div class="fuel-price">
+
+                            <small>
+                                L.
+                            </small>
+
+                            <span id="precioSuper">
+                                --
+                            </span>
+
+                        </div>
+
+                        <span class="price-label">
+                            Precio por galón
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-edit-price"
+                        data-fuel="super"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalPrecio">
+
+                        <i class="bi bi-pencil"></i>
+
+                        Editar precio
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             NOTA PRECIO
+        ================================================== -->
+
+        <div class="price-history-note">
+
+            <i class="bi bi-shield-check"></i>
+
+            <div>
+
+                <strong>
+                    Los precios históricos están protegidos
+                </strong>
+
+                <span>
+                    Cambiar el precio vigente no modifica los abastecimientos
+                    registrados anteriormente. Cada viaje conserva el precio
+                    utilizado al momento de registrarlo.
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         RESUMEN
+    ====================================================== -->
+
+    <section class="summary-section">
+
+
+        <!-- GALONES -->
+
+        <div class="summary-card">
+
+            <div class="summary-icon blue">
+
+                <i class="bi bi-droplet-half"></i>
+
+            </div>
+
+            <div class="summary-info">
+
+                <span>
+                    Galones autorizados
+                </span>
+
+                <strong id="totalGalones">
+                    --
+                </strong>
+
+                <small>
+                    Periodo seleccionado
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- COSTO -->
+
+        <div class="summary-card">
+
+            <div class="summary-icon green">
+
+                <i class="bi bi-cash-stack"></i>
+
+            </div>
+
+            <div class="summary-info">
+
+                <span>
+                    Costo de combustible
+                </span>
+
+                <strong id="totalCosto">
+                    L. --
+                </strong>
+
+                <small>
+                    Periodo seleccionado
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- VIAJES -->
+
+        <div class="summary-card">
+
+            <div class="summary-icon purple">
+
+                <i class="bi bi-truck"></i>
+
+            </div>
+
+            <div class="summary-info">
+
+                <span>
+                    Viajes abastecidos
+                </span>
+
+                <strong id="totalViajes">
+                    --
+                </strong>
+
+                <small>
+                    Registros encontrados
+                </small>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         REPORTE
+    ====================================================== -->
+
+    <section class="report-card">
+
+
+        <!-- HEADER -->
+
+        <div class="report-header">
+
+            <div>
+
+                <span class="section-kicker">
+
+                    <i class="bi bi-list-check"></i>
+
+                    REGISTROS
+
+                </span>
+
+                <h2>
+                    Control de abastecimientos
+                </h2>
+
+                <p>
+                    Consulta el combustible autorizado y el costo asociado
+                    a cada viaje.
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="btn btn-outline-secondary btn-export"
+                id="btnExportar">
+
+                <i class="bi bi-download"></i>
+
+                Exportar
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             FILTROS
+        ================================================== -->
+
+        <div class="filters-container">
+
+
+            <!-- DESDE -->
+
+            <div class="filter-group">
+
+                <label for="fechaDesde">
+
+                    <i class="bi bi-calendar3"></i>
+
+                    Desde
+
+                </label>
+
+                <input
+                    type="date"
+                    class="form-control"
+                    id="fechaDesde">
+
+            </div>
+
+
+            <!-- HASTA -->
+
+            <div class="filter-group">
+
+                <label for="fechaHasta">
+
+                    <i class="bi bi-calendar3"></i>
+
+                    Hasta
+
+                </label>
+
+                <input
+                    type="date"
+                    class="form-control"
+                    id="fechaHasta">
+
+            </div>
+
+
+            <!-- PLACA -->
+
+            <div class="filter-group">
+
+                <label for="filtroPlaca">
+
+                    <i class="bi bi-truck"></i>
+
+                    Placa
+
+                </label>
+
+                <select
+                    class="form-select"
+                    id="filtroPlaca">
+
+                    <option selected value="">
+                        Todas las unidades
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- COMBUSTIBLE -->
+
+            <div class="filter-group">
+
+                <label for="filtroCombustible">
+
+                    <i class="bi bi-fuel-pump"></i>
+
+                    Combustible
+
+                </label>
+
+                <select
+                    class="form-select"
+                    id="filtroCombustible">
+
+                    <option selected value="">
+                        Todos
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- =================================================
+                 ACCIONES DE FILTROS
+            ================================================== -->
+
+            <div class="filter-actions">
+
+                <!-- BUSCAR -->
+
+                <button
+                    type="button"
+                    class="btn btn-filter"
+                    id="btnBuscar">
+
+                    <i class="bi bi-search"></i>
+
+                    Buscar
+
+                </button>
+
+
+                <!-- LIMPIAR FILTROS -->
+
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-clear-filters"
+                    id="btnLimpiarFiltros"
+                    title="Limpiar todos los filtros">
+
+                    <i class="bi bi-arrow-counterclockwise"></i>
+
+                    Limpiar 
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             TABLA
+        ================================================== -->
+
+        <div class="table-responsive">
+
+            <table class="table fuel-table">
+
+                <thead>
+
+                <tr>
+
+                    <th>
+                        Fecha
+                    </th>
+
+                    <th>
+                        Placa
+                    </th>
+
+                    <th>
+                        Motorista
+                    </th>
+
+                    <th>
+                        Destino
+                    </th>
+
+                    <th>
+                        KM ruta
+                    </th>
+
+                    <th>
+                        Galones autorizados
+                    </th>
+
+                    <th>
+                        Combustible
+                    </th>
+
+                    <th>
+                        Precio/Galón
+                    </th>
+
+                    <th>
+                        Total
+                    </th>
+
+                    <th class="text-center">
+                        Acciones
+                    </th>
+
+                </tr>
+
+                </thead>
+
+
+                <!--
+                    IMPORTANTE:
+
+                    Este tbody queda vacío.
+
+                    combustible.js lo llenará con los datos
+                    provenientes de la API /api/abastecimientos
+                -->
+
+                <tbody id="tablaAbastecimientos">
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- =================================================
+             FOOTER TABLA
+        ================================================== -->
+
+        <div class="table-footer">
+
+            <span id="infoPaginacion">
+
+                Mostrando
+
+                <strong id="registroDesde">
+                    0
+                </strong>
+
+                -
+
+                <strong id="registroHasta">
+                    0
+                </strong>
+
+                de
+
+                <strong id="totalRegistros">
+                    0
+                </strong>
+
+                registros
+
+            </span>
+
+
+            <nav>
+
+                <ul
+                    class="pagination pagination-sm mb-0"
+                    id="paginacion">
+                </ul>
+
+            </nav>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL REGISTRAR ABASTECIMIENTO
+========================================================== -->
+
+<div
+    class="modal fade"
+    id="modalCombustible"
+    tabindex="-1"
+    aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+
+        <div class="modal-content custom-modal">
+
+
+            <!-- HEADER -->
+
+            <div class="modal-header">
+
+                <div class="modal-title-wrapper">
+
+                    <div class="modal-icon">
+
+                        <i class="bi bi-fuel-pump-fill"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h5>
+                            Registrar abastecimiento
+                        </h5>
+
+                        <p>
+                            Registre el combustible autorizado para el viaje.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Cerrar">
+                </button>
+
+            </div>
+
+
+            <!-- BODY -->
+
+            <div class="modal-body">
+
+                <div class="row g-3">
+
+
+                    <!-- FECHA -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="fechaCombustible"
+                            class="form-label">
+
+                            Fecha
+
+                            <span>*</span>
+
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="bi bi-calendar3"></i>
+
+                            <input
+                                type="date"
+                                class="form-control"
+                                id="fechaCombustible">
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PLACA -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="unidadCombustible"
+                            class="form-label">
+
+                            Placa
+
+                            <span>*</span>
+
+                        </label>
+
+                        <select
+                            class="form-select"
+                            id="unidadCombustible">
+
+                            <option
+                                selected
+                                disabled
+                                value="">
+
+                                Seleccionar unidad
+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- MOTORISTA -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="motoristaCombustible"
+                            class="form-label">
+
+                            Motorista
+
+                            <span>*</span>
+
+                        </label>
+
+                        <select
+                            class="form-select"
+                            id="motoristaCombustible">
+
+                            <option
+                                selected
+                                disabled
+                                value="">
+
+                                Seleccionar motorista
+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- DESTINO -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="destinoCombustible"
+                            class="form-label">
+
+                            Destino
+
+                            <span>*</span>
+
+                        </label>
+
+                        <select
+                            class="form-select"
+                            id="destinoCombustible">
+
+                            <option
+                                selected
+                                disabled
+                                value="">
+
+                                Seleccionar destino
+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- INFORMACIÓN AUTOMÁTICA DE LA RUTA -->
+
+                    <div class="col-12">
+
+                        <div class="route-info-box">
+
+
+                            <div class="route-info-item">
+
+                                <span>
+
+                                    <i class="bi bi-signpost-2"></i>
+
+                                    Kilómetros de ruta
+
+                                </span>
+
+                                <strong id="kmRuta">
+                                    — km
+                                </strong>
+
+                                <small>
+                                    Valor definido en el catálogo de rutas
+                                </small>
+
+                            </div>
+
+
+                            <div class="route-info-divider">
+                            </div>
+
+
+                            <div class="route-info-item">
+
+                                <span>
+
+                                    <i class="bi bi-droplet-half"></i>
+
+                                    Galones autorizados
+
+                                </span>
+
+                                <strong id="galonesRuta">
+                                    — gal
+                                </strong>
+
+                                <small>
+                                    Cantidad establecida para este destino
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                   
+
+
+                    <!-- TIPO DE COMBUSTIBLE -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="tipoCombustible"
+                            class="form-label">
+
+                            Tipo de combustible
+
+                            <span>*</span>
+
+                        </label>
+
+                        <select
+                            class="form-select"
+                            id="tipoCombustible">
+
+                            <option
+                                selected
+                                disabled
+                                value="">
+
+                                Seleccionar combustible
+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- GALONES -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="galonesInput"
+                            class="form-label">
+
+                            Galones autorizados
+
+                            <span>*</span>
+
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="bi bi-droplet"></i>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="galonesInput"
+                                placeholder="0.00"
+                                step="0.01"
+                                min="0">
+
+                        </div>
+
+
+                        <div class="field-help">
+
+                            Se cargará automáticamente según el destino.
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PRECIO POR GALÓN -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+
+                            Precio aplicado por galón
+
+                        </label>
+
+                        <div class="calculated-field">
+
+                            <span>
+                                L.
+                            </span>
+
+                            <strong id="precioAplicado">
+                                0.00
+                            </strong>
+
+                            <small>
+                                Precio vigente
+                            </small>
+
+                        </div>
+
+
+                        <div class="field-help">
+
+                            Este precio queda guardado en este abastecimiento.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- TOTAL -->
+
+                <div class="calculation-box">
+
+                    <div>
+
+                        <span>
+                            Costo total del abastecimiento
+                        </span>
+
+                        <small>
+                            Galones autorizados × precio aplicado por galón
+                        </small>
+
+                    </div>
+
+                    <strong id="totalAbastecimiento">
+                        L. 0.00
+                    </strong>
+
+                </div>
+
+
+                <!-- EXPLICACIÓN DEL PRECIO -->
+
+                <div class="alert custom-alert-info">
+
+                    <i class="bi bi-info-circle-fill"></i>
+
+                    <div>
+
+                        <strong>
+                            El precio queda congelado en el registro
+                        </strong>
+
+                        <p>
+                            Si posteriormente cambia el precio del combustible,
+                            este abastecimiento conservará el precio y total
+                            registrados actualmente.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ADVERTENCIA -->
+
+                <div class="alert custom-alert-warning">
+
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+
+                    <div>
+
+                        <strong>
+                            Verifique los datos
+                        </strong>
+
+                        <p>
+                            Confirme que la unidad, destino, gasolinera y tipo
+                            de combustible sean correctos antes de registrar
+                            el abastecimiento.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER -->
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-light btn-modal-cancel"
+                    data-bs-dismiss="modal">
+
+                    Cancelar
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn btn-primary btn-modal-save"
+                    id="btnGuardarAbastecimiento">
+
+                    <i class="bi bi-check-lg"></i>
+
+                    Registrar abastecimiento
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL EDITAR PRECIO
+========================================================== -->
+
+<div
+    class="modal fade"
+    id="modalPrecio"
+    tabindex="-1"
+    aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content custom-modal">
+
+
+            <!-- HEADER -->
+
+            <div class="modal-header">
+
+                <div class="modal-title-wrapper">
+
+                    <div class="modal-icon">
+
+                        <i class="bi bi-cash-coin"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h5>
+                            Actualizar precio
+                        </h5>
+
+                        <p>
+                            Modifique el precio vigente por galón.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Cerrar">
+                </button>
+
+            </div>
+
+
+            <!-- BODY -->
+
+            <div class="modal-body">
+
+
+                <!-- COMBUSTIBLE -->
+
+                <div class="price-edit-info">
+
+                    <span>
+                        Combustible seleccionado
+                    </span>
+
+                    <strong id="combustiblePrecioSeleccionado">
+                        Seleccionar
+                    </strong>
+
+                </div>
+
+
+                <!-- PRECIO -->
+
+                <label
+                    for="nuevoPrecio"
+                    class="form-label">
+
+                    Nuevo precio por galón
+
+                    <span>*</span>
+
+                </label>
+
+
+                <div class="price-input">
+
+                    <span>
+                        L.
+                    </span>
+
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="nuevoPrecio"
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0">
+
+                </div>
+
+
+                <div class="field-help">
+
+                    Este precio será utilizado para nuevos abastecimientos.
+
+                </div>
+
+
+                <!-- AVISO -->
+
+                <div class="alert custom-alert-info">
+
+                    <i class="bi bi-shield-check"></i>
+
+                    <span>
+                        Los abastecimientos anteriores conservarán
+                        exactamente el precio que tenían al momento
+                        de ser registrados.
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER -->
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-light btn-modal-cancel"
+                    data-bs-dismiss="modal">
+
+                    Cancelar
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn btn-primary btn-modal-save"
+                    id="btnGuardarPrecio">
+
+                    <i class="bi bi-check-lg"></i>
+
+                    Guardar precio
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL ELIMINAR
+========================================================== -->
+
+<div
+    class="modal fade"
+    id="modalEliminar"
+    tabindex="-1"
+    aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content custom-modal delete-modal">
+
+
+            <div class="modal-body text-center">
+
+                <div class="delete-icon">
+
+                    <i class="bi bi-trash3"></i>
+
+                </div>
+
+
+                <h4>
+                    ¿Eliminar abastecimiento?
+                </h4>
+
+
+                <p>
+                    Esta acción eliminará el registro seleccionado.
+                    Esta operación no se puede deshacer.
+                </p>
+
+
+                <div class="delete-record">
+
+                    <strong id="eliminarPlaca">
+                        --
+                    </strong>
+
+                    <span id="eliminarDetalle">
+                        --
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer justify-content-center">
+
+                <button
+                    type="button"
+                    class="btn btn-light btn-modal-cancel"
+                    data-bs-dismiss="modal">
+
+                    Cancelar
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    id="btnConfirmarEliminar">
+
+                    <i class="bi bi-trash3"></i>
+
+                    Sí, eliminar
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     TOASTS
+========================================================== -->
+
+<div class="toast-container position-fixed bottom-0 end-0 p-4">
+
+
+    <!-- ÉXITO -->
+
+    <div
+        id="toastExito"
+        class="toast custom-toast success"
+        role="alert">
+
+        <div class="toast-body">
+
+            <div class="toast-icon">
+
+                <i class="bi bi-check-lg"></i>
+
+            </div>
+
+            <div>
+
+                <strong>
+                    Operación exitosa
+                </strong>
+
+                <p id="toastExitoMensaje">
+                    Operación realizada correctamente.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="toast"
+                aria-label="Cerrar">
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ADVERTENCIA -->
+
+    <div
+        id="toastAdvertencia"
+        class="toast custom-toast warning"
+        role="alert">
+
+        <div class="toast-body">
+
+            <div class="toast-icon">
+
+                <i class="bi bi-exclamation-lg"></i>
+
+            </div>
+
+            <div>
+
+                <strong>
+                    Advertencia
+                </strong>
+
+                <p id="toastAdvertenciaMensaje">
+                    Complete todos los campos requeridos.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="toast"
+                aria-label="Cerrar">
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ERROR -->
+
+    <div
+        id="toastError"
+        class="toast custom-toast error"
+        role="alert">
+
+        <div class="toast-body">
+
+            <div class="toast-icon">
+
+                <i class="bi bi-x-lg"></i>
+
+            </div>
+
+            <div>
+
+                <strong>
+                    Error
+                </strong>
+
+                <p id="toastErrorMensaje">
+                    No fue posible completar la operación.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="toast"
+                aria-label="Cerrar">
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================== -->
+
+<!-- Bootstrap -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+
+<!-- SweetAlert2 -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/sweetalert2@11">
+</script>
+
+
+<!-- JavaScript propio -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<script src="/js/combustible.js"></script>
+
+
+</body>
+
+</html>
