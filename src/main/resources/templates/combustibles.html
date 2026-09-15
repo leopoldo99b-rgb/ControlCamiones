@@ -1,11 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Control de Combustible</title>
@@ -46,11 +43,8 @@
         <div class="header-content">
 
             <span class="page-kicker">
-
                 <i class="bi bi-fuel-pump-fill"></i>
-
                 CONTROL DE FLOTA
-
             </span>
 
             <h1>
@@ -58,7 +52,8 @@
             </h1>
 
             <p>
-                Control de abastecimientos, consumo autorizado y costo por viaje.
+                Control de abastecimientos, consumo autorizado,
+                gasolinera y costo por viaje.
             </p>
 
         </div>
@@ -70,7 +65,6 @@
             data-bs-target="#modalCombustible">
 
             <i class="bi bi-plus-lg"></i>
-
             Registrar abastecimiento
 
         </button>
@@ -120,7 +114,6 @@
                 <span class="section-kicker">
 
                     <i class="bi bi-cash-coin"></i>
-
                     PRECIOS
 
                 </span>
@@ -161,9 +154,7 @@
                     <div class="fuel-card-top">
 
                         <div class="fuel-icon">
-
                             <i class="bi bi-fuel-pump-fill"></i>
-
                         </div>
 
                         <span class="fuel-status">
@@ -206,7 +197,6 @@
                         data-bs-target="#modalPrecio">
 
                         <i class="bi bi-pencil"></i>
-
                         Editar precio
 
                     </button>
@@ -227,9 +217,7 @@
                     <div class="fuel-card-top">
 
                         <div class="fuel-icon">
-
                             <i class="bi bi-fuel-pump-fill"></i>
-
                         </div>
 
                         <span class="fuel-status">
@@ -272,7 +260,6 @@
                         data-bs-target="#modalPrecio">
 
                         <i class="bi bi-pencil"></i>
-
                         Editar precio
 
                     </button>
@@ -293,9 +280,7 @@
                     <div class="fuel-card-top">
 
                         <div class="fuel-icon">
-
                             <i class="bi bi-fuel-pump-fill"></i>
-
                         </div>
 
                         <span class="fuel-status">
@@ -338,7 +323,6 @@
                         data-bs-target="#modalPrecio">
 
                         <i class="bi bi-pencil"></i>
-
                         Editar precio
 
                     </button>
@@ -489,7 +473,6 @@
                 <span class="section-kicker">
 
                     <i class="bi bi-list-check"></i>
-
                     REGISTROS
 
                 </span>
@@ -499,8 +482,8 @@
                 </h2>
 
                 <p>
-                    Consulta el combustible autorizado y el costo asociado
-                    a cada viaje.
+                    Consulta el combustible autorizado, la gasolinera
+                    y el costo asociado a cada viaje.
                 </p>
 
             </div>
@@ -512,7 +495,6 @@
                 id="btnExportar">
 
                 <i class="bi bi-download"></i>
-
                 Exportar
 
             </button>
@@ -534,7 +516,6 @@
                 <label for="fechaDesde">
 
                     <i class="bi bi-calendar3"></i>
-
                     Desde
 
                 </label>
@@ -554,7 +535,6 @@
                 <label for="fechaHasta">
 
                     <i class="bi bi-calendar3"></i>
-
                     Hasta
 
                 </label>
@@ -574,7 +554,6 @@
                 <label for="filtroPlaca">
 
                     <i class="bi bi-truck"></i>
-
                     Placa
 
                 </label>
@@ -599,7 +578,6 @@
                 <label for="filtroCombustible">
 
                     <i class="bi bi-fuel-pump"></i>
-
                     Combustible
 
                 </label>
@@ -610,6 +588,50 @@
 
                     <option selected value="">
                         Todos
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- GASOLINERA -->
+
+            <div class="filter-group">
+
+                <label for="filtroGasolinera">
+
+                    <i class="bi bi-shop"></i>
+                    Gasolinera
+
+                </label>
+
+                <select
+                    class="form-select"
+                    id="filtroGasolinera">
+
+                    <option selected value="">
+                        Todas
+                    </option>
+
+                    <option value="Shell">
+                        Shell
+                    </option>
+
+                    <option value="Texaco">
+                        Texaco
+                    </option>
+
+                    <option value="Puma">
+                        Puma
+                    </option>
+
+                    <option value="UNO">
+                        UNO
+                    </option>
+
+                    <option value="Otra">
+                        Otra
                     </option>
 
                 </select>
@@ -631,7 +653,6 @@
                     id="btnBuscar">
 
                     <i class="bi bi-search"></i>
-
                     Buscar
 
                 </button>
@@ -646,8 +667,7 @@
                     title="Limpiar todos los filtros">
 
                     <i class="bi bi-arrow-counterclockwise"></i>
-
-                    Limpiar 
+                    Limpiar
 
                 </button>
 
@@ -692,6 +712,12 @@
                         Galones autorizados
                     </th>
 
+                    <!-- NUEVA COLUMNA GASOLINERA -->
+
+                    <th>
+                        Gasolinera
+                    </th>
+
                     <th>
                         Combustible
                     </th>
@@ -719,7 +745,12 @@
                     Este tbody queda vacío.
 
                     combustible.js lo llenará con los datos
-                    provenientes de la API /api/abastecimientos
+                    provenientes de la API /api/abastecimientos.
+
+                    El objeto de cada abastecimiento deberá incluir:
+
+                    gasolinera
+
                 -->
 
                 <tbody id="tablaAbastecimientos">
@@ -766,6 +797,7 @@
                 <ul
                     class="pagination pagination-sm mb-0"
                     id="paginacion">
+
                 </ul>
 
             </nav>
@@ -824,6 +856,7 @@
                     class="btn-close"
                     data-bs-dismiss="modal"
                     aria-label="Cerrar">
+
                 </button>
 
             </div>
@@ -972,7 +1005,6 @@
                                 <span>
 
                                     <i class="bi bi-signpost-2"></i>
-
                                     Kilómetros de ruta
 
                                 </span>
@@ -997,7 +1029,6 @@
                                 <span>
 
                                     <i class="bi bi-droplet-half"></i>
-
                                     Galones autorizados
 
                                 </span>
@@ -1017,7 +1048,70 @@
                     </div>
 
 
-                   
+                    <!-- =================================================
+                         GASOLINERA
+                    ================================================== -->
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="gasolineraCombustible"
+                            class="form-label">
+
+                            Gasolinera
+
+                            <span>*</span>
+
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="bi bi-shop"></i>
+
+                            <select
+                                class="form-select"
+                                id="gasolineraCombustible">
+
+                                <option
+                                    selected
+                                    disabled
+                                    value="">
+
+                                    Seleccionar gasolinera
+
+                                </option>
+
+                                <option value="Shell">
+                                    Shell
+                                </option>
+
+                                <option value="Texaco">
+                                    Texaco
+                                </option>
+
+                                <option value="Puma">
+                                    Puma
+                                </option>
+
+                                <option value="UNO">
+                                    UNO
+                                </option>
+
+                                <option value="Otra">
+                                    Otra
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="field-help">
+
+                            Seleccione la gasolinera donde se realizó el abastecimiento.
+
+                        </div>
+
+                    </div>
 
 
                     <!-- TIPO DE COMBUSTIBLE -->
@@ -1164,9 +1258,11 @@
                         </strong>
 
                         <p>
+
                             Si posteriormente cambia el precio del combustible,
                             este abastecimiento conservará el precio y total
                             registrados actualmente.
+
                         </p>
 
                     </div>
@@ -1187,9 +1283,11 @@
                         </strong>
 
                         <p>
+
                             Confirme que la unidad, destino, gasolinera y tipo
                             de combustible sean correctos antes de registrar
                             el abastecimiento.
+
                         </p>
 
                     </div>
@@ -1219,7 +1317,6 @@
                     id="btnGuardarAbastecimiento">
 
                     <i class="bi bi-check-lg"></i>
-
                     Registrar abastecimiento
 
                 </button>
@@ -1280,6 +1377,7 @@
                     class="btn-close"
                     data-bs-dismiss="modal"
                     aria-label="Cerrar">
+
                 </button>
 
             </div>
@@ -1349,9 +1447,11 @@
                     <i class="bi bi-shield-check"></i>
 
                     <span>
+
                         Los abastecimientos anteriores conservarán
                         exactamente el precio que tenían al momento
                         de ser registrados.
+
                     </span>
 
                 </div>
@@ -1379,7 +1479,6 @@
                     id="btnGuardarPrecio">
 
                     <i class="bi bi-check-lg"></i>
-
                     Guardar precio
 
                 </button>
@@ -1423,8 +1522,10 @@
 
 
                 <p>
+
                     Esta acción eliminará el registro seleccionado.
                     Esta operación no se puede deshacer.
+
                 </p>
 
 
@@ -1461,7 +1562,6 @@
                     id="btnConfirmarEliminar">
 
                     <i class="bi bi-trash3"></i>
-
                     Sí, eliminar
 
                 </button>
@@ -1514,6 +1614,7 @@
                 class="btn-close"
                 data-bs-dismiss="toast"
                 aria-label="Cerrar">
+
             </button>
 
         </div>
@@ -1553,6 +1654,7 @@
                 class="btn-close"
                 data-bs-dismiss="toast"
                 aria-label="Cerrar">
+
             </button>
 
         </div>
@@ -1592,6 +1694,7 @@
                 class="btn-close"
                 data-bs-dismiss="toast"
                 aria-label="Cerrar">
+
             </button>
 
         </div>
@@ -1619,9 +1722,21 @@
 </script>
 
 
+<!-- jsPDF -->
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+</script>
+
+
+<!-- jsPDF AutoTable -->
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js">
+</script>
+
+
 <!-- JavaScript propio -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
 <script src="/js/combustible.js"></script>
 

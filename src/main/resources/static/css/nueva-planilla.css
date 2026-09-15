@@ -1,0 +1,952 @@
+@charset "UTF-8";
+
+/* =========================================
+   GENERAL
+========================================= */
+body {
+	margin: 0;
+	background: #f5f7fb;
+	color: #1f2937;
+	font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.payroll-page {
+	max-width: 1600px;
+	margin: auto;
+	padding: 30px 35px 50px;
+}
+
+/* =========================================
+   HEADER
+========================================= */
+.page-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	margin-bottom: 28px;
+}
+
+.back-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	text-decoration: none;
+	color: #1769e0;
+	font-size: 13px;
+	font-weight: 600;
+	margin-bottom: 12px;
+}
+
+.page-header h1 {
+	margin: 0;
+	font-size: 29px;
+	font-weight: 700;
+	color: #172033;
+}
+
+.page-header p {
+	margin: 6px 0 0;
+	color: #6b7280;
+	font-size: 14px;
+}
+
+.status-badge {
+	padding: 7px 12px;
+	border-radius: 20px;
+	font-size: 11px;
+	font-weight: 700;
+}
+
+.status-badge.draft {
+	background: #fff4df;
+	color: #bd7600;
+}
+
+/* =========================================
+   CARD
+========================================= */
+.payroll-card {
+	background: #ffffff;
+	border: 1px solid #e6eaf0;
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.card-header-custom {
+	padding: 22px 25px;
+	border-bottom: 1px solid #edf0f4;
+}
+
+.card-header-custom h2 {
+	font-size: 18px;
+	font-weight: 700;
+	margin: 0;
+	color: #172033;
+}
+
+.card-header-custom p {
+	font-size: 13px;
+	color: #7b8494;
+	margin: 5px 0 0;
+}
+
+/* =========================================
+   FORMULARIO
+========================================= */
+.payroll-card>.row, .payroll-card>.period-info, .payroll-card>.generate-container
+	{
+	margin-left: 25px;
+	margin-right: 25px;
+}
+
+.payroll-card>.row {
+	margin-top: 22px;
+}
+
+.form-label {
+	font-size: 13px;
+	font-weight: 600;
+	color: #374151;
+}
+
+.form-control {
+	height: 43px;
+	border-color: #dce1e8;
+	border-radius: 7px;
+	font-size: 13px;
+}
+
+.form-control:focus {
+	border-color: #1769e0;
+	box-shadow: 0 0 0 3px rgba(23, 105, 224, 0.08);
+}
+
+/* =========================================
+   INFORMACIÓN PERÍODO
+========================================= */
+.period-info {
+	margin-top: 18px;
+	padding: 11px 13px;
+	background: #f2f7ff;
+	border-radius: 7px;
+	color: #54708f;
+	font-size: 12px;
+}
+
+.period-info i {
+	color: #1769e0;
+	margin-right: 6px;
+}
+
+/* =========================================
+   BOTÓN GENERAR
+========================================= */
+.generate-container {
+	display: flex;
+	justify-content: flex-end;
+	padding: 20px 0 23px;
+}
+
+.generate-btn {
+	border-radius: 7px;
+	padding: 10px 18px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+/* =========================================
+   MINI RESUMEN
+========================================= */
+.mini-summary {
+	background: #ffffff;
+	border: 1px solid #e6eaf0;
+	border-radius: 10px;
+	padding: 17px;
+	display: flex;
+	align-items: center;
+	gap: 13px;
+}
+
+.mini-icon {
+	width: 43px;
+	height: 43px;
+	border-radius: 9px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 19px;
+}
+
+.mini-icon.blue {
+	background: #e8f1ff;
+	color: #1769e0;
+}
+
+.mini-icon.green {
+	background: #e7f8ef;
+	color: #198754;
+}
+
+.mini-icon.orange {
+	background: #fff2df;
+	color: #d98200;
+}
+
+.mini-icon.purple {
+	background: #f1eafe;
+	color: #7542d6;
+}
+
+.mini-summary span {
+	display: block;
+	color: #7b8494;
+	font-size: 11px;
+	margin-bottom: 3px;
+}
+
+.mini-summary strong {
+	display: block;
+	color: #172033;
+	font-size: 16px;
+}
+
+/* =========================================
+   TABLA
+========================================= */
+.employee-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.search-box {
+	position: relative;
+	width: 230px;
+}
+
+.search-box i {
+	position: absolute;
+	left: 12px;
+	top: 11px;
+	color: #9ca3af;
+	z-index: 2;
+}
+
+.search-box input {
+	width: 100%;
+	height: 38px;
+	border: 1px solid #dce1e8;
+	border-radius: 7px;
+	padding-left: 35px;
+	font-size: 12px;
+	outline: none;
+	background: #ffffff;
+}
+
+.search-box input:focus {
+	border-color: #1769e0;
+}
+
+/* =========================================
+   TABLA PRINCIPAL
+========================================= */
+.payroll-table {
+	margin: 0;
+}
+
+.payroll-table thead {
+	background: #f8f9fb;
+}
+
+.payroll-table th {
+	padding: 14px 20px;
+	color: #737d8c;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	border-bottom: 1px solid #e8ebf0;
+	white-space: nowrap;
+}
+
+.payroll-table td {
+	padding: 16px 20px;
+	vertical-align: middle;
+	font-size: 13px;
+	border-bottom: 1px solid #edf0f4;
+	white-space: nowrap;
+}
+
+.payroll-table tbody tr:hover {
+	background: #fafbfc;
+}
+
+/* =========================================
+   EMPLEADO
+========================================= */
+.employee {
+	display: flex;
+	align-items: center;
+	gap: 11px;
+}
+
+.employee strong {
+	display: block;
+	font-size: 13px;
+	color: #273246;
+}
+
+.employee small {
+	display: block;
+	color: #9aa2ae;
+	font-size: 10px;
+	margin-top: 2px;
+}
+
+.avatar {
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: #e8f1ff;
+	color: #1769e0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 11px;
+	font-weight: 700;
+}
+
+.avatar.large {
+	width: 50px;
+	height: 50px;
+	font-size: 15px;
+}
+
+/* =========================================
+   VALORES
+========================================= */
+.income {
+	color: #198754;
+	font-weight: 600;
+}
+
+.deduction {
+	color: #dc3545;
+	font-weight: 600;
+}
+
+.red-text {
+	color: #dc3545 !important;
+}
+
+.net-pay {
+	font-weight: 700;
+	color: #172033;
+}
+
+/* =========================================
+   BOTÓN EDITAR
+========================================= */
+.btn-detail {
+	width: 34px;
+	height: 34px;
+	border: 1px solid #e0e5eb;
+	color: #667085;
+	border-radius: 6px;
+	background: #ffffff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.btn-detail:hover {
+	background: #f1f5f9;
+}
+
+/* =========================================
+   BOTÓN ELIMINAR
+========================================= */
+.btn-delete {
+	width: 34px;
+	height: 34px;
+	border: 1px solid #f0d5d8;
+	color: #dc3545;
+	border-radius: 6px;
+	background: #ffffff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.btn-delete:hover {
+	background: #fff1f2;
+	border-color: #dc3545;
+}
+
+/* =========================================
+   TOTAL
+========================================= */
+.payroll-total {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 35px;
+	padding: 20px 25px;
+	background: #fafbfc;
+	border-top: 1px solid #e8ebf0;
+}
+
+.payroll-total span {
+	display: block;
+	color: #7b8494;
+	font-size: 10px;
+	text-transform: uppercase;
+}
+
+.payroll-total strong {
+	display: block;
+	margin-top: 4px;
+	font-size: 14px;
+}
+
+.total-final {
+	border-left: 1px solid #dfe4eb;
+	padding-left: 30px;
+}
+
+.total-final strong {
+	font-size: 20px;
+	color: #1769e0;
+}
+
+/* =========================================
+   ACCIONES
+========================================= */
+.form-actions {
+	padding: 18px 25px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	border-top: 1px solid #edf0f4;
+}
+
+.form-actions .btn {
+	border-radius: 7px;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 9px 15px;
+}
+
+.cancel-btn {
+	margin-right: auto;
+}
+
+/* =========================================================
+   MODAL GENERAL
+========================================================= */
+.modal-content {
+	border: none;
+	border-radius: 14px;
+	overflow: hidden;
+	box-shadow: 0 18px 50px rgba(23, 32, 51, 0.16);
+}
+
+.modal-header {
+	padding: 20px 24px;
+	border-bottom: 1px solid #edf0f4;
+	background: #ffffff;
+}
+
+.modal-title {
+	font-size: 17px;
+	font-weight: 700;
+	color: #172033;
+}
+
+.modal-header small {
+	color: #7b8494;
+}
+
+.modal-body {
+	padding: 24px;
+}
+
+.modal-footer {
+	padding: 16px 24px;
+	border-top: 1px solid #edf0f4;
+	background: #fafbfc;
+}
+
+/* =========================================================
+   MODAL — AGREGAR EMPLEADO
+========================================================= */
+
+/*
+   Esta sección es la que cambia principalmente
+   el aspecto de la lista de empleados.
+*/
+#addEmployeeModal .modal-dialog {
+	max-width: 720px;
+}
+
+#addEmployeeModal .modal-body {
+	background: #ffffff;
+}
+
+/* =========================================
+   BUSCADOR DEL MODAL
+========================================= */
+#addEmployeeModal .search-box {
+	width: 100%;
+	position: relative;
+}
+
+#addEmployeeModal .search-box i {
+	position: absolute;
+	left: 14px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #98a2b3;
+	font-size: 15px;
+	z-index: 3;
+	pointer-events: none;
+}
+
+#addEmployeeModal .search-box input {
+	width: 100%;
+	height: 44px;
+	padding: 0 14px 0 40px;
+	border: 1px solid #dfe4eb;
+	border-radius: 9px;
+	background: #f9fafc;
+	color: #273246;
+	font-size: 13px;
+	outline: none;
+	transition: all 0.2s ease;
+}
+
+#addEmployeeModal .search-box input::placeholder {
+	color: #a0a8b5;
+}
+
+#addEmployeeModal .search-box input:hover {
+	background: #ffffff;
+	border-color: #cfd6df;
+}
+
+#addEmployeeModal .search-box input:focus {
+	background: #ffffff;
+	border-color: #1769e0;
+	box-shadow: 0 0 0 3px rgba(23, 105, 224, 0.08);
+}
+
+/* =========================================
+   CONTENEDOR DE LA LISTA
+========================================= */
+.employee-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-height: 365px;
+	overflow-y: auto;
+	margin-top: 14px;
+	padding: 4px 6px 4px 2px;
+	scrollbar-width: thin;
+	scrollbar-color: #cfd6df transparent;
+}
+
+/* Scrollbar Chrome / Edge */
+.employee-list::-webkit-scrollbar {
+	width: 6px;
+}
+
+.employee-list::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.employee-list::-webkit-scrollbar-thumb {
+	background: #d3d9e2;
+	border-radius: 10px;
+}
+
+.employee-list::-webkit-scrollbar-thumb:hover {
+	background: #b8c0cc;
+}
+
+/* =========================================
+   TARJETA INDIVIDUAL DEL EMPLEADO
+========================================= */
+.employee-option {
+	position: relative;
+	width: 100%;
+	min-height: 72px;
+	display: flex;
+	align-items: center;
+	gap: 13px;
+	padding: 11px 14px;
+	border: 1px solid #e7ebf0;
+	border-radius: 10px;
+	background: #ffffff;
+	text-align: left;
+	cursor: pointer;
+	transition: border-color 0.18s ease, background 0.18s ease, box-shadow
+		0.18s ease, transform 0.18s ease;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+/* Hover */
+.employee-option:hover {
+	background: #f8fbff;
+	border-color: #b9d1f3;
+	box-shadow: 0 4px 14px rgba(23, 105, 224, 0.07);
+	transform: translateY(-1px);
+}
+
+/* Active */
+.employee-option:active {
+	transform: translateY(0);
+	box-shadow: none;
+}
+
+/* Focus accesible */
+.employee-option:focus {
+	outline: none;
+	border-color: #1769e0;
+	box-shadow: 0 0 0 3px rgba(23, 105, 224, 0.10);
+}
+
+/* =========================================
+   AVATAR DE LA LISTA
+========================================= */
+.employee-option .avatar {
+	width: 43px;
+	height: 43px;
+	flex: 0 0 43px;
+	border-radius: 11px;
+	background: #edf4ff;
+	color: #1769e0;
+	font-size: 12px;
+	font-weight: 700;
+	border: 1px solid #dceaff;
+	transition: background 0.18s ease, color 0.18s ease;
+}
+
+.employee-option:hover .avatar {
+	background: #1769e0;
+	color: #ffffff;
+}
+
+/* =========================================
+   INFORMACIÓN DEL EMPLEADO
+========================================= */
+.employee-option-info {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.employee-option-info strong {
+	display: block;
+	color: #253047;
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.2;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.employee-option-info small {
+	display: block;
+	color: #8a94a4;
+	font-size: 11px;
+	font-weight: 400;
+	line-height: 1.3;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* =========================================
+   FLECHA DE SELECCIÓN
+========================================= */
+.employee-option>i {
+	width: 30px;
+	height: 30px;
+	flex: 0 0 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 7px;
+	background: #f5f7fa;
+	color: #98a2b3;
+	font-size: 13px;
+	transition: background 0.18s ease, color 0.18s ease, transform 0.18s
+		ease;
+}
+
+.employee-option:hover>i {
+	background: #e8f1ff;
+	color: #1769e0;
+	transform: translateX(2px);
+}
+
+/* =========================================
+   INFORMACIÓN DE IDENTIDAD
+========================================= */
+.employee-option-info small::first-line {
+	color: #7b8494;
+}
+
+/* =========================================
+   ESTADO SIN RESULTADOS
+========================================= */
+#noEmployeesFound {
+	margin-top: 14px;
+	padding: 35px 20px;
+	border: 1px dashed #d8dee7;
+	border-radius: 10px;
+	background: #fafbfc;
+	color: #7b8494;
+}
+
+#noEmployeesFound i {
+	color: #a5afbd;
+}
+
+#noEmployeesFound p {
+	font-size: 13px;
+}
+
+/* =========================================
+   ETIQUETA DEL BUSCADOR
+========================================= */
+#addEmployeeModal .form-label {
+	margin-bottom: 7px;
+	color: #374151;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+/* =========================================
+   MODAL — DATOS DEL EMPLEADO
+========================================= */
+.employee-modal-header {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.employee-modal-header h4 {
+	margin: 0 0 4px;
+	font-size: 17px;
+	color: #172033;
+}
+
+.employee-modal-header span {
+	font-size: 12px;
+	color: #7b8494;
+}
+
+/* =========================================
+   AVATAR GRANDE
+========================================= */
+.avatar.large {
+	width: 50px;
+	height: 50px;
+	font-size: 15px;
+	border-radius: 12px;
+}
+
+/* =========================================
+   TÍTULOS DE DETALLE
+========================================= */
+.detail-title {
+	color: #8a93a2;
+	font-size: 10px;
+	letter-spacing: .5px;
+	margin-bottom: 10px;
+}
+
+/* =========================================
+   FILAS DE DETALLE
+========================================= */
+.detail-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 10px 0;
+	border-bottom: 1px solid #f0f2f5;
+	font-size: 13px;
+}
+
+.detail-row strong {
+	font-weight: 600;
+}
+
+/* =========================================
+   INPUTS BLOQUEADOS
+========================================= */
+#addEmployeeModal input[readonly], #employeeModal input[readonly] {
+	background: #f7f8fa;
+	color: #596273;
+	border-color: #e1e5eb;
+	cursor: not-allowed;
+}
+
+/* =========================================
+   TOTAL DEL MODAL
+========================================= */
+.modal-total {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 22px;
+	padding: 17px;
+	background: #f5f8fc;
+	border: 1px solid #e7edf5;
+	border-radius: 9px;
+}
+
+.modal-total span {
+	font-size: 11px;
+	font-weight: 700;
+	color: #667085;
+}
+
+.modal-total strong {
+	font-size: 19px;
+	color: #1769e0;
+}
+
+/* =========================================
+   BOTÓN ELIMINAR DEL MODAL
+========================================= */
+#removeEmployeeBtn {
+	border-radius: 7px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+@media ( max-width : 992px) {
+	.payroll-page {
+		padding: 25px 20px;
+	}
+	.payroll-total {
+		flex-wrap: wrap;
+		justify-content: flex-start;
+	}
+	.total-final {
+		border-left: none;
+		padding-left: 0;
+	}
+}
+
+@media ( max-width : 768px) {
+	.page-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 15px;
+	}
+	.employee-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 15px;
+	}
+	.search-box {
+		width: 100%;
+	}
+	.form-actions {
+		flex-wrap: wrap;
+	}
+	.cancel-btn {
+		margin-right: 0;
+	}
+
+	/* Modal */
+	#addEmployeeModal .modal-dialog {
+		margin: 12px;
+	}
+	#addEmployeeModal .modal-body {
+		padding: 18px;
+	}
+	.employee-list {
+		max-height: 340px;
+	}
+}
+
+@media ( max-width : 576px) {
+	.payroll-page {
+		padding: 20px 14px;
+	}
+	.payroll-total {
+		gap: 20px;
+		padding: 18px;
+	}
+	.form-actions {
+		flex-direction: column;
+	}
+	.form-actions .btn {
+		width: 100%;
+	}
+
+	/* =====================================
+       LISTA DE EMPLEADOS EN CELULAR
+    ===================================== */
+	#addEmployeeModal .modal-dialog {
+		margin: 8px;
+	}
+	#addEmployeeModal .modal-content {
+		border-radius: 12px;
+	}
+	#addEmployeeModal .modal-header {
+		padding: 17px;
+	}
+	#addEmployeeModal .modal-body {
+		padding: 17px;
+	}
+	#addEmployeeModal .modal-footer {
+		padding: 13px 17px;
+	}
+	.employee-list {
+		max-height: 330px;
+		gap: 7px;
+		padding-right: 3px;
+	}
+	.employee-option {
+		min-height: 68px;
+		padding: 10px;
+		gap: 10px;
+		border-radius: 9px;
+	}
+	.employee-option .avatar {
+		width: 39px;
+		height: 39px;
+		flex-basis: 39px;
+		border-radius: 10px;
+		font-size: 11px;
+	}
+	.employee-option-info strong {
+		font-size: 12px;
+	}
+	.employee-option-info small {
+		font-size: 10px;
+	}
+	.employee-option>i {
+		width: 27px;
+		height: 27px;
+		flex-basis: 27px;
+		font-size: 11px;
+	}
+	.employee-modal-header {
+		gap: 11px;
+	}
+	.employee-modal-header h4 {
+		font-size: 15px;
+	}
+}

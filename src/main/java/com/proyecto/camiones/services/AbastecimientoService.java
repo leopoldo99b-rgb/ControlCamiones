@@ -74,22 +74,11 @@ public class AbastecimientoService {
 
         // ========================================================
         // CONVERTIR FECHA HASTA
-        //
-        // Se usa el día siguiente a las 00:00.
-        //
-        // Ejemplo:
-        //
-        // hasta = 2026-09-06
-        //
-        // fechaHasta = 2026-09-07 00:00:00
-        //
-        // Así se incluye todo el día 06.
         // ========================================================
 
         LocalDateTime fechaHasta = null;
 
         if (hasta != null) {
-
             fechaHasta = hasta
                     .plusDays(1)
                     .atStartOfDay();
@@ -97,9 +86,6 @@ public class AbastecimientoService {
 
         // ========================================================
         // SPECIFICATION
-        //
-        // NO usamos Specification.where(null)
-        // porque genera ambigüedad en algunas versiones.
         // ========================================================
 
         Specification<Abastecimiento> specification =
@@ -145,7 +131,8 @@ public class AbastecimientoService {
 
         if (placa != null) {
 
-            String placaFinal = placa.toLowerCase();
+            String placaFinal =
+                    placa.toLowerCase();
 
             specification = specification.and(
                     (root, query, cb) ->
@@ -164,7 +151,8 @@ public class AbastecimientoService {
 
         if (combustibleId != null) {
 
-            Long combustibleIdFinal = combustibleId;
+            Long combustibleIdFinal =
+                    combustibleId;
 
             specification = specification.and(
                     (root, query, cb) ->
@@ -197,6 +185,13 @@ public class AbastecimientoService {
     @Transactional(readOnly = true)
     public Abastecimiento obtenerPorId(Long id) {
 
+        if (id == null || id <= 0) {
+
+            throw new IllegalArgumentException(
+                    "El ID del abastecimiento no es válido."
+            );
+        }
+
         return abastecimientoRepository
                 .findById(id)
                 .orElseThrow(
@@ -215,9 +210,44 @@ public class AbastecimientoService {
             AbastecimientoRequest request
     ) {
 
+        if (request == null) {
+
+            throw new IllegalArgumentException(
+                    "Los datos del abastecimiento son obligatorios."
+            );
+        }
+
+        // ========================================================
+        // VALIDAR GASOLINERA
+        // ========================================================
+
+        String gasolinera =
+                request.getGasolinera();
+
+        if (
+                gasolinera == null ||
+                gasolinera.trim().isEmpty()
+        ) {
+
+            throw new IllegalArgumentException(
+                    "Debe seleccionar una gasolinera."
+            );
+        }
+
+        gasolinera = gasolinera.trim();
+
+        validarGasolinera(gasolinera);
+
         // ========================================================
         // BUSCAR COMBUSTIBLE
         // ========================================================
+
+        if (request.getCombustibleId() == null) {
+
+            throw new IllegalArgumentException(
+                    "El combustible es obligatorio."
+            );
+        }
 
         Combustible combustible =
                 combustibleRepository
@@ -226,7 +256,7 @@ public class AbastecimientoService {
                         )
                         .orElseThrow(
                                 () -> new ResourceNotFoundException(
-                                        "No existe el combustible seleccionado"
+                                        "No existe el combustible seleccionado."
                                 )
                         );
 
@@ -239,7 +269,7 @@ public class AbastecimientoService {
         )) {
 
             throw new IllegalArgumentException(
-                    "El combustible seleccionado está inactivo"
+                    "El combustible seleccionado está inactivo."
             );
         }
 
@@ -251,6 +281,21 @@ public class AbastecimientoService {
 
             throw new IllegalArgumentException(
                     "El combustible seleccionado no tiene precio por galón."
+            );
+        }
+
+        // ========================================================
+        // VALIDAR GALONES
+        // ========================================================
+
+        if (
+                request.getGalonesAutorizados() == null ||
+                request.getGalonesAutorizados()
+                        .compareTo(BigDecimal.ZERO) <= 0
+        ) {
+
+            throw new IllegalArgumentException(
+                    "Los galones autorizados deben ser mayores que cero."
             );
         }
 
@@ -300,6 +345,14 @@ public class AbastecimientoService {
         );
 
         // ========================================================
+        // GASOLINERA
+        // ========================================================
+
+        abastecimiento.setGasolinera(
+                gasolinera
+        );
+
+        // ========================================================
         // COMBUSTIBLE
         // ========================================================
 
@@ -308,7 +361,7 @@ public class AbastecimientoService {
         );
 
         // ========================================================
-        // PRECIO POR GALÓN
+        // PRECIO HISTÓRICO
         // ========================================================
 
         abastecimiento.setPrecioGalon(
@@ -325,7 +378,9 @@ public class AbastecimientoService {
                                 combustible.getPrecioGalon()
                         );
 
-        abastecimiento.setTotal(total);
+        abastecimiento.setTotal(
+                total
+        );
 
         // ========================================================
         // GUARDAR
@@ -345,6 +400,13 @@ public class AbastecimientoService {
             AbastecimientoRequest request
     ) {
 
+        if (request == null) {
+
+            throw new IllegalArgumentException(
+                    "Los datos del abastecimiento son obligatorios."
+            );
+        }
+
         // ========================================================
         // BUSCAR ABASTECIMIENTO
         // ========================================================
@@ -353,8 +415,36 @@ public class AbastecimientoService {
                 obtenerPorId(id);
 
         // ========================================================
-        // BUSCAR COMBUSTIBLE
+        // VALIDAR GASOLINERA
         // ========================================================
+
+        String gasolinera =
+                request.getGasolinera();
+
+        if (
+                gasolinera == null ||
+                gasolinera.trim().isEmpty()
+        ) {
+
+            throw new IllegalArgumentException(
+                    "Debe seleccionar una gasolinera."
+            );
+        }
+
+        gasolinera = gasolinera.trim();
+
+        validarGasolinera(gasolinera);
+
+        // ========================================================
+        // VALIDAR COMBUSTIBLE
+        // ========================================================
+
+        if (request.getCombustibleId() == null) {
+
+            throw new IllegalArgumentException(
+                    "El combustible es obligatorio."
+            );
+        }
 
         Combustible combustible =
                 combustibleRepository
@@ -363,7 +453,7 @@ public class AbastecimientoService {
                         )
                         .orElseThrow(
                                 () -> new ResourceNotFoundException(
-                                        "No existe el combustible seleccionado"
+                                        "No existe el combustible seleccionado."
                                 )
                         );
 
@@ -376,7 +466,7 @@ public class AbastecimientoService {
         )) {
 
             throw new IllegalArgumentException(
-                    "El combustible seleccionado está inactivo"
+                    "El combustible seleccionado está inactivo."
             );
         }
 
@@ -388,6 +478,21 @@ public class AbastecimientoService {
 
             throw new IllegalArgumentException(
                     "El combustible seleccionado no tiene precio por galón."
+            );
+        }
+
+        // ========================================================
+        // VALIDAR GALONES
+        // ========================================================
+
+        if (
+                request.getGalonesAutorizados() == null ||
+                request.getGalonesAutorizados()
+                        .compareTo(BigDecimal.ZERO) <= 0
+        ) {
+
+            throw new IllegalArgumentException(
+                    "Los galones autorizados deben ser mayores que cero."
             );
         }
 
@@ -431,6 +536,14 @@ public class AbastecimientoService {
         );
 
         // ========================================================
+        // GASOLINERA
+        // ========================================================
+
+        abastecimiento.setGasolinera(
+                gasolinera
+        );
+
+        // ========================================================
         // COMBUSTIBLE
         // ========================================================
 
@@ -439,7 +552,7 @@ public class AbastecimientoService {
         );
 
         // ========================================================
-        // PRECIO POR GALÓN
+        // PRECIO HISTÓRICO
         // ========================================================
 
         abastecimiento.setPrecioGalon(
@@ -456,7 +569,9 @@ public class AbastecimientoService {
                                 combustible.getPrecioGalon()
                         );
 
-        abastecimiento.setTotal(total);
+        abastecimiento.setTotal(
+                total
+        );
 
         // ========================================================
         // GUARDAR
@@ -473,11 +588,69 @@ public class AbastecimientoService {
 
     public void eliminar(Long id) {
 
-        Abastecimiento abastecimiento =
-                obtenerPorId(id);
+        if (id == null || id <= 0) {
 
-        abastecimientoRepository.delete(
-                abastecimiento
-        );
+            throw new IllegalArgumentException(
+                    "El ID del abastecimiento no es válido."
+            );
+        }
+
+        // ========================================================
+        // VERIFICAR QUE EXISTA
+        // ========================================================
+
+        if (!abastecimientoRepository.existsById(id)) {
+
+            throw new ResourceNotFoundException(
+                    "No existe el abastecimiento con ID: "
+                            + id
+            );
+        }
+
+        // ========================================================
+        // ELIMINAR DIRECTAMENTE
+        // ========================================================
+        //
+        // IMPORTANTE:
+        // No usamos findById() + delete(entidad).
+        //
+        // El DELETE directo evita que Hibernate tenga que
+        // sincronizar una entidad Abastecimiento que pudiera
+        // tener gasolinera = null.
+        // ========================================================
+
+        int eliminados =
+                abastecimientoRepository.eliminarPorId(id);
+
+        if (eliminados == 0) {
+
+            throw new ResourceNotFoundException(
+                    "No se pudo eliminar el abastecimiento con ID: "
+                            + id
+            );
+        }
+    }
+
+    // ============================================================
+    // VALIDAR GASOLINERA
+    // ============================================================
+
+    private void validarGasolinera(
+            String gasolinera
+    ) {
+
+        if (
+                !gasolinera.equals("Shell") &&
+                !gasolinera.equals("Texaco") &&
+                !gasolinera.equals("Puma") &&
+                !gasolinera.equals("UNO") &&
+                !gasolinera.equals("Otra")
+        ) {
+
+            throw new IllegalArgumentException(
+                    "La gasolinera seleccionada no es válida. "
+                            + "Use Shell, Texaco, Puma, UNO u Otra."
+            );
+        }
     }
 }

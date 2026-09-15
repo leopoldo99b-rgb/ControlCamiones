@@ -30,6 +30,19 @@ public class Abastecimiento {
     @Column(name = "galones_autorizados", nullable = false, precision = 10, scale = 2)
     private BigDecimal galonesAutorizados;
 
+    /**
+     * Gasolinera donde se realizó el abastecimiento.
+     *
+     * Valores esperados:
+     * Shell
+     * Texaco
+     * Puma
+     * UNO
+     * Otra
+     */
+    @Column(nullable = false, length = 150)
+    private String gasolinera;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "combustible_id", nullable = false)
     private Combustible combustible;
@@ -42,11 +55,19 @@ public class Abastecimiento {
     @Column(name = "precio_galon", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioGalon;
 
+    /**
+     * Galones autorizados × precio por galón.
+     */
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
+
+
+    // =========================================================
+    // CICLO DE VIDA JPA
+    // =========================================================
 
     @PrePersist
     protected void onCreate() {
@@ -55,15 +76,23 @@ public class Abastecimiento {
             fecha = LocalDateTime.now();
         }
 
-        fechaCreacion = LocalDateTime.now();
+        if (fechaCreacion == null) {
+            fechaCreacion = LocalDateTime.now();
+        }
 
         calcularTotal();
     }
+
 
     @PreUpdate
     protected void onUpdate() {
         calcularTotal();
     }
+
+
+    // =========================================================
+    // CÁLCULO DEL TOTAL
+    // =========================================================
 
     private void calcularTotal() {
 
@@ -72,8 +101,18 @@ public class Abastecimiento {
         }
     }
 
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
     public Abastecimiento() {
     }
+
+
+    // =========================================================
+    // GETTERS
+    // =========================================================
 
     public Long getId() {
         return id;
@@ -103,6 +142,10 @@ public class Abastecimiento {
         return galonesAutorizados;
     }
 
+    public String getGasolinera() {
+        return gasolinera;
+    }
+
     public Combustible getCombustible() {
         return combustible;
     }
@@ -118,6 +161,11 @@ public class Abastecimiento {
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
+
+
+    // =========================================================
+    // SETTERS
+    // =========================================================
 
     public void setId(Long id) {
         this.id = id;
@@ -145,6 +193,10 @@ public class Abastecimiento {
 
     public void setGalonesAutorizados(BigDecimal galonesAutorizados) {
         this.galonesAutorizados = galonesAutorizados;
+    }
+
+    public void setGasolinera(String gasolinera) {
+        this.gasolinera = gasolinera;
     }
 
     public void setCombustible(Combustible combustible) {

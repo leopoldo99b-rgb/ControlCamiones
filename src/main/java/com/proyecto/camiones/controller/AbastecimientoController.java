@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.proyecto.camiones.exception.ResourceNotFoundException;
 import com.proyecto.camiones.model.Abastecimiento;
 import com.proyecto.camiones.services.AbastecimientoService;
 
@@ -28,23 +29,14 @@ public class AbastecimientoController {
 
     private final AbastecimientoService service;
 
-    public AbastecimientoController(AbastecimientoService service) {
+    public AbastecimientoController(
+            AbastecimientoService service
+    ) {
         this.service = service;
     }
 
     // =========================================================
     // LISTAR ABASTECIMIENTOS
-    //
-    // GET /api/abastecimientos
-    //
-    // Ejemplos:
-    //
-    // /api/abastecimientos
-    // /api/abastecimientos?desde=2026-09-01
-    // /api/abastecimientos?hasta=2026-09-06
-    // /api/abastecimientos?placa=HAC1234
-    // /api/abastecimientos?combustibleId=1
-    // /api/abastecimientos?desde=2026-09-01&hasta=2026-09-06
     // =========================================================
 
     @GetMapping
@@ -69,35 +61,45 @@ public class AbastecimientoController {
             LocalDate fechaDesde = null;
             LocalDate fechaHasta = null;
 
-            // -------------------------------------------------
+            // =================================================
             // FECHA DESDE
-            // -------------------------------------------------
+            // =================================================
 
-            if (desde != null && !desde.trim().isEmpty()) {
+            if (
+                    desde != null &&
+                    !desde.trim().isEmpty()
+            ) {
 
-                fechaDesde = LocalDate.parse(
-                        desde.trim()
-                );
+                fechaDesde =
+                        LocalDate.parse(
+                                desde.trim()
+                        );
             }
 
-            // -------------------------------------------------
+            // =================================================
             // FECHA HASTA
-            // -------------------------------------------------
+            // =================================================
 
-            if (hasta != null && !hasta.trim().isEmpty()) {
+            if (
+                    hasta != null &&
+                    !hasta.trim().isEmpty()
+            ) {
 
-                fechaHasta = LocalDate.parse(
-                        hasta.trim()
-                );
+                fechaHasta =
+                        LocalDate.parse(
+                                hasta.trim()
+                        );
             }
 
-            // -------------------------------------------------
+            // =================================================
             // VALIDAR RANGO
-            // -------------------------------------------------
+            // =================================================
 
-            if (fechaDesde != null &&
-                fechaHasta != null &&
-                fechaDesde.isAfter(fechaHasta)) {
+            if (
+                    fechaDesde != null &&
+                    fechaHasta != null &&
+                    fechaDesde.isAfter(fechaHasta)
+            ) {
 
                 return ResponseEntity
                         .badRequest()
@@ -106,9 +108,9 @@ public class AbastecimientoController {
                         );
             }
 
-            // -------------------------------------------------
+            // =================================================
             // NORMALIZAR PLACA
-            // -------------------------------------------------
+            // =================================================
 
             if (placa != null) {
 
@@ -119,9 +121,9 @@ public class AbastecimientoController {
                 }
             }
 
-            // -------------------------------------------------
+            // =================================================
             // BUSCAR
-            // -------------------------------------------------
+            // =================================================
 
             List<Abastecimiento> resultado =
                     service.buscarLista(
@@ -131,13 +133,13 @@ public class AbastecimientoController {
                             combustibleId
                     );
 
-            // -------------------------------------------------
-            // DEVOLVER LISTA
-            // -------------------------------------------------
+            return ResponseEntity.ok(
+                    resultado
+            );
 
-            return ResponseEntity.ok(resultado);
-
-        } catch (java.time.format.DateTimeParseException e) {
+        } catch (
+                java.time.format.DateTimeParseException e
+        ) {
 
             return ResponseEntity
                     .badRequest()
@@ -150,18 +152,18 @@ public class AbastecimientoController {
             e.printStackTrace();
 
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .status(
+                            HttpStatus.INTERNAL_SERVER_ERROR
+                    )
                     .body(
                             "Error al obtener abastecimientos: "
-                            + obtenerMensajeError(e)
+                                    + obtenerMensajeError(e)
                     );
         }
     }
 
     // =========================================================
-    // OBTENER ABASTECIMIENTO POR ID
-    //
-    // GET /api/abastecimientos/{id}
+    // OBTENER POR ID
     // =========================================================
 
     @GetMapping("/{id}")
@@ -187,12 +189,20 @@ public class AbastecimientoController {
                     abastecimiento
             );
 
+        } catch (ResourceNotFoundException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(
+                            e.getMessage()
+                    );
+
         } catch (Exception e) {
 
             e.printStackTrace();
 
             return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(
                             obtenerMensajeError(e)
                     );
@@ -201,8 +211,6 @@ public class AbastecimientoController {
 
     // =========================================================
     // CREAR ABASTECIMIENTO
-    //
-    // POST /api/abastecimientos
     // =========================================================
 
     @PostMapping
@@ -224,31 +232,35 @@ public class AbastecimientoController {
 
             return ResponseEntity
                     .status(HttpStatus.CREATED)
-                    .body(abastecimiento);
+                    .body(
+                            abastecimiento
+                    );
 
         } catch (IllegalArgumentException e) {
 
             return ResponseEntity
                     .badRequest()
-                    .body(e.getMessage());
+                    .body(
+                            e.getMessage()
+                    );
 
         } catch (Exception e) {
 
             e.printStackTrace();
 
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .status(
+                            HttpStatus.INTERNAL_SERVER_ERROR
+                    )
                     .body(
                             "Error al crear el abastecimiento: "
-                            + obtenerMensajeError(e)
+                                    + obtenerMensajeError(e)
                     );
         }
     }
 
     // =========================================================
     // ACTUALIZAR ABASTECIMIENTO
-    //
-    // PUT /api/abastecimientos/{id}
     // =========================================================
 
     @PutMapping("/{id}")
@@ -292,25 +304,35 @@ public class AbastecimientoController {
 
             return ResponseEntity
                     .badRequest()
-                    .body(e.getMessage());
+                    .body(
+                            e.getMessage()
+                    );
+
+        } catch (ResourceNotFoundException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(
+                            e.getMessage()
+                    );
 
         } catch (Exception e) {
 
             e.printStackTrace();
 
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .status(
+                            HttpStatus.INTERNAL_SERVER_ERROR
+                    )
                     .body(
                             "Error al actualizar el abastecimiento: "
-                            + obtenerMensajeError(e)
+                                    + obtenerMensajeError(e)
                     );
         }
     }
 
     // =========================================================
     // ELIMINAR ABASTECIMIENTO
-    //
-    // DELETE /api/abastecimientos/{id}
     // =========================================================
 
     @DeleteMapping("/{id}")
@@ -329,8 +351,14 @@ public class AbastecimientoController {
                         );
             }
 
-            // Verificar que exista
-            service.obtenerPorId(id);
+            // IMPORTANTE:
+            // Ya no hacemos:
+            //
+            // service.obtenerPorId(id);
+            // service.eliminar(id);
+            //
+            // El service verifica existencia y ejecuta el
+            // DELETE directamente.
 
             service.eliminar(id);
 
@@ -338,15 +366,33 @@ public class AbastecimientoController {
                     "Abastecimiento eliminado correctamente."
             );
 
+        } catch (ResourceNotFoundException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(
+                            e.getMessage()
+                    );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            e.getMessage()
+                    );
+
         } catch (Exception e) {
 
             e.printStackTrace();
 
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .status(
+                            HttpStatus.INTERNAL_SERVER_ERROR
+                    )
                     .body(
                             "Error al eliminar el abastecimiento: "
-                            + obtenerMensajeError(e)
+                                    + obtenerMensajeError(e)
                     );
         }
     }
@@ -368,9 +414,9 @@ public class AbastecimientoController {
                     );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // FECHA
-        // -----------------------------------------------------
+        // =====================================================
 
         if (request.getFecha() == null) {
 
@@ -381,9 +427,9 @@ public class AbastecimientoController {
                     );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // PLACA
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
                 request.getPlaca() == null ||
@@ -397,9 +443,9 @@ public class AbastecimientoController {
                     );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // MOTORISTA
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
                 request.getMotorista() == null ||
@@ -413,9 +459,9 @@ public class AbastecimientoController {
                     );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // DESTINO
-        // -----------------------------------------------------
+        // =====================================================
 
         if (
                 request.getDestino() == null ||
@@ -429,9 +475,9 @@ public class AbastecimientoController {
                     );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // KM
-        // -----------------------------------------------------
+        // =====================================================
 
         if (request.getKmRuta() == null) {
 
@@ -456,11 +502,13 @@ public class AbastecimientoController {
                     );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
         // GALONES
-        // -----------------------------------------------------
+        // =====================================================
 
-        if (request.getGalonesAutorizados() == null) {
+        if (
+                request.getGalonesAutorizados() == null
+        ) {
 
             return ResponseEntity
                     .badRequest()
@@ -483,9 +531,44 @@ public class AbastecimientoController {
                     );
         }
 
-        // -----------------------------------------------------
+        // =====================================================
+        // GASOLINERA
+        // =====================================================
+
+        if (
+                request.getGasolinera() == null ||
+                request.getGasolinera().trim().isEmpty()
+        ) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "La gasolinera es obligatoria."
+                    );
+        }
+
+        String gasolinera =
+                request.getGasolinera().trim();
+
+        if (
+                !gasolinera.equals("Shell") &&
+                !gasolinera.equals("Texaco") &&
+                !gasolinera.equals("Puma") &&
+                !gasolinera.equals("UNO") &&
+                !gasolinera.equals("Otra")
+        ) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "La gasolinera seleccionada no es válida. "
+                                    + "Use Shell, Texaco, Puma, UNO u Otra."
+                    );
+        }
+
+        // =====================================================
         // COMBUSTIBLE
-        // -----------------------------------------------------
+        // =====================================================
 
         if (request.getCombustibleId() == null) {
 
@@ -503,11 +586,14 @@ public class AbastecimientoController {
     // OBTENER MENSAJE REAL DEL ERROR
     // =========================================================
 
-    private String obtenerMensajeError(Exception e) {
+    private String obtenerMensajeError(
+            Exception e
+    ) {
 
         Throwable causa = e;
 
-        String mensaje = e.getMessage();
+        String mensaje =
+                e.getMessage();
 
         while (causa.getCause() != null) {
 
@@ -518,7 +604,8 @@ public class AbastecimientoController {
                     !causa.getMessage().isBlank()
             ) {
 
-                mensaje = causa.getMessage();
+                mensaje =
+                        causa.getMessage();
             }
         }
 

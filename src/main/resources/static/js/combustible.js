@@ -42,6 +42,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const unidadSelect =
         document.getElementById("unidadCombustible");
 
+    // NUEVO: GASOLINERA
+    const gasolineraSelect =
+        document.getElementById("gasolineraCombustible");
+
 
     // ============================================================
     // ELEMENTOS - MODAL EDITAR PRECIO
@@ -118,6 +122,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const filtroCombustible =
         document.getElementById("filtroCombustible");
 
+    // NUEVO: FILTRO GASOLINERA
+    const filtroGasolinera =
+        document.getElementById("filtroGasolinera");
+
 
     // ============================================================
     // VARIABLES
@@ -143,17 +151,12 @@ document.addEventListener("DOMContentLoaded", function () {
             mostrarCargando();
 
             await cargarCombustibles();
-
             await cargarDestinos();
-
             await cargarCamiones();
-
             await cargarConductores();
-
             await cargarAbastecimientos();
 
             establecerFechaActual();
-
             actualizarResumen();
 
         } catch (error) {
@@ -224,9 +227,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         llenarComboCombustibles();
-
         actualizarTarjetasPrecios();
-
         actualizarFiltroCombustibles();
     }
 
@@ -273,6 +274,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             tipoCombustible.appendChild(option);
+
         });
     }
 
@@ -393,19 +395,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 if (texto === "super") {
-
                     return nombre.includes("super");
                 }
 
 
                 if (texto === "regular") {
-
                     return nombre.includes("regular");
                 }
 
 
                 if (texto === "diesel") {
-
                     return nombre.includes("diesel");
                 }
 
@@ -478,6 +477,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         nuevoPrecio.value =
                             combustible.precioGalon ?? "";
                     }
+
                 }
             );
         });
@@ -496,9 +496,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 const id =
                     modalPrecio?.dataset?.combustibleId;
 
+
                 const nombre =
                     modalPrecio?.dataset?.combustibleNombre ||
                     "combustible";
+
 
                 const precio =
                     parseFloat(
@@ -597,6 +599,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                     ) ===
                                     String(id)
                                 );
+
                             }
                         );
 
@@ -619,7 +622,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                     actualizarTarjetasPrecios();
-
                     llenarComboCombustibles();
 
 
@@ -681,6 +683,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     btnGuardarPrecio.innerHTML =
                         textoOriginal;
                 }
+
             }
         );
     }
@@ -695,7 +698,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (modalPrecio) {
 
             delete modalPrecio.dataset.combustibleId;
-
             delete modalPrecio.dataset.combustibleNombre;
         }
 
@@ -725,6 +727,7 @@ document.addEventListener("DOMContentLoaded", function () {
             function () {
 
                 limpiarModalPrecio();
+
             }
         );
     }
@@ -837,6 +840,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 destinoSelect.appendChild(
                     option
                 );
+
             }
         );
     }
@@ -1116,6 +1120,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     unidadSelect.appendChild(
                         option
                     );
+
                 }
             );
 
@@ -1134,102 +1139,131 @@ document.addEventListener("DOMContentLoaded", function () {
     // CARGAR CONDUCTORES
     // ============================================================
 
-	async function cargarConductores() {
+    async function cargarConductores() {
 
-	    if (!motoristaSelect) {
-	        return;
-	    }
+        if (!motoristaSelect) {
+            return;
+        }
 
-	    try {
 
-	        const response = await fetch(
-	            API_CONDUCTORES,
-	            {
-	                method: "GET",
-	                headers: {
-	                    "Accept": "application/json"
-	                }
-	            }
-	        );
+        try {
 
-	        if (!response.ok) {
+            const response =
+                await fetch(
+                    API_CONDUCTORES,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        }
+                    }
+                );
 
-	            console.warn(
-	                "No se pudieron cargar conductores. HTTP:",
-	                response.status
-	            );
 
-	            return;
-	        }
+            if (!response.ok) {
 
-	        const conductores = await response.json();
+                console.warn(
+                    "No se pudieron cargar conductores. HTTP:",
+                    response.status
+                );
 
-	        if (!Array.isArray(conductores)) {
+                return;
+            }
 
-	            console.warn(
-	                "La API de conductores no devolvió una lista válida."
-	            );
 
-	            return;
-	        }
+            const conductores =
+                await response.json();
 
-	        motoristaSelect.innerHTML = `
-	            <option selected disabled value="">
-	                Seleccionar motorista
-	            </option>
-	        `;
 
-	        conductores.forEach(function (conductor) {
+            if (!Array.isArray(conductores)) {
 
-	            if (!conductor) {
-	                return;
-	            }
+                console.warn(
+                    "La API de conductores no devolvió una lista válida."
+                );
 
-	            const option = document.createElement("option");
+                return;
+            }
 
-	            /*
-	             * Tu entidad Conductor puede devolver
-	             * nombre y apellido por separado.
-	             */
-	            let nombre = conductor.nombreCompleto;
 
-	            if (!nombre && conductor.nombre) {
+            motoristaSelect.innerHTML = `
+                <option selected disabled value="">
+                    Seleccionar motorista
+                </option>
+            `;
 
-	                nombre = conductor.nombre;
 
-	                if (conductor.apellido) {
-	                    nombre += " " + conductor.apellido;
-	                }
-	            }
+            conductores.forEach(
+                function (conductor) {
 
-	            /*
-	             * Compatibilidad por si tu entidad usa
-	             * alguno de estos nombres.
-	             */
-	            nombre =
-	                nombre ||
-	                conductor.motorista ||
-	                conductor.nombreConductor;
+                    if (!conductor) {
+                        return;
+                    }
 
-	            if (!nombre) {
-	                return;
-	            }
 
-	            option.value = nombre;
-	            option.textContent = nombre;
+                    const option =
+                        document.createElement("option");
 
-	            motoristaSelect.appendChild(option);
 
-	        });
+                    let nombre =
+                        conductor.nombreCompleto;
 
-	    } catch (error) {
 
-	        console.warn(
-	            "No se pudieron cargar conductores:",
-	            error
-	        );
-	    }
-	}
+                    if (
+                        !nombre &&
+                        conductor.nombre
+                    ) {
+
+                        nombre =
+                            conductor.nombre;
+
+
+                        if (conductor.apellido) {
+
+                            nombre +=
+                                " " +
+                                conductor.apellido;
+                        }
+                    }
+
+
+                    nombre =
+                        nombre ||
+                        conductor.motorista ||
+                        conductor.nombreConductor;
+
+
+                    if (!nombre) {
+                        return;
+                    }
+
+
+                    option.value =
+                        nombre;
+
+
+                    option.textContent =
+                        nombre;
+
+
+                    motoristaSelect.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+
+        } catch (error) {
+
+            console.warn(
+                "No se pudieron cargar conductores:",
+                error
+            );
+        }
+    }
+
+
     // ============================================================
     // CARGAR ABASTECIMIENTOS
     // ============================================================
@@ -1309,7 +1343,7 @@ document.addEventListener("DOMContentLoaded", function () {
             tablaBody.innerHTML = `
                 <tr>
                     <td
-                        colspan="10"
+                        colspan="11"
                         class="text-center py-5">
 
                         <i class="bi bi-inbox fs-2"></i>
@@ -1360,8 +1394,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     );
 
 
+                // NUEVO: GASOLINERA
+                const gasolinera =
+                    registro.gasolinera ||
+                    "—";
+
+
                 tr.innerHTML = `
+
                     <td>
+
                         <span class="date-main">
                             ${escaparHTML(fecha.fecha)}
                         </span>
@@ -1369,78 +1411,124 @@ document.addEventListener("DOMContentLoaded", function () {
                         <span class="date-time">
                             ${escaparHTML(fecha.hora)}
                         </span>
+
                     </td>
 
+
                     <td>
+
                         <span class="unit-badge">
                             ${escaparHTML(
                                 registro.placa
                             )}
                         </span>
+
                     </td>
 
+
                     <td>
+
                         <span class="driver-name">
                             ${escaparHTML(
                                 registro.motorista
                             )}
                         </span>
+
                     </td>
 
+
                     <td>
+
                         <span class="destination-name">
                             ${escaparHTML(
                                 registro.destino
                             )}
                         </span>
+
                     </td>
 
+
                     <td>
+
                         <span class="km-value">
                             ${formatearNumero(
                                 registro.kmRuta
                             )}
                             km
                         </span>
+
                     </td>
 
+
                     <td>
+
                         <span class="gallons-value">
                             ${formatearNumero(
                                 registro.galonesAutorizados
                             )}
                             gal
                         </span>
+
                     </td>
 
+
+                    <!-- NUEVA COLUMNA GASOLINERA -->
+
                     <td>
+
+                        <span class="station-badge">
+                            ${escaparHTML(
+                                gasolinera
+                            )}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
                         <span
                             class="fuel-badge ${combustibleClase}">
+
                             ${escaparHTML(
                                 combustibleNombre
                             )}
+
                         </span>
+
                     </td>
 
+
                     <td>
+
                         <span class="money-cell">
+
                             L.
                             ${formatearNumero(
                                 registro.precioGalon
                             )}
+
                         </span>
+
                     </td>
 
+
                     <td>
+
                         <span class="total-cell">
+
                             L.
                             ${formatearNumero(
                                 registro.total
                             )}
+
                         </span>
+
                     </td>
 
+
                     <td>
+
                         <div class="action-buttons">
 
                             <button
@@ -1453,6 +1541,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                             </button>
 
+
                             <button
                                 type="button"
                                 class="action-btn delete"
@@ -1464,11 +1553,14 @@ document.addEventListener("DOMContentLoaded", function () {
                             </button>
 
                         </div>
+
                     </td>
+
                 `;
 
 
                 tablaBody.appendChild(tr);
+
             }
         );
 
@@ -1694,6 +1786,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
+        // ========================================================
+        // NUEVO: CARGAR GASOLINERA AL EDITAR
+        // ========================================================
+
+        if (gasolineraSelect) {
+
+            gasolineraSelect.value =
+                registro.gasolinera ?? "";
+        }
+
+
         calcularTotal();
 
 
@@ -1733,6 +1836,7 @@ document.addEventListener("DOMContentLoaded", function () {
             async function () {
 
                 await guardarAbastecimiento();
+
             }
         );
     }
@@ -1781,6 +1885,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     : "POST";
 
 
+            console.log(
+                "Datos enviados al backend:",
+                datos
+            );
+
+
             const response =
                 await fetch(
                     url,
@@ -1816,9 +1926,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             cerrarSweetAlert();
-
             cerrarModal();
-
             limpiarFormulario();
 
 
@@ -1903,6 +2011,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
+        // ========================================================
+        // NUEVO: OBTENER GASOLINERA
+        // ========================================================
+
+        const gasolinera =
+            gasolineraSelect?.value || "";
+
+
         return {
 
             fecha:
@@ -1931,6 +2047,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
             galonesAutorizados:
                 galones,
+
+            // ====================================================
+            // NUEVO CAMPO
+            // ====================================================
+
+            gasolinera:
+                gasolinera,
 
             combustibleId:
                 combustibleOption?.value
@@ -2000,6 +2123,16 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
+        // ========================================================
+        // NUEVO: VALIDAR GASOLINERA
+        // ========================================================
+
+        if (!datos.gasolinera) {
+
+            return "Seleccione la gasolinera.";
+        }
+
+
         if (!datos.combustibleId) {
 
             return "Seleccione el tipo de combustible.";
@@ -2035,6 +2168,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         String(item.id) ===
                         String(id)
                     );
+
                 }
             );
 
@@ -2276,6 +2410,16 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
+        // ========================================================
+        // NUEVO: LIMPIAR GASOLINERA
+        // ========================================================
+
+        if (gasolineraSelect) {
+
+            gasolineraSelect.value = "";
+        }
+
+
         if (galonesInput) {
 
             galonesInput.value = "";
@@ -2321,6 +2465,7 @@ document.addEventListener("DOMContentLoaded", function () {
             function () {
 
                 limpiarFormulario();
+
             }
         );
     }
@@ -2337,6 +2482,7 @@ document.addEventListener("DOMContentLoaded", function () {
             function () {
 
                 aplicarFiltros();
+
             }
         );
     }
@@ -2357,63 +2503,37 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
 
 
-                // ------------------------------------------------
-                // LIMPIAR FECHA DESDE
-                // ------------------------------------------------
-
                 if (fechaDesde) {
-
                     fechaDesde.value = "";
                 }
 
 
-                // ------------------------------------------------
-                // LIMPIAR FECHA HASTA
-                // ------------------------------------------------
-
                 if (fechaHasta) {
-
                     fechaHasta.value = "";
                 }
 
 
-                // ------------------------------------------------
-                // RESTABLECER UNIDAD
-                // ------------------------------------------------
-
                 if (filtroPlaca) {
-
                     filtroPlaca.value = "";
                 }
 
 
-                // ------------------------------------------------
-                // RESTABLECER COMBUSTIBLE
-                // ------------------------------------------------
-
                 if (filtroCombustible) {
-
                     filtroCombustible.value = "";
                 }
 
 
-                // ------------------------------------------------
-                // MOSTRAR TODOS LOS REGISTROS
-                // ------------------------------------------------
-                // IMPORTANTE:
-                // abastecimientos contiene todos los registros
-                // cargados desde la API.
-                // No debemos llamar aplicarFiltros(),
-                // porque eso volvería a filtrar la información.
+                // NUEVO: LIMPIAR GASOLINERA
+
+                if (filtroGasolinera) {
+                    filtroGasolinera.value = "";
+                }
+
 
                 renderizarTabla(
                     abastecimientos
                 );
 
-
-                // ------------------------------------------------
-                // RESTAURAR RESUMEN COMPLETO
-                // ------------------------------------------------
 
                 actualizarResumen(
                     abastecimientos
@@ -2423,6 +2543,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log(
                     "Filtros limpiados correctamente."
                 );
+
 
                 console.log(
                     "Total de registros:",
@@ -2552,6 +2673,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         // --------------------------------------------------------
+        // NUEVO: FILTRO GASOLINERA
+        // --------------------------------------------------------
+
+        if (
+            filtroGasolinera &&
+            filtroGasolinera.value
+        ) {
+
+            resultado =
+                resultado.filter(
+                    function (registro) {
+
+                        return (
+                            normalizarTexto(
+                                registro.gasolinera
+                            ) ===
+                            normalizarTexto(
+                                filtroGasolinera.value
+                            )
+                        );
+                    }
+                );
+        }
+
+
+        // --------------------------------------------------------
         // MOSTRAR RESULTADO
         // --------------------------------------------------------
 
@@ -2634,6 +2781,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     filtroPlaca.appendChild(
                         option
                     );
+
                 }
             );
 
@@ -2719,6 +2867,73 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     // ============================================================
+    // NUEVO: FILTRO GASOLINERAS
+    // ============================================================
+
+    function actualizarFiltroGasolineras() {
+
+        if (!filtroGasolinera) {
+            return;
+        }
+
+
+        const valorActual =
+            filtroGasolinera.value;
+
+
+        const gasolineras = [
+            "Shell",
+            "Texaco",
+            "Puma",
+            "UNO",
+            "Otra"
+        ];
+
+
+        filtroGasolinera.innerHTML = `
+            <option value="">
+                Todas
+            </option>
+        `;
+
+
+        gasolineras.forEach(
+            function (gasolinera) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    gasolinera;
+
+
+                option.textContent =
+                    gasolinera;
+
+
+                filtroGasolinera.appendChild(
+                    option
+                );
+            }
+        );
+
+
+        if (
+            gasolineras.includes(
+                valorActual
+            )
+        ) {
+
+            filtroGasolinera.value =
+                valorActual;
+        }
+    }
+
+
+    // ============================================================
     // RESUMEN
     // ============================================================
 
@@ -2727,7 +2942,6 @@ document.addEventListener("DOMContentLoaded", function () {
     ) {
 
         if (!Array.isArray(registros)) {
-
             registros = [];
         }
 
@@ -2744,6 +2958,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             ) || 0
                         )
                     );
+
                 },
                 0
             );
@@ -2761,6 +2976,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             ) || 0
                         )
                     );
+
                 },
                 0
             );
@@ -2815,8 +3031,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         actualizarFiltroPlacas();
-
         actualizarFiltroCombustibles();
+        actualizarFiltroGasolineras();
     }
 
 
@@ -2992,7 +3208,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     {
                         hour:
                             "2-digit",
-
                         minute:
                             "2-digit"
                     }
@@ -3020,7 +3235,6 @@ document.addEventListener("DOMContentLoaded", function () {
             {
                 minimumFractionDigits:
                     2,
-
                 maximumFractionDigits:
                     2
             }
@@ -3179,6 +3393,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 timerProgressBar:
                     true
+
             });
 
 
@@ -3213,6 +3428,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 confirmButtonText:
                     "Aceptar"
+
             });
 
 
@@ -3247,6 +3463,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 confirmButtonText:
                     "Aceptar"
+
             });
 
 
@@ -3283,6 +3500,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     function () {
 
                         Swal.showLoading();
+
                     }
             });
         }
@@ -3352,1130 +3570,1225 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 
 
-	// ============================================================
-	// EXPORTAR REPORTE PDF
-	// ============================================================
+    // ============================================================
+    // EXPORTAR REPORTE PDF
+    // ============================================================
 
-	if (btnExportar) {
+    if (btnExportar) {
 
-	    btnExportar.addEventListener(
-	        "click",
-	        exportarPDF
-	    );
+        btnExportar.addEventListener(
+            "click",
+            exportarPDF
+        );
+    }
 
-	}
 
-	async function exportarPDF() {
+    async function exportarPDF() {
 
-	    if (
-	        typeof window.jspdf === "undefined" ||
-	        typeof window.jspdf.jsPDF === "undefined"
-	    ) {
+        if (
+            typeof window.jspdf === "undefined" ||
+            typeof window.jspdf.jsPDF === "undefined"
+        ) {
 
-	        mostrarError(
-	            "No se pudo cargar la herramienta para generar el PDF."
-	        );
+            mostrarError(
+                "No se pudo cargar la herramienta para generar el PDF."
+            );
 
-	        return;
-	    }
+            return;
+        }
 
-	    let registros = [...abastecimientos];
 
-	    // ============================================================
-	    // APLICAR FILTROS
-	    // ============================================================
+        let registros =
+            [...abastecimientos];
 
-	    if (fechaDesde?.value) {
 
-	        registros = registros.filter(function (registro) {
+        // ========================================================
+        // APLICAR FILTROS
+        // ========================================================
 
-	            const fecha =
-	                obtenerFechaSolo(
-	                    registro.fecha
-	                );
+        if (fechaDesde?.value) {
 
-	            return fecha >= fechaDesde.value;
+            registros =
+                registros.filter(
+                    function (registro) {
 
-	        });
+                        const fecha =
+                            obtenerFechaSolo(
+                                registro.fecha
+                            );
 
-	    }
 
-	    if (fechaHasta?.value) {
+                        return (
+                            fecha >=
+                            fechaDesde.value
+                        );
+                    }
+                );
+        }
 
-	        registros = registros.filter(function (registro) {
 
-	            const fecha =
-	                obtenerFechaSolo(
-	                    registro.fecha
-	                );
+        if (fechaHasta?.value) {
+
+            registros =
+                registros.filter(
+                    function (registro) {
+
+                        const fecha =
+                            obtenerFechaSolo(
+                                registro.fecha
+                            );
 
-	            return fecha <= fechaHasta.value;
 
-	        });
+                        return (
+                            fecha <=
+                            fechaHasta.value
+                        );
+                    }
+                );
+        }
 
-	    }
 
-	    if (
-	        filtroPlaca &&
-	        filtroPlaca.value
-	    ) {
+        if (
+            filtroPlaca &&
+            filtroPlaca.value
+        ) {
 
-	        registros = registros.filter(function (registro) {
+            registros =
+                registros.filter(
+                    function (registro) {
 
-	            return (
-	                normalizarTexto(
-	                    registro.placa
-	                ) ===
-	                normalizarTexto(
-	                    filtroPlaca.value
-	                )
-	            );
+                        return (
+                            normalizarTexto(
+                                registro.placa
+                            ) ===
+                            normalizarTexto(
+                                filtroPlaca.value
+                            )
+                        );
+                    }
+                );
+        }
 
-	        });
 
-	    }
+        if (
+            filtroCombustible &&
+            filtroCombustible.value
+        ) {
 
-	    if (
-	        filtroCombustible &&
-	        filtroCombustible.value
-	    ) {
+            registros =
+                registros.filter(
+                    function (registro) {
 
-	        registros = registros.filter(function (registro) {
+                        const nombre =
+                            registro.combustible?.nombre ||
+                            registro.combustibleNombre ||
+                            "";
 
-	            const nombre =
-	                registro.combustible?.nombre ||
-	                registro.combustibleNombre ||
-	                "";
 
-	            return (
-	                normalizarTexto(
-	                    nombre
-	                ) ===
-	                normalizarTexto(
-	                    filtroCombustible.value
-	                )
-	            );
+                        return (
+                            normalizarTexto(
+                                nombre
+                            ) ===
+                            normalizarTexto(
+                                filtroCombustible.value
+                            )
+                        );
+                    }
+                );
+        }
 
-	        });
-
-	    }
-
-	    if (
-	        !registros ||
-	        registros.length === 0
-	    ) {
-
-	        mostrarAdvertencia(
-	            "No existen registros que coincidan con los filtros seleccionados."
-	        );
-
-	        return;
-	    }
-
-	    // ============================================================
-	    // CREAR PDF
-	    // ============================================================
-
-	    const { jsPDF } =
-	        window.jspdf;
-
-	    const doc =
-	        new jsPDF({
-	            orientation: "landscape",
-	            unit: "mm",
-	            format: "a4"
-	        });
-
-	    const anchoPagina =
-	        doc.internal.pageSize.getWidth();
-
-	    const altoPagina =
-	        doc.internal.pageSize.getHeight();
-
-	    const margen = 12;
-
-	    // ============================================================
-	    // PERÍODO
-	    // ============================================================
-
-	    let textoRango =
-	        "Todos los registros";
-
-	    if (
-	        fechaDesde?.value &&
-	        fechaHasta?.value
-	    ) {
-
-	        textoRango =
-	            `${formatearFechaPDF(fechaDesde.value)} al ${formatearFechaPDF(fechaHasta.value)}`;
-
-	    } else if (
-	        fechaDesde?.value
-	    ) {
-
-	        textoRango =
-	            `Desde ${formatearFechaPDF(fechaDesde.value)}`;
-
-	    } else if (
-	        fechaHasta?.value
-	    ) {
-
-	        textoRango =
-	            `Hasta ${formatearFechaPDF(fechaHasta.value)}`;
-
-	    }
-
-	    // ============================================================
-	    // FECHA DE GENERACIÓN
-	    // SIN HORA
-	    // ============================================================
-
-	    const ahora =
-	        new Date();
-
-	    const fechaGeneracion =
-	        ahora.toLocaleDateString(
-	            "es-HN",
-	            {
-	                day: "2-digit",
-	                month: "2-digit",
-	                year: "numeric"
-	            }
-	        );
-
-	    // ============================================================
-	    // TOTALES
-	    // ============================================================
-
-	    const totalGalones =
-	        registros.reduce(
-	            function (
-	                total,
-	                item
-	            ) {
-
-	                return (
-	                    total +
-	                    (
-	                        Number(
-	                            item?.galonesAutorizados
-	                        ) || 0
-	                    )
-	                );
-
-	            },
-	            0
-	        );
-
-	    const totalCosto =
-	        registros.reduce(
-	            function (
-	                total,
-	                item
-	            ) {
-
-	                return (
-	                    total +
-	                    (
-	                        Number(
-	                            item?.total
-	                        ) || 0
-	                    )
-	                );
-
-	            },
-	            0
-	        );
-
-	    const totalKilometros =
-	        registros.reduce(
-	            function (
-	                total,
-	                item
-	            ) {
-
-	                return (
-	                    total +
-	                    (
-	                        Number(
-	                            item?.kmRuta
-	                        ) || 0
-	                    )
-	                );
-
-	            },
-	            0
-	        );
-
-	    // ============================================================
-	    // ENCABEZADO
-	    // ============================================================
-
-	    doc.setFillColor(
-	        18,
-	        31,
-	        48
-	    );
-
-	    doc.rect(
-	        0,
-	        0,
-	        anchoPagina,
-	        34,
-	        "F"
-	    );
-
-	    // ============================================================
-	    // CARGAR LOGO
-	    // ============================================================
-
-	    let logo = null;
-
-	    try {
-
-	        logo =
-	            await cargarImagenPDF(
-	                "/imgs/logo.png"
-	            );
-
-	    } catch (error) {
-
-	        console.warn(
-	            "No se pudo cargar el logo:",
-	            error
-	        );
-
-	    }
-
-	    // ============================================================
-	    // LOGO
-	    // MÁS ANCHO
-	    // ALTO: 22 MM
-	    // ============================================================
-
-	    if (logo) {
-
-	        const logoAncho = 34;
-	        const logoAlto = 22;
-
-	        doc.addImage(
-	            logo,
-	            "PNG",
-	            margen,
-	            6,
-	            logoAncho,
-	            logoAlto
-	        );
-
-	    }
-
-	    // ============================================================
-	    // TEXTOS DEL ENCABEZADO
-	    // ============================================================
-
-	    const xContenido =
-	        margen + 40;
-
-	    doc.setTextColor(
-	        255,
-	        255,
-	        255
-	    );
-
-	    doc.setFont(
-	        "helvetica",
-	        "bold"
-	    );
-
-	    doc.setFontSize(
-	        20
-	    );
-
-	    doc.text(
-	        "REPORTE DE COMBUSTIBLE",
-	        xContenido,
-	        14
-	    );
-
-	    doc.setFont(
-	        "helvetica",
-	        "normal"
-	    );
-
-	    doc.setFontSize(
-	        9
-	    );
-
-	    doc.setTextColor(
-	        220,
-	        226,
-	        232
-	    );
-
-	    doc.text(
-	        "Control de abastecimientos y consumo de combustible",
-	        xContenido,
-	        21
-	    );
-
-	    doc.setFont(
-	        "helvetica",
-	        "bold"
-	    );
-
-	    doc.setFontSize(
-	        10
-	    );
-
-	    doc.setTextColor(
-	        255,
-	        255,
-	        255
-	    );
-
-	    // ============================================================
-	    // PERÍODO EN EL ENCABEZADO
-	    // ============================================================
-
-	    doc.text(
-	        `Período: ${textoRango}`,
-	        xContenido,
-	        28
-	    );
-
-	    // ============================================================
-	    // INFORMACIÓN DERECHA
-	    // SOLO FECHA
-	    // SIN HORA
-	    // ============================================================
-
-	    doc.setFont(
-	        "helvetica",
-	        "normal"
-	    );
-
-	    doc.setFontSize(
-	        8
-	    );
-
-	    doc.text(
-	        `Generado: ${fechaGeneracion}`,
-	        anchoPagina - margen,
-	        13,
-	        {
-	            align: "right"
-	        }
-	    );
-
-	    doc.text(
-	        `Registros: ${registros.length}`,
-	        anchoPagina - margen,
-	        20,
-	        {
-	            align: "right"
-	        }
-	    );
-
-	    // ============================================================
-	    // RESUMEN
-	    // ============================================================
-
-	    const yResumen = 42;
-
-	    const espacio = 4;
-
-	    const anchoTarjeta =
-	        (
-	            anchoPagina -
-	            (margen * 2) -
-	            (espacio * 3)
-	        ) / 4;
-
-	    function dibujarTarjeta(
-	        x,
-	        titulo,
-	        valor,
-	        subtitulo
-	    ) {
-
-	        // --------------------------------------------------------
-	        // FONDO
-	        // --------------------------------------------------------
-
-	        doc.setFillColor(
-	            245,
-	            247,
-	            250
-	        );
-
-	        doc.roundedRect(
-	            x,
-	            yResumen,
-	            anchoTarjeta,
-	            25,
-	            2,
-	            2,
-	            "F"
-	        );
-
-	        // --------------------------------------------------------
-	        // BORDE
-	        // --------------------------------------------------------
-
-	        doc.setDrawColor(
-	            220,
-	            224,
-	            230
-	        );
-
-	        doc.roundedRect(
-	            x,
-	            yResumen,
-	            anchoTarjeta,
-	            25,
-	            2,
-	            2,
-	            "S"
-	        );
-
-	        // --------------------------------------------------------
-	        // TÍTULO
-	        // --------------------------------------------------------
-
-	        doc.setTextColor(
-	            90,
-	            99,
-	            110
-	        );
-
-	        doc.setFont(
-	            "helvetica",
-	            "bold"
-	        );
-
-	        doc.setFontSize(
-	            7
-	        );
-
-	        doc.text(
-	            titulo.toUpperCase(),
-	            x + 5,
-	            yResumen + 7
-	        );
-
-	        // --------------------------------------------------------
-	        // VALOR
-	        // --------------------------------------------------------
-
-	        doc.setTextColor(
-	            18,
-	            31,
-	            48
-	        );
-
-	        doc.setFont(
-	            "helvetica",
-	            "bold"
-	        );
-
-	        doc.setFontSize(
-	            13
-	        );
-
-	        doc.text(
-	            valor,
-	            x + 5,
-	            yResumen + 15
-	        );
-
-	        // --------------------------------------------------------
-	        // SUBTÍTULO
-	        // --------------------------------------------------------
-
-	        doc.setTextColor(
-	            120,
-	            128,
-	            138
-	        );
-
-	        doc.setFont(
-	            "helvetica",
-	            "normal"
-	        );
-
-	        doc.setFontSize(
-	            6.5
-	        );
-
-	        doc.text(
-	            subtitulo,
-	            x + 5,
-	            yResumen + 21
-	        );
-
-	    }
-
-	    // ============================================================
-	    // TARJETA 1
-	    // ============================================================
-
-	    dibujarTarjeta(
-	        margen,
-	        "Abastecimientos",
-	        String(
-	            registros.length
-	        ),
-	        "Registros incluidos"
-	    );
-
-	    // ============================================================
-	    // TARJETA 2
-	    // ============================================================
-
-	    dibujarTarjeta(
-	        margen +
-	        (anchoTarjeta + espacio),
-	        "Galones",
-	        formatearNumeroPDF(
-	            totalGalones
-	        ),
-	        "Total autorizado"
-	    );
-
-	    // ============================================================
-	    // TARJETA 3
-	    // ============================================================
-
-	    dibujarTarjeta(
-	        margen +
-	        (
-	            (anchoTarjeta + espacio) *
-	            2
-	        ),
-	        "Kilómetros",
-	        formatearNumeroPDF(
-	            totalKilometros
-	        ),
-	        "Distancia registrada"
-	    );
-
-	    // ============================================================
-	    // TARJETA 4
-	    // TOTAL DEL REPORTE
-	    // SE MUESTRA ARRIBA
-	    // ============================================================
-
-	    dibujarTarjeta(
-	        margen +
-	        (
-	            (anchoTarjeta + espacio) *
-	            3
-	        ),
-	        "Costo total",
-	        `L. ${formatearNumeroPDF(totalCosto)}`,
-	        "Valor de abastecimientos"
-	    );
-
-	    // ============================================================
-	    // TABLA
-	    // SIN FILTROS APLICADOS
-	    // SIN COLUMNA HORA
-	    // ============================================================
-
-	    const yTabla =
-	        yResumen + 32;
-
-	    // ============================================================
-	    // FILAS DE LA TABLA
-	    // ============================================================
-
-	    const filas =
-	        registros.map(
-	            function (item) {
-
-	                const combustible =
-	                    item.combustible?.nombre ||
-	                    item.combustibleNombre ||
-	                    "—";
-
-	                const fecha =
-	                    formatearFecha(
-	                        item.fecha
-	                    );
-
-	                return [
-
-	                    fecha.fecha,
-
-	                    item.placa ||
-	                    "—",
-
-	                    item.motorista ||
-	                    "—",
-
-	                    item.destino ||
-	                    "—",
-
-	                    `${formatearNumeroPDF(
-	                        item.kmRuta
-	                    )} km`,
-
-	                    `${formatearNumeroPDF(
-	                        item.galonesAutorizados
-	                    )} gal`,
-
-	                    combustible,
-
-	                    `L. ${formatearNumeroPDF(
-	                        item.precioGalon
-	                    )}`,
-
-	                    `L. ${formatearNumeroPDF(
-	                        item.total
-	                    )}`
-
-	                ];
-
-	            }
-	        );
-
-	    // ============================================================
-	    // TABLA PDF
-	    // ============================================================
-
-	    doc.autoTable({
-
-	        startY:
-	            yTabla,
-
-	        margin: {
-	            left: margen,
-	            right: margen
-	        },
-
-	        // --------------------------------------------------------
-	        // ENCABEZADOS
-	        // --------------------------------------------------------
-
-	        head: [[
-
-	            "Fecha",
-
-	            "Placa",
-
-	            "Motorista",
-
-	            "Destino",
-
-	            "KM Ruta",
-
-	            "Galones",
-
-	            "Combustible",
-
-	            "Precio/Galón",
-
-	            "Total"
-
-	        ]],
-
-	        body:
-	            filas,
-
-	        theme:
-	            "grid",
-
-	        // --------------------------------------------------------
-	        // ESTILOS
-	        // --------------------------------------------------------
-
-	        styles: {
-
-	            font:
-	                "helvetica",
-
-	            fontSize:
-	                7,
-
-	            cellPadding:
-	                2.2,
-
-	            textColor: [
-	                45,
-	                52,
-	                60
-	            ],
-
-	            lineColor: [
-	                220,
-	                224,
-	                230
-	            ],
-
-	            lineWidth:
-	                0.25,
-
-	            valign:
-	                "middle"
-
-	        },
-
-	        // --------------------------------------------------------
-	        // ENCABEZADO DE TABLA
-	        // --------------------------------------------------------
-
-	        headStyles: {
-
-	            fillColor: [
-	                18,
-	                31,
-	                48
-	            ],
-
-	            textColor: [
-	                255,
-	                255,
-	                255
-	            ],
-
-	            fontStyle:
-	                "bold",
-
-	            fontSize:
-	                7,
-
-	            halign:
-	                "center",
-
-	            cellPadding:
-	                2.8
-
-	        },
-
-	        // --------------------------------------------------------
-	        // FILAS ALTERNAS
-	        // --------------------------------------------------------
-
-	        alternateRowStyles: {
-
-	            fillColor: [
-	                248,
-	                249,
-	                251
-	            ]
-
-	        },
-
-	        // --------------------------------------------------------
-	        // ANCHOS DE COLUMNAS
-	        // SIN HORA
-	        // --------------------------------------------------------
-
-	        columnStyles: {
-
-	            0: {
-	                halign:
-	                    "center",
-	                cellWidth:
-	                    22
-	            },
-
-	            1: {
-	                halign:
-	                    "center",
-	                cellWidth:
-	                    20
-	            },
-
-	            2: {
-	                cellWidth:
-	                    42
-	            },
-
-	            3: {
-	                cellWidth:
-	                    45
-	            },
-
-	            4: {
-	                halign:
-	                    "right",
-	                cellWidth:
-	                    23
-	            },
-
-	            5: {
-	                halign:
-	                    "right",
-	                cellWidth:
-	                    24
-	            },
-
-	            6: {
-	                halign:
-	                    "center",
-	                cellWidth:
-	                    28
-	            },
-
-	            7: {
-	                halign:
-	                    "right",
-	                cellWidth:
-	                    34
-	            },
-
-	            8: {
-	                halign:
-	                    "right",
-	                cellWidth:
-	                    31
-	            }
-
-	        },
-
-	        // ========================================================
-	        // PIE DE PÁGINA
-	        // ========================================================
-
-	        didDrawPage:
-	            function () {
-
-	                const paginaActual =
-	                    doc.internal.getNumberOfPages();
-
-	                // ------------------------------------------------
-	                // LÍNEA
-	                // ------------------------------------------------
-
-	                doc.setDrawColor(
-	                    220,
-	                    224,
-	                    230
-	                );
-
-	                doc.line(
-	                    margen,
-	                    altoPagina - 13,
-	                    anchoPagina - margen,
-	                    altoPagina - 13
-	                );
-
-	                // ------------------------------------------------
-	                // TEXTO PIE IZQUIERDO
-	                // ------------------------------------------------
-
-	                doc.setTextColor(
-	                    120,
-	                    128,
-	                    138
-	                );
-
-	                doc.setFont(
-	                    "helvetica",
-	                    "normal"
-	                );
-
-	                doc.setFontSize(
-	                    7
-	                );
-
-	                doc.text(
-	                    "Reporte de Combustible",
-	                    margen,
-	                    altoPagina - 7
-	                );
-
-	                // ------------------------------------------------
-	                // TEXTO PIE CENTRO
-	                // ------------------------------------------------
-
-	                doc.text(
-	                    "Control de abastecimientos",
-	                    anchoPagina / 2,
-	                    altoPagina - 7,
-	                    {
-	                        align:
-	                            "center"
-	                    }
-	                );
-
-	                // ------------------------------------------------
-	                // NÚMERO DE PÁGINA
-	                // ------------------------------------------------
-
-	                doc.text(
-	                    `Página ${paginaActual}`,
-	                    anchoPagina - margen,
-	                    altoPagina - 7,
-	                    {
-	                        align:
-	                            "right"
-	                    }
-	                );
-
-	            }
-
-	    });
-
-	    // ============================================================
-	    // NOMBRE DEL ARCHIVO
-	    // ============================================================
-
-	    let nombreArchivo =
-	        "Reporte_de_Combustible";
-
-	    if (
-	        fechaDesde?.value &&
-	        fechaHasta?.value
-	    ) {
-
-	        nombreArchivo +=
-	            `_${fechaDesde.value}_${fechaHasta.value}`;
-
-	    } else if (
-	        fechaDesde?.value
-	    ) {
-
-	        nombreArchivo +=
-	            `_desde_${fechaDesde.value}`;
-
-	    } else if (
-	        fechaHasta?.value
-	    ) {
-
-	        nombreArchivo +=
-	            `_hasta_${fechaHasta.value}`;
-
-	    }
-
-	    nombreArchivo +=
-	        ".pdf";
-
-	    // ============================================================
-	    // GUARDAR PDF
-	    // ============================================================
-
-	    doc.save(
-	        nombreArchivo
-	    );
-
-	    mostrarExito(
-	        "El reporte de combustible fue generado correctamente en PDF."
-	    );
-
-	}
-
-
-	// ============================================================
-	// CARGAR IMAGEN PARA EL PDF
-	// ============================================================
-
-	function cargarImagenPDF(src) {
-
-	    return new Promise(
-	        function (
-	            resolve,
-	            reject
-	        ) {
-
-	            const img =
-	                new Image();
-
-	            img.onload =
-	                function () {
-
-	                    resolve(
-	                        img
-	                    );
-
-	                };
-
-	            img.onerror =
-	                function () {
-
-	                    reject(
-	                        new Error(
-	                            "No se pudo cargar la imagen: " +
-	                            src
-	                        )
-	                    );
-
-	                };
-
-	            img.src =
-	                src;
-
-	        }
-	    );
-
-	}
-
-
-	// ============================================================
-	// FORMATEAR FECHA PDF
-	// ============================================================
-
-	function formatearFechaPDF(fecha) {
-
-	    if (!fecha) {
-
-	        return "—";
-
-	    }
-
-	    const partes =
-	        String(fecha)
-	            .substring(
-	                0,
-	                10
-	            )
-	            .split("-");
-
-	    if (
-	        partes.length !== 3
-	    ) {
-
-	        return fecha;
-
-	    }
-
-	    return (
-	        `${partes[2]}/${partes[1]}/${partes[0]}`
-	    );
-
-	}
-
-
-	// ============================================================
-	// FORMATEAR NÚMERO PDF
-	// ============================================================
-
-	function formatearNumeroPDF(numero) {
-
-	    const valor =
-	        Number(numero);
-
-	    if (
-	        isNaN(valor)
-	    ) {
-
-	        return "0.00";
-
-	    }
-
-	    return valor.toLocaleString(
-	        "es-HN",
-	        {
-	            minimumFractionDigits:
-	                2,
-
-	            maximumFractionDigits:
-	                2
-	        }
-	    );
-
-	}
+
+        // ========================================================
+        // NUEVO: FILTRO GASOLINERA EN PDF
+        // ========================================================
+
+        if (
+            filtroGasolinera &&
+            filtroGasolinera.value
+        ) {
+
+            registros =
+                registros.filter(
+                    function (registro) {
+
+                        return (
+                            normalizarTexto(
+                                registro.gasolinera
+                            ) ===
+                            normalizarTexto(
+                                filtroGasolinera.value
+                            )
+                        );
+                    }
+                );
+        }
+
+
+        if (
+            !registros ||
+            registros.length === 0
+        ) {
+
+            mostrarAdvertencia(
+                "No existen registros que coincidan con los filtros seleccionados."
+            );
+
+            return;
+        }
+
+
+        // ========================================================
+        // CREAR PDF
+        // ========================================================
+
+        const { jsPDF } =
+            window.jspdf;
+
+
+        const doc =
+            new jsPDF({
+                orientation: "landscape",
+                unit: "mm",
+                format: "a4"
+            });
+
+
+        const anchoPagina =
+            doc.internal.pageSize.getWidth();
+
+
+        const altoPagina =
+            doc.internal.pageSize.getHeight();
+
+
+        const margen =
+            10;
+
+
+        // ========================================================
+        // PERÍODO
+        // ========================================================
+
+        let textoRango =
+            "Todos los registros";
+
+
+        if (
+            fechaDesde?.value &&
+            fechaHasta?.value
+        ) {
+
+            textoRango =
+                `${formatearFechaPDF(fechaDesde.value)} al ${formatearFechaPDF(fechaHasta.value)}`;
+
+        } else if (
+            fechaDesde?.value
+        ) {
+
+            textoRango =
+                `Desde ${formatearFechaPDF(fechaDesde.value)}`;
+
+        } else if (
+            fechaHasta?.value
+        ) {
+
+            textoRango =
+                `Hasta ${formatearFechaPDF(fechaHasta.value)}`;
+        }
+
+
+        // ========================================================
+        // FECHA DE GENERACIÓN
+        // ========================================================
+
+        const ahora =
+            new Date();
+
+
+        const fechaGeneracion =
+            ahora.toLocaleDateString(
+                "es-HN",
+                {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric"
+                }
+            );
+
+
+        // ========================================================
+        // TOTALES
+        // ========================================================
+
+        const totalGalones =
+            registros.reduce(
+                function (
+                    total,
+                    item
+                ) {
+
+                    return (
+                        total +
+                        (
+                            Number(
+                                item?.galonesAutorizados
+                            ) || 0
+                        )
+                    );
+
+                },
+                0
+            );
+
+
+        const totalCosto =
+            registros.reduce(
+                function (
+                    total,
+                    item
+                ) {
+
+                    return (
+                        total +
+                        (
+                            Number(
+                                item?.total
+                            ) || 0
+                        )
+                    );
+
+                },
+                0
+            );
+
+
+        const totalKilometros =
+            registros.reduce(
+                function (
+                    total,
+                    item
+                ) {
+
+                    return (
+                        total +
+                        (
+                            Number(
+                                item?.kmRuta
+                            ) || 0
+                        )
+                    );
+
+                },
+                0
+            );
+
+
+        // ========================================================
+        // ENCABEZADO
+        // ========================================================
+
+        doc.setFillColor(
+            18,
+            31,
+            48
+        );
+
+
+        doc.rect(
+            0,
+            0,
+            anchoPagina,
+            34,
+            "F"
+        );
+
+
+        // ========================================================
+        // CARGAR LOGO
+        // ========================================================
+
+        let logo =
+            null;
+
+
+        try {
+
+            logo =
+                await cargarImagenPDF(
+                    "/imgs/logo.png"
+                );
+
+        } catch (error) {
+
+            console.warn(
+                "No se pudo cargar el logo:",
+                error
+            );
+        }
+
+
+        // ========================================================
+        // LOGO
+        // ========================================================
+
+        if (logo) {
+
+            const logoAncho =
+                34;
+
+            const logoAlto =
+                22;
+
+
+            doc.addImage(
+                logo,
+                "PNG",
+                margen,
+                6,
+                logoAncho,
+                logoAlto
+            );
+        }
+
+
+        // ========================================================
+        // TEXTOS ENCABEZADO
+        // ========================================================
+
+        const xContenido =
+            margen + 40;
+
+
+        doc.setTextColor(
+            255,
+            255,
+            255
+        );
+
+
+        doc.setFont(
+            "helvetica",
+            "bold"
+        );
+
+
+        doc.setFontSize(
+            20
+        );
+
+
+        doc.text(
+            "REPORTE DE COMBUSTIBLE",
+            xContenido,
+            14
+        );
+
+
+        doc.setFont(
+            "helvetica",
+            "normal"
+        );
+
+
+        doc.setFontSize(
+            9
+        );
+
+
+        doc.setTextColor(
+            220,
+            226,
+            232
+        );
+
+
+        doc.text(
+            "Control de abastecimientos y consumo de combustible",
+            xContenido,
+            21
+        );
+
+
+        doc.setFont(
+            "helvetica",
+            "bold"
+        );
+
+
+        doc.setFontSize(
+            10
+        );
+
+
+        doc.setTextColor(
+            255,
+            255,
+            255
+        );
+
+
+        doc.text(
+            `Período: ${textoRango}`,
+            xContenido,
+            28
+        );
+
+
+        // ========================================================
+        // INFORMACIÓN DERECHA
+        // ========================================================
+
+        doc.setFont(
+            "helvetica",
+            "normal"
+        );
+
+
+        doc.setFontSize(
+            8
+        );
+
+
+        doc.text(
+            `Generado: ${fechaGeneracion}`,
+            anchoPagina - margen,
+            13,
+            {
+                align: "right"
+            }
+        );
+
+
+        doc.text(
+            `Registros: ${registros.length}`,
+            anchoPagina - margen,
+            20,
+            {
+                align: "right"
+            }
+        );
+
+
+        // ========================================================
+        // RESUMEN
+        // ========================================================
+
+        const yResumen =
+            42;
+
+
+        const espacio =
+            4;
+
+
+        const anchoTarjeta =
+            (
+                anchoPagina -
+                (margen * 2) -
+                (espacio * 3)
+            ) / 4;
+
+
+        function dibujarTarjeta(
+            x,
+            titulo,
+            valor,
+            subtitulo
+        ) {
+
+            doc.setFillColor(
+                245,
+                247,
+                250
+            );
+
+
+            doc.roundedRect(
+                x,
+                yResumen,
+                anchoTarjeta,
+                25,
+                2,
+                2,
+                "F"
+            );
+
+
+            doc.setDrawColor(
+                220,
+                224,
+                230
+            );
+
+
+            doc.roundedRect(
+                x,
+                yResumen,
+                anchoTarjeta,
+                25,
+                2,
+                2,
+                "S"
+            );
+
+
+            doc.setTextColor(
+                90,
+                99,
+                110
+            );
+
+
+            doc.setFont(
+                "helvetica",
+                "bold"
+            );
+
+
+            doc.setFontSize(
+                7
+            );
+
+
+            doc.text(
+                titulo.toUpperCase(),
+                x + 5,
+                yResumen + 7
+            );
+
+
+            doc.setTextColor(
+                18,
+                31,
+                48
+            );
+
+
+            doc.setFont(
+                "helvetica",
+                "bold"
+            );
+
+
+            doc.setFontSize(
+                13
+            );
+
+
+            doc.text(
+                valor,
+                x + 5,
+                yResumen + 15
+            );
+
+
+            doc.setTextColor(
+                120,
+                128,
+                138
+            );
+
+
+            doc.setFont(
+                "helvetica",
+                "normal"
+            );
+
+
+            doc.setFontSize(
+                6.5
+            );
+
+
+            doc.text(
+                subtitulo,
+                x + 5,
+                yResumen + 21
+            );
+        }
+
+
+        // TARJETA 1
+
+        dibujarTarjeta(
+            margen,
+            "Abastecimientos",
+            String(
+                registros.length
+            ),
+            "Registros incluidos"
+        );
+
+
+        // TARJETA 2
+
+        dibujarTarjeta(
+            margen +
+            (anchoTarjeta + espacio),
+            "Galones",
+            formatearNumeroPDF(
+                totalGalones
+            ),
+            "Total autorizado"
+        );
+
+
+        // TARJETA 3
+
+        dibujarTarjeta(
+            margen +
+            (
+                (anchoTarjeta + espacio) *
+                2
+            ),
+            "Kilómetros",
+            formatearNumeroPDF(
+                totalKilometros
+            ),
+            "Distancia registrada"
+        );
+
+
+        // TARJETA 4
+
+        dibujarTarjeta(
+            margen +
+            (
+                (anchoTarjeta + espacio) *
+                3
+            ),
+            "Costo total",
+            `L. ${formatearNumeroPDF(totalCosto)}`,
+            "Valor de abastecimientos"
+        );
+
+
+        // ========================================================
+        // TABLA PDF
+        // ========================================================
+
+        const yTabla =
+            yResumen + 32;
+
+
+        // ========================================================
+        // FILAS
+        // ========================================================
+
+        const filas =
+            registros.map(
+                function (item) {
+
+                    const combustible =
+                        item.combustible?.nombre ||
+                        item.combustibleNombre ||
+                        "—";
+
+
+                    const gasolinera =
+                        item.gasolinera ||
+                        "—";
+
+
+                    const fecha =
+                        formatearFecha(
+                            item.fecha
+                        );
+
+
+                    return [
+
+                        fecha.fecha,
+
+                        item.placa ||
+                        "—",
+
+                        item.motorista ||
+                        "—",
+
+                        item.destino ||
+                        "—",
+
+                        gasolinera,
+
+                        `${formatearNumeroPDF(
+                            item.kmRuta
+                        )} km`,
+
+                        `${formatearNumeroPDF(
+                            item.galonesAutorizados
+                        )} gal`,
+
+                        combustible,
+
+                        `L. ${formatearNumeroPDF(
+                            item.precioGalon
+                        )}`,
+
+                        `L. ${formatearNumeroPDF(
+                            item.total
+                        )}`
+                    ];
+                }
+            );
+
+
+        // ========================================================
+        // TABLA PDF
+        // ========================================================
+
+        doc.autoTable({
+
+            startY:
+                yTabla,
+
+            margin: {
+                left: margen,
+                right: margen
+            },
+
+
+            // ----------------------------------------------------
+            // ENCABEZADOS
+            // ----------------------------------------------------
+
+            head: [[
+
+                "Fecha",
+
+                "Placa",
+
+                "Motorista",
+
+                "Destino",
+
+                "Gasolinera",
+
+                "KM Ruta",
+
+                "Galones",
+
+                "Combustible",
+
+                "Precio/Galón",
+
+                "Total"
+
+            ]],
+
+
+            body:
+                filas,
+
+
+            theme:
+                "grid",
+
+
+            // ----------------------------------------------------
+            // ESTILOS
+            // ----------------------------------------------------
+
+            styles: {
+
+                font:
+                    "helvetica",
+
+                fontSize:
+                    6.5,
+
+                cellPadding:
+                    2,
+
+                textColor: [
+                    45,
+                    52,
+                    60
+                ],
+
+                lineColor: [
+                    220,
+                    224,
+                    230
+                ],
+
+                lineWidth:
+                    0.25,
+
+                valign:
+                    "middle"
+            },
+
+
+            // ----------------------------------------------------
+            // ENCABEZADO
+            // ----------------------------------------------------
+
+            headStyles: {
+
+                fillColor: [
+                    18,
+                    31,
+                    48
+                ],
+
+                textColor: [
+                    255,
+                    255,
+                    255
+                ],
+
+                fontStyle:
+                    "bold",
+
+                fontSize:
+                    6.5,
+
+                halign:
+                    "center",
+
+                cellPadding:
+                    2.5
+            },
+
+
+            // ----------------------------------------------------
+            // FILAS ALTERNAS
+            // ----------------------------------------------------
+
+            alternateRowStyles: {
+
+                fillColor: [
+                    248,
+                    249,
+                    251
+                ]
+            },
+
+
+            // ----------------------------------------------------
+            // ANCHOS
+            // ----------------------------------------------------
+
+            columnStyles: {
+
+                0: {
+                    halign:
+                        "center",
+                    cellWidth:
+                        18
+                },
+
+                1: {
+                    halign:
+                        "center",
+                    cellWidth:
+                        18
+                },
+
+                2: {
+                    cellWidth:
+                        35
+                },
+
+                3: {
+                    cellWidth:
+                        38
+                },
+
+                // NUEVA COLUMNA
+
+                4: {
+                    halign:
+                        "center",
+                    cellWidth:
+                        25
+                },
+
+                5: {
+                    halign:
+                        "right",
+                    cellWidth:
+                        20
+                },
+
+                6: {
+                    halign:
+                        "right",
+                    cellWidth:
+                        22
+                },
+
+                7: {
+                    halign:
+                        "center",
+                    cellWidth:
+                        26
+                },
+
+                8: {
+                    halign:
+                        "right",
+                    cellWidth:
+                        27
+                },
+
+                9: {
+                    halign:
+                        "right",
+                    cellWidth:
+                        25
+                }
+            },
+
+
+            // ====================================================
+            // PIE DE PÁGINA
+            // ====================================================
+
+            didDrawPage:
+                function () {
+
+                    const paginaActual =
+                        doc.internal.getNumberOfPages();
+
+
+                    doc.setDrawColor(
+                        220,
+                        224,
+                        230
+                    );
+
+
+                    doc.line(
+                        margen,
+                        altoPagina - 13,
+                        anchoPagina - margen,
+                        altoPagina - 13
+                    );
+
+
+                    doc.setTextColor(
+                        120,
+                        128,
+                        138
+                    );
+
+
+                    doc.setFont(
+                        "helvetica",
+                        "normal"
+                    );
+
+
+                    doc.setFontSize(
+                        7
+                    );
+
+
+                    doc.text(
+                        "Reporte de Combustible",
+                        margen,
+                        altoPagina - 7
+                    );
+
+
+                    doc.text(
+                        "Control de abastecimientos",
+                        anchoPagina / 2,
+                        altoPagina - 7,
+                        {
+                            align:
+                                "center"
+                        }
+                    );
+
+
+                    doc.text(
+                        `Página ${paginaActual}`,
+                        anchoPagina - margen,
+                        altoPagina - 7,
+                        {
+                            align:
+                                "right"
+                        }
+                    );
+                }
+        });
+
+
+        // ========================================================
+        // NOMBRE DEL ARCHIVO
+        // ========================================================
+
+        let nombreArchivo =
+            "Reporte_de_Combustible";
+
+
+        if (
+            fechaDesde?.value &&
+            fechaHasta?.value
+        ) {
+
+            nombreArchivo +=
+                `_${fechaDesde.value}_${fechaHasta.value}`;
+
+        } else if (
+            fechaDesde?.value
+        ) {
+
+            nombreArchivo +=
+                `_desde_${fechaDesde.value}`;
+
+        } else if (
+            fechaHasta?.value
+        ) {
+
+            nombreArchivo +=
+                `_hasta_${fechaHasta.value}`;
+        }
+
+
+        // ========================================================
+        // AGREGAR GASOLINERA AL NOMBRE SI HAY FILTRO
+        // ========================================================
+
+        if (
+            filtroGasolinera &&
+            filtroGasolinera.value
+        ) {
+
+            nombreArchivo +=
+                `_${filtroGasolinera.value}`;
+        }
+
+
+        nombreArchivo +=
+            ".pdf";
+
+
+        // ========================================================
+        // GUARDAR PDF
+        // ========================================================
+
+        doc.save(
+            nombreArchivo
+        );
+
+
+        mostrarExito(
+            "El reporte de combustible fue generado correctamente en PDF."
+        );
+    }
+
+
+    // ============================================================
+    // CARGAR IMAGEN PARA EL PDF
+    // ============================================================
+
+    function cargarImagenPDF(src) {
+
+        return new Promise(
+            function (
+                resolve,
+                reject
+            ) {
+
+                const img =
+                    new Image();
+
+
+                img.onload =
+                    function () {
+
+                        resolve(
+                            img
+                        );
+                    };
+
+
+                img.onerror =
+                    function () {
+
+                        reject(
+                            new Error(
+                                "No se pudo cargar la imagen: " +
+                                src
+                            )
+                        );
+                    };
+
+
+                img.src =
+                    src;
+            }
+        );
+    }
+
+
+    // ============================================================
+    // FORMATEAR FECHA PDF
+    // ============================================================
+
+    function formatearFechaPDF(fecha) {
+
+        if (!fecha) {
+            return "—";
+        }
+
+
+        const partes =
+            String(fecha)
+                .substring(
+                    0,
+                    10
+                )
+                .split("-");
+
+
+        if (
+            partes.length !== 3
+        ) {
+
+            return fecha;
+        }
+
+
+        return (
+            `${partes[2]}/${partes[1]}/${partes[0]}`
+        );
+    }
+
+
+    // ============================================================
+    // FORMATEAR NÚMERO PDF
+    // ============================================================
+
+    function formatearNumeroPDF(numero) {
+
+        const valor =
+            Number(numero);
+
+
+        if (
+            isNaN(valor)
+        ) {
+
+            return "0.00";
+        }
+
+
+        return valor.toLocaleString(
+            "es-HN",
+            {
+                minimumFractionDigits:
+                    2,
+
+                maximumFractionDigits:
+                    2
+            }
+        );
+    }
 
 
     // ============================================================
@@ -4493,7 +4806,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <tr>
 
                 <td
-                    colspan="10"
+                    colspan="11"
                     class="text-center py-5">
 
                     <div

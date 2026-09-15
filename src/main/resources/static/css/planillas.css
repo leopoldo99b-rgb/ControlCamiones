@@ -1,0 +1,434 @@
+@charset "UTF-8";
+/* =========================================
+   CONFIGURACIÓN GENERAL
+========================================= */
+body {
+	background-color: #f5f7fb;
+	font-family: "Segoe UI", Arial, sans-serif;
+	color: #1f2937;
+}
+
+.planillas-container {
+	padding: 30px 35px 50px;
+	max-width: 1600px;
+	margin: 0 auto;
+}
+
+/* =========================================
+   ENCABEZADO
+========================================= */
+.page-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	margin-bottom: 30px;
+}
+
+.breadcrumb-custom {
+	font-size: 13px;
+	color: #6b7280;
+	margin-bottom: 8px;
+}
+
+.breadcrumb-custom i {
+	margin-right: 5px;
+}
+
+.breadcrumb-custom span {
+	margin: 0 7px;
+	color: #9ca3af;
+}
+
+.page-header h1 {
+	font-size: 30px;
+	font-weight: 700;
+	margin: 0;
+	color: #172033;
+}
+
+.page-description {
+	margin: 6px 0 0;
+	color: #6b7280;
+	font-size: 14px;
+}
+
+.btn-new-payroll {
+	padding: 11px 18px;
+	font-weight: 600;
+	border-radius: 8px;
+}
+
+/* =========================================
+   TARJETAS DE RESUMEN
+========================================= */
+.summary-card {
+	background: #ffffff;
+	border: 1px solid #e8ebf0;
+	border-radius: 12px;
+	padding: 22px;
+	display: flex;
+	align-items: center;
+	min-height: 125px;
+	transition: all 0.2s ease;
+}
+
+.summary-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 22px rgba(31, 41, 55, 0.07);
+}
+
+.summary-icon {
+	width: 52px;
+	height: 52px;
+	border-radius: 11px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 23px;
+	margin-right: 16px;
+}
+
+.summary-icon.employees {
+	background: #e8f1ff;
+	color: #1769e0;
+}
+
+.summary-icon.payroll {
+	background: #e9f8f0;
+	color: #198754;
+}
+
+.summary-icon.advances {
+	background: #fff4df;
+	color: #d98b00;
+}
+
+.summary-icon.paid {
+	background: #e8f8ef;
+	color: #16965b;
+}
+
+.summary-content {
+	min-width: 0;
+}
+
+.summary-label {
+	display: block;
+	color: #6b7280;
+	font-size: 13px;
+	margin-bottom: 5px;
+}
+
+.summary-content h3 {
+	font-size: 21px;
+	font-weight: 700;
+	margin: 0;
+	color: #172033;
+}
+
+.summary-info {
+	display: block;
+	margin-top: 4px;
+	color: #9ca3af;
+	font-size: 12px;
+}
+
+/* =========================================
+   TÍTULOS DE SECCIÓN
+========================================= */
+.section-title {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 30px 0 18px;
+}
+
+.section-title h2 {
+	font-size: 20px;
+	font-weight: 700;
+	margin: 0;
+	color: #172033;
+}
+
+.section-title p {
+	margin: 4px 0 0;
+	color: #7b8494;
+	font-size: 13px;
+}
+
+.view-all {
+	color: #1769e0;
+	text-decoration: none;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.view-all:hover {
+	text-decoration: underline;
+}
+
+/* =========================================
+   CARDS DE GESTIÓN
+========================================= */
+.management-card {
+	background: #ffffff;
+	border: 1px solid #e8ebf0;
+	border-radius: 12px;
+	padding: 23px;
+	min-height: 205px;
+	display: flex;
+	text-decoration: none;
+	color: inherit;
+	transition: all 0.2s ease;
+}
+
+.management-card:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 10px 25px rgba(31, 41, 55, 0.08);
+	border-color: #d9e2f0;
+}
+
+.management-icon {
+	width: 48px;
+	height: 48px;
+	min-width: 48px;
+	border-radius: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 21px;
+	margin-right: 17px;
+}
+
+.management-icon.blue {
+	background: #e9f2ff;
+	color: #1769e0;
+}
+
+.management-icon.purple {
+	background: #f1eafe;
+	color: #7542d6;
+}
+
+.management-icon.green {
+	background: #e7f8ef;
+	color: #198754;
+}
+
+.management-icon.orange {
+	background: #fff1df;
+	color: #db8500;
+}
+
+.management-icon.teal {
+	background: #e4f8f7;
+	color: #168b87;
+}
+
+.management-icon.red {
+	background: #fdecec;
+	color: #dc3545;
+}
+
+.management-content h4 {
+	margin: 2px 0 8px;
+	font-size: 17px;
+	font-weight: 700;
+	color: #172033;
+}
+
+.management-content p {
+	margin: 0;
+	color: #6b7280;
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+.card-link {
+	display: inline-block;
+	margin-top: 17px;
+	color: #1769e0;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.card-link i {
+	margin-left: 4px;
+	transition: margin-left 0.2s ease;
+}
+
+.management-card:hover .card-link i {
+	margin-left: 8px;
+}
+
+/* =========================================
+   ÚLTIMA PLANILLA
+========================================= */
+.latest-payroll {
+	background: #ffffff;
+	border: 1px solid #e8ebf0;
+	border-radius: 12px;
+	padding: 22px 25px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 25px;
+}
+
+.latest-info {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	gap: 45px;
+}
+
+.latest-info span, .latest-total>span:first-child {
+	display: block;
+	font-size: 11px;
+	color: #8a93a2;
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
+	margin-bottom: 5px;
+}
+
+.latest-info strong {
+	font-size: 14px;
+	color: #273246;
+}
+
+.payroll-number strong {
+	color: #1769e0;
+}
+
+.latest-total {
+	min-width: 180px;
+}
+
+.latest-total strong {
+	display: block;
+	font-size: 20px;
+	color: #172033;
+	margin-bottom: 8px;
+}
+
+.status-badge {
+	display: inline-flex !important;
+	align-items: center;
+	gap: 5px;
+	color: #198754 !important;
+	background: #e8f7ef;
+	border-radius: 20px;
+	padding: 5px 9px;
+	font-size: 10px !important;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.latest-action {
+	white-space: nowrap;
+}
+
+.latest-action .btn {
+	border-radius: 7px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+/* =========================================
+   AVISO
+========================================= */
+.payroll-notice {
+	margin-top: 25px;
+	background: #eef6ff;
+	border: 1px solid #d7e9ff;
+	border-radius: 10px;
+	padding: 17px 20px;
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
+}
+
+.notice-icon {
+	width: 36px;
+	height: 36px;
+	min-width: 36px;
+	border-radius: 50%;
+	background: #ffffff;
+	color: #1769e0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 17px;
+}
+
+.payroll-notice h5 {
+	margin: 2px 0 4px;
+	font-size: 14px;
+	font-weight: 700;
+	color: #1d4f86;
+}
+
+.payroll-notice p {
+	margin: 0;
+	font-size: 12px;
+	color: #54708f;
+	line-height: 1.5;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+@media ( max-width : 992px) {
+	.planillas-container {
+		padding: 25px 20px 40px;
+	}
+	.latest-payroll {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.latest-info {
+		flex-wrap: wrap;
+		gap: 25px;
+	}
+	.latest-total {
+		border-top: 1px solid #edf0f4;
+		padding-top: 18px;
+	}
+	.latest-action {
+		text-align: right;
+	}
+}
+
+@media ( max-width : 768px) {
+	.page-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 18px;
+	}
+	.page-header h1 {
+		font-size: 26px;
+	}
+	.header-actions {
+		width: 100%;
+	}
+	.btn-new-payroll {
+		width: 100%;
+	}
+	.management-card {
+		min-height: auto;
+	}
+}
+
+@media ( max-width : 576px) {
+	.planillas-container {
+		padding: 20px 15px 35px;
+	}
+	.latest-info {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 17px;
+	}
+	.latest-action {
+		text-align: left;
+	}
+}

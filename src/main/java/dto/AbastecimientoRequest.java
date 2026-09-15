@@ -17,10 +17,24 @@ public class AbastecimientoRequest {
 
     private BigDecimal galonesAutorizados;
 
+    // ============================================================
+    // GASOLINERA
+    // ============================================================
+
+    private String gasolinera;
+
     private Long combustibleId;
+
+    // ============================================================
+    // CONSTRUCTOR
+    // ============================================================
 
     public AbastecimientoRequest() {
     }
+
+    // ============================================================
+    // GETTERS
+    // ============================================================
 
     public LocalDateTime getFecha() {
         return fecha;
@@ -46,9 +60,17 @@ public class AbastecimientoRequest {
         return galonesAutorizados;
     }
 
+    public String getGasolinera() {
+        return gasolinera;
+    }
+
     public Long getCombustibleId() {
         return combustibleId;
     }
+
+    // ============================================================
+    // SETTERS
+    // ============================================================
 
     public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
@@ -72,6 +94,10 @@ public class AbastecimientoRequest {
 
     public void setGalonesAutorizados(BigDecimal galonesAutorizados) {
         this.galonesAutorizados = galonesAutorizados;
+    }
+
+    public void setGasolinera(String gasolinera) {
+        this.gasolinera = gasolinera;
     }
 
     public void setCombustibleId(Long combustibleId) {

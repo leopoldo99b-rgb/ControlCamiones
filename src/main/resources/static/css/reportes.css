@@ -611,6 +611,58 @@ body {
 
 
 /* =========================================================
+   CARD PLANILLAS
+   ========================================================= */
+
+/* Barra superior */
+.card.planillas::before {
+    background: linear-gradient(
+        90deg,
+        #2563eb,
+        #7c3aed
+    );
+}
+
+/* Icono */
+.card.planillas .icon-circle {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+/* Imagen */
+.card.planillas .imagen img {
+    width: 145px;
+    height: 145px;
+    object-fit: contain;
+}
+
+/* Botón */
+.card.planillas .card-btn {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+/* Hover del botón */
+.card.planillas .card-btn:hover {
+    background: #4f46e5;
+    color: #ffffff;
+}
+
+/* Efecto al pasar el mouse */
+.card.planillas:hover {
+    border-color: #c7d2fe;
+}
+
+/* Animación del icono */
+.card.planillas:hover .icon-circle {
+    transform: translateY(-3px);
+}
+
+.card.planillas .icon-circle {
+    transition: all 0.3s ease;
+}
+
+/* =========================================================
    PANEL INFERIOR
    ========================================================= */
 
@@ -932,5 +984,56 @@ body {
         padding: 23px;
     }
 
+}
+
+
+/* =========================================================
+   PLANILLAS - DISEÑO PROPIO
+   ========================================================= */
+
+/* Barra superior */
+.card.planillas::before {
+    background: linear-gradient(
+        90deg,
+        #7c3aed,
+        #a78bfa
+    ) !important;
+}
+
+/* Icono */
+.card.planillas .icon-circle {
+    background: #f3e8ff !important;
+    color: #7c3aed !important;
+}
+
+/* Efecto del icono */
+.card.planillas:hover .icon-circle {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+    transform: translateY(-3px);
+}
+
+/* Imagen */
+.card.planillas .imagen img {
+    width: 145px;
+    height: 145px;
+    object-fit: contain;
+}
+
+/* Botón */
+.card.planillas .card-btn {
+    background: #f3e8ff !important;
+    color: #7c3aed !important;
+}
+
+/* Botón al pasar el mouse */
+.card.planillas .card-btn:hover {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+}
+
+/* Borde al pasar el mouse */
+.card.planillas:hover {
+    border-color: #c4b5fd !important;
 }
 
