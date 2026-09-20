@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Historial de Planillas | Sistema de Planillas</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- CSS -->
+    <link
+        rel="stylesheet"
+        th:href="@{/css/historial-planillas.css}">
+
+</head>
+
+<body>
+
+<div class="payroll-page">
+
+    <!-- =====================================================
+         ENCABEZADO
+    ====================================================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <a
+                th:href="@{/planillas}"
+                class="back-link">
+
+                <i class="bi bi-arrow-left"></i>
+
+                Volver a Planillas
+
+            </a>
+
+            <h1>
+                Historial de planillas
+            </h1>
+
+            <p>
+                Consulta las planillas procesadas, sus pagos y
+                el detalle de cada empleado.
+            </p>
+
+        </div>
+
+
+        <a
+            th:href="@{/planillas/nueva}"
+            class="btn btn-primary new-payroll-btn">
+
+            <i class="bi bi-plus-lg"></i>
+
+            Nueva planilla
+
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         RESUMEN
+    ====================================================== -->
+
+    <div class="row g-3 mb-4">
+
+        <!-- TOTAL PLANILLAS -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="mini-summary">
+
+                <div class="mini-icon blue">
+
+                    <i class="bi bi-files"></i>
+
+                </div>
+
+                <div>
+
+                    <span>
+                        Total planillas
+                    </span>
+
+                    <strong id="totalPayrolls">
+                        12
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- PAGADAS -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="mini-summary">
+
+                <div class="mini-icon green">
+
+                    <i class="bi bi-check-circle-fill"></i>
+
+                </div>
+
+                <div>
+
+                    <span>
+                        Planillas pagadas
+                    </span>
+
+                    <strong id="paidPayrolls">
+                        9
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- EN PROCESO -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="mini-summary">
+
+                <div class="mini-icon orange">
+
+                    <i class="bi bi-clock-fill"></i>
+
+                </div>
+
+                <div>
+
+                    <span>
+                        Pendientes
+                    </span>
+
+                    <strong id="pendingPayrolls">
+                        3
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TOTAL PAGADO -->
+
+        <div class="col-12 col-sm-6 col-xl-3">
+
+            <div class="mini-summary">
+
+                <div class="mini-icon purple">
+
+                    <i class="bi bi-cash-stack"></i>
+
+                </div>
+
+                <div>
+
+                    <span>
+                        Total pagado
+                    </span>
+
+                    <strong id="totalPaid">
+                        L 426,850.00
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         HISTORIAL
+    ====================================================== -->
+
+    <div class="payroll-card">
+
+        <!-- HEADER -->
+
+        <div class="card-header-custom history-header">
+
+            <div>
+
+                <h2>
+                    Planillas registradas
+                </h2>
+
+                <p>
+                    Consulta las planillas anteriores y revisa
+                    sus movimientos.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             FILTROS
+        ================================================== -->
+
+        <div class="history-filters">
+
+            <!-- BUSCAR -->
+
+            <div class="filter-search">
+
+                <label>
+                    Buscar
+                </label>
+
+                <div class="search-box">
+
+                    <i class="bi bi-search"></i>
+
+                    <input
+                        type="text"
+                        id="searchPayroll"
+                        placeholder="Buscar por número de planilla...">
+
+                </div>
+
+            </div>
+
+
+            <!-- FECHA DESDE -->
+
+            <div class="filter-item">
+
+                <label>
+                    Desde
+                </label>
+
+                <input
+                    type="date"
+                    id="dateFrom"
+                    class="form-control">
+
+            </div>
+
+
+            <!-- FECHA HASTA -->
+
+            <div class="filter-item">
+
+                <label>
+                    Hasta
+                </label>
+
+                <input
+                    type="date"
+                    id="dateTo"
+                    class="form-control">
+
+            </div>
+
+
+            <!-- ESTADO -->
+
+            <div class="filter-item">
+
+                <label>
+                    Estado
+                </label>
+
+                <select
+                    id="statusFilter"
+                    class="form-select">
+
+                    <option value="">
+                        Todos los estados
+                    </option>
+
+                    <option value="PAGADA">
+                        Pagada
+                    </option>
+
+                    <option value="PENDIENTE">
+                        Pendiente
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- LIMPIAR -->
+
+            <div class="filter-action">
+
+                <button
+                    type="button"
+                    class="btn btn-light"
+                    id="clearFiltersBtn">
+
+                    <i class="bi bi-arrow-counterclockwise"></i>
+
+                    Limpiar
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             TABLA PRINCIPAL
+        ================================================== -->
+
+        <div class="table-responsive">
+
+            <table class="table payroll-table history-table">
+
+                <thead>
+
+                <tr>
+
+                    <th>
+                        Planilla
+                    </th>
+
+                    <th>
+                        Período
+                    </th>
+
+                    <th>
+                        Fecha de pago
+                    </th>
+
+                    <th>
+                        Empleados
+                    </th>
+
+                    <th>
+                        Salarios
+                    </th>
+
+                    <th>
+                        Bonos
+                    </th>
+
+                    <th>
+                        Anticipos
+                    </th>
+
+                    <th>
+                        Deducciones
+                    </th>
+
+                    <th>
+                        Total neto
+                    </th>
+
+                    <th>
+                        Estado
+                    </th>
+
+                    <th>
+                        Acción
+                    </th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody id="payrollHistoryBody">
+
+
+                <!-- =================================================
+                     PLANILLA 37
+                ================================================== -->
+
+                <tr
+                    id="payroll-row-2026-37"
+                    data-payroll="#2026-37"
+                    data-payment="2026-09-14"
+                    data-status="PAGADA">
+
+                    <td>
+
+                        <div class="payroll-number">
+
+                            <span>
+                                PLANILLA
+                            </span>
+
+                            <strong>
+                                #2026-37
+                            </strong>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="period-cell">
+
+                            <strong>
+                                07/09/2026 - 13/09/2026
+                            </strong>
+
+                            <small>
+                                Semana 37
+                            </small>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        14/09/2026
+                    </td>
+
+
+                    <td>
+
+                        <span class="employee-count">
+
+                            <i class="bi bi-people-fill"></i>
+
+                            24
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        L 120,000.00
+                    </td>
+
+
+                    <td class="income">
+                        + L 4,500.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 8,500.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 2,300.00
+                    </td>
+
+
+                    <td class="net-pay">
+                        L 113,700.00
+                    </td>
+
+
+                    <!-- ESTADO -->
+
+                    <td>
+
+                        <span
+                            class="history-status paid"
+                            id="status-2026-37">
+
+                            <i class="bi bi-check-circle-fill"></i>
+
+                            PAGADA
+
+                        </span>
+
+                    </td>
+
+
+                    <!-- ACCIÓN -->
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-detail"
+                            data-bs-toggle="modal"
+                            data-bs-target="#payrollDetailModal"
+                            data-payroll-id="2026-37">
+
+                            <i class="bi bi-eye"></i>
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- =================================================
+                     PLANILLA 36
+                ================================================== -->
+
+                <tr
+                    id="payroll-row-2026-36"
+                    data-payroll="#2026-36"
+                    data-payment="2026-09-07"
+                    data-status="PAGADA">
+
+                    <td>
+
+                        <div class="payroll-number">
+
+                            <span>
+                                PLANILLA
+                            </span>
+
+                            <strong>
+                                #2026-36
+                            </strong>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="period-cell">
+
+                            <strong>
+                                31/08/2026 - 06/09/2026
+                            </strong>
+
+                            <small>
+                                Semana 36
+                            </small>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        07/09/2026
+                    </td>
+
+
+                    <td>
+
+                        <span class="employee-count">
+
+                            <i class="bi bi-people-fill"></i>
+
+                            24
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        L 118,500.00
+                    </td>
+
+
+                    <td class="income">
+                        + L 3,800.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 7,500.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 1,900.00
+                    </td>
+
+
+                    <td class="net-pay">
+                        L 112,900.00
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="history-status paid"
+                            id="status-2026-36">
+
+                            <i class="bi bi-check-circle-fill"></i>
+
+                            PAGADA
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-detail"
+                            data-bs-toggle="modal"
+                            data-bs-target="#payrollDetailModal"
+                            data-payroll-id="2026-36">
+
+                            <i class="bi bi-eye"></i>
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- =================================================
+                     PLANILLA 35
+                ================================================== -->
+
+                <tr
+                    id="payroll-row-2026-35"
+                    data-payroll="#2026-35"
+                    data-payment="2026-08-31"
+                    data-status="PAGADA">
+
+                    <td>
+
+                        <div class="payroll-number">
+
+                            <span>
+                                PLANILLA
+                            </span>
+
+                            <strong>
+                                #2026-35
+                            </strong>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="period-cell">
+
+                            <strong>
+                                24/08/2026 - 30/08/2026
+                            </strong>
+
+                            <small>
+                                Semana 35
+                            </small>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        31/08/2026
+                    </td>
+
+
+                    <td>
+
+                        <span class="employee-count">
+
+                            <i class="bi bi-people-fill"></i>
+
+                            23
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        L 115,800.00
+                    </td>
+
+
+                    <td class="income">
+                        + L 2,500.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 6,800.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 1,700.00
+                    </td>
+
+
+                    <td class="net-pay">
+                        L 109,800.00
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="history-status paid"
+                            id="status-2026-35">
+
+                            <i class="bi bi-check-circle-fill"></i>
+
+                            PAGADA
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-detail"
+                            data-bs-toggle="modal"
+                            data-bs-target="#payrollDetailModal"
+                            data-payroll-id="2026-35">
+
+                            <i class="bi bi-eye"></i>
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- =================================================
+                     PLANILLA 34
+                ================================================== -->
+
+                <tr
+                    id="payroll-row-2026-34"
+                    data-payroll="#2026-34"
+                    data-payment="2026-08-24"
+                    data-status="PENDIENTE">
+
+                    <td>
+
+                        <div class="payroll-number">
+
+                            <span>
+                                PLANILLA
+                            </span>
+
+                            <strong>
+                                #2026-34
+                            </strong>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="period-cell">
+
+                            <strong>
+                                17/08/2026 - 23/08/2026
+                            </strong>
+
+                            <small>
+                                Semana 34
+                            </small>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        24/08/2026
+                    </td>
+
+
+                    <td>
+
+                        <span class="employee-count">
+
+                            <i class="bi bi-people-fill"></i>
+
+                            23
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        L 115,800.00
+                    </td>
+
+
+                    <td class="income">
+                        + L 1,800.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 5,500.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 1,200.00
+                    </td>
+
+
+                    <td class="net-pay">
+                        L 110,900.00
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="history-status pending"
+                            id="status-2026-34">
+
+                            <i class="bi bi-clock-fill"></i>
+
+                            PENDIENTE
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-detail"
+                            data-bs-toggle="modal"
+                            data-bs-target="#payrollDetailModal"
+                            data-payroll-id="2026-34">
+
+                            <i class="bi bi-eye"></i>
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- =================================================
+                     PLANILLA 33
+                ================================================== -->
+
+                <tr
+                    id="payroll-row-2026-33"
+                    data-payroll="#2026-33"
+                    data-payment="2026-08-17"
+                    data-status="PENDIENTE">
+
+                    <td>
+
+                        <div class="payroll-number">
+
+                            <span>
+                                PLANILLA
+                            </span>
+
+                            <strong>
+                                #2026-33
+                            </strong>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="period-cell">
+
+                            <strong>
+                                10/08/2026 - 16/08/2026
+                            </strong>
+
+                            <small>
+                                Semana 33
+                            </small>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        17/08/2026
+                    </td>
+
+
+                    <td>
+
+                        <span class="employee-count">
+
+                            <i class="bi bi-people-fill"></i>
+
+                            22
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        L 109,500.00
+                    </td>
+
+
+                    <td class="income">
+                        + L 1,500.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 4,800.00
+                    </td>
+
+
+                    <td class="deduction">
+                        - L 1,100.00
+                    </td>
+
+
+                    <td class="net-pay">
+                        L 105,100.00
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="history-status pending"
+                            id="status-2026-33">
+
+                            <i class="bi bi-clock-fill"></i>
+
+                            PENDIENTE
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-detail"
+                            data-bs-toggle="modal"
+                            data-bs-target="#payrollDetailModal"
+                            data-payroll-id="2026-33">
+
+                            <i class="bi bi-eye"></i>
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- =================================================
+             SIN RESULTADOS
+        ================================================== -->
+
+        <div
+            id="emptyHistory"
+            class="empty-history d-none">
+
+            <div class="empty-icon">
+
+                <i class="bi bi-file-earmark-x"></i>
+
+            </div>
+
+            <h5>
+                No se encontraron planillas
+            </h5>
+
+            <p>
+                No existen planillas que coincidan con
+                los filtros seleccionados.
+            </p>
+
+        </div>
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <div class="history-footer">
+
+            <div>
+
+                Mostrando
+
+                <strong id="visiblePayrolls">
+                    5
+                </strong>
+
+                de
+
+                <strong id="totalPayrollsFooter">
+                    5
+                </strong>
+
+                planillas
+
+            </div>
+
+
+            <div class="history-pagination">
+
+                <button
+                    type="button"
+                    class="pagination-btn disabled">
+
+                    <i class="bi bi-chevron-left"></i>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="pagination-btn active">
+
+                    1
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="pagination-btn">
+
+                    2
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="pagination-btn">
+
+                    3
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="pagination-btn">
+
+                    <i class="bi bi-chevron-right"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         AVISO
+    ====================================================== -->
+
+    <div class="payroll-notice">
+
+        <div class="notice-icon">
+
+            <i class="bi bi-shield-check"></i>
+
+        </div>
+
+        <div>
+
+            <h5>
+                Control de pagos
+            </h5>
+
+            <p>
+                Una planilla se considera pagada únicamente
+                cuando todos sus empleados tienen registrado
+                el estado PAGADO. Si al menos un empleado está
+                pendiente, la planilla permanecerá como
+                PENDIENTE.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL DETALLE DE PLANILLA
+========================================================== -->
+
+<div
+    class="modal fade"
+    id="payrollDetailModal"
+    tabindex="-1"
+    aria-labelledby="payrollDetailModalLabel"
+    aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+
+        <div class="modal-content">
+
+
+            <!-- =================================================
+                 HEADER
+            ================================================== -->
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h5
+                        class="modal-title"
+                        id="payrollDetailModalLabel">
+
+                        Detalle de planilla
+
+                    </h5>
+
+                    <small
+                        class="text-muted"
+                        id="modalPayrollNumber">
+
+                        Planilla #2026-37
+
+                    </small>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 BODY
+            ================================================== -->
+
+            <div class="modal-body">
+
+
+                <!-- =================================================
+                     INFORMACIÓN PRINCIPAL
+                ================================================== -->
+
+                <div class="detail-summary">
+
+                    <div>
+
+                        <span>
+                            Período
+                        </span>
+
+                        <strong id="modalPeriod">
+                            07/09/2026 - 13/09/2026
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Fecha de pago
+                        </span>
+
+                        <strong id="modalPaymentDate">
+                            14/09/2026
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Empleados
+                        </span>
+
+                        <strong id="modalEmployees">
+                            24
+                        </strong>
+
+                    </div>
+
+
+                    <!-- ESTADO GENERAL -->
+
+                    <div>
+
+                        <span>
+                            Estado de planilla
+                        </span>
+
+                        <strong>
+
+                            <span
+                                class="history-status paid"
+                                id="modalStatus">
+
+                                <i class="bi bi-check-circle-fill"></i>
+
+                                PAGADA
+
+                            </span>
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <hr>
+
+
+                <!-- =================================================
+                     RESUMEN FINANCIERO
+                ================================================== -->
+
+                <h6 class="detail-title">
+                    RESUMEN FINANCIERO
+                </h6>
+
+
+                <div class="financial-grid">
+
+                    <div class="financial-item">
+
+                        <span>
+                            Salarios
+                        </span>
+
+                        <strong>
+                            L 120,000.00
+                        </strong>
+
+                    </div>
+
+
+                    <div class="financial-item income-item">
+
+                        <span>
+                            Bonificaciones
+                        </span>
+
+                        <strong>
+                            + L 4,500.00
+                        </strong>
+
+                    </div>
+
+
+                    <div class="financial-item deduction-item">
+
+                        <span>
+                            Anticipos
+                        </span>
+
+                        <strong>
+                            - L 8,500.00
+                        </strong>
+
+                    </div>
+
+
+                    <div class="financial-item deduction-item">
+
+                        <span>
+                            Otras deducciones
+                        </span>
+
+                        <strong>
+                            - L 2,300.00
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- TOTAL -->
+
+                <div class="modal-total">
+
+                    <span>
+                        TOTAL NETO A PAGAR
+                    </span>
+
+                    <strong>
+                        L 113,700.00
+                    </strong>
+
+                </div>
+
+
+                <hr>
+
+
+                <!-- =================================================
+                     EMPLEADOS
+                ================================================== -->
+
+                <div class="detail-employees-header">
+
+                    <div>
+
+                        <h6 class="detail-title mb-1">
+                            EMPLEADOS
+                        </h6>
+
+                        <p>
+                            Marca cada empleado como PAGADO
+                            cuando se haya realizado su pago.
+                        </p>
+
+                    </div>
+
+
+                    <span
+                        class="employee-badge"
+                        id="employeePaymentSummary">
+
+                        3 pagados de 3
+
+                    </span>
+
+                </div>
+
+
+                <!-- =================================================
+                     TABLA DE EMPLEADOS
+                ================================================== -->
+
+                <div class="table-responsive">
+
+                    <table class="table detail-table">
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                Empleado
+                            </th>
+
+                            <th>
+                                Salario
+                            </th>
+
+                            <th>
+                                Bonos
+                            </th>
+
+                            <th>
+                                Anticipos
+                            </th>
+
+                            <th>
+                                Deducciones
+                            </th>
+
+                            <th>
+                                Neto
+                            </th>
+
+                            <th>
+                                Estado
+                            </th>
+
+                            <th>
+                                Acciones
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+
+                        <tbody id="employeeDetailBody">
+
+                        <!-- Se carga mediante JavaScript -->
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 FOOTER
+            ================================================== -->
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-light"
+                    data-bs-dismiss="modal">
+
+                    Cerrar
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn btn-outline-primary">
+
+                    <i class="bi bi-printer"></i>
+
+                    Imprimir
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn btn-primary">
+
+                    <i class="bi bi-receipt"></i>
+
+                    Ver recibos
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     BOOTSTRAP JS
+========================================================== -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================== -->
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+
+    /*
+     * ========================================================
+     * DATOS DE LAS PLANILLAS
+     *
+     * En tu proyecto real estos datos vendrán
+     * posteriormente desde Spring Boot.
+     * ========================================================
+     */
+
+    const payrolls = {
+
+        "2026-37": {
+
+            number: "#2026-37",
+
+            period: "07/09/2026 - 13/09/2026",
+
+            paymentDate: "14/09/2026",
+
+            employees: [
+
+                {
+                    id: "EMP-001",
+                    name: "Juan Pérez",
+                    initials: "JP",
+                    salary: 5000,
+                    bonus: 0,
+                    advance: 1000,
+                    deduction: 0,
+                    status: "PAGADO"
+                },
+
+                {
+                    id: "EMP-002",
+                    name: "María García",
+                    initials: "MG",
+                    salary: 5500,
+                    bonus: 300,
+                    advance: 0,
+                    deduction: 0,
+                    status: "PAGADO"
+                },
+
+                {
+                    id: "EMP-003",
+                    name: "Carlos Ruiz",
+                    initials: "CR",
+                    salary: 4500,
+                    bonus: 0,
+                    advance: 500,
+                    deduction: 200,
+                    status: "PAGADO"
+                }
+
+            ]
+
+        },
+
+
+        "2026-36": {
+
+            number: "#2026-36",
+
+            period: "31/08/2026 - 06/09/2026",
+
+            paymentDate: "07/09/2026",
+
+            employees: [
+
+                {
+                    id: "EMP-001",
+                    name: "Juan Pérez",
+                    initials: "JP",
+                    salary: 5000,
+                    bonus: 0,
+                    advance: 1000,
+                    deduction: 0,
+                    status: "PAGADO"
+                },
+
+                {
+                    id: "EMP-002",
+                    name: "María García",
+                    initials: "MG",
+                    salary: 5500,
+                    bonus: 300,
+                    advance: 0,
+                    deduction: 0,
+                    status: "PAGADO"
+                },
+
+                {
+                    id: "EMP-003",
+                    name: "Carlos Ruiz",
+                    initials: "CR",
+                    salary: 4500,
+                    bonus: 0,
+                    advance: 500,
+                    deduction: 200,
+                    status: "PAGADO"
+                }
+
+            ]
+
+        },
+
+
+        "2026-35": {
+
+            number: "#2026-35",
+
+            period: "24/08/2026 - 30/08/2026",
+
+            paymentDate: "31/08/2026",
+
+            employees: [
+
+                {
+                    id: "EMP-001",
+                    name: "Juan Pérez",
+                    initials: "JP",
+                    salary: 5000,
+                    bonus: 0,
+                    advance: 1000,
+                    deduction: 0,
+                    status: "PAGADO"
+                },
+
+                {
+                    id: "EMP-002",
+                    name: "María García",
+                    initials: "MG",
+                    salary: 5500,
+                    bonus: 300,
+                    advance: 0,
+                    deduction: 0,
+                    status: "PAGADO"
+                },
+
+                {
+                    id: "EMP-003",
+                    name: "Carlos Ruiz",
+                    initials: "CR",
+                    salary: 4500,
+                    bonus: 0,
+                    advance: 500,
+                    deduction: 200,
+                    status: "PAGADO"
+                }
+
+            ]
+
+        },
+
+
+        "2026-34": {
+
+            number: "#2026-34",
+
+            period: "17/08/2026 - 23/08/2026",
+
+            paymentDate: "24/08/2026",
+
+            employees: [
+
+                {
+                    id: "EMP-001",
+                    name: "Juan Pérez",
+                    initials: "JP",
+                    salary: 5000,
+                    bonus: 0,
+                    advance: 1000,
+                    deduction: 0,
+                    status: "PAGADO"
+                },
+
+                {
+                    id: "EMP-002",
+                    name: "María García",
+                    initials: "MG",
+                    salary: 5500,
+                    bonus: 300,
+                    advance: 0,
+                    deduction: 0,
+                    status: "PENDIENTE"
+                },
+
+                {
+                    id: "EMP-003",
+                    name: "Carlos Ruiz",
+                    initials: "CR",
+                    salary: 4500,
+                    bonus: 0,
+                    advance: 500,
+                    deduction: 200,
+                    status: "PAGADO"
+                }
+
+            ]
+
+        },
+
+
+        "2026-33": {
+
+            number: "#2026-33",
+
+            period: "10/08/2026 - 16/08/2026",
+
+            paymentDate: "17/08/2026",
+
+            employees: [
+
+                {
+                    id: "EMP-001",
+                    name: "Juan Pérez",
+                    initials: "JP",
+                    salary: 5000,
+                    bonus: 0,
+                    advance: 1000,
+                    deduction: 0,
+                    status: "PENDIENTE"
+                },
+
+                {
+                    id: "EMP-002",
+                    name: "María García",
+                    initials: "MG",
+                    salary: 5500,
+                    bonus: 300,
+                    advance: 0,
+                    deduction: 0,
+                    status: "PENDIENTE"
+                },
+
+                {
+                    id: "EMP-003",
+                    name: "Carlos Ruiz",
+                    initials: "CR",
+                    salary: 4500,
+                    bonus: 0,
+                    advance: 500,
+                    deduction: 200,
+                    status: "PAGADO"
+                }
+
+            ]
+
+        }
+
+    };
+
+
+    /*
+     * ========================================================
+     * ELEMENTOS
+     * ========================================================
+     */
+
+    const searchInput =
+        document.getElementById('searchPayroll');
+
+    const dateFrom =
+        document.getElementById('dateFrom');
+
+    const dateTo =
+        document.getElementById('dateTo');
+
+    const statusFilter =
+        document.getElementById('statusFilter');
+
+    const clearFiltersBtn =
+        document.getElementById('clearFiltersBtn');
+
+    const tableBody =
+        document.getElementById('payrollHistoryBody');
+
+    const emptyHistory =
+        document.getElementById('emptyHistory');
+
+    const visiblePayrolls =
+        document.getElementById('visiblePayrolls');
+
+    const totalPayrollsFooter =
+        document.getElementById('totalPayrollsFooter');
+
+
+    /*
+     * ========================================================
+     * FORMATO DE DINERO
+     * ========================================================
+     */
+
+    function formatMoney(value) {
+
+        return new Intl.NumberFormat(
+            'es-HN',
+            {
+                style: 'currency',
+                currency: 'HNL',
+                minimumFractionDigits: 2
+            }
+        ).format(value);
+
+    }
+
+
+    /*
+     * ========================================================
+     * CALCULAR ESTADO DE LA PLANILLA
+     *
+     * TODOS PAGADOS = PAGADA
+     * UNO PENDIENTE = PENDIENTE
+     * ========================================================
+     */
+
+    function calculatePayrollStatus(payroll) {
+
+        const allPaid =
+            payroll.employees.length > 0 &&
+            payroll.employees.every(
+                employee => employee.status === "PAGADO"
+            );
+
+        return allPaid
+            ? "PAGADA"
+            : "PENDIENTE";
+
+    }
+
+
+    /*
+     * ========================================================
+     * HTML DEL ESTADO
+     * ========================================================
+     */
+
+    function getStatusHTML(status) {
+
+        if (status === "PAGADA") {
+
+            return `
+                <span class="history-status paid">
+                    <i class="bi bi-check-circle-fill"></i>
+                    PAGADA
+                </span>
+            `;
+
+        }
+
+
+        return `
+            <span class="history-status pending">
+                <i class="bi bi-clock-fill"></i>
+                PENDIENTE
+            </span>
+        `;
+
+    }
+
+
+    /*
+     * ========================================================
+     * ACTUALIZAR ESTADO EN LA TABLA PRINCIPAL
+     * ========================================================
+     */
+
+    function updatePayrollTableStatus(payrollId) {
+
+        const payroll =
+            payrolls[payrollId];
+
+        if (!payroll) {
+            return;
+        }
+
+
+        const status =
+            calculatePayrollStatus(payroll);
+
+
+        const row =
+            document.getElementById(
+                `payroll-row-${payrollId}`
+            );
+
+
+        if (!row) {
+            return;
+        }
+
+
+        /*
+         * Guardar estado en el TR
+         */
+
+        row.dataset.status =
+            status;
+
+
+        /*
+         * Buscar celda de estado
+         */
+
+        const statusElement =
+            document.getElementById(
+                `status-${payrollId}`
+            );
+
+
+        if (statusElement) {
+
+            statusElement.outerHTML =
+                getStatusHTML(status)
+                    .replace(
+                        '<span ',
+                        `<span id="status-${payrollId}" `
+                    );
+
+        }
+
+    }
+
+
+    /*
+     * ========================================================
+     * ACTUALIZAR TODOS LOS ESTADOS
+     * ========================================================
+     */
+
+    function updateAllPayrollStatuses() {
+
+        Object.keys(payrolls).forEach(
+            function (payrollId) {
+
+                updatePayrollTableStatus(
+                    payrollId
+                );
+
+            }
+        );
+
+    }
+
+
+    /*
+     * ========================================================
+     * CARGAR MODAL
+     * ========================================================
+     */
+
+    document
+        .querySelectorAll('.btn-detail')
+        .forEach(function (button) {
+
+            button.addEventListener(
+                'click',
+                function () {
+
+                    const payrollId =
+                        this.dataset.payrollId;
+
+                    openPayrollDetail(
+                        payrollId
+                    );
+
+                }
+            );
+
+        });
+
+
+    /*
+     * ========================================================
+     * ABRIR DETALLE
+     * ========================================================
+     */
+
+    function openPayrollDetail(payrollId) {
+
+        const payroll =
+            payrolls[payrollId];
+
+
+        if (!payroll) {
+            return;
+        }
+
+
+        /*
+         * Información principal
+         */
+
+        document.getElementById(
+            'modalPayrollNumber'
+        ).textContent =
+            `Planilla ${payroll.number}`;
+
+
+        document.getElementById(
+            'modalPeriod'
+        ).textContent =
+            payroll.period;
+
+
+        document.getElementById(
+            'modalPaymentDate'
+        ).textContent =
+            payroll.paymentDate;
+
+
+        document.getElementById(
+            'modalEmployees'
+        ).textContent =
+            payroll.employees.length;
+
+
+        /*
+         * Estado general
+         */
+
+        updateModalStatus(
+            payrollId
+        );
+
+
+        /*
+         * Cargar empleados
+         */
+
+        renderEmployeeTable(
+            payrollId
+        );
+
+    }
+
+
+    /*
+     * ========================================================
+     * ACTUALIZAR ESTADO DEL MODAL
+     * ========================================================
+     */
+
+    function updateModalStatus(payrollId) {
+
+        const payroll =
+            payrolls[payrollId];
+
+        const status =
+            calculatePayrollStatus(payroll);
+
+        const modalStatus =
+            document.getElementById(
+                'modalStatus'
+            );
+
+
+        if (status === "PAGADA") {
+
+            modalStatus.className =
+                "history-status paid";
+
+            modalStatus.innerHTML = `
+                <i class="bi bi-check-circle-fill"></i>
+                PAGADA
+            `;
+
+        } else {
+
+            modalStatus.className =
+                "history-status pending";
+
+            modalStatus.innerHTML = `
+                <i class="bi bi-clock-fill"></i>
+                PENDIENTE
+            `;
+
+        }
+
+    }
+
+
+    /*
+     * ========================================================
+     * TABLA DE EMPLEADOS
+     * ========================================================
+     */
+
+    function renderEmployeeTable(payrollId) {
+
+        const payroll =
+            payrolls[payrollId];
+
+        const tbody =
+            document.getElementById(
+                'employeeDetailBody'
+            );
+
+
+        tbody.innerHTML = "";
+
+
+        payroll.employees.forEach(
+            function (employee, index) {
+
+                const net =
+                    employee.salary +
+                    employee.bonus -
+                    employee.advance -
+                    employee.deduction;
+
+
+                const row =
+                    document.createElement('tr');
+
+
+                row.innerHTML = `
+
+                    <td>
+
+                        <div class="employee">
+
+                            <div class="avatar">
+                                ${employee.initials}
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    ${employee.name}
+                                </strong>
+
+                                <small>
+                                    ${employee.id}
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        ${formatMoney(employee.salary)}
+                    </td>
+
+
+                    <td class="income">
+
+                        ${employee.bonus > 0
+                            ? '+ ' + formatMoney(employee.bonus)
+                            : formatMoney(0)
+                        }
+
+                    </td>
+
+
+                    <td class="deduction">
+
+                        ${employee.advance > 0
+                            ? '- ' + formatMoney(employee.advance)
+                            : formatMoney(0)
+                        }
+
+                    </td>
+
+
+                    <td class="deduction">
+
+                        ${employee.deduction > 0
+                            ? '- ' + formatMoney(employee.deduction)
+                            : formatMoney(0)
+                        }
+
+                    </td>
+
+
+                    <td class="net-pay">
+
+                        ${formatMoney(net)}
+
+                    </td>
+
+
+                    <!-- ESTADO DEL EMPLEADO -->
+
+                    <td>
+
+                        ${
+                            employee.status === "PAGADO"
+
+                            ?
+
+                            `
+                            <span class="employee-payment-status paid">
+                                <i class="bi bi-check-circle-fill"></i>
+                                PAGADO
+                            </span>
+                            `
+
+                            :
+
+                            `
+                            <span class="employee-payment-status pending">
+                                <i class="bi bi-clock-fill"></i>
+                                PENDIENTE
+                            </span>
+                            `
+                        }
+
+                    </td>
+
+
+                    <!-- ACCIONES -->
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-edit-payment"
+                            title="Cambiar estado"
+                            data-payroll-id="${payrollId}"
+                            data-employee-index="${index}">
+
+                            <i class="bi bi-pencil"></i>
+
+                        </button>
+
+                    </td>
+
+                `;
+
+
+                tbody.appendChild(row);
+
+            }
+        );
+
+
+        /*
+         * Agregar evento a los lápices
+         */
+
+        tbody
+            .querySelectorAll('.btn-edit-payment')
+            .forEach(function (button) {
+
+                button.addEventListener(
+                    'click',
+                    function () {
+
+                        const payrollId =
+                            this.dataset.payrollId;
+
+                        const employeeIndex =
+                            Number(
+                                this.dataset.employeeIndex
+                            );
+
+
+                        toggleEmployeePaymentStatus(
+                            payrollId,
+                            employeeIndex
+                        );
+
+                    }
+                );
+
+            });
+
+
+        /*
+         * Actualizar contador
+         */
+
+        updateEmployeePaymentSummary(
+            payrollId
+        );
+
+    }
+
+
+    /*
+     * ========================================================
+     * CAMBIAR ESTADO DEL EMPLEADO
+     * ========================================================
+     */
+
+    function toggleEmployeePaymentStatus(
+        payrollId,
+        employeeIndex
+    ) {
+
+        const payroll =
+            payrolls[payrollId];
+
+
+        const employee =
+            payroll.employees[employeeIndex];
+
+
+        /*
+         * Cambiar estado
+         */
+
+        if (employee.status === "PAGADO") {
+
+            employee.status =
+                "PENDIENTE";
+
+        } else {
+
+            employee.status =
+                "PAGADO";
+
+        }
+
+
+        /*
+         * Actualizar tabla de empleados
+         */
+
+        renderEmployeeTable(
+            payrollId
+        );
+
+
+        /*
+         * Actualizar estado de la planilla
+         * dentro de la tabla principal
+         */
+
+        updatePayrollTableStatus(
+            payrollId
+        );
+
+
+        /*
+         * Actualizar estado de arriba del modal
+         */
+
+        updateModalStatus(
+            payrollId
+        );
+
+    }
+
+
+    /*
+     * ========================================================
+     * CONTADOR DE EMPLEADOS PAGADOS
+     * ========================================================
+     */
+
+    function updateEmployeePaymentSummary(
+        payrollId
+    ) {
+
+        const payroll =
+            payrolls[payrollId];
+
+
+        const paid =
+            payroll.employees.filter(
+                employee =>
+                    employee.status === "PAGADO"
+            ).length;
+
+
+        const total =
+            payroll.employees.length;
+
+
+        document.getElementById(
+            'employeePaymentSummary'
+        ).textContent =
+            `${paid} pagados de ${total}`;
+
+    }
+
+
+    /*
+     * ========================================================
+     * FILTROS
+     * ========================================================
+     */
+
+    function filterPayrolls() {
+
+        const search =
+            searchInput.value
+                .toLowerCase()
+                .trim();
+
+
+        const from =
+            dateFrom.value;
+
+
+        const to =
+            dateTo.value;
+
+
+        const status =
+            statusFilter.value;
+
+
+        const rows =
+            tableBody.querySelectorAll('tr');
+
+
+        let visible = 0;
+
+
+        rows.forEach(function (row) {
+
+            const payroll =
+                (
+                    row.dataset.payroll || ''
+                ).toLowerCase();
+
+
+            const payment =
+                row.dataset.payment || '';
+
+
+            const rowStatus =
+                row.dataset.status || '';
+
+
+            const matchesSearch =
+                payroll.includes(search);
+
+
+            const matchesStatus =
+                !status ||
+                rowStatus === status;
+
+
+            const matchesFrom =
+                !from ||
+                payment >= from;
+
+
+            const matchesTo =
+                !to ||
+                payment <= to;
+
+
+            const show =
+                matchesSearch &&
+                matchesStatus &&
+                matchesFrom &&
+                matchesTo;
+
+
+            row.style.display =
+                show ? '' : 'none';
+
+
+            if (show) {
+
+                visible++;
+
+            }
+
+        });
+
+
+        visiblePayrolls.textContent =
+            visible;
+
+
+        totalPayrollsFooter.textContent =
+            rows.length;
+
+
+        emptyHistory.classList.toggle(
+            'd-none',
+            visible > 0
+        );
+
+    }
+
+
+    /*
+     * ========================================================
+     * EVENTOS DE FILTROS
+     * ========================================================
+     */
+
+    searchInput.addEventListener(
+        'input',
+        filterPayrolls
+    );
+
+
+    dateFrom.addEventListener(
+        'change',
+        filterPayrolls
+    );
+
+
+    dateTo.addEventListener(
+        'change',
+        filterPayrolls
+    );
+
+
+    statusFilter.addEventListener(
+        'change',
+        filterPayrolls
+    );
+
+
+    /*
+     * ========================================================
+     * LIMPIAR FILTROS
+     * ========================================================
+     */
+
+    clearFiltersBtn.addEventListener(
+        'click',
+        function () {
+
+            searchInput.value = '';
+
+            dateFrom.value = '';
+
+            dateTo.value = '';
+
+            statusFilter.value = '';
+
+            filterPayrolls();
+
+        }
+    );
+
+
+    /*
+     * ========================================================
+     * PAGINACIÓN VISUAL
+     * ========================================================
+     */
+
+    document
+        .querySelectorAll('.pagination-btn')
+        .forEach(function (button) {
+
+            button.addEventListener(
+                'click',
+                function () {
+
+                    if (
+                        this.classList.contains('disabled') ||
+                        this.classList.contains('active')
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    document
+                        .querySelectorAll('.pagination-btn')
+                        .forEach(function (btn) {
+
+                            btn.classList.remove(
+                                'active'
+                            );
+
+                        });
+
+
+                    this.classList.add(
+                        'active'
+                    );
+
+                }
+            );
+
+        });
+
+
+    /*
+     * ========================================================
+     * INICIALIZACIÓN
+     * ========================================================
+     */
+
+    updateAllPayrollStatuses();
+
+    filterPayrolls();
+
+});
+
+</script>
+
+
+</body>
+
+</html>

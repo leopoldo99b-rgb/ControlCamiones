@@ -17,4 +17,10 @@ public class planillaController {
     public String mostrarNuevaPlanilla() {
         return "nueva-planilla";
     }
+
+    // Pantalla de historial de planillas
+    @GetMapping("/planillas/historial")
+    public String mostrarHistorialPlanillas() {
+        return "historial-planillas";
+    }
 }

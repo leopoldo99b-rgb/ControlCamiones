@@ -1,2263 +1,2698 @@
-// =====================================================
-// VARIABLES GLOBALES
-// =====================================================
+'use strict';
 
-let modalMantenimiento;
-let formMantenimiento;
-
-let idMantenimiento;
-let tituloModalMantenimiento;
-
-let btnNuevoMantenimiento;
-let btnPrimerRegistro;
-
-let selectCamion;
-let selectTipo;
-
-let modalVerMantenimiento;
-let modalEditarEstado;
-
-let modalEliminarMantenimiento;
-
-let btnFiltrar;
-let btnLimpiarFiltros;
-
-
-let contadorRegistros;
-let paginaActual;
-let btnAnterior;
-let btnSiguiente;
-
-let paginaActualTabla = 1;
-let registrosPorPagina = 12;
-let listaMantenimientosCompleta = [];
-
-let modalAuditoria;
-let btnAbrirAuditoria;
-
-let mantenimientoActual = null;
-let mantenimientoSeleccionado = null;
-let buscarMantenimiento;
-let listaMantenimientosOriginal = [];
-
-let btnActualizar;
-
-let modalGraficos;
-
-let btnAbrirGraficos;
-
-let graficoMantenimientos = null;
-
-let btnImprimirAuditoria;
-
-// =====================================================
-// REPUESTOS VARIABLES GLOBALES
-// =====================================================
-
-let tbodyRepuestos;
-let totalRepuestos;
-let totalMantenimiento;
-
-let listaRepuestos = [];
+/*
+ * ============================================================
+ * CONTROL DE MANTENIMIENTOS Y UNIDADES
+ * ============================================================
+ *
+ * MANTENIMIENTOS
+ * GET    /api/mantenimientos
+ * GET    /api/mantenimientos/{id}
+ * POST   /api/mantenimientos
+ * PUT    /api/mantenimientos/{id}
+ * DELETE /api/mantenimientos/{id}
+ *
+ * UNIDADES
+ * GET    /api/unidades
+ * GET    /api/unidades/{id}
+ * POST   /api/unidades
+ * PUT    /api/unidades/{id}
+ * DELETE /api/unidades/{id}
+ *
+ * PDF
+ * - jsPDF
+ * - jsPDF-AutoTable
+ * - Logo: /imgs/logo.png
+ *
+ * ============================================================
+ */
 
 
-// =====================================================
-// INICIALIZACIÓN
-// =====================================================
+/* ============================================================
+   CONFIGURACIÓN
+============================================================ */
+
+const CONFIG = Object.freeze({
+
+    mantenimientosUrl:
+        '/api/mantenimientos',
+
+    unidadesUrl:
+        '/api/unidades',
+
+    logoPdfUrl:
+        '/imgs/logo.png',
+
+    toastDelay:
+        3500,
+
+    registrosPorPagina:
+        10
+
+});
+
+
+/* ============================================================
+   ESTADO GLOBAL
+============================================================ */
+
+const STATE = {
+
+    mantenimientos: [],
+
+    mantenimientosFiltrados: [],
+
+    unidades: [],
+
+    mantenimientoSeleccionado: null,
+
+    unidadSeleccionada: null,
+
+    modoUnidad: 'crear',
+
+    abriendoEdicionUnidad: false,
+
+    paginaActual: 1
+
+};
+
+
+/* ============================================================
+   DOM
+============================================================ */
+
+const DOM = {
+
+    /* Formularios */
+
+    formNuevo:
+        document.getElementById(
+            'formMantenimiento'
+        ),
+
+    formEditar:
+        document.getElementById(
+            'formEditarMantenimiento'
+        ),
+
+    formUnidad:
+        document.getElementById(
+            'formUnidad'
+        ),
+
+
+    /* Modales */
+
+    modalNuevo:
+        document.getElementById(
+            'nuevoMantenimientoModal'
+        ),
+
+    modalVer:
+        document.getElementById(
+            'verMantenimientoModal'
+        ),
+
+    modalEditar:
+        document.getElementById(
+            'editarMantenimientoModal'
+        ),
+
+    modalEliminar:
+        document.getElementById(
+            'eliminarMantenimientoModal'
+        ),
+
+    modalNuevaUnidad:
+        document.getElementById(
+            'nuevaUnidadModal'
+        ),
+
+
+    /* Botones */
+
+    btnConfirmarEliminar:
+        document.getElementById(
+            'btnConfirmarEliminar'
+        ),
+
+    btnLimpiarFiltros:
+        document.getElementById(
+            'btnLimpiarFiltros'
+        ),
+
+    btnExportar:
+        document.getElementById(
+            'btnExportar'
+        ),
+
+    btnMarcarNotificaciones:
+        document.getElementById(
+            'marcarNotificacionesLeidas'
+        ),
+
+
+    /* Filtros */
+
+    filtroUnidad:
+        document.getElementById(
+            'filtroUnidad'
+        ),
+
+    filtroTipo:
+        document.getElementById(
+            'filtroTipo'
+        ),
+
+    filtroMedicionTipo:
+        document.getElementById(
+            'filtroMedicionTipo'
+        ),
+
+    filtroDesde:
+        document.getElementById(
+            'filtroDesde'
+        ),
+
+    filtroHasta:
+        document.getElementById(
+            'filtroHasta'
+        ),
+
+    filtroBuscar:
+        document.getElementById(
+            'filtroBuscar'
+        ),
+
+
+    /* Tablas */
+
+    tablaMantenimientos:
+        document.getElementById(
+            'maintenanceTableBody'
+        ),
+
+    tablaUnidades:
+        document.getElementById(
+            'unitsTableBody'
+        ),
+
+
+    /* Paginación */
+
+    paginationNav:
+        document.getElementById(
+            'paginationNav'
+        ),
+
+    paginationInfo:
+        document.getElementById(
+            'paginationInfo'
+        ),
+
+    tableCount:
+        document.getElementById(
+            'tableCount'
+        ),
+
+
+    /* Contadores mantenimiento */
+
+    totalMantenimientos:
+        document.getElementById(
+            'totalMantenimientos'
+        ),
+
+    totalPreventivos:
+        document.getElementById(
+            'totalPreventivos'
+        ),
+
+    totalCorrectivos:
+        document.getElementById(
+            'totalCorrectivos'
+        ),
+
+    totalUnidadesAtendidas:
+        document.getElementById(
+            'totalUnidadesAtendidas'
+        ),
+
+
+    /* Contador unidades */
+
+    unitsTotalCount:
+        document.getElementById(
+            'unitsTotalCount'
+        ),
+
+
+    /* Selects unidades */
+
+    unidadMantenimiento:
+        document.getElementById(
+            'unidadMantenimiento'
+        ),
+
+    editarUnidad:
+        document.getElementById(
+            'editarUnidad'
+        ),
+
+
+    /* Notificaciones */
+
+    notificationDot:
+        document.getElementById(
+            'notificationBadge'
+        ),
+
+
+    /* Toasts */
+
+    successToast:
+        document.getElementById(
+            'successToast'
+        ),
+
+    errorToast:
+        document.getElementById(
+            'errorToast'
+        ),
+
+    deleteToast:
+        document.getElementById(
+            'deleteToast'
+        )
+
+};
+
+
+/* ============================================================
+   INICIALIZACIÓN
+============================================================ */
 
 document.addEventListener(
-    "DOMContentLoaded",
-    function(){
-
-        inicializarVariables();
-
-        inicializarEventos();
-
-        cargarMantenimientos();
-
-        cargarFiltroCamiones();
-
-        cargarFiltroTipos();
-
-    }
+    'DOMContentLoaded',
+    inicializarAplicacion
 );
 
 
-// =====================================================
-// CARGAR ELEMENTOS DEL DOM
-// =====================================================
+async function inicializarAplicacion() {
 
-function inicializarVariables(){
+    console.log(
+        'Inicializando módulo de mantenimientos y unidades...'
+    );
 
 
-    btnNuevoMantenimiento =
-        document.getElementById(
-            "btnNuevoMantenimiento"
-        );
+    registrarEventosMantenimientos();
 
+    registrarEventosUnidades();
 
-    btnPrimerRegistro =
-        document.getElementById(
-            "btnPrimerRegistro"
-        );
+    eliminarBotonImprimirHistorial();
 
-		btnActualizar =
-		    document.getElementById(
-		        "btnActualizar"
-		    );
 
-    formMantenimiento =
-        document.getElementById(
-            "formMantenimiento"
-        );
+    await cargarUnidades();
 
+    await cargarMantenimientos();
 
 
-    idMantenimiento =
-        document.getElementById(
-            "idMantenimiento"
-        );
+    actualizarContadores();
 
-		buscarMantenimiento =
-		    document.getElementById(
-		        "buscarMantenimiento"
-		    );
+    inicializarNotificaciones();
 
 
-    tituloModalMantenimiento =
-        document.getElementById(
-            "tituloModalMantenimiento"
-        );
-
-
-
-    selectCamion =
-        document.getElementById(
-            "selectCamion"
-        );
-
-
-
-    selectTipo =
-        document.getElementById(
-            "tipo"
-        );
-
-
-
-    tbodyRepuestos =
-        document.getElementById(
-            "tbodyRepuestos"
-        );
-
-
-
-    totalRepuestos =
-        document.getElementById(
-            "totalRepuestos"
-        );
-
-
-
-    totalMantenimiento =
-        document.getElementById(
-            "totalMantenimiento"
-        );
-
-
-
-    let modal1 =
-        document.getElementById(
-            "modalMantenimiento"
-        );
-
-
-    if(modal1){
-
-        modalMantenimiento =
-            new bootstrap.Modal(modal1);
-
-    }
-
-
-
-    let modal2 =
-        document.getElementById(
-            "modalVerMantenimiento"
-        );
-
-
-    if(modal2){
-
-        modalVerMantenimiento =
-            new bootstrap.Modal(modal2);
-
-    }
-
-
-
-    let modal3 =
-        document.getElementById(
-            "modalEditarEstado"
-        );
-
-
-    if(modal3){
-
-        modalEditarEstado =
-            new bootstrap.Modal(modal3);
-
-    }
-
-
-
-    let modal4 =
-        document.getElementById(
-            "modalEliminarMantenimiento"
-        );
-
-
-    if(modal4){
-
-        modalEliminarMantenimiento =
-            new bootstrap.Modal(modal4);
-
-    }
-
-
-
-    btnFiltrar =
-        document.getElementById(
-            "btnFiltrar"
-        );
-
-
-
-    btnLimpiarFiltros =
-        document.getElementById(
-            "btnLimpiarFiltros"
-        );
-	
-		contadorRegistros =
-		document.getElementById(
-		    "contadorRegistros"
-		);
-
-
-		paginaActual =
-		document.getElementById(
-		    "paginaActual"
-		);
-
-
-		btnAnterior =
-		document.getElementById(
-		    "btnAnterior"
-		);
-
-
-		btnSiguiente =
-		document.getElementById(
-		    "btnSiguiente"
-		);
-		
-		btnAbrirAuditoria =
-		    document.getElementById(
-		        "btnAbrirAuditoria"
-		    );
-
-		let modal5 =
-		    document.getElementById(
-		        "modalAuditoria"
-		    );
-
-		if(modal5){
-
-		    modalAuditoria =
-		        new bootstrap.Modal(modal5);
-
-		}
-		
-		btnImprimirAuditoria =
-		    document.getElementById(
-		        "btnImprimirAuditoria"
-		    );
-
-			btnAbrirGraficos =
-			    document.getElementById(
-			        "btnAbrirgraficos"
-			    );
-
-			btnGenerarGrafico =
-			    document.getElementById(
-			        "btnGenerarGrafico"
-			    );
-
-			let modal6 =
-			    document.getElementById(
-			        "modalGraficos"
-			    );
-
-			if(modal6){
-
-			    modalGraficos =
-			        new bootstrap.Modal(modal6);
-
-			}
-
+    console.log(
+        'Aplicación inicializada correctamente.'
+    );
 
 }
 
 
+/* ============================================================
+   EVENTOS - MANTENIMIENTOS
+============================================================ */
 
-// =====================================================
-// EVENTOS
-// =====================================================
+function registrarEventosMantenimientos() {
 
-function inicializarEventos(){
+    if (DOM.formNuevo) {
 
-
-
-    if(btnNuevoMantenimiento){
-
-        btnNuevoMantenimiento.addEventListener(
-            "click",
-            abrirNuevoMantenimiento
-        );
-
-    }
-
-	if(buscarMantenimiento){
-
-	    buscarMantenimiento.addEventListener(
-	        "input",
-	        filtrarBusqueda
-	    );
-
-	}
-
-    if(btnPrimerRegistro){
-
-        btnPrimerRegistro.addEventListener(
-            "click",
-            abrirNuevoMantenimiento
+        DOM.formNuevo.addEventListener(
+            'submit',
+            manejarFormularioNuevo
         );
 
     }
 
 
-	if(btnAbrirGraficos){
+    if (DOM.formEditar) {
 
-	    btnAbrirGraficos.addEventListener(
-	        "click",
-	        abrirModalGraficos
-	    );
-
-	}
-
-	if(btnGenerarGrafico){
-
-	    btnGenerarGrafico.addEventListener(
-	        "click",
-	        generarGraficoPDF
-	    );
-
-	}
-
-    let btnAgregarRepuesto =
-        document.getElementById(
-            "btnAgregarRepuesto"
-        );
-
-
-
-    if(btnAgregarRepuesto){
-
-        btnAgregarRepuesto.addEventListener(
-            "click",
-            agregarRepuesto
+        DOM.formEditar.addEventListener(
+            'submit',
+            manejarFormularioEditar
         );
 
     }
 
 
+    if (DOM.btnConfirmarEliminar) {
 
-
-    if(formMantenimiento){
-
-        formMantenimiento.addEventListener(
-            "submit",
-            guardarMantenimiento
+        DOM.btnConfirmarEliminar.addEventListener(
+            'click',
+            confirmarEliminar
         );
 
     }
 
 
+    if (DOM.btnLimpiarFiltros) {
 
-
-
-    if(btnFiltrar){
-
-        btnFiltrar.addEventListener(
-            "click",
-            aplicarFiltros
-        );
-
-    }
-
-
-
-
-    if(btnLimpiarFiltros){
-
-        btnLimpiarFiltros.addEventListener(
-            "click",
+        DOM.btnLimpiarFiltros.addEventListener(
+            'click',
             limpiarFiltros
         );
 
     }
 
 
-	if(btnActualizar){
+    if (DOM.btnExportar) {
 
-	    btnActualizar.addEventListener(
-	        "click",
-	        actualizarTabla
-	    );
-
-	}
-
-
-    let codigoUsuario =
-        document.getElementById(
-            "codigoUsuario"
+        DOM.btnExportar.addEventListener(
+            'click',
+            exportarMantenimientos
         );
 
+    }
 
 
-    if(codigoUsuario){
+    if (DOM.btnMarcarNotificaciones) {
 
-
-        codigoUsuario.addEventListener(
-            "input",
-            function(){
-
-
-                let codigoGenerado =
-                    document.getElementById(
-                        "codigoGenerado"
-                    ).textContent;
-
-
-
-                let boton =
-                    document.getElementById(
-                        "btnConfirmarEliminar"
-                    );
-
-
-
-                if(boton){
-
-                    boton.disabled =
-                        this.value.trim().toUpperCase()
-                        !== codigoGenerado;
-
-                }
-
-
-            }
-        );
-		
-		}
-	
-		if(btnAnterior){
-
-		    btnAnterior.addEventListener(
-		        "click",
-		        function(){
-
-		            if(paginaActualTabla > 1){
-
-		                paginaActualTabla--;
-
-		                mostrarPaginaMantenimientos();
-
-		            }
-
-		        }
-		    );
-
-		}
-
-
-
-		if(btnSiguiente){
-
-		    btnSiguiente.addEventListener(
-		        "click",
-		        function(){
-
-		            let totalPaginas =
-		                Math.ceil(
-		                    listaMantenimientosCompleta.length /
-		                    registrosPorPagina
-		                );
-
-		            if(paginaActualTabla < totalPaginas){
-
-		                paginaActualTabla++;
-
-		                mostrarPaginaMantenimientos();
-
-		            }
-
-		        }
-		    );
-
-		}
-
-
-
-
-    let btnConfirmarEliminar =
-        document.getElementById(
-            "btnConfirmarEliminar"
+        DOM.btnMarcarNotificaciones.addEventListener(
+            'click',
+            marcarNotificacionesLeidas
         );
 
-
-
-    if(btnConfirmarEliminar){
-
-
-        btnConfirmarEliminar.addEventListener(
-            "click",
-            confirmarEliminarMantenimiento
-        );
-
-
-    }
-
-	if(btnAbrirAuditoria){
-
-	    btnAbrirAuditoria.addEventListener(
-	        "click",
-	        abrirAuditoria
-	    );
-
-	}
-
-	if(btnImprimirAuditoria){
-
-	    btnImprimirAuditoria.addEventListener(
-	        "click",
-	        imprimirAuditoria
-	    );
-
-	}
-	
-	document.getElementById("btnEditarEstado").addEventListener("click", () => {
-
-	    modalSeleccionEdicion.hide();
-
-	    editarEstado(mantenimientoSeleccionado);
-
-	});
-	
-	
-	document.getElementById("btnEditarCompleto").addEventListener("click", () => {
-
-	    modalSeleccionEdicion.hide();
-
-	    editarMantenimiento(mantenimientoSeleccionado);
-
-	});
-	
-	document
-	    .getElementById("btnActualizarGrafico")
-	    .addEventListener("click", cargarGrafico);
-
-	document
-	    .getElementById("datasetGrafico")
-	    .addEventListener("change", cargarGrafico);
-
-	document
-	    .getElementById("tipoGrafico")
-	    .addEventListener("change", cargarGrafico);
-
-}
-
-
-// =====================================================
-// ABRIR MODAL NUEVO MANTENIMIENTO
-// =====================================================
-
-function abrirNuevoMantenimiento(){
-
-
-
-    if(formMantenimiento){
-
-        formMantenimiento.reset();
-
     }
 
 
+    const filtros = [
 
-    if(idMantenimiento){
+        DOM.filtroUnidad,
 
-        idMantenimiento.value = "";
+        DOM.filtroTipo,
 
-    }
+        DOM.filtroMedicionTipo,
 
+        DOM.filtroDesde,
 
+        DOM.filtroHasta
 
-    if(tituloModalMantenimiento){
-
-        tituloModalMantenimiento.innerHTML =
-        `
-            <i class="fa-solid fa-screwdriver-wrench"></i>
-            Nuevo mantenimiento
-        `;
-
-    }
+    ];
 
 
+    filtros.forEach(elemento => {
 
-    if(tbodyRepuestos){
+        if (elemento) {
 
-        tbodyRepuestos.innerHTML = "";
-
-    }
-
-
-
-    cargarCamiones();
-
-    cargarTiposMantenimiento();
-
-
-
-    if(modalMantenimiento){
-
-        modalMantenimiento.show();
-
-    }
-
-
-}
-
-
-
-// =====================================================
-// CARGAR CAMIONES
-// =====================================================
-
-async function cargarCamiones(){
-
-
-    try{
-
-
-        const respuesta =
-            await fetch(
-                "/camiones/lista"
+            elemento.addEventListener(
+                'change',
+                aplicarFiltros
             );
-
-
-
-        const camiones =
-            await respuesta.json();
-
-
-
-        if(!selectCamion){
-
-            return;
 
         }
 
+    });
 
 
-        selectCamion.innerHTML =
-        `
-            <option value="">
-                Seleccione un camión
-            </option>
-        `;
+    if (DOM.filtroBuscar) {
 
-
-
-
-        camiones.forEach(
-            camion => {
-
-
-                let option =
-                    document.createElement(
-                        "option"
-                    );
-
-
-
-                option.value =
-                    camion.id;
-
-
-
-                option.textContent =
-                    camion.placa +
-                    " - " +
-                    camion.marca +
-                    " " +
-                    camion.modelo;
-
-
-
-                selectCamion.appendChild(
-                    option
-                );
-
-
-            }
+        DOM.filtroBuscar.addEventListener(
+            'input',
+            aplicarFiltros
         );
-
-
-
-    }catch(error){
-
-
-        console.error(
-            "Error cargando camiones:",
-            error
-        );
-
 
     }
 
 
-}
+    if (DOM.tablaMantenimientos) {
 
-
-
-// =====================================================
-// CARGAR TIPOS DE MANTENIMIENTO
-// =====================================================
-
-async function cargarTiposMantenimiento(){
-
-
-
-    try{
-
-
-        const respuesta =
-            await fetch(
-                "/api/tipos-mantenimiento"
-            );
-
-
-
-        const tipos =
-            await respuesta.json();
-
-
-
-        if(!selectTipo){
-
-            return;
-
-        }
-
-
-
-
-        selectTipo.innerHTML =
-        `
-            <option value="">
-                Seleccione tipo
-            </option>
-        `;
-
-
-
-        tipos.forEach(
-            tipo => {
-
-
-                let option =
-                    document.createElement(
-                        "option"
-                    );
-
-
-
-                option.value =
-                    tipo.id;
-
-
-
-                option.textContent =
-                    tipo.nombre;
-
-
-
-                selectTipo.appendChild(
-                    option
-                );
-
-
-            }
+        DOM.tablaMantenimientos.addEventListener(
+            'click',
+            manejarAccionesTabla
         );
-
-
-
-    }catch(error){
-
-
-        console.error(
-            "Error cargando tipos:",
-            error
-        );
-
 
     }
 
 
+    /*
+     * Cuando el usuario selecciona una unidad
+     * para un nuevo mantenimiento, actualizamos
+     * automáticamente su placa.
+     */
+
+    if (DOM.unidadMantenimiento) {
+
+        DOM.unidadMantenimiento.addEventListener(
+            'change',
+            manejarCambioUnidadMantenimiento
+        );
+
+    }
+
+
+    /*
+     * Cuando el usuario cambia la unidad al editar
+     * un mantenimiento, actualizamos automáticamente
+     * la placa.
+     */
+
+    if (DOM.editarUnidad) {
+
+        DOM.editarUnidad.addEventListener(
+            'change',
+            manejarCambioUnidadEditar
+        );
+
+    }
 
 }
-// =====================================================
-// AGREGAR REPUESTOS
-// =====================================================
-
-function agregarRepuesto(){
 
 
-    if(!tbodyRepuestos){
+/* ============================================================
+   EVENTOS - UNIDADES
+============================================================ */
+
+function registrarEventosUnidades() {
+
+    if (DOM.formUnidad) {
+
+        DOM.formUnidad.addEventListener(
+            'submit',
+            manejarFormularioUnidad
+        );
+
+    } else {
+
+        console.warn(
+            'No se encontró #formUnidad.'
+        );
+
+    }
+
+
+    if (DOM.tablaUnidades) {
+
+        DOM.tablaUnidades.addEventListener(
+            'click',
+            manejarAccionesUnidad
+        );
+
+    } else {
+
+        console.warn(
+            'No se encontró #unitsTableBody.'
+        );
+
+    }
+
+
+    if (DOM.modalNuevaUnidad) {
+
+        DOM.modalNuevaUnidad.addEventListener(
+            'show.bs.modal',
+            prepararModalNuevaUnidad
+        );
+
+
+        DOM.modalNuevaUnidad.addEventListener(
+            'shown.bs.modal',
+            colocarModalUnidadAlFrente
+        );
+
+
+        DOM.modalNuevaUnidad.addEventListener(
+            'hidden.bs.modal',
+            restaurarZIndexModalUnidad
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   ELIMINAR BOTÓN IMPRIMIR DEL HISTORIAL
+============================================================ */
+
+function eliminarBotonImprimirHistorial() {
+
+    if (!DOM.tablaMantenimientos) {
 
         return;
 
     }
 
 
-
-    let fila =
-        document.createElement("tr");
-
+    const contenedor =
+        DOM.tablaMantenimientos.closest('.card');
 
 
-    fila.innerHTML =
-    `
+    if (!contenedor) {
+
+        return;
+
+    }
+
+
+    const botones =
+        contenedor.querySelectorAll(
+            'button, a'
+        );
+
+
+    botones.forEach(boton => {
+
+        const texto =
+            boton.textContent
+                .trim()
+                .toLowerCase();
+
+
+        if (
+
+            texto === 'imprimir' ||
+
+            texto.includes('imprimir')
+
+        ) {
+
+            boton.remove();
+
+        }
+
+    });
+
+}
+
+
+/* ============================================================
+   MODAL UNIDAD AL FRENTE
+============================================================ */
+
+function colocarModalUnidadAlFrente() {
+
+    if (!DOM.modalNuevaUnidad) {
+
+        return;
+
+    }
+
+
+    DOM.modalNuevaUnidad.style.zIndex =
+        '1065';
+
+
+    const backdrops =
+        document.querySelectorAll(
+            '.modal-backdrop'
+        );
+
+
+    if (backdrops.length > 0) {
+
+        const ultimoBackdrop =
+            backdrops[
+                backdrops.length - 1
+            ];
+
+
+        ultimoBackdrop.style.zIndex =
+            '1060';
+
+    }
+
+}
+
+
+/* ============================================================
+   RESTAURAR Z-INDEX MODAL UNIDAD
+============================================================ */
+
+function restaurarZIndexModalUnidad() {
+
+    if (!DOM.modalNuevaUnidad) {
+
+        return;
+
+    }
+
+
+    DOM.modalNuevaUnidad.style.zIndex =
+        '';
+
+
+    const backdrops =
+        document.querySelectorAll(
+            '.modal-backdrop'
+        );
+
+
+    backdrops.forEach(backdrop => {
+
+        backdrop.style.zIndex = '';
+
+    });
+
+
+    STATE.modoUnidad =
+        'crear';
+
+    STATE.unidadSeleccionada =
+        null;
+
+    STATE.abriendoEdicionUnidad =
+        false;
+
+}
+
+
+/* ============================================================
+   ACCIONES TABLA UNIDADES
+============================================================ */
+
+async function manejarAccionesUnidad(event) {
+
+    const boton =
+        event.target.closest(
+            '[data-unidad-action]'
+        );
+
+
+    if (!boton) {
+
+        return;
+
+    }
+
+
+    const accion =
+        boton.dataset.unidadAction;
+
+
+    const id =
+        Number(
+            boton.dataset.id
+        );
+
+
+    if (
+
+        !Number.isInteger(id) ||
+
+        id <= 0
+
+    ) {
+
+        mostrarError(
+            'El ID de la unidad no es válido.'
+        );
+
+        return;
+
+    }
+
+
+    switch (accion) {
+
+        case 'editar':
+
+            await editarUnidad(id);
+
+            break;
+
+
+        default:
+
+            console.warn(
+                'Acción de unidad desconocida:',
+                accion
+            );
+
+            break;
+
+    }
+
+}
+
+
+/* ============================================================
+   UNIDADES - CARGAR
+============================================================ */
+
+async function cargarUnidades() {
+
+    try {
+
+        const respuesta =
+            await fetch(
+                CONFIG.unidadesUrl
+            );
+
+
+        if (!respuesta.ok) {
+
+            const mensaje =
+                await obtenerMensajeError(
+                    respuesta
+                );
+
+            throw new Error(mensaje);
+
+        }
+
+
+        const datos =
+            await respuesta.json();
+
+
+        STATE.unidades =
+            Array.isArray(datos)
+                ? datos
+                : [];
+
+
+        console.log(
+            'Unidades cargadas:',
+            STATE.unidades
+        );
+
+
+        /*
+         * Si ya había mantenimientos cargados,
+         * actualizamos sus unidades y placas.
+         */
+
+        enriquecerTodosLosMantenimientosConUnidades();
+
+
+        renderizarTablaUnidades();
+
+        actualizarContadorUnidades();
+
+        llenarSelectUnidades();
+
+        actualizarPlacaMantenimientoSeleccionada();
+
+        actualizarPlacaMantenimientoEditado();
+
+
+        /*
+         * Si los mantenimientos ya estaban cargados,
+         * volvemos a aplicar los filtros para actualizar
+         * la tabla con las placas actuales.
+         */
+
+        if (
+            STATE.mantenimientos.length > 0
+        ) {
+
+            aplicarFiltros();
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            'Error al cargar unidades:',
+            error
+        );
+
+
+        STATE.unidades = [];
+
+
+        renderizarTablaUnidades();
+
+        actualizarContadorUnidades();
+
+        llenarSelectUnidades();
+
+
+        mostrarError(
+            error.message ||
+            'No fue posible cargar las unidades.'
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   TABLA UNIDADES
+============================================================ */
+
+function renderizarTablaUnidades() {
+
+    if (!DOM.tablaUnidades) {
+
+        return;
+
+    }
+
+
+    DOM.tablaUnidades.innerHTML = '';
+
+
+    if (STATE.unidades.length === 0) {
+
+        DOM.tablaUnidades.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="6"
+                    class="text-center py-4 text-muted"
+                >
+
+                    <i
+                        class="bi bi-truck fs-2 d-block mb-2"
+                    ></i>
+
+                    <p
+                        class="mb-1 fw-semibold text-dark"
+                    >
+                        No hay unidades registradas
+                    </p>
+
+                    <small>
+                        Registra una unidad para comenzar.
+                    </small>
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    STATE.unidades.forEach(unidad => {
+
+        const fila =
+            crearFilaUnidad(unidad);
+
+
+        DOM.tablaUnidades.appendChild(
+            fila
+        );
+
+    });
+
+}
+
+
+/* ============================================================
+   CREAR FILA UNIDAD
+============================================================ */
+
+function crearFilaUnidad(unidad) {
+
+    const fila =
+        document.createElement('tr');
+
+
+    const id =
+        unidad.idUnidad ?? '';
+
+
+    const codigo =
+        unidad.codigoUnidad || '—';
+
+
+    const placa =
+        unidad.placa || '—';
+
+
+    const descripcion =
+        unidad.descripcion || '—';
+
+
+    const activo =
+        unidadEstaActiva(unidad);
+
+
+    const estadoClase =
+        activo
+            ? 'text-bg-success'
+            : 'text-bg-secondary';
+
+
+    const estadoTexto =
+        activo
+            ? 'Activa'
+            : 'Inactiva';
+
+
+    fila.innerHTML = `
 
         <td>
 
-            <input 
-            class="form-control repuestoNombre"
-            placeholder="Nombre">
+            <strong>
+                ${escaparHtml(id)}
+            </strong>
 
         </td>
-
 
         <td>
 
-            <input 
-            type="number"
-            class="form-control repuestoCantidad"
-            value="1"
-            min="1">
+            <span class="fw-semibold">
+                ${escaparHtml(codigo)}
+            </span>
 
         </td>
 
+        <td>
+            ${escaparHtml(placa)}
+        </td>
+
+        <td>
+            ${escaparHtml(descripcion)}
+        </td>
 
         <td>
 
-            <input 
-            type="number"
-            step="0.01"
-            class="form-control repuestoPrecio"
-            value="0">
+            <span class="badge ${estadoClase}">
+                ${estadoTexto}
+            </span>
 
         </td>
 
+        <td class="text-end">
 
-        <td class="subtotal">
+            <div
+                class="btn-group"
+                role="group"
+            >
 
-            L 0.00
+                <button
+                    type="button"
+                    class="btn btn-sm btn-light"
+                    title="Editar unidad"
+                    data-unidad-action="editar"
+                    data-id="${escaparHtml(id)}"
+                >
 
-        </td>
+                    <i class="bi bi-pencil"></i>
 
+                </button>
 
-
-        <td>
-
-
-            <button 
-            type="button"
-            class="btn btn-danger btn-sm"
-            onclick="eliminarRepuesto(this)">
-
-
-                <i class="fa-solid fa-trash"></i>
-
-
-            </button>
-
+            </div>
 
         </td>
-
 
     `;
 
 
-
-    tbodyRepuestos.appendChild(
-        fila
-    );
-
-
-
-
-    fila.querySelectorAll("input")
-        .forEach(
-            input => {
-
-
-                input.addEventListener(
-                    "input",
-                    calcularRepuestos
-                );
-
-
-            }
-        );
-
-
+    return fila;
 
 }
 
 
+/* ============================================================
+   EDITAR UNIDAD
+============================================================ */
 
-// =====================================================
-// CALCULAR TOTALES DE REPUESTOS
-// =====================================================
+async function editarUnidad(id) {
 
-function calcularRepuestos(){
+    try {
 
-    if(!tbodyRepuestos){
+        console.log(
+            'Editando unidad:',
+            id
+        );
+
+
+        let unidad =
+            STATE.unidades.find(
+                item =>
+                    Number(item.idUnidad) === id
+            );
+
+
+        if (!unidad) {
+
+            const respuesta =
+                await fetch(
+                    `${CONFIG.unidadesUrl}/${id}`
+                );
+
+
+            if (!respuesta.ok) {
+
+                const mensaje =
+                    await obtenerMensajeError(
+                        respuesta
+                    );
+
+                throw new Error(mensaje);
+
+            }
+
+
+            unidad =
+                await respuesta.json();
+
+        }
+
+
+        if (!unidad) {
+
+            throw new Error(
+                'No se encontró la unidad.'
+            );
+
+        }
+
+
+        STATE.unidadSeleccionada =
+            id;
+
+
+        STATE.modoUnidad =
+            'editar';
+
+
+        STATE.abriendoEdicionUnidad =
+            true;
+
+
+        const idInput =
+            document.getElementById(
+                'idUnidad'
+            );
+
+
+        const codigoInput =
+            document.getElementById(
+                'codigoUnidad'
+            );
+
+
+        const placaInput =
+            document.getElementById(
+                'placaUnidad'
+            );
+
+
+        const activoInput =
+            document.getElementById(
+                'activoUnidad'
+            );
+
+
+        const descripcionInput =
+            document.getElementById(
+                'descripcionUnidad'
+            );
+
+
+        if (idInput) {
+
+            idInput.value =
+                unidad.idUnidad ?? '';
+
+            idInput.readOnly =
+                true;
+
+        }
+
+
+        if (codigoInput) {
+
+            codigoInput.value =
+                unidad.codigoUnidad ?? '';
+
+        }
+
+
+        if (placaInput) {
+
+            placaInput.value =
+                unidad.placa ?? '';
+
+        }
+
+
+        if (activoInput) {
+
+            activoInput.value =
+                unidadEstaActiva(unidad)
+                    ? 'true'
+                    : 'false';
+
+        }
+
+
+        if (descripcionInput) {
+
+            descripcionInput.value =
+                unidad.descripcion ?? '';
+
+        }
+
+
+        cambiarTextoModalUnidad(
+            'Editar unidad'
+        );
+
+
+        cambiarBotonGuardarUnidad(
+            'Actualizar unidad'
+        );
+
+
+        abrirModal(
+            DOM.modalNuevaUnidad
+        );
+
+
+    } catch (error) {
+
+        STATE.abriendoEdicionUnidad =
+            false;
+
+
+        console.error(
+            'Error al editar unidad:',
+            error
+        );
+
+
+        mostrarError(
+            error.message ||
+            'No fue posible cargar la unidad para editar.'
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   PREPARAR MODAL NUEVA UNIDAD
+============================================================ */
+
+function prepararModalNuevaUnidad() {
+
+    if (STATE.abriendoEdicionUnidad) {
+
+        STATE.abriendoEdicionUnidad =
+            false;
 
         return;
 
     }
 
-    let filas =
-        tbodyRepuestos.querySelectorAll(
-            "tr"
-        );
 
-    let total = 0;
+    STATE.modoUnidad =
+        'crear';
 
-    filas.forEach(
-        fila => {
 
-            let cantidad =
-                Number(
-                    fila.querySelector(
-                        ".repuestoCantidad"
-                    ).value
-                ) || 0;
+    STATE.unidadSeleccionada =
+        null;
 
-            let precio =
-                Number(
-                    fila.querySelector(
-                        ".repuestoPrecio"
-                    ).value
-                ) || 0;
 
-            let subtotal =
-                cantidad * precio;
+    if (DOM.formUnidad) {
 
-            fila.querySelector(
-                ".subtotal"
-            ).innerHTML =
-                "L " +
-                subtotal.toFixed(2);
-
-            total += subtotal;
-
-        }
-    );
-
-    // ==========================================
-    // TOTAL DE REPUESTOS
-    // ==========================================
-
-    if(totalRepuestos){
-
-        totalRepuestos.innerHTML =
-            "L " +
-            total.toFixed(2);
+        DOM.formUnidad.reset();
 
     }
 
-    // ==========================================
-    // TOTAL DEL MANTENIMIENTO
-    // ==========================================
 
-    if(totalMantenimiento){
-
-        totalMantenimiento.innerHTML =
-            "L " +
-            total.toFixed(2);
-
-    }
-
-    // ==========================================
-    // ACTUALIZAR EL CAMPO COSTO AUTOMÁTICAMENTE
-    // ==========================================
-
-    let campoCosto =
+    const idInput =
         document.getElementById(
-            "costo"
-        );
-
-    if(campoCosto){
-
-        campoCosto.value =
-            total.toFixed(2);
-
-    }
-
-}
-
-
-// =====================================================
-// ELIMINAR REPUESTOS
-// =====================================================
-
-function eliminarRepuesto(btn){
-
-
-    if(btn){
-
-
-        let fila =
-            btn.closest("tr");
-
-
-
-        if(fila){
-
-            fila.remove();
-
-        }
-
-
-    }
-
-
-
-    calcularRepuestos();
-
-
-
-}
-
-
-
-// =====================================================
-// OBTENER REPUESTOS
-// =====================================================
-
-function obtenerRepuestos(){
-
-
-
-    let repuestos = [];
-
-
-
-    if(!tbodyRepuestos){
-
-        return repuestos;
-
-    }
-
-
-
-
-    let filas =
-        tbodyRepuestos.querySelectorAll(
-            "tr"
+            'idUnidad'
         );
 
 
+    if (idInput) {
+
+        idInput.value = '';
+
+        idInput.readOnly = false;
+
+    }
 
 
-    filas.forEach(
-        fila => {
+    const codigoInput =
+        document.getElementById(
+            'codigoUnidad'
+        );
 
 
-
-            let nombre =
-                fila.querySelector(
-                    ".repuestoNombre"
-                ).value;
-
+    const placaInput =
+        document.getElementById(
+            'placaUnidad'
+        );
 
 
-            let cantidad =
-                Number(
-                    fila.querySelector(
-                        ".repuestoCantidad"
-                    ).value
-                ) || 0;
+    const activoInput =
+        document.getElementById(
+            'activoUnidad'
+        );
 
 
+    const descripcionInput =
+        document.getElementById(
+            'descripcionUnidad'
+        );
 
 
-            let precio =
-                Number(
-                    fila.querySelector(
-                        ".repuestoPrecio"
-                    ).value
-                ) || 0;
+    if (codigoInput) {
+
+        codigoInput.value = '';
+
+    }
 
 
+    if (placaInput) {
 
-            repuestos.push({
+        placaInput.value = '';
 
-                nombre:nombre,
-
-                cantidad:cantidad,
-
-                precio:precio,
-
-                subtotal:
-                    cantidad * precio
-
-            });
+    }
 
 
+    if (activoInput) {
 
-        }
+        activoInput.value = 'true';
+
+    }
+
+
+    if (descripcionInput) {
+
+        descripcionInput.value = '';
+
+    }
+
+
+    cambiarTextoModalUnidad(
+        'Nueva unidad'
     );
 
 
-
-    return repuestos;
-
-
+    cambiarBotonGuardarUnidad(
+        'Guardar unidad'
+    );
 
 }
 
 
+/* ============================================================
+   GUARDAR / ACTUALIZAR UNIDAD
+============================================================ */
 
-// =====================================================
-// CARGAR TABLA DE MANTENIMIENTOS
-// =====================================================
+async function manejarFormularioUnidad(event) {
 
-async function cargarMantenimientos(
-    camion = "",
-    tipo = "",
-    estado = "",
-    fechaInicio = "",
-    fechaFin = ""
-){
+    event.preventDefault();
 
-    try{
 
-        let parametros =
-            new URLSearchParams();
+    const formulario =
+        event.currentTarget;
 
-        if(camion){
 
-            parametros.append(
-                "camion",
-                camion
-            );
+    if (!formulario.checkValidity()) {
 
-        }
+        formulario.reportValidity();
 
-        if(tipo){
-
-            parametros.append(
-                "tipo",
-                tipo
-            );
-
-        }
-
-        if(estado){
-
-            parametros.append(
-                "estado",
-                estado
-            );
-
-        }
-
-        if(fechaInicio){
-
-            parametros.append(
-                "fechaInicio",
-                fechaInicio
-            );
-
-        }
-
-        if(fechaFin){
-
-            parametros.append(
-                "fechaFin",
-                fechaFin
-            );
-
-        }
-
-        let url =
-            "/mantenimiento/lista";
-
-        if(parametros.toString() !== ""){
-
-            url +=
-                "?" +
-                parametros.toString();
-
-        }
-
-        const respuesta =
-            await fetch(url);
-
-        if(!respuesta.ok){
-
-            throw new Error(
-                "Error al cargar mantenimientos"
-            );
-
-        }
-
-        const mantenimientos =
-            await respuesta.json();
-
-        // Guardar todos los registros obtenidos
-        listaMantenimientosCompleta =
-            mantenimientos;
-			
-			listaMantenimientosOriginal = [...mantenimientos];
-
-        // Volver siempre a la primera página
-        paginaActualTabla = 1;
-
-        // Actualizar tabla
-        mostrarPaginaMantenimientos();
-
-        // Actualizar dashboard
-        actualizarDashboard();
+        return;
 
     }
-    catch(error){
 
-        console.error(
-            "Error cargando mantenimientos:",
-            error
+
+    const idTexto =
+        document.getElementById(
+            'idUnidad'
+        )?.value;
+
+
+    const codigo =
+        document.getElementById(
+            'codigoUnidad'
+        )?.value.trim();
+
+
+    const placa =
+        document.getElementById(
+            'placaUnidad'
+        )?.value.trim();
+
+
+    const activoValor =
+        document.getElementById(
+            'activoUnidad'
+        )?.value;
+
+
+    const descripcion =
+        document.getElementById(
+            'descripcionUnidad'
+        )?.value.trim();
+
+
+    const idUnidad =
+        Number(idTexto);
+
+
+    if (
+
+        !Number.isInteger(idUnidad) ||
+
+        idUnidad <= 0
+
+    ) {
+
+        mostrarError(
+            'El ID de la unidad debe ser un número entero válido.'
         );
 
-        // Vaciar lista
-        listaMantenimientosCompleta = [];
-
-        // Limpiar tabla
-        mostrarPaginaMantenimientos();
-
-        // Limpiar dashboard
-        actualizarDashboard();
+        return;
 
     }
 
-}
-// =====================================================
-// GUARDAR MANTENIMIENTO
-// =====================================================
 
-async function guardarMantenimiento(e){
+    if (!codigo) {
 
-    e.preventDefault();
+        mostrarError(
+            'Debes ingresar el código de la unidad.'
+        );
 
-    let datos = {
+        return;
 
-        // IMPORTANTE:
-        // Si está vacío crea uno nuevo.
-        // Si tiene valor actualiza ese mantenimiento.
-        id: idMantenimiento.value
-            ? Number(idMantenimiento.value)
-            : null,
+    }
 
-        camion:{
-            id:Number(
-                selectCamion.value
-            )
-        },
 
-        fecha:
-            document.getElementById(
-                "fecha"
-            ).value,
+    const unidad = {
 
-        tipo:
-            selectTipo.options[
-                selectTipo.selectedIndex
-            ]?.text || "",
+        idUnidad,
 
-        estado:
-            document.getElementById(
-                "estado"
-            ).value,
+        codigoUnidad:
+            codigo,
 
-        kilometraje:
-            Number(
-                document.getElementById(
-                    "kilometraje"
-                ).value
-            ),
+        placa:
+            placa || null,
 
-        costo:
-            Number(
-                document.getElementById(
-                    "costo"
-                ).value
-            ),
-
-        taller:
-            document.getElementById(
-                "taller"
-            ).value,
-
-        proximoMantenimiento:
-            Number(
-                document.getElementById(
-                    "proximoMantenimiento"
-                ).value
-            ),
-
-        proximaFecha:
-            document.getElementById(
-                "proximaFecha"
-            ).value,
+        activo:
+            activoValor === 'true',
 
         descripcion:
-            document.getElementById(
-                "descripcion"
-            ).value,
-
-        observaciones:
-            document.getElementById(
-                "observaciones"
-            ).value,
-
-        repuestos:
-            obtenerRepuestos()
+            descripcion || null
 
     };
 
-    try{
 
-        let respuesta =
-            await fetch(
-                "/mantenimiento/guardar",
-                {
+    const modoOperacion =
+        STATE.modoUnidad;
 
-                    method:"POST",
 
-                    headers:{
+    try {
 
-                        "Content-Type":
-                            "application/json"
+        let respuesta;
 
-                    },
 
-                    body:
-                        JSON.stringify(datos)
+        if (
+            modoOperacion === 'crear'
+        ) {
 
-                }
-            );
-
-        if(respuesta.ok){
-
-            alert(
-                "Mantenimiento guardado correctamente"
-            );
-
-            if(modalMantenimiento){
-
-                modalMantenimiento.hide();
-
-            }
-
-            formMantenimiento.reset();
-
-            if(tbodyRepuestos){
-
-                tbodyRepuestos.innerHTML = "";
-
-            }
-
-            cargarMantenimientos();
-
-        }else{
-
-            let error =
-                await respuesta.text();
-
-            console.error(error);
-
-            alert(
-                "Error guardando mantenimiento"
-            );
-
-        }
-
-    }catch(error){
-
-        console.error(
-            "Error guardando:",
-            error
-        );
-
-    }
-
-}
-
-// =====================================================
-// VER DETALLE MANTENIMIENTO
-// =====================================================
-
-async function verMantenimiento(id){
-
-    try{
-
-        let respuesta =
-            await fetch(
-                "/mantenimiento/ver/" + id
-            );
-
-        let m =
-            await respuesta.json();
-			
-			mantenimientoActual = m.id;
-
-        // ==========================================
-        // ESTADO
-        // ==========================================
-
-        let claseEstado = "";
-
-        switch(m.estado){
-
-            case "FINALIZADO":
-
-                claseEstado =
-                    "estado-finalizado";
-
-                break;
-
-            case "EN_PROCESO":
-
-                claseEstado =
-                    "estado-en-proceso";
-
-                break;
-
-            case "PENDIENTE":
-
-                claseEstado =
-                    "estado-pendiente";
-
-                break;
-
-            default:
-
-                claseEstado =
-                    "estado-cancelado";
-
-        }
-
-        // ==========================================
-        // PRÓXIMA FECHA
-        // ==========================================
-
-        let claseFecha =
-            "fecha-normal";
-
-        if(m.proximaFecha){
-
-            let hoy =
-                new Date();
-
-            hoy.setHours(
-                0,
-                0,
-                0,
-                0
-            );
-
-            let fechaProxima =
-                new Date(
-                    m.proximaFecha +
-                    "T00:00:00"
+            respuesta =
+                await fetch(
+                    CONFIG.unidadesUrl,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type':
+                                'application/json'
+                        },
+                        body:
+                            JSON.stringify(unidad)
+                    }
                 );
 
-            if(fechaProxima < hoy){
+        } else {
 
-                claseFecha =
-                    "fecha-vencida";
+            respuesta =
+                await fetch(
+                    `${CONFIG.unidadesUrl}/${idUnidad}`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type':
+                                'application/json'
+                        },
+                        body:
+                            JSON.stringify(unidad)
+                    }
+                );
+
+        }
+
+
+        if (!respuesta.ok) {
+
+            const mensaje =
+                await obtenerMensajeError(
+                    respuesta
+                );
+
+            throw new Error(mensaje);
+
+        }
+
+
+        let unidadGuardada =
+            unidad;
+
+
+        if (respuesta.status !== 204) {
+
+            const texto =
+                await respuesta.text();
+
+
+            if (texto) {
+
+                try {
+
+                    unidadGuardada =
+                        JSON.parse(texto);
+
+                } catch {
+
+                    unidadGuardada =
+                        unidad;
+
+                }
 
             }
 
         }
 
-        // ==========================================
-        // INFORMACIÓN GENERAL
-        // ==========================================
 
-        document.getElementById(
-            "verPlaca"
-        ).innerHTML =
-            m.placa || "No registrado";
+        cerrarModal(
+            DOM.modalNuevaUnidad
+        );
 
-        document.getElementById(
-            "verFecha"
-        ).innerHTML =
-            m.fecha || "No registrada";
 
-        document.getElementById(
-            "verEstado"
-        ).innerHTML =
+        formulario.reset();
 
-        `
-            <span class="badge-estado ${claseEstado}">
-                ${(m.estado || "SIN ESTADO")
-                    .replaceAll("_"," ")}
-            </span>
-        `;
 
-        document.getElementById(
-            "verTipo"
-        ).innerHTML =
-            m.tipo || "No registrado";
+        STATE.modoUnidad =
+            'crear';
 
-        document.getElementById(
-            "verTaller"
-        ).innerHTML =
-            m.taller || "No registrado";
 
-        document.getElementById(
-            "verKilometraje"
-        ).innerHTML =
+        STATE.unidadSeleccionada =
+            null;
 
-        `
-            <span class="valor-km">
-                ${Number(
-                    m.kilometraje ?? 0
-                ).toLocaleString()} km
-            </span>
-        `;
 
-        document.getElementById(
-            "verCosto"
-        ).innerHTML =
+        STATE.abriendoEdicionUnidad =
+            false;
 
-        `
-            <span class="valor-costo">
-                L ${Number(
-                    m.costo ?? 0
-                ).toFixed(2)}
-            </span>
-        `;
 
-        document.getElementById(
-            "verProximo"
-        ).innerHTML =
-            m.proximoMantenimiento ||
-            "No definido";
-
-        document.getElementById(
-            "verProximaFecha"
-        ).innerHTML =
-
-        `
-            <span class="${claseFecha}">
-                ${m.proximaFecha || "No definida"}
-            </span>
-        `;
-
-        document.getElementById(
-            "verDescripcion"
-        ).innerHTML =
-            m.descripcion ||
-            "Sin descripción.";
-
-        document.getElementById(
-            "verObservaciones"
-        ).innerHTML =
-            m.observaciones ||
-            "Sin observaciones.";
-
-        // ==========================================
-        // REPUESTOS
-        // ==========================================
-
-        let tbody =
+        const idInput =
             document.getElementById(
-                "tbodyVerRepuestos"
+                'idUnidad'
             );
 
-        tbody.innerHTML = "";
 
-        if(
-            m.repuestos &&
-            m.repuestos.length > 0
-        ){
+        if (idInput) {
 
-            m.repuestos.forEach(
-                r => {
+            idInput.value = '';
 
-                    tbody.innerHTML +=
-
-                    `
-                    <tr>
-
-                        <td>
-                            ${r.nombre}
-                        </td>
-
-                        <td class="text-center">
-                            ${r.cantidad}
-                        </td>
-
-                        <td class="text-end">
-                            L ${Number(
-                                r.precio ?? 0
-                            ).toFixed(2)}
-                        </td>
-
-                        <td class="text-end fw-bold text-success">
-                            L ${Number(
-                                r.subtotal ?? 0
-                            ).toFixed(2)}
-                        </td>
-
-                    </tr>
-                    `;
-
-                }
-            );
-
-        }else{
-
-            tbody.innerHTML =
-
-            `
-            <tr>
-
-                <td colspan="4" class="text-center text-muted py-4">
-
-                    <i class="fa-solid fa-box-open me-2"></i>
-
-                    No se registraron repuestos para este mantenimiento.
-
-                </td>
-
-            </tr>
-            `;
+            idInput.readOnly = false;
 
         }
 
-        // ==========================================
-        // ABRIR MODAL
-        // ==========================================
 
-        if(modalVerMantenimiento){
+        cambiarTextoModalUnidad(
+            'Nueva unidad'
+        );
 
-            modalVerMantenimiento.show();
+
+        cambiarBotonGuardarUnidad(
+            'Guardar unidad'
+        );
+
+
+        await cargarUnidades();
+
+
+        /*
+         * Actualizamos mantenimientos localmente
+         * con la nueva placa de la unidad.
+         */
+
+        enriquecerTodosLosMantenimientosConUnidades();
+
+        aplicarFiltros();
+
+
+        if (
+            modoOperacion === 'editar'
+        ) {
+
+            mostrarExito(
+                `Unidad ${
+                    unidadGuardada.codigoUnidad ||
+                    unidad.codigoUnidad
+                } actualizada correctamente.`
+            );
+
+        } else {
+
+            mostrarExito(
+                `Unidad ${
+                    unidadGuardada.codigoUnidad ||
+                    unidad.codigoUnidad
+                } guardada correctamente.`
+            );
 
         }
 
-    }catch(error){
+
+    } catch (error) {
 
         console.error(
-            "Error viendo mantenimiento:",
+            'Error al guardar/actualizar unidad:',
             error
         );
 
+
+        mostrarError(
+            error.message ||
+            'No fue posible guardar la unidad.'
+        );
+
     }
 
 }
-// =====================================================
-// EDITAR ESTADO
-// =====================================================
-
-async function editarEstado(id){
 
 
+/* ============================================================
+   CAMBIAR TÍTULO MODAL UNIDAD
+============================================================ */
 
-    document.getElementById(
-        "idEditarEstado"
-    ).value=id;
+function cambiarTextoModalUnidad(texto) {
+
+    if (!DOM.modalNuevaUnidad) {
+
+        return;
+
+    }
 
 
+    const titulo =
+        DOM.modalNuevaUnidad.querySelector(
+            '.modal-title'
+        );
 
 
+    if (titulo) {
 
-    try{
+        titulo.textContent =
+            texto;
+
+    }
+
+}
 
 
-        let respuesta =
+/* ============================================================
+   CAMBIAR BOTÓN GUARDAR UNIDAD
+============================================================ */
+
+function cambiarBotonGuardarUnidad(texto) {
+
+    if (!DOM.formUnidad) {
+
+        return;
+
+    }
+
+
+    const boton =
+        DOM.formUnidad.querySelector(
+            'button[type="submit"]'
+        );
+
+
+    if (!boton) {
+
+        return;
+
+    }
+
+
+    const icono =
+        boton.querySelector('i');
+
+
+    if (icono) {
+
+        boton.innerHTML = '';
+
+        boton.appendChild(icono);
+
+        boton.appendChild(
+            document.createTextNode(
+                ` ${texto}`
+            )
+        );
+
+    } else {
+
+        boton.textContent =
+            texto;
+
+    }
+
+}
+
+
+/* ============================================================
+   ELIMINAR UNIDAD
+============================================================ */
+
+async function eliminarUnidad(id) {
+
+    const unidad =
+        STATE.unidades.find(
+            item =>
+                Number(item.idUnidad) === id
+        );
+
+
+    if (!unidad) {
+
+        mostrarError(
+            'No se encontró la unidad.'
+        );
+
+        return;
+
+    }
+
+
+    const nombre =
+        unidad.codigoUnidad ||
+        `Unidad ${id}`;
+
+
+    const confirmar =
+        window.confirm(
+            `¿Deseas eliminar la unidad "${nombre}"?\n\n` +
+            'Esta acción no se puede deshacer.'
+        );
+
+
+    if (!confirmar) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const respuesta =
             await fetch(
-                "/mantenimiento/lista"
+                `${CONFIG.unidadesUrl}/${id}`,
+                {
+                    method: 'DELETE'
+                }
             );
 
 
+        if (!respuesta.ok) {
 
-        let lista =
+            const mensaje =
+                await obtenerMensajeError(
+                    respuesta
+                );
+
+            throw new Error(mensaje);
+
+        }
+
+
+        await cargarUnidades();
+
+        await cargarMantenimientos();
+
+        actualizarContadores();
+
+
+        mostrarExito(
+            `Unidad ${nombre} eliminada correctamente.`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            'Error al eliminar unidad:',
+            error
+        );
+
+
+        mostrarError(
+            error.message ||
+            'No fue posible eliminar la unidad.'
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   CONTADOR UNIDADES
+============================================================ */
+
+function actualizarContadorUnidades() {
+
+    if (!DOM.unitsTotalCount) {
+
+        return;
+
+    }
+
+
+    const total =
+        STATE.unidades.length;
+
+
+    DOM.unitsTotalCount.textContent =
+        `${total} ${
+            total === 1
+                ? 'unidad'
+                : 'unidades'
+        }`;
+
+}
+
+
+/* ============================================================
+   SELECTS UNIDADES
+============================================================ */
+
+function llenarSelectUnidades() {
+
+    const selects = [
+
+        DOM.filtroUnidad,
+
+        DOM.unidadMantenimiento,
+
+        DOM.editarUnidad
+
+    ];
+
+
+    selects.forEach(select => {
+
+        if (!select) {
+
+            return;
+
+        }
+
+
+        const valorActual =
+            select.value;
+
+
+        const primeraOpcion =
+            select.options.length > 0
+                ? select.options[0]
+                : null;
+
+
+        select.innerHTML = '';
+
+
+        if (primeraOpcion) {
+
+            select.appendChild(
+                primeraOpcion
+            );
+
+        }
+
+
+        const unidadesParaSelect =
+            select === DOM.unidadMantenimiento
+                ? STATE.unidades.filter(
+                    unidad =>
+                        unidadEstaActiva(unidad)
+                )
+                : STATE.unidades;
+
+
+        unidadesParaSelect.forEach(unidad => {
+
+            const option =
+                document.createElement(
+                    'option'
+                );
+
+
+            option.value =
+                unidad.idUnidad;
+
+
+            option.textContent =
+                obtenerNombreUnidad(unidad);
+
+
+            select.appendChild(option);
+
+        });
+
+
+        const existe =
+            [...select.options].some(
+                option =>
+                    option.value ===
+                    valorActual
+            );
+
+
+        if (existe) {
+
+            select.value =
+                valorActual;
+
+        } else if (
+            select === DOM.unidadMantenimiento
+        ) {
+
+            select.value = '';
+
+        }
+
+    });
+
+
+    actualizarPlacaMantenimientoSeleccionada();
+
+    actualizarPlacaMantenimientoEditado();
+
+}
+
+
+/* ============================================================
+   ESTADO DE UNIDAD
+============================================================ */
+
+function unidadEstaActiva(unidad) {
+
+    if (!unidad) {
+
+        return false;
+
+    }
+
+
+    const valor =
+        unidad.activo;
+
+
+    if (
+
+        valor === true ||
+
+        valor === 1 ||
+
+        valor === '1' ||
+
+        valor === 'true' ||
+
+        valor === 'TRUE' ||
+
+        valor === 'True'
+
+    ) {
+
+        return true;
+
+    }
+
+
+    return false;
+
+}
+
+
+/* ============================================================
+   NOMBRE UNIDAD
+============================================================ */
+
+function obtenerNombreUnidad(unidad) {
+
+    if (!unidad) {
+
+        return 'Sin unidad';
+
+    }
+
+
+    if (unidad.codigoUnidad) {
+
+        return unidad.codigoUnidad;
+
+    }
+
+
+    if (
+
+        unidad.idUnidad !== null &&
+
+        unidad.idUnidad !== undefined
+
+    ) {
+
+        return `Unidad ${unidad.idUnidad}`;
+
+    }
+
+
+    return 'Sin unidad';
+
+}
+
+
+/* ============================================================
+   OBTENER PLACA DE LA UNIDAD
+============================================================ */
+
+function obtenerPlacaUnidad(unidad) {
+
+    if (!unidad) {
+
+        return '—';
+
+    }
+
+
+    if (
+
+        unidad.placa !== null &&
+
+        unidad.placa !== undefined &&
+
+        String(unidad.placa).trim() !== ''
+
+    ) {
+
+        return String(
+            unidad.placa
+        ).trim();
+
+    }
+
+
+    const idUnidad =
+        unidad.idUnidad;
+
+
+    if (
+
+        idUnidad !== null &&
+
+        idUnidad !== undefined
+
+    ) {
+
+        const unidadCompleta =
+            STATE.unidades.find(
+                item =>
+                    Number(item.idUnidad) ===
+                    Number(idUnidad)
+            );
+
+
+        if (
+
+            unidadCompleta &&
+
+            unidadCompleta.placa !== null &&
+
+            unidadCompleta.placa !== undefined &&
+
+            String(
+                unidadCompleta.placa
+            ).trim() !== ''
+
+        ) {
+
+            return String(
+                unidadCompleta.placa
+            ).trim();
+
+        }
+
+    }
+
+
+    return '—';
+
+}
+
+
+/* ============================================================
+   OBTENER UNIDAD COMPLETA
+============================================================ */
+
+function obtenerUnidadCompleta(unidad) {
+
+    if (!unidad) {
+
+        return null;
+
+    }
+
+
+    const idUnidad =
+        unidad.idUnidad;
+
+
+    const unidadRegistrada =
+        STATE.unidades.find(
+            item =>
+                Number(item.idUnidad) ===
+                Number(idUnidad)
+        );
+
+
+    if (!unidadRegistrada) {
+
+        return {
+            ...unidad
+        };
+
+    }
+
+
+    return {
+
+        ...unidadRegistrada,
+
+        ...unidad,
+
+        idUnidad:
+            unidad.idUnidad ??
+            unidadRegistrada.idUnidad,
+
+        codigoUnidad:
+            unidad.codigoUnidad ??
+            unidadRegistrada.codigoUnidad,
+
+        placa:
+            unidad.placa !== undefined &&
+            unidad.placa !== null &&
+            String(unidad.placa).trim() !== ''
+                ? unidad.placa
+                : unidadRegistrada.placa,
+
+        activo:
+            unidad.activo !== undefined
+                ? unidad.activo
+                : unidadRegistrada.activo,
+
+        descripcion:
+            unidad.descripcion ??
+            unidadRegistrada.descripcion
+
+    };
+
+}
+
+
+/* ============================================================
+   ENRIQUECER MANTENIMIENTO CON UNIDAD
+============================================================ */
+
+function enriquecerMantenimientoConUnidad(
+    mantenimiento
+) {
+
+    if (!mantenimiento) {
+
+        return mantenimiento;
+
+    }
+
+
+    return {
+
+        ...mantenimiento,
+
+        unidad:
+            obtenerUnidadCompleta(
+                mantenimiento.unidad
+            )
+
+    };
+
+}
+
+
+/* ============================================================
+   ENRIQUECER TODOS LOS MANTENIMIENTOS
+============================================================ */
+
+function enriquecerTodosLosMantenimientosConUnidades() {
+
+    if (
+        !Array.isArray(
+            STATE.mantenimientos
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    STATE.mantenimientos =
+        STATE.mantenimientos.map(
+            enriquecerMantenimientoConUnidad
+        );
+
+
+    if (
+        Array.isArray(
+            STATE.mantenimientosFiltrados
+        )
+    ) {
+
+        STATE.mantenimientosFiltrados =
+            STATE.mantenimientosFiltrados.map(
+                enriquecerMantenimientoConUnidad
+            );
+
+    }
+
+}
+
+
+/* ============================================================
+   OBTENER ELEMENTO POR VARIOS IDS
+============================================================ */
+
+function obtenerElementoPorIds(ids) {
+
+    for (const id of ids) {
+
+        const elemento =
+            document.getElementById(id);
+
+
+        if (elemento) {
+
+            return elemento;
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* ============================================================
+   ESTABLECER VALOR DE PLACA EN ELEMENTO
+============================================================ */
+
+function establecerValorPlacaElemento(
+    elemento,
+    placa
+) {
+
+    if (!elemento) {
+
+        return;
+
+    }
+
+
+    const valor =
+        placa && placa !== '—'
+            ? placa
+            : '';
+
+
+    const tag =
+        elemento.tagName?.toLowerCase();
+
+
+    if (
+
+        tag === 'input' ||
+
+        tag === 'textarea' ||
+
+        tag === 'select'
+
+    ) {
+
+        elemento.value =
+            valor;
+
+
+        /*
+         * La placa pertenece a la unidad.
+         * No debe editarse directamente desde
+         * el mantenimiento.
+         */
+
+        if (
+            tag === 'input' ||
+            tag === 'textarea'
+        ) {
+
+            elemento.readOnly = true;
+
+        }
+
+
+    } else {
+
+        elemento.textContent =
+            placa || '—';
+
+    }
+
+}
+
+
+/* ============================================================
+   OBTENER UNIDAD POR SELECT
+============================================================ */
+
+function obtenerUnidadPorSelect(select) {
+
+    if (!select) {
+
+        return null;
+
+    }
+
+
+    const id =
+        Number(select.value);
+
+
+    if (!id) {
+
+        return null;
+
+    }
+
+
+    return STATE.unidades.find(
+        unidad =>
+            Number(unidad.idUnidad) === id
+    ) || null;
+
+}
+
+
+/* ============================================================
+   ACTUALIZAR PLACA NUEVO MANTENIMIENTO
+============================================================ */
+
+function actualizarPlacaMantenimientoSeleccionada() {
+
+    const unidad =
+        obtenerUnidadPorSelect(
+            DOM.unidadMantenimiento
+        );
+
+
+    const placa =
+        obtenerPlacaUnidad(unidad);
+
+
+    const elemento =
+        obtenerElementoPorIds([
+
+            'placaMantenimiento',
+
+            'placaUnidadMantenimiento',
+
+            'mantenimientoPlaca',
+
+            'placaSeleccionadaMantenimiento'
+
+        ]);
+
+
+    establecerValorPlacaElemento(
+        elemento,
+        placa
+    );
+
+}
+
+
+/* ============================================================
+   ACTUALIZAR PLACA EDICIÓN MANTENIMIENTO
+============================================================ */
+
+function actualizarPlacaMantenimientoEditado() {
+
+    const unidad =
+        obtenerUnidadPorSelect(
+            DOM.editarUnidad
+        );
+
+
+    const placa =
+        obtenerPlacaUnidad(unidad);
+
+
+    const elemento =
+        obtenerElementoPorIds([
+
+            'editarPlaca',
+
+            'editarPlacaMantenimiento',
+
+            'placaEditarMantenimiento'
+
+        ]);
+
+
+    establecerValorPlacaElemento(
+        elemento,
+        placa
+    );
+
+}
+
+
+/* ============================================================
+   CAMBIO DE UNIDAD - NUEVO MANTENIMIENTO
+============================================================ */
+
+function manejarCambioUnidadMantenimiento() {
+
+    actualizarPlacaMantenimientoSeleccionada();
+
+}
+
+
+/* ============================================================
+   CAMBIO DE UNIDAD - EDITAR MANTENIMIENTO
+============================================================ */
+
+function manejarCambioUnidadEditar() {
+
+    actualizarPlacaMantenimientoEditado();
+
+}
+
+
+/* ============================================================
+   MANTENIMIENTOS - CARGAR
+============================================================ */
+
+async function cargarMantenimientos() {
+
+    mostrarCargandoTabla();
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                CONFIG.mantenimientosUrl
+            );
+
+
+        if (!respuesta.ok) {
+
+            const mensaje =
+                await obtenerMensajeError(
+                    respuesta
+                );
+
+            throw new Error(mensaje);
+
+        }
+
+
+        const datos =
             await respuesta.json();
 
 
+        STATE.mantenimientos =
+            Array.isArray(datos)
+                ? datos.map(
+                    enriquecerMantenimientoConUnidad
+                )
+                : [];
 
 
-        let mantenimiento =
-            lista.find(
-                m=>m.id==id
-            );
+        STATE.mantenimientos.sort(
+            compararMantenimientosPorFecha
+        );
 
 
+        STATE.paginaActual = 1;
 
 
-        if(mantenimiento){
+        aplicarFiltros();
 
 
-
-            document.getElementById(
-                "nuevoEstado"
-            ).value =
-                mantenimiento.estado;
+        actualizarContadores();
 
 
+    } catch (error) {
 
-        }
-
-
-
-
-
-        if(modalEditarEstado){
-
-            modalEditarEstado.show();
-
-        }
+        console.error(
+            'Error al cargar mantenimientos:',
+            error
+        );
 
 
+        STATE.mantenimientos = [];
+
+        STATE.mantenimientosFiltrados = [];
+
+        STATE.paginaActual = 1;
 
 
-    }catch(error){
+        renderizarTabla();
 
 
-        console.error(error);
+        mostrarError(
+            error.message ||
+            'No fue posible cargar los mantenimientos.'
+        );
 
+    }
+
+}
+
+
+/* ============================================================
+   COMPARAR MANTENIMIENTOS POR FECHA
+============================================================ */
+
+function compararMantenimientosPorFecha(a, b) {
+
+    const fechaA =
+        obtenerTimestampFecha(
+            a?.fechaMantenimiento
+        );
+
+
+    const fechaB =
+        obtenerTimestampFecha(
+            b?.fechaMantenimiento
+        );
+
+
+    if (fechaA !== fechaB) {
+
+        return fechaB - fechaA;
 
     }
 
 
+    const idA =
+        Number(
+            a?.idMantenimiento
+        ) || 0;
+
+
+    const idB =
+        Number(
+            b?.idMantenimiento
+        ) || 0;
+
+
+    return idB - idA;
 
 }
 
 
+/* ============================================================
+   OBTENER TIMESTAMP DE FECHA
+============================================================ */
 
+function obtenerTimestampFecha(fecha) {
 
-// =====================================================
-// GUARDAR ESTADO
-// =====================================================
+    if (!fecha) {
 
-async function guardarEstado(){
-
-
-
-    let id =
-        document.getElementById(
-            "idEditarEstado"
-        ).value;
-
-
-
-
-    let estado =
-        document.getElementById(
-            "nuevoEstado"
-        ).value;
-
-
-
-
-    let respuesta =
-        await fetch(
-            "/mantenimiento/estado/"+id,
-            {
-
-
-                method:"PUT",
-
-
-                headers:{
-
-
-                    "Content-Type":
-                    "application/json"
-
-
-                },
-
-
-                body:
-                    JSON.stringify({
-                        estado:estado
-                    })
-
-
-            }
-        );
-
-
-
-
-
-    if(respuesta.ok){
-
-
-        alert(
-            "Estado actualizado correctamente"
-        );
-
-
-
-        modalEditarEstado.hide();
-
-
-
-        cargarMantenimientos();
-
-
-
-    }else{
-
-
-        alert(
-            "Error actualizando estado"
-        );
-
+        return 0;
 
     }
 
 
-
-}
-
-
-
-// =====================================================
-// ELIMINAR MANTENIMIENTO
-// =====================================================
-
-function eliminarMantenimiento(id){
+    const texto =
+        String(fecha);
 
 
-
-    document.getElementById(
-        "idEliminarMantenimiento"
-    ).value=id;
-
-
-
-
-    document.getElementById(
-        "codigoUsuario"
-    ).value="";
-
-
-
-
-    document.getElementById(
-        "btnConfirmarEliminar"
-    ).disabled=true;
-
-
-
-
-
-    let codigo =
-        Math.random()
-        .toString(36)
-        .substring(2,8)
-        .toUpperCase();
-
-
-
-
-    document.getElementById(
-        "codigoGenerado"
-    ).textContent=codigo;
-
-
-
-
-
-    modalEliminarMantenimiento.show();
-
-
-
-}
-
-
-
-// =====================================================
-// CONFIRMAR ELIMINACIÓN
-// =====================================================
-
-async function confirmarEliminarMantenimiento(){
-
-
-
-    let id =
-        document.getElementById(
-            "idEliminarMantenimiento"
-        ).value;
-
-
-
-
-
-    let respuesta =
-        await fetch(
-            "/mantenimiento/eliminar/"+id,
-            {
-
-                method:"DELETE"
-
-            }
+    const coincidencia =
+        texto.match(
+            /^(\d{4})-(\d{2})-(\d{2})$/
         );
 
 
+    if (coincidencia) {
+
+        const anio =
+            Number(coincidencia[1]);
 
 
-
-    if(respuesta.ok){
-
-
-        modalEliminarMantenimiento.hide();
+        const mes =
+            Number(coincidencia[2]);
 
 
-        cargarMantenimientos();
+        const dia =
+            Number(coincidencia[3]);
 
 
-        alert(
-            "Mantenimiento eliminado correctamente"
+        return Date.UTC(
+            anio,
+            mes - 1,
+            dia
         );
-
-
-
-    }else{
-
-
-        alert(
-            "No se pudo eliminar"
-        );
-
 
     }
 
 
+    const timestamp =
+        Date.parse(texto);
+
+
+    if (!Number.isNaN(timestamp)) {
+
+        return timestamp;
+
+    }
+
+
+    return 0;
 
 }
 
 
+/* ============================================================
+   TABLA MANTENIMIENTOS
+============================================================ */
 
-// =====================================================
-// CARGAR FILTRO CAMIONES
-// =====================================================
+function renderizarTabla() {
 
-async function cargarFiltroCamiones(){
-
-
-
-    let respuesta =
-        await fetch(
-            "/camiones/lista"
-        );
-
-
-
-    let camiones =
-        await respuesta.json();
-
-
-
-
-    let select =
-        document.getElementById(
-            "filtroCamion"
-        );
-
-
-
-
-    if(!select){
+    if (!DOM.tablaMantenimientos) {
 
         return;
 
     }
 
 
+    DOM.tablaMantenimientos.innerHTML = '';
 
 
-    select.innerHTML =
-    `
-        <option value="">
-            Todos
-        </option>
-    `;
+    const totalRegistros =
+        STATE.mantenimientosFiltrados.length;
 
 
-
-
-    camiones.forEach(
-        c=>{
-
-
-            select.innerHTML +=
-            `
-            <option value="${c.id}">
-                ${c.placa}
-            </option>
-            `;
-
-
-        }
-    );
-
-
-
-}
-
-
-
-// =====================================================
-// CARGAR FILTRO TIPOS
-// =====================================================
-
-async function cargarFiltroTipos(){
-
-
-
-    let respuesta =
-        await fetch(
-            "/api/tipos-mantenimiento"
+    const totalPaginas =
+        Math.max(
+            1,
+            Math.ceil(
+                totalRegistros /
+                CONFIG.registrosPorPagina
+            )
         );
 
 
+    if (
+        STATE.paginaActual < 1
+    ) {
 
-    let tipos =
-        await respuesta.json();
-
-
-
-
-    let select =
-        document.getElementById(
-            "filtroTipo"
-        );
-
-
-
-
-    if(!select){
-
-        return;
+        STATE.paginaActual = 1;
 
     }
 
 
-
-
-
-    select.innerHTML =
-    `
-        <option value="">
-            Todos
-        </option>
-    `;
-
-
-
-
-    tipos.forEach(
-        t=>{
-
-
-            select.innerHTML +=
-            `
-            <option value="${t.nombre}">
-                ${t.nombre}
-            </option>
-            `;
-
-
-        }
-    );
-
-
-
-}
-
-
-
-// =====================================================
-// APLICAR FILTROS
-// =====================================================
-
-function aplicarFiltros(){
-
-
-
-    cargarMantenimientos(
-
-
-        document.getElementById(
-            "filtroCamion"
-        ).value,
-
-
-
-        document.getElementById(
-            "filtroTipo"
-        ).value,
-
-
-
-        document.getElementById(
-            "filtroEstado"
-        ).value,
-
-
-
-        document.getElementById(
-            "fechaInicio"
-        ).value,
-
-
-
-        document.getElementById(
-            "fechaFin"
-        ).value
-
-
-    );
-
-
-
-}
-
-
-
-// =====================================================
-// LIMPIAR FILTROS
-// =====================================================
-
-function limpiarFiltros(){
-
-
-
-    document.getElementById(
-        "filtroCamion"
-    ).value="";
-
-
-
-    document.getElementById(
-        "filtroTipo"
-    ).value="";
-
-
-
-    document.getElementById(
-        "filtroEstado"
-    ).value="";
-
-
-
-    document.getElementById(
-        "fechaInicio"
-    ).value="";
-
-
-
-    document.getElementById(
-        "fechaFin"
-    ).value="";
-
-
-
-    cargarMantenimientos();
-
-
-
-}
-
-// =====================================================
-// MOSTRAR PÁGINA DE MANTENIMIENTOS
-// =====================================================
-
-function mostrarPaginaMantenimientos(){
-
-    let tbody =
-        document.getElementById(
-            "tbodyMantenimientos"
-        );
-
-    if(!tbody){
-
-        return;
+    if (
+        STATE.paginaActual > totalPaginas
+    ) {
+
+        STATE.paginaActual =
+            totalPaginas;
 
     }
 
-    tbody.innerHTML = "";
 
-    // Si no hay registros
-    if(listaMantenimientosCompleta.length === 0){
+    if (totalRegistros === 0) {
 
-        tbody.innerHTML = `
+        DOM.tablaMantenimientos.innerHTML = `
 
             <tr>
 
-                <td colspan="8">
+                <td
+                    colspan="8"
+                    class="text-center py-5 text-muted"
+                >
 
-                    <div class="empty-table">
+                    <i
+                        class="bi bi-clipboard-x fs-2
+                        d-block mb-2 text-secondary"
+                    ></i>
 
-                        <div class="empty-icon">
+                    <p
+                        class="mb-1 fw-semibold text-dark"
+                    >
+                        No hay mantenimientos registrados
+                    </p>
 
-                            <i class="fa-solid fa-screwdriver-wrench"></i>
-
-                        </div>
-
-                        <h3>
-
-                            Sin mantenimientos registrados
-
-                        </h3>
-
-                        <p>
-
-                            No existen mantenimientos con los filtros seleccionados.
-
-                        </p>
-
-                    </div>
+                    <small class="text-muted">
+                        No se encontraron registros
+                        con los filtros seleccionados.
+                    </small>
 
                 </td>
 
@@ -2265,1130 +2700,4745 @@ function mostrarPaginaMantenimientos(){
 
         `;
 
-        if(contadorRegistros){
 
-            contadorRegistros.innerHTML =
-                "No hay registros";
+        actualizarInformacionTabla();
 
-        }
-
-        if(paginaActual){
-
-            paginaActual.innerHTML = "0";
-
-        }
-
-        if(btnAnterior){
-
-            btnAnterior.disabled = true;
-
-        }
-
-        if(btnSiguiente){
-
-            btnSiguiente.disabled = true;
-
-        }
+        renderizarPaginacion();
 
         return;
 
     }
 
-    // ==========================================
-    // PAGINACIÓN
-    // ==========================================
 
-    let inicio =
-        (paginaActualTabla - 1) *
-        registrosPorPagina;
+    const inicio =
+        (
+            STATE.paginaActual - 1
+        ) *
+        CONFIG.registrosPorPagina;
 
-    let fin =
+
+    const fin =
         inicio +
-        registrosPorPagina;
+        CONFIG.registrosPorPagina;
 
-    let registrosPagina =
-        listaMantenimientosCompleta.slice(
+
+    const registrosPagina =
+        STATE.mantenimientosFiltrados.slice(
             inicio,
             fin
         );
 
-    // ==========================================
-    // PINTAR FILAS
-    // ==========================================
 
     registrosPagina.forEach(
-        m => {
+        mantenimiento => {
 
-            let fila =
-                document.createElement(
-                    "tr"
+            const fila =
+                crearFilaMantenimiento(
+                    mantenimiento
                 );
 
-            // ----------------------------
-            // Verificar si está vencido
-            // ----------------------------
 
-            let vencido = false;
-
-            if(m.proximaFecha){
-
-                let hoy =
-                    new Date();
-
-                hoy.setHours(
-                    0,
-                    0,
-                    0,
-                    0
-                );
-
-                let fechaProxima =
-                    new Date(
-                        m.proximaFecha +
-                        "T00:00:00"
-                    );
-
-                if(fechaProxima < hoy){
-
-                    vencido = true;
-
-                }
-
-            }
-
-            if(vencido){
-
-                fila.classList.add(
-                    "fila-vencida"
-                );
-
-            }
-
-            // ----------------------------
-            // Color del estado
-            // ----------------------------
-
-            let claseEstado = "";
-
-            switch(m.estado){
-
-                case "FINALIZADO":
-
-                    claseEstado =
-                        "estado-finalizado";
-
-                    break;
-
-                case "EN_PROCESO":
-
-                    claseEstado =
-                        "estado-en-proceso";
-
-                    break;
-
-                case "PENDIENTE":
-
-                    claseEstado =
-                        "estado-pendiente";
-
-                    break;
-
-                default:
-
-                    claseEstado =
-                        "estado-cancelado";
-
-            }
-
-            fila.innerHTML = `
-
-                <td>
-
-                    ${m.placa ?? ""}
-
-                </td>
-
-                <td>
-
-                    ${m.fecha ?? ""}
-
-                </td>
-
-                <td>
-
-                    ${m.tipo ?? ""}
-
-                </td>
-
-                <td>
-
-                    ${m.taller ?? ""}
-
-                </td>
-
-                <td>
-
-                    ${m.kilometraje ?? ""}
-
-                </td>
-
-                <td>
-
-                    L ${Number(
-                        m.costo ?? 0
-                    ).toFixed(2)}
-
-                </td>
-
-                <td>
-
-                    <span class="badge-estado ${claseEstado}">
-
-                        ${(m.estado ?? "")
-                            .replaceAll("_"," ")}
-
-                    </span>
-
-                </td>
-
-				<td>
-
-				    <div class="acciones-tabla">
-
-				        <button
-				            class="btn btn-info"
-				            title="Ver mantenimiento"
-				            onclick="verMantenimiento(${m.id})">
-
-				            <i class="fa-solid fa-eye"></i>
-
-				        </button>
-
-				        <button
-				            class="btn btn-warning"
-				            title="Editar estado"
-				            onclick="mostrarSeleccionEdicion(${m.id})">
-
-				            <i class="fa-solid fa-pen"></i>
-
-				        </button>
-
-				        <button
-				            class="btn btn-danger"
-				            title="Eliminar mantenimiento"
-				            onclick="eliminarMantenimiento(${m.id})">
-
-				            <i class="fa-solid fa-trash"></i>
-
-				        </button>
-
-				    </div>
-
-				</td>
-
-            `;
-
-            tbody.appendChild(
+            DOM.tablaMantenimientos.appendChild(
                 fila
             );
 
         }
     );
 
-    // ==========================================
-    // TOTAL PÁGINAS
-    // ==========================================
 
-    let totalPaginas =
-        Math.max(
-            1,
-            Math.ceil(
-                listaMantenimientosCompleta.length /
-                registrosPorPagina
-            )
+    actualizarInformacionTabla();
+
+    renderizarPaginacion();
+
+}
+
+
+/* ============================================================
+   CREAR FILA MANTENIMIENTO
+============================================================ */
+
+function crearFilaMantenimiento(
+    mantenimiento
+) {
+
+    const fila =
+        document.createElement('tr');
+
+
+    const id =
+        mantenimiento.idMantenimiento;
+
+
+    const numero =
+        formatearNumeroMantenimiento(id);
+
+
+    const unidad =
+        obtenerUnidadCompleta(
+            mantenimiento.unidad
         );
 
-    // ==========================================
-    // CONTADOR
-    // ==========================================
 
-    if(contadorRegistros){
+    const nombreUnidad =
+        obtenerNombreUnidad(unidad);
 
-        let desde =
-            inicio + 1;
 
-        let hasta =
-            Math.min(
-                fin,
-                listaMantenimientosCompleta.length
-            );
+    const placa =
+        obtenerPlacaUnidad(unidad);
 
-        let total =
-            listaMantenimientosCompleta.length;
 
-        if(total <= registrosPorPagina){
+    const medicion =
+        formatearMedicion(
+            mantenimiento
+        );
 
-            contadorRegistros.innerHTML =
-                `Mostrando ${total} registro${total !== 1 ? "s" : ""}`;
 
-        }else{
+    const tipo =
+        mantenimiento.tipo || '—';
 
-            contadorRegistros.innerHTML =
-                `Mostrando ${desde} a ${hasta} de ${total} registros`;
 
-        }
+    const tipoTexto =
+        formatearTipo(tipo);
+
+
+    const fecha =
+        formatearFecha(
+            mantenimiento.fechaMantenimiento
+        );
+
+
+    fila.innerHTML = `
+
+        <td>
+
+            <strong>
+                ${escaparHtml(numero)}
+            </strong>
+
+        </td>
+
+        <td>
+            ${escaparHtml(fecha)}
+        </td>
+
+        <td>
+            ${escaparHtml(medicion)}
+        </td>
+
+        <td>
+
+            <span class="fw-semibold">
+
+                <i
+                    class="bi bi-truck me-1"
+                    aria-hidden="true"
+                ></i>
+
+                ${escaparHtml(nombreUnidad)}
+
+            </span>
+
+        </td>
+
+        <td>
+
+            <span class="fw-semibold">
+
+                ${escaparHtml(placa)}
+
+            </span>
+
+        </td>
+
+        <td>
+
+            <span
+                class="type-badge
+                ${obtenerClaseTipo(tipo)}"
+            >
+
+                ${escaparHtml(tipoTexto)}
+
+            </span>
+
+        </td>
+
+        <td>
+
+            <span
+                title="${escaparHtml(
+                    mantenimiento.descripcion || ''
+                )}"
+            >
+
+                ${escaparHtml(
+                    resumirTexto(
+                        mantenimiento.descripcion,
+                        70
+                    )
+                )}
+
+            </span>
+
+        </td>
+
+        <td class="text-end">
+
+            <div
+                class="btn-group"
+                role="group"
+            >
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-light"
+                    data-action="ver"
+                    data-id="${id}"
+                    title="Ver"
+                >
+
+                    <i class="bi bi-eye"></i>
+
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-light"
+                    data-action="editar"
+                    data-id="${id}"
+                    title="Editar"
+                >
+
+                    <i class="bi bi-pencil"></i>
+
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-light text-danger"
+                    data-action="eliminar"
+                    data-id="${id}"
+                    title="Eliminar"
+                >
+
+                    <i class="bi bi-trash"></i>
+
+                </button>
+
+            </div>
+
+        </td>
+
+    `;
+
+
+    return fila;
+
+}
+
+
+/* ============================================================
+   ACCIONES TABLA MANTENIMIENTOS
+============================================================ */
+
+async function manejarAccionesTabla(event) {
+
+    const boton =
+        event.target.closest(
+            '[data-action]'
+        );
+
+
+    if (!boton) {
+
+        return;
 
     }
 
-    // ==========================================
-    // NÚMERO DE PÁGINA
-    // ==========================================
 
-    if(paginaActual){
+    const id =
+        Number(
+            boton.dataset.id
+        );
 
-        paginaActual.innerHTML =
-            `${paginaActualTabla} / ${totalPaginas}`;
 
-    }
+    if (!id) {
 
-    // ==========================================
-    // BOTONES PAGINACIÓN
-    // ==========================================
-
-    if(btnAnterior){
-
-        btnAnterior.disabled =
-            paginaActualTabla === 1;
+        return;
 
     }
 
-    if(btnSiguiente){
 
-        btnSiguiente.disabled =
-            paginaActualTabla === totalPaginas;
+    const accion =
+        boton.dataset.action;
+
+
+    switch (accion) {
+
+        case 'ver':
+
+            await abrirDetalle(id);
+
+            break;
+
+
+        case 'editar':
+
+            await abrirEditar(id);
+
+            break;
+
+
+        case 'eliminar':
+
+            abrirEliminar(id);
+
+            break;
 
     }
 
 }
 
-// =====================================================
-// ACTUALIZAR DASHBOARD
-// =====================================================
 
-function actualizarDashboard(){
+/* ============================================================
+   VER MANTENIMIENTO
+============================================================ */
 
-    let cardTotal =
-        document.getElementById(
-            "cardTotal"
+async function abrirDetalle(id) {
+
+    try {
+
+        const mantenimiento =
+            await obtenerMantenimiento(id);
+
+
+        const unidad =
+            obtenerUnidadCompleta(
+                mantenimiento.unidad
+            );
+
+
+        const elementoId =
+            document.getElementById(
+                'verDetalleId'
+            );
+
+
+        if (elementoId) {
+
+            elementoId.textContent =
+                formatearNumeroMantenimiento(
+                    mantenimiento.idMantenimiento
+                );
+
+        }
+
+
+        const elementoFecha =
+            document.getElementById(
+                'verDetalleFecha'
+            );
+
+
+        if (elementoFecha) {
+
+            elementoFecha.textContent =
+                formatearFecha(
+                    mantenimiento.fechaMantenimiento
+                );
+
+        }
+
+
+        const elementoUnidad =
+            document.getElementById(
+                'verDetalleUnidad'
+            );
+
+
+        if (elementoUnidad) {
+
+            elementoUnidad.textContent =
+                obtenerNombreUnidad(
+                    unidad
+                );
+
+        }
+
+
+        const elementoPlaca =
+            obtenerElementoPorIds([
+
+                'verDetallePlaca'
+
+            ]);
+
+
+        if (elementoPlaca) {
+
+            establecerValorPlacaElemento(
+                elementoPlaca,
+                obtenerPlacaUnidad(unidad)
+            );
+
+        }
+
+
+        const elementoMedicion =
+            document.getElementById(
+                'verDetalleMedicion'
+            );
+
+
+        if (elementoMedicion) {
+
+            elementoMedicion.textContent =
+                formatearMedicion(
+                    mantenimiento
+                );
+
+        }
+
+
+        const tipoElemento =
+            document.getElementById(
+                'verDetalleTipo'
+            );
+
+
+        if (tipoElemento) {
+
+            tipoElemento.textContent =
+                formatearTipo(
+                    mantenimiento.tipo
+                );
+
+
+            tipoElemento.className =
+                `type-badge ${
+                    obtenerClaseTipo(
+                        mantenimiento.tipo
+                    )
+                }`;
+
+        }
+
+
+        const descripcionElemento =
+            document.getElementById(
+                'verDetalleDescripcion'
+            );
+
+
+        if (descripcionElemento) {
+
+            descripcionElemento.textContent =
+                mantenimiento.descripcion ||
+                '—';
+
+        }
+
+
+        abrirModal(
+            DOM.modalVer
         );
 
-    let cardCosto =
-        document.getElementById(
-            "cardCosto"
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        mostrarError(
+            error.message ||
+            'No fue posible cargar el detalle.'
         );
 
-    let cardProximos =
-        document.getElementById(
-            "cardProximos"
-        );
-
-    let cardVencidos =
-        document.getElementById(
-            "cardVencidos"
-        );
-
-    if(
-        !cardTotal ||
-        !cardCosto ||
-        !cardProximos ||
-        !cardVencidos
-    ){
-        return;
     }
 
-    let total =
-        listaMantenimientosCompleta.length;
+}
 
-    // ==========================================
-    // GASTO HISTÓRICO
-    // ==========================================
 
-    let gastoHistorico = 0;
+/* ============================================================
+   NUEVO MANTENIMIENTO
+============================================================ */
 
-    let proximos = 0;
+async function manejarFormularioNuevo(event) {
 
-    let vencidos = 0;
+    event.preventDefault();
 
-    let hoy =
-        new Date();
 
-    // Comparar únicamente la fecha
-    hoy.setHours(
-        0,
-        0,
-        0,
-        0
-    );
+    const formulario =
+        event.currentTarget;
 
-    listaMantenimientosCompleta.forEach(
-        mantenimiento => {
 
-            // ==========================
-            // SUMAR TODO EL HISTÓRICO
-            // ==========================
+    if (!formulario.checkValidity()) {
 
-            gastoHistorico +=
-                Number(
-                    mantenimiento.costo
-                ) || 0;
+        formulario.reportValidity();
 
-            // ==========================
-            // PRÓXIMOS Y VENCIDOS
-            // ==========================
+        return;
 
-            if(mantenimiento.proximaFecha){
+    }
 
-                let fechaProxima =
-                    new Date(
-                        mantenimiento.proximaFecha + "T00:00:00"
-                    );
 
-                if(fechaProxima < hoy){
+    const datos =
+        construirDatosFormularioNuevo(
+            formulario
+        );
 
-                    vencidos++;
 
-                }else{
+    if (!datos.unidad) {
 
-                    proximos++;
+        mostrarError(
+            'Debes seleccionar una unidad.'
+        );
+
+        return;
+
+    }
+
+
+    const unidadSeleccionada =
+        STATE.unidades.find(
+            unidad =>
+                Number(unidad.idUnidad) ===
+                Number(datos.unidad.idUnidad)
+        );
+
+
+    if (
+
+        !unidadSeleccionada ||
+
+        !unidadEstaActiva(
+            unidadSeleccionada
+        )
+
+    ) {
+
+        mostrarError(
+            'La unidad seleccionada está inactiva. Selecciona una unidad activa.'
+        );
+
+
+        llenarSelectUnidades();
+
+        return;
+
+    }
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                CONFIG.mantenimientosUrl,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':
+                            'application/json'
+                    },
+                    body:
+                        JSON.stringify(datos)
+                }
+            );
+
+
+        if (!respuesta.ok) {
+
+            const mensaje =
+                await obtenerMensajeError(
+                    respuesta
+                );
+
+            throw new Error(mensaje);
+
+        }
+
+
+        let nuevo = null;
+
+
+        if (respuesta.status !== 204) {
+
+            const texto =
+                await respuesta.text();
+
+
+            if (texto) {
+
+                try {
+
+                    nuevo =
+                        JSON.parse(texto);
+
+                } catch {
+
+                    nuevo = null;
 
                 }
 
             }
 
         }
-    );
 
-    // ==========================================
-    // ACTUALIZAR CARDS
-    // ==========================================
 
-    cardTotal.textContent =
-        total;
-
-    cardCosto.textContent =
-        "L. " +
-        gastoHistorico.toLocaleString(
-            "es-HN",
-            {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }
+        cerrarModal(
+            DOM.modalNuevo
         );
 
-    cardProximos.textContent =
-        proximos;
 
-    cardVencidos.textContent =
-        vencidos;
+        formulario.reset();
 
-}
 
-// =====================================================
-// ABRIR MODAL AUDITORÍA
-// =====================================================
+        actualizarPlacaMantenimientoSeleccionada();
 
-function abrirAuditoria(){
 
-    if(modalAuditoria){
+        await cargarMantenimientos();
 
-        modalAuditoria.show();
+
+        actualizarContadores();
+
+
+        mostrarExito(
+            nuevo?.idMantenimiento
+                ? `Mantenimiento ${
+                    formatearNumeroMantenimiento(
+                        nuevo.idMantenimiento
+                    )
+                } guardado correctamente.`
+                : 'Mantenimiento guardado correctamente.'
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            'Error al crear mantenimiento:',
+            error
+        );
+
+
+        mostrarError(
+            error.message ||
+            'No fue posible guardar el mantenimiento.'
+        );
 
     }
 
 }
 
 
+/* ============================================================
+   CONSTRUIR MANTENIMIENTO
+============================================================ */
 
-function imprimirMantenimiento(){
+function construirDatosFormularioNuevo(
+    formulario
+) {
 
-    console.log("ID seleccionado:", mantenimientoActual);
+    const unidadId =
+        Number(
+            document.getElementById(
+                'unidadMantenimiento'
+            )?.value
+        );
 
-    if(!mantenimientoActual){
 
-        alert("No hay mantenimiento seleccionado");
+    const medicionValorTexto =
+        document.getElementById(
+            'medicionValor'
+        )?.value;
+
+
+    return {
+
+        fechaMantenimiento:
+            document.getElementById(
+                'fechaMantenimiento'
+            )?.value || null,
+
+
+        medicionValor:
+            medicionValorTexto === ''
+                ? null
+                : Number(
+                    medicionValorTexto
+                ),
+
+
+        medicionTipo:
+            document.getElementById(
+                'medicionTipo'
+            )?.value || null,
+
+
+        unidad:
+            unidadId
+                ? {
+                    idUnidad:
+                        unidadId
+                }
+                : null,
+
+
+        tipo:
+            document.getElementById(
+                'tipoMantenimiento'
+            )?.value || null,
+
+
+        descripcion:
+            document.getElementById(
+                'descripcionMantenimiento'
+            )?.value.trim() || null
+
+    };
+
+}
+
+
+/* ============================================================
+   EDITAR MANTENIMIENTO
+============================================================ */
+
+async function abrirEditar(id) {
+
+    try {
+
+        const mantenimiento =
+            await obtenerMantenimiento(id);
+
+
+        STATE.mantenimientoSeleccionado =
+            id;
+
+
+        const editarId =
+            document.getElementById(
+                'editarId'
+            );
+
+
+        if (editarId) {
+
+            editarId.value =
+                id;
+
+        }
+
+
+        const badge =
+            document.getElementById(
+                'editarRegistroIdBadge'
+            );
+
+
+        if (badge) {
+
+            badge.textContent =
+                formatearNumeroMantenimiento(id);
+
+        }
+
+
+        const fecha =
+            document.getElementById(
+                'editarFecha'
+            );
+
+
+        if (fecha) {
+
+            fecha.value =
+                mantenimiento.fechaMantenimiento ||
+                '';
+
+        }
+
+
+        const medicion =
+            document.getElementById(
+                'editarMedicion'
+            );
+
+
+        if (medicion) {
+
+            medicion.value =
+                mantenimiento.medicionValor ??
+                '';
+
+        }
+
+
+        const medicionTipo =
+            document.getElementById(
+                'editarMedicionTipo'
+            );
+
+
+        if (medicionTipo) {
+
+            medicionTipo.value =
+                mantenimiento.medicionTipo ||
+                'KM';
+
+        }
+
+
+        const tipo =
+            document.getElementById(
+                'editarTipo'
+            );
+
+
+        if (tipo) {
+
+            tipo.value =
+                mantenimiento.tipo ||
+                '';
+
+        }
+
+
+        const descripcion =
+            document.getElementById(
+                'editarDescripcion'
+            );
+
+
+        if (descripcion) {
+
+            descripcion.value =
+                mantenimiento.descripcion ||
+                '';
+
+        }
+
+
+        const unidad =
+            document.getElementById(
+                'editarUnidad'
+            );
+
+
+        if (unidad) {
+
+            unidad.value =
+                mantenimiento.unidad?.idUnidad ||
+                '';
+
+        }
+
+
+        actualizarPlacaMantenimientoEditado();
+
+
+        abrirModal(
+            DOM.modalEditar
+        );
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        mostrarError(
+            error.message ||
+            'No fue posible cargar el mantenimiento.'
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   GUARDAR EDICIÓN MANTENIMIENTO
+============================================================ */
+
+async function manejarFormularioEditar(event) {
+
+    event.preventDefault();
+
+
+    const formulario =
+        event.currentTarget;
+
+
+    if (!formulario.checkValidity()) {
+
+        formulario.reportValidity();
 
         return;
 
     }
 
-    window.open(
-        "/mantenimiento/pdf/" + mantenimientoActual,
-        "_blank"
-    );
 
-}
-
-document
-.getElementById("btnImprimirMantenimiento")
-.addEventListener("click",imprimirMantenimiento);
+    const id =
+        Number(
+            document.getElementById(
+                'editarId'
+            )?.value
+        );
 
 
-function imprimirAuditoria(){
+    if (!id) {
 
-    let parametros =
-        new URLSearchParams();
+        mostrarError(
+            'No se encontró el mantenimiento a editar.'
+        );
 
-    parametros.append(
-        "camion",
-        document.getElementById("filtroCamion").value
-    );
+        return;
 
-    parametros.append(
-        "tipo",
-        document.getElementById("filtroTipo").value
-    );
+    }
 
-    parametros.append(
-        "estado",
-        document.getElementById("filtroEstado").value
-    );
 
-    parametros.append(
-        "fechaInicio",
-        document.getElementById("fechaInicio").value
-    );
+    const unidadId =
+        Number(
+            document.getElementById(
+                'editarUnidad'
+            )?.value
+        );
 
-    parametros.append(
-        "fechaFin",
-        document.getElementById("fechaFin").value
-    );
 
-    let busqueda =
-        document.getElementById("buscarMantenimiento");
+    if (!unidadId) {
 
-    if(busqueda){
+        mostrarError(
+            'Debes seleccionar una unidad.'
+        );
 
-        parametros.append(
-            "busqueda",
-            busqueda.value
+        return;
+
+    }
+
+
+    const unidadSeleccionada =
+        STATE.unidades.find(
+            unidad =>
+                Number(unidad.idUnidad) ===
+                unidadId
+        );
+
+
+    if (!unidadSeleccionada) {
+
+        mostrarError(
+            'No se encontró la unidad seleccionada.'
+        );
+
+        return;
+
+    }
+
+
+    const medicionValorTexto =
+        document.getElementById(
+            'editarMedicion'
+        )?.value;
+
+
+    const datos = {
+
+        fechaMantenimiento:
+            document.getElementById(
+                'editarFecha'
+            )?.value || null,
+
+
+        medicionValor:
+            medicionValorTexto === ''
+                ? null
+                : Number(
+                    medicionValorTexto
+                ),
+
+
+        medicionTipo:
+            document.getElementById(
+                'editarMedicionTipo'
+            )?.value || null,
+
+
+        unidad: {
+
+            idUnidad:
+                unidadId
+
+        },
+
+
+        tipo:
+            document.getElementById(
+                'editarTipo'
+            )?.value || null,
+
+
+        descripcion:
+            document.getElementById(
+                'editarDescripcion'
+            )?.value.trim() || null
+
+    };
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                `${CONFIG.mantenimientosUrl}/${id}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type':
+                            'application/json'
+                    },
+                    body:
+                        JSON.stringify(datos)
+                }
+            );
+
+
+        if (!respuesta.ok) {
+
+            const mensaje =
+                await obtenerMensajeError(
+                    respuesta
+                );
+
+            throw new Error(mensaje);
+
+        }
+
+
+        cerrarModal(
+            DOM.modalEditar
+        );
+
+
+        await cargarMantenimientos();
+
+
+        actualizarContadores();
+
+
+        mostrarExito(
+            `Mantenimiento ${
+                formatearNumeroMantenimiento(id)
+            } actualizado correctamente.`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            'Error al editar mantenimiento:',
+            error
+        );
+
+
+        mostrarError(
+            error.message ||
+            'No fue posible actualizar el mantenimiento.'
         );
 
     }
 
-    window.open(
-        "/pdf?" + parametros.toString(),
-        "_blank"
+}
+
+
+/* ============================================================
+   ELIMINAR MANTENIMIENTO
+============================================================ */
+
+function abrirEliminar(id) {
+
+    const mantenimiento =
+        STATE.mantenimientos.find(
+            item =>
+                Number(
+                    item.idMantenimiento
+                ) === id
+        );
+
+
+    if (!mantenimiento) {
+
+        return;
+
+    }
+
+
+    STATE.mantenimientoSeleccionado =
+        id;
+
+
+    const badge =
+        document.getElementById(
+            'eliminarBadge'
+        );
+
+
+    if (badge) {
+
+        badge.textContent =
+            `Mantenimiento ${
+                formatearNumeroMantenimiento(id)
+            }`;
+
+    }
+
+
+    const unidad =
+        obtenerUnidadCompleta(
+            mantenimiento.unidad
+        );
+
+
+    const unidadDetalle =
+        document.getElementById(
+            'eliminarUnidadDetalle'
+        );
+
+
+    if (unidadDetalle) {
+
+        unidadDetalle.textContent =
+            obtenerNombreUnidad(unidad);
+
+    }
+
+
+    const placaDetalle =
+        obtenerElementoPorIds([
+
+            'eliminarPlacaDetalle'
+
+        ]);
+
+
+    if (placaDetalle) {
+
+        establecerValorPlacaElemento(
+            placaDetalle,
+            obtenerPlacaUnidad(unidad)
+        );
+
+    }
+
+
+    abrirModal(
+        DOM.modalEliminar
     );
 
 }
 
 
+/* ============================================================
+   CONFIRMAR ELIMINACIÓN MANTENIMIENTO
+============================================================ */
 
-const modalSeleccionEdicion = new bootstrap.Modal(
-    document.getElementById("modalSeleccionEdicion")
-);
+async function confirmarEliminar() {
 
-function mostrarSeleccionEdicion(id){
-
-    mantenimientoSeleccionado = id;
-
-    modalSeleccionEdicion.show();
-
-}
+    const id =
+        STATE.mantenimientoSeleccionado;
 
 
-async function editarMantenimiento(id){
+    if (!id) {
 
-    try{
+        return;
+
+    }
+
+
+    try {
 
         const respuesta =
-            await fetch("/mantenimiento/ver/" + id);
-
-        const m = await respuesta.json();
-
-        // guardar el id
-        idMantenimiento.value = m.id;
-
-        tituloModalMantenimiento.innerHTML = `
-            <i class="fa-solid fa-pen"></i>
-            Editar mantenimiento
-        `;
-
-        await cargarCamiones();
-        await cargarTiposMantenimiento();
-
-        // llenar formulario
-
-        selectCamion.value = m.camionId;
-
-        document.getElementById("fecha").value = m.fecha;
-
-        document.getElementById("estado").value = m.estado;
-
-        document.getElementById("kilometraje").value = m.kilometraje;
-
-        document.getElementById("costo").value = m.costo;
-
-        document.getElementById("taller").value = m.taller;
-
-        document.getElementById("proximoMantenimiento").value =
-            m.proximoMantenimiento;
-
-        document.getElementById("proximaFecha").value =
-            m.proximaFecha;
-
-        document.getElementById("descripcion").value =
-            m.descripcion;
-
-        document.getElementById("observaciones").value =
-            m.observaciones;
-
-        // seleccionar tipo
-
-        for(let option of selectTipo.options){
-
-            if(option.text === m.tipo){
-
-                selectTipo.value = option.value;
-
-                break;
-
-            }
-
-        }
-
-        // limpiar repuestos
-
-        tbodyRepuestos.innerHTML = "";
-
-        // cargar repuestos
-
-        if(m.repuestos){
-
-            m.repuestos.forEach(r=>{
-
-                agregarRepuesto();
-
-                let fila =
-                    tbodyRepuestos.lastElementChild;
-
-                fila.querySelector(".repuestoNombre").value =
-                    r.nombre;
-
-                fila.querySelector(".repuestoCantidad").value =
-                    r.cantidad;
-
-                fila.querySelector(".repuestoPrecio").value =
-                    r.precio;
-
-            });
-
-        }
-
-        calcularRepuestos();
-
-        modalMantenimiento.show();
-
-    }
-    catch(error){
-
-        console.error(error);
-
-    }
-
-}
-
-function filtrarBusqueda(){
-
-    let texto =
-        buscarMantenimiento.value
-        .toLowerCase()
-        .trim();
-
-    if(texto === ""){
-
-        listaMantenimientosCompleta =
-            [...listaMantenimientosOriginal];
-
-    }else{
-
-        listaMantenimientosCompleta =
-            listaMantenimientosOriginal.filter(m =>
-
-                (m.placa ?? "")
-                    .toLowerCase()
-                    .includes(texto)
-
-                ||
-
-                (m.taller ?? "")
-                    .toLowerCase()
-                    .includes(texto)
-
-                ||
-
-                (m.tipo ?? "")
-                    .toLowerCase()
-                    .includes(texto)
-
-                ||
-
-                (m.descripcion ?? "")
-                    .toLowerCase()
-                    .includes(texto)
-
+            await fetch(
+                `${CONFIG.mantenimientosUrl}/${id}`,
+                {
+                    method: 'DELETE'
+                }
             );
 
+
+        if (!respuesta.ok) {
+
+            const mensaje =
+                await obtenerMensajeError(
+                    respuesta
+                );
+
+            throw new Error(mensaje);
+
+        }
+
+
+        cerrarModal(
+            DOM.modalEliminar
+        );
+
+
+        STATE.mantenimientoSeleccionado =
+            null;
+
+
+        await cargarMantenimientos();
+
+
+        actualizarContadores();
+
+
+        mostrarToast(
+            'deleteToast'
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            'Error al eliminar mantenimiento:',
+            error
+        );
+
+
+        mostrarError(
+            error.message ||
+            'No fue posible eliminar el mantenimiento.'
+        );
+
     }
-
-    paginaActualTabla = 1;
-
-    mostrarPaginaMantenimientos();
-
-    actualizarDashboard();
 
 }
 
-async function actualizarTabla(){
+
+/* ============================================================
+   OBTENER MANTENIMIENTO
+============================================================ */
+
+async function obtenerMantenimiento(id) {
+
+    const respuesta =
+        await fetch(
+            `${CONFIG.mantenimientosUrl}/${id}`
+        );
+
+
+    if (!respuesta.ok) {
+
+        const mensaje =
+            await obtenerMensajeError(
+                respuesta
+            );
+
+
+        throw new Error(
+            mensaje ||
+            `No se encontró el mantenimiento ${id}.`
+        );
+
+    }
+
+
+    const datos =
+        await respuesta.json();
+
+
+    return enriquecerMantenimientoConUnidad(
+        datos
+    );
+
+}
+
+
+/* ============================================================
+   FILTROS
+============================================================ */
+
+function aplicarFiltros() {
+
+    const unidad =
+        DOM.filtroUnidad?.value || '';
+
+
+    const tipo =
+        DOM.filtroTipo?.value || '';
+
+
+    const medicionTipo =
+        DOM.filtroMedicionTipo?.value || '';
+
+
+    const desde =
+        DOM.filtroDesde?.value || '';
+
+
+    const hasta =
+        DOM.filtroHasta?.value || '';
+
+
+    const buscar =
+        (
+            DOM.filtroBuscar?.value ||
+            ''
+        )
+            .trim()
+            .toLowerCase();
+
+
+    STATE.mantenimientosFiltrados =
+        STATE.mantenimientos.filter(
+            mantenimiento => {
+
+                if (
+
+                    unidad &&
+
+                    String(
+                        mantenimiento.unidad?.idUnidad
+                    ) !== unidad
+
+                ) {
+
+                    return false;
+
+                }
+
+
+                if (
+
+                    tipo &&
+
+                    mantenimiento.tipo !== tipo
+
+                ) {
+
+                    return false;
+
+                }
+
+
+                if (
+
+                    medicionTipo &&
+
+                    mantenimiento.medicionTipo !==
+                        medicionTipo
+
+                ) {
+
+                    return false;
+
+                }
+
+
+                if (
+
+                    desde &&
+
+                    mantenimiento.fechaMantenimiento <
+                        desde
+
+                ) {
+
+                    return false;
+
+                }
+
+
+                if (
+
+                    hasta &&
+
+                    mantenimiento.fechaMantenimiento >
+                        hasta
+
+                ) {
+
+                    return false;
+
+                }
+
+
+                if (buscar) {
+
+                    const unidadTexto =
+                        obtenerNombreUnidad(
+                            mantenimiento.unidad
+                        )
+                            .toLowerCase();
+
+
+                    const codigoUnidad =
+                        (
+                            mantenimiento.unidad
+                                ?.codigoUnidad ||
+                            ''
+                        )
+                            .toLowerCase();
+
+
+                    const placa =
+                        obtenerPlacaUnidad(
+                            mantenimiento.unidad
+                        )
+                            .toLowerCase();
+
+
+                    const descripcion =
+                        (
+                            mantenimiento.descripcion ||
+                            ''
+                        )
+                            .toLowerCase();
+
+
+                    const tipoMantenimiento =
+                        formatearTipo(
+                            mantenimiento.tipo
+                        )
+                            .toLowerCase();
+
+
+                    const id =
+                        String(
+                            mantenimiento.idMantenimiento
+                        );
+
+
+                    const numero =
+                        formatearNumeroMantenimiento(
+                            mantenimiento.idMantenimiento
+                        )
+                            .toLowerCase();
+
+
+                    const coincide =
+
+                        unidadTexto.includes(
+                            buscar
+                        ) ||
+
+                        codigoUnidad.includes(
+                            buscar
+                        ) ||
+
+                        placa.includes(
+                            buscar
+                        ) ||
+
+                        descripcion.includes(
+                            buscar
+                        ) ||
+
+                        tipoMantenimiento.includes(
+                            buscar
+                        ) ||
+
+                        id.includes(
+                            buscar
+                        ) ||
+
+                        numero.includes(
+                            buscar
+                        );
+
+
+                    if (!coincide) {
+
+                        return false;
+
+                    }
+
+                }
+
+
+                return true;
+
+            }
+        );
+
+
+    STATE.mantenimientosFiltrados.sort(
+        compararMantenimientosPorFecha
+    );
+
+
+    STATE.paginaActual =
+        1;
+
+
+    renderizarTabla();
+
+}
+
+
+/* ============================================================
+   LIMPIAR FILTROS
+============================================================ */
+
+function limpiarFiltros() {
+
+    if (DOM.filtroUnidad) {
+
+        DOM.filtroUnidad.value = '';
+
+    }
+
+
+    if (DOM.filtroTipo) {
+
+        DOM.filtroTipo.value = '';
+
+    }
+
+
+    if (DOM.filtroMedicionTipo) {
+
+        DOM.filtroMedicionTipo.value = '';
+
+    }
+
+
+    if (DOM.filtroDesde) {
+
+        DOM.filtroDesde.value = '';
+
+    }
+
+
+    if (DOM.filtroHasta) {
+
+        DOM.filtroHasta.value = '';
+
+    }
+
+
+    if (DOM.filtroBuscar) {
+
+        DOM.filtroBuscar.value = '';
+
+    }
+
 
     aplicarFiltros();
 
 }
 
-// =====================================================
-// ABRIR MODAL GRÁFICOS
-// =====================================================
 
-function abrirModalGraficos(){
+/* ============================================================
+   CONTADORES
+============================================================ */
 
-    cargarGrafico();
+function actualizarContadores() {
 
-    if(modalGraficos){
+    const registros =
+        STATE.mantenimientos;
 
-        modalGraficos.show();
+
+    if (DOM.totalMantenimientos) {
+
+        DOM.totalMantenimientos.textContent =
+            registros.length;
+
+    }
+
+
+    if (DOM.totalPreventivos) {
+
+        DOM.totalPreventivos.textContent =
+            registros.filter(
+                item =>
+                    item.tipo === 'PREVENTIVO'
+            ).length;
+
+    }
+
+
+    if (DOM.totalCorrectivos) {
+
+        DOM.totalCorrectivos.textContent =
+            registros.filter(
+                item =>
+                    item.tipo === 'CORRECTIVO'
+            ).length;
+
+    }
+
+
+    if (DOM.totalUnidadesAtendidas) {
+
+        const unidades =
+            new Set(
+                registros
+                    .map(
+                        item =>
+                            item.unidad?.idUnidad
+                    )
+                    .filter(
+                        id =>
+                            id !== null &&
+                            id !== undefined
+                    )
+            );
+
+
+        DOM.totalUnidadesAtendidas.textContent =
+            unidades.size;
 
     }
 
 }
 
-// =====================================================
-// GENERAR PDF DEL GRÁFICO
-// =====================================================
 
-function generarGraficoPDF(){
+/* ============================================================
+   PAGINACIÓN
+============================================================ */
 
-    let tipo =
-        document.querySelector(
-            'input[name="tipoGrafico"]:checked'
-        ).value;
+function renderizarPaginacion() {
 
+    if (!DOM.paginationNav) {
 
-    let inicio =
-        document.getElementById(
-            "fechaGraficoInicio"
-        ).value;
+        return;
+
+    }
 
 
-    let fin =
-        document.getElementById(
-            "fechaGraficoFin"
-        ).value;
+    DOM.paginationNav.innerHTML = '';
 
 
-
-    modalGraficos.hide();
-
-
-
-    window.open(
-
-        "/mantenimiento/graficos/pdf?tipo="
-        + tipo
-        +
-        "&inicio="
-        + inicio
-        +
-        "&fin="
-        + fin,
-
-        "_blank"
-
-    );
+    const totalRegistros =
+        STATE.mantenimientosFiltrados.length;
 
 
-}
+    const totalPaginas =
+        Math.ceil(
+            totalRegistros /
+            CONFIG.registrosPorPagina
+        );
 
-async function cargarGrafico() {
 
-    try {
+    if (totalPaginas <= 1) {
 
-        const dataset =
-            document.getElementById("datasetGrafico").value;
+        return;
 
-        const tipoGrafico =
-            document.getElementById("tipoGrafico").value;
+    }
 
-        const inicio =
-            document.getElementById("fechaGraficoInicio").value;
 
-        const fin =
-            document.getElementById("fechaGraficoFin").value;
+    const anterior =
+        crearBotonPaginacion(
 
-        //--------------------------------------------------
-        // URL DEL GRÁFICO
-        //--------------------------------------------------
+            '<i class="bi bi-chevron-left"></i>',
 
-        let url =
-            "/mantenimiento/graficos/datos?dataset=" + encodeURIComponent(dataset);
+            STATE.paginaActual > 1,
 
-        if (inicio) {
+            () => {
 
-            url += "&inicio=" + encodeURIComponent(inicio);
+                if (
+                    STATE.paginaActual > 1
+                ) {
 
-        }
+                    STATE.paginaActual--;
 
-        if (fin) {
-
-            url += "&fin=" + encodeURIComponent(fin);
-
-        }
-
-        //--------------------------------------------------
-        // URL DEL DASHBOARD
-        //--------------------------------------------------
-
-        let urlDashboard =
-            "/mantenimiento/graficos/dashboard";
-
-        const parametros = [];
-
-        if (inicio) {
-
-            parametros.push(
-                "inicio=" + encodeURIComponent(inicio)
-            );
-
-        }
-
-        if (fin) {
-
-            parametros.push(
-                "fin=" + encodeURIComponent(fin)
-            );
-
-        }
-
-        if (parametros.length > 0) {
-
-            urlDashboard += "?" + parametros.join("&");
-
-        }
-
-        //--------------------------------------------------
-        // CARGAR AMBOS ENDPOINTS
-        //--------------------------------------------------
-
-        const [respuestaGrafico, respuestaDashboard] =
-            await Promise.all([
-
-                fetch(url),
-
-                fetch(urlDashboard)
-
-            ]);
-
-        if (!respuestaGrafico.ok) {
-
-            throw new Error("No se pudieron cargar los datos del gráfico.");
-
-        }
-
-        if (!respuestaDashboard.ok) {
-
-            throw new Error("No se pudieron cargar las tarjetas.");
-
-        }
-
-        const datos =
-            await respuestaGrafico.json();
-
-        const dashboard =
-            await respuestaDashboard.json();
-
-        //--------------------------------------------------
-        // ACTUALIZAR TARJETAS
-        //--------------------------------------------------
-
-        document.getElementById("cardGraficoTotal").textContent =
-            dashboard.totalMantenimientos;
-
-        document.getElementById("cardGraficoCosto").textContent =
-            Number(dashboard.costoTotal).toLocaleString(
-
-                "es-HN",
-
-                {
-
-                    style: "currency",
-
-                    currency: "HNL"
+                    renderizarTabla();
 
                 }
-
-            );
-
-        document.getElementById("cardGraficoProximos").textContent =
-            dashboard.proximos;
-
-        document.getElementById("cardGraficoVencidos").textContent =
-            dashboard.vencidos;
-
-        //--------------------------------------------------
-        // ETIQUETAS Y VALORES
-        //--------------------------------------------------
-
-        const meses = [
-
-            "",
-            "Enero",
-            "Febrero",
-            "Marzo",
-            "Abril",
-            "Mayo",
-            "Junio",
-            "Julio",
-            "Agosto",
-            "Septiembre",
-            "Octubre",
-            "Noviembre",
-            "Diciembre"
-
-        ];
-
-        const etiquetas =
-
-            dataset === "costosMes"
-
-                ? datos.map(d => meses[Number(d.etiqueta)])
-
-                : datos.map(d => d.etiqueta);
-
-        const valores =
-            datos.map(d => Number(d.valor));
-
-        //--------------------------------------------------
-        // DESTRUIR GRÁFICO ANTERIOR
-        //--------------------------------------------------
-
-        if (graficoMantenimientos) {
-
-            graficoMantenimientos.destroy();
-
-        }
-
-        //--------------------------------------------------
-        // CREAR GRÁFICO
-        //--------------------------------------------------
-
-        const ctx =
-            document
-                .getElementById("graficoMantenimientos")
-                .getContext("2d");
-
-        const nombres = {
-
-            tipos: "Mantenimientos por tipo",
-
-            estados: "Estados del mantenimiento",
-
-            camiones: "Costos por camión",
-
-            costosMes: "Costos por mes",
-
-            proximos: "Próximos vs Vencidos"
-
-        };
-
-        graficoMantenimientos = new Chart(ctx, {
-
-            type: tipoGrafico,
-
-            data: {
-
-                labels: etiquetas,
-
-                datasets: [{
-
-                    label: nombres[dataset] ?? dataset,
-
-                    data: valores,
-
-                    borderWidth: 2,
-
-                    fill: tipoGrafico === "line"
-
-                }]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                animation: {
-
-                    duration: 700
-
-                },
-
-                plugins: {
-
-                    legend: {
-
-                        display: true,
-
-                        position: "top"
-
-                    }
-
-                },
-
-                scales:
-
-                    (
-
-                        tipoGrafico === "pie" ||
-
-                        tipoGrafico === "doughnut" ||
-
-                        tipoGrafico === "radar" ||
-
-                        tipoGrafico === "polarArea"
-
-                    )
-
-                    ? {}
-
-                    : {
-
-                        y: {
-
-                            beginAtZero: true
-
-                        }
-
-                    }
-
-            }
-
-        });
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-        alert("No se pudieron cargar los gráficos.");
-
-    }
-
-}
-
-
-document
-    .getElementById("btnGenerarGrafico")
-    .addEventListener("click", exportarGraficoPDF);
-
-async function exportarGraficoPDF() {
-
-    try {
-
-        const dataset =
-            document.getElementById("datasetGrafico").value;
-
-        const tipoGrafico =
-            document.getElementById("tipoGrafico").value;
-
-        const inicio =
-            document.getElementById("fechaGraficoInicio").value;
-
-        const fin =
-            document.getElementById("fechaGraficoFin").value;
-
-        //------------------------------------------
-        // IMAGEN DEL GRÁFICO
-        //------------------------------------------
-
-        const imagenGrafico =
-            graficoMantenimientos.toBase64Image();
-
-        //------------------------------------------
-        // BODY
-        //------------------------------------------
-
-        const body = {
-
-            dataset,
-            tipoGrafico,
-            inicio,
-            fin,
-            imagenGrafico
-
-        };
-
-        //------------------------------------------
-        // GENERAR PDF
-        //------------------------------------------
-
-        const response = await fetch(
-
-            "/mantenimiento/graficos/pdf",
-
-            {
-
-                method: "POST",
-
-                headers: {
-
-                    "Content-Type": "application/json"
-
-                },
-
-                body: JSON.stringify(body)
 
             }
 
         );
 
-        if (!response.ok) {
 
-            throw new Error("No se pudo generar el PDF.");
+    DOM.paginationNav.appendChild(
+        anterior
+    );
+
+
+    const paginas =
+        obtenerPaginasPaginacion(
+            totalPaginas,
+            STATE.paginaActual
+        );
+
+
+    paginas.forEach(elemento => {
+
+        if (elemento === '...') {
+
+            DOM.paginationNav.appendChild(
+                crearEllipsisPaginacion()
+            );
+
+            return;
 
         }
 
-        //------------------------------------------
-        // ABRIR PDF
-        //------------------------------------------
 
-        const blob =
-            await response.blob();
+        const item =
+            document.createElement('li');
 
-        const url =
-            URL.createObjectURL(blob);
 
-        window.open(url, "_blank");
+        item.className =
+            `page-item ${
+                elemento ===
+                STATE.paginaActual
+                    ? 'active'
+                    : ''
+            }`;
+
+
+        const boton =
+            document.createElement(
+                'button'
+            );
+
+
+        boton.type =
+            'button';
+
+
+        boton.className =
+            'page-link';
+
+
+        boton.textContent =
+            elemento;
+
+
+        if (
+            elemento ===
+            STATE.paginaActual
+        ) {
+
+            boton.setAttribute(
+                'aria-current',
+                'page'
+            );
+
+        }
+
+
+        boton.addEventListener(
+            'click',
+            () => {
+
+                STATE.paginaActual =
+                    elemento;
+
+                renderizarTabla();
+
+            }
+        );
+
+
+        item.appendChild(
+            boton
+        );
+
+
+        DOM.paginationNav.appendChild(
+            item
+        );
+
+    });
+
+
+    const siguiente =
+        crearBotonPaginacion(
+
+            '<i class="bi bi-chevron-right"></i>',
+
+            STATE.paginaActual <
+                totalPaginas,
+
+            () => {
+
+                if (
+                    STATE.paginaActual <
+                    totalPaginas
+                ) {
+
+                    STATE.paginaActual++;
+
+                    renderizarTabla();
+
+                }
+
+            }
+
+        );
+
+
+    DOM.paginationNav.appendChild(
+        siguiente
+    );
+
+}
+
+
+/* ============================================================
+   OBTENER PÁGINAS DE PAGINACIÓN
+============================================================ */
+
+function obtenerPaginasPaginacion(
+    totalPaginas,
+    paginaActual
+) {
+
+    if (totalPaginas <= 3) {
+
+        return Array.from(
+            {
+                length: totalPaginas
+            },
+            (_, indice) =>
+                indice + 1
+        );
 
     }
 
-    catch (e) {
 
-        console.error(e);
+    if (paginaActual <= 3) {
 
-        alert("Error al generar el PDF.");
+        return [
+            1,
+            2,
+            3,
+            '...',
+            totalPaginas
+        ];
 
     }
 
-	}
+
+    if (
+        paginaActual >=
+        totalPaginas - 2
+    ) {
+
+        return [
+            1,
+            '...',
+            totalPaginas - 2,
+            totalPaginas - 1,
+            totalPaginas
+        ];
+
+    }
+
+
+    return [
+        1,
+        '...',
+        paginaActual,
+        '...',
+        totalPaginas
+    ];
+
+}
+
+
+/* ============================================================
+   CREAR ELLIPSIS
+============================================================ */
+
+function crearEllipsisPaginacion() {
+
+    const item =
+        document.createElement('li');
+
+
+    item.className =
+        'page-item disabled';
+
+
+    const span =
+        document.createElement('span');
+
+
+    span.className =
+        'page-link';
+
+
+    span.textContent =
+        '...';
+
+
+    span.setAttribute(
+        'aria-hidden',
+        'true'
+    );
+
+
+    item.appendChild(
+        span
+    );
+
+
+    return item;
+
+}
+
+
+/* ============================================================
+   BOTÓN PAGINACIÓN
+============================================================ */
+
+function crearBotonPaginacion(
+    contenido,
+    habilitado,
+    callback
+) {
+
+    const item =
+        document.createElement('li');
+
+
+    item.className =
+        `page-item ${
+            habilitado
+                ? ''
+                : 'disabled'
+        }`;
+
+
+    const boton =
+        document.createElement(
+            'button'
+        );
+
+
+    boton.type =
+        'button';
+
+
+    boton.className =
+        'page-link';
+
+
+    boton.innerHTML =
+        contenido;
+
+
+    if (habilitado) {
+
+        boton.addEventListener(
+            'click',
+            callback
+        );
+
+    } else {
+
+        boton.setAttribute(
+            'tabindex',
+            '-1'
+        );
+
+        boton.setAttribute(
+            'aria-disabled',
+            'true'
+        );
+
+    }
+
+
+    item.appendChild(
+        boton
+    );
+
+
+    return item;
+
+}
+
+
+/* ============================================================
+   INFORMACIÓN TABLA
+============================================================ */
+
+function actualizarInformacionTabla() {
+
+    const total =
+        STATE.mantenimientosFiltrados.length;
+
+
+    if (DOM.tableCount) {
+
+        DOM.tableCount.textContent =
+            `${total} ${
+                total === 1
+                    ? 'registro'
+                    : 'registros'
+            }`;
+
+    }
+
+
+    if (DOM.paginationInfo) {
+
+        if (total === 0) {
+
+            DOM.paginationInfo.innerHTML =
+                'Mostrando <strong>0</strong> registros';
+
+            return;
+
+        }
+
+
+        const inicio =
+            (
+                (STATE.paginaActual - 1) *
+                CONFIG.registrosPorPagina
+            ) + 1;
+
+
+        const fin =
+            Math.min(
+                STATE.paginaActual *
+                    CONFIG.registrosPorPagina,
+                total
+            );
+
+
+        DOM.paginationInfo.innerHTML =
+            `Mostrando <strong>${inicio}</strong> -
+             <strong>${fin}</strong> de
+             <strong>${total}</strong> registros`;
+
+    }
+
+}
+
+
+/* ============================================================
+   EXPORTAR MANTENIMIENTOS A PDF
+   VERSIÓN COMPLETA CORREGIDA
+============================================================ */
+
+async function exportarMantenimientos() {
+
+    const registros =
+        Array.isArray(STATE.mantenimientosFiltrados)
+            ? STATE.mantenimientosFiltrados
+            : [];
+
+    if (registros.length === 0) {
+
+        mostrarError(
+            'No hay registros para exportar con los filtros seleccionados.'
+        );
+
+        return;
+    }
+
+    try {
+
+        /* ========================================================
+           CARGAR LIBRERÍAS
+        ======================================================== */
+
+        await cargarLibreriasPDF();
+
+        if (
+            typeof window.jspdf === 'undefined' ||
+            typeof window.jspdf.jsPDF === 'undefined'
+        ) {
+            throw new Error(
+                'No fue posible cargar la librería para generar el PDF.'
+            );
+        }
+
+        if (
+            typeof window.jspdf.jsPDF.API.autoTable !== 'function'
+        ) {
+            throw new Error(
+                'No fue posible cargar el módulo de tablas PDF.'
+            );
+        }
+
+        const { jsPDF } = window.jspdf;
+
+
+        /* ========================================================
+           CREAR DOCUMENTO
+        ======================================================== */
+
+        const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'letter',
+            compress: true
+        });
+
+
+        /* ========================================================
+           MÁRGENES
+        ======================================================== */
+
+        const margenIzquierdo = 12;
+        const margenDerecho = 12;
+        const margenSuperior = 18;
+        const margenInferior = 18;
+
+        const anchoPagina =
+            doc.internal.pageSize.getWidth();
+
+        const altoPagina =
+            doc.internal.pageSize.getHeight();
+
+        const anchoUtil =
+            anchoPagina -
+            margenIzquierdo -
+            margenDerecho;
+
+
+        /* ========================================================
+           CARGAR LOGO
+        ======================================================== */
+
+        let logoBase64 = null;
+
+        try {
+
+            logoBase64 =
+                await cargarImagenComoBase64(
+                    CONFIG.logoPdfUrl
+                );
+
+        } catch (error) {
+
+            console.warn(
+                'No fue posible cargar el logo:',
+                error
+            );
+        }
+
+
+        /* ========================================================
+           FECHA Y HORA
+        ======================================================== */
+
+        const fechaGeneracion = new Date();
+
+        const fechaTexto =
+            fechaGeneracion.toLocaleDateString(
+                'es-HN',
+                {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }
+            );
+
+        const horaTexto =
+            fechaGeneracion.toLocaleTimeString(
+                'es-HN',
+                {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }
+            );
+
+
+        /* ========================================================
+           ENCABEZADO PRINCIPAL
+        ======================================================== */
+
+        dibujarEncabezadoPDF({
+            doc,
+            logoBase64,
+            anchoPagina,
+            margenIzquierdo,
+            margenDerecho
+        });
+
+
+        doc.setFont(
+            'helvetica',
+            'bold'
+        );
+
+        doc.setFontSize(18);
+
+        doc.setTextColor(
+            35,
+            35,
+            35
+        );
+
+        doc.text(
+            'Bitácora de Mantenimientos',
+            margenIzquierdo,
+            48
+        );
+
+
+        doc.setFont(
+            'helvetica',
+            'normal'
+        );
+
+        doc.setFontSize(8.5);
+
+        doc.setTextColor(
+            95,
+            95,
+            95
+        );
+
+        doc.text(
+            'Registro histórico de mantenimientos de unidades',
+            margenIzquierdo,
+            54
+        );
+
+
+        doc.text(
+            `Generado: ${fechaTexto} ${horaTexto}`,
+            anchoPagina - margenDerecho,
+            54,
+            {
+                align: 'right'
+            }
+        );
+
+
+        /* ========================================================
+           RESUMEN DE FILTROS
+        ======================================================== */
+
+        const resumenFiltros =
+            obtenerResumenFiltrosPDF();
+
+
+        dibujarResumenFiltrosPDF({
+            doc,
+            resumenFiltros,
+            cantidadRegistros: registros.length,
+            x: margenIzquierdo,
+            y: 61,
+            ancho: anchoUtil
+        });
+
+
+        /* ========================================================
+           AGRUPAR REGISTROS POR UNIDAD
+        ======================================================== */
+
+        const gruposPorUnidad = new Map();
+
+
+        registros.forEach(
+            mantenimiento => {
+
+                const unidad =
+                    obtenerUnidadCompleta(
+                        mantenimiento.unidad
+                    );
+
+
+                const nombreUnidad =
+                    obtenerNombreUnidad(
+                        unidad
+                    ) ||
+                    'Unidad sin identificar';
+
+
+                const placa =
+                    obtenerPlacaUnidad(
+                        unidad
+                    ) ||
+                    '—';
+
+
+                const clave =
+                    `${nombreUnidad}||${placa}`;
+
+
+                if (
+                    !gruposPorUnidad.has(clave)
+                ) {
+
+                    gruposPorUnidad.set(
+                        clave,
+                        {
+                            nombre: nombreUnidad,
+                            placa: placa,
+                            registros: []
+                        }
+                    );
+                }
+
+
+                gruposPorUnidad
+                    .get(clave)
+                    .registros
+                    .push(
+                        mantenimiento
+                    );
+            }
+        );
+
+
+        const grupos =
+            Array.from(
+                gruposPorUnidad.values()
+            );
+
+
+        /* ========================================================
+           CONFIGURACIÓN DE COLUMNAS
+
+           CARTA LANDSCAPE:
+           279.4 mm de ancho
+           Márgenes: 12 + 12
+           Ancho útil: 255.4 mm
+
+           La suma de estas columnas es exactamente
+           el ancho útil disponible.
+        ======================================================== */
+
+        const anchoID = 18;
+        const anchoFecha = 25;
+        const anchoMedicion = 30;
+        const anchoUnidad = 38;
+        const anchoPlaca = 24;
+
+
+        const anchoTipoMantenimiento =
+            anchoUtil -
+            anchoID -
+            anchoFecha -
+            anchoMedicion -
+            anchoUnidad -
+            anchoPlaca;
+
+
+        /* ========================================================
+           POSICIÓN INICIAL
+        ======================================================== */
+
+        let posicionY = 78;
+
+
+        /* ========================================================
+           RECORRER UNIDADES
+        ======================================================== */
+
+        grupos.forEach(
+            (
+                grupo,
+                indiceGrupo
+            ) => {
+
+
+                /* =================================================
+                   ALTURAS
+                ================================================= */
+
+                const alturaTituloUnidad = 9;
+
+                const alturaSeparacion = 3;
+
+                const alturaEncabezadoTabla = 10;
+
+                const espacioNecesarioMinimo =
+                    alturaTituloUnidad +
+                    alturaSeparacion +
+                    alturaEncabezadoTabla +
+                    12;
+
+
+                /* =================================================
+                   COMPROBAR ESPACIO
+                ================================================= */
+
+                if (
+                    posicionY +
+                    espacioNecesarioMinimo >
+                    altoPagina -
+                    margenInferior -
+                    5
+                ) {
+
+                    doc.addPage();
+
+                    posicionY = 20;
+                }
+
+
+                /* =================================================
+                   FUNCIÓN PARA DIBUJAR TÍTULO DE UNIDAD
+                ================================================= */
+
+                const dibujarTituloUnidad =
+                    () => {
+
+                        doc.setFont(
+                            'helvetica',
+                            'bold'
+                        );
+
+                        doc.setFontSize(
+                            10
+                        );
+
+                        doc.setTextColor(
+                            45,
+                            45,
+                            45
+                        );
+
+
+                        doc.text(
+                            `UNIDAD: ${grupo.nombre}`,
+                            margenIzquierdo,
+                            posicionY
+                        );
+
+
+                        doc.setFont(
+                            'helvetica',
+                            'normal'
+                        );
+
+                        doc.setFontSize(
+                            8
+                        );
+
+                        doc.setTextColor(
+                            90,
+                            90,
+                            90
+                        );
+
+
+                        doc.text(
+                            `Placa: ${grupo.placa}`,
+                            anchoPagina - margenDerecho,
+                            posicionY,
+                            {
+                                align: 'right'
+                            }
+                        );
+
+
+                        posicionY +=
+                            alturaTituloUnidad;
+                    };
+
+
+                /* =================================================
+                   DIBUJAR TÍTULO
+                ================================================= */
+
+                dibujarTituloUnidad();
+
+
+                /* =================================================
+                   CREAR FILAS
+                ================================================= */
+
+                const body = [];
+
+
+                grupo.registros.forEach(
+                    mantenimiento => {
+
+                        const unidad =
+                            obtenerUnidadCompleta(
+                                mantenimiento.unidad
+                            );
+
+
+                        const placa =
+                            obtenerPlacaUnidad(
+                                unidad
+                            ) ||
+                            '—';
+
+
+                        /* =========================================
+                           MEDICIÓN
+                        ========================================= */
+
+                        const medicionValor =
+                            mantenimiento.medicionValor === null ||
+                            mantenimiento.medicionValor === undefined
+                                ? '—'
+                                : Number(
+                                    mantenimiento.medicionValor
+                                ).toLocaleString(
+                                    'es-HN'
+                                );
+
+
+                        const medicionTipo =
+                            mantenimiento.medicionTipo ||
+                            '';
+
+
+                        const medicion =
+                            medicionTipo &&
+                            medicionValor !== '—'
+                                ? `${medicionValor} ${medicionTipo}`
+                                : medicionValor;
+
+
+                        /* =========================================
+                           TIPO
+                        ========================================= */
+
+                        const tipoMantenimiento =
+                            formatearTipo(
+                                mantenimiento.tipo
+                            ) ||
+                            '—';
+
+
+                        /* =========================================
+                           DESCRIPCIÓN
+                        ========================================= */
+
+                        const descripcion =
+                            String(
+                                mantenimiento.descripcion ||
+                                '—'
+                            )
+                                .trim();
+
+
+                        /* =========================================
+                           FILA PRINCIPAL
+                        ========================================= */
+
+                        body.push({
+
+                            tipoFila:
+                                'principal',
+
+                            id:
+                                formatearNumeroMantenimiento(
+                                    mantenimiento.idMantenimiento
+                                ),
+
+                            fecha:
+                                formatearFecha(
+                                    mantenimiento.fechaMantenimiento
+                                ),
+
+                            medicion:
+                                medicion,
+
+                            unidad:
+                                obtenerNombreUnidad(
+                                    unidad
+                                ) ||
+                                '—',
+
+                            placa:
+                                placa,
+
+                            tipoMantenimiento:
+                                tipoMantenimiento
+                        });
+
+
+                        /* =========================================
+                           FILA DESCRIPCIÓN
+                        ========================================= */
+
+                        body.push({
+
+                            tipoFila:
+                                'descripcion',
+
+                            descripcion:
+                                descripcion
+                        });
+
+                    }
+                );
+
+
+                /* =================================================
+                   CONVERTIR A AUTOTABLE
+
+                   La descripción ocupa DOS columnas para
+                   que "Descripción:" tenga espacio suficiente.
+
+                   Las otras CUATRO columnas se utilizan para
+                   el texto de la descripción.
+                ================================================= */
+
+                const filasTabla = [];
+
+
+                body.forEach(
+                    fila => {
+
+                        if (
+                            fila.tipoFila ===
+                            'principal'
+                        ) {
+
+                            filasTabla.push([
+                                fila.id,
+                                fila.fecha,
+                                fila.medicion,
+                                fila.unidad,
+                                fila.placa,
+                                fila.tipoMantenimiento
+                            ]);
+
+                            return;
+                        }
+
+
+                        filasTabla.push([
+
+                            {
+                                content:
+                                    'Descripción:',
+
+                                colSpan:
+                                    2,
+
+                                styles: {
+
+                                    fontStyle:
+                                        'bold',
+
+                                    fontSize:
+                                        7,
+
+                                    halign:
+                                        'left',
+
+                                    valign:
+                                        'top',
+
+                                    fillColor:
+                                        [248, 248, 248],
+
+                                    cellPadding: {
+                                        top: 3,
+                                        right: 3,
+                                        bottom: 3,
+                                        left: 3
+                                    }
+                                }
+                            },
+
+
+                            {
+                                content:
+                                    fila.descripcion,
+
+                                colSpan:
+                                    4,
+
+                                styles: {
+
+                                    fontStyle:
+                                        'normal',
+
+                                    fontSize:
+                                        7.5,
+
+                                    halign:
+                                        'left',
+
+                                    valign:
+                                        'top',
+
+                                    overflow:
+                                        'linebreak',
+
+                                    fillColor:
+                                        [248, 248, 248],
+
+                                    cellPadding: {
+                                        top: 3,
+                                        right: 4,
+                                        bottom: 3,
+                                        left: 5
+                                    }
+                                }
+                            }
+
+                        ]);
+
+                    }
+                );
+
+
+                /* =================================================
+                   CREAR TABLA
+                ================================================= */
+
+                doc.autoTable({
+
+                    startY:
+                        posicionY + 2,
+
+
+                    margin: {
+
+                        left:
+                            margenIzquierdo,
+
+                        right:
+                            margenDerecho,
+
+                        top:
+                            margenSuperior,
+
+                        bottom:
+                            margenInferior + 3
+                    },
+
+
+                    head: [
+
+                        [
+                            'ID',
+                            'Fecha',
+                            'Medición',
+                            'Unidad',
+                            'Placa',
+                            'Tipo de mantenimiento'
+                        ]
+
+                    ],
+
+
+                    body:
+                        filasTabla,
+
+
+                    /* =================================================
+                       SIN GRID AUTOMÁTICO
+
+                       Los bordes se dibujan manualmente una sola vez.
+                       Esto evita las dobles líneas.
+                    ================================================= */
+
+                    theme:
+                        'plain',
+
+
+                    styles: {
+
+                        font:
+                            'helvetica',
+
+                        fontStyle:
+                            'normal',
+
+                        fontSize:
+                            7.5,
+
+                        textColor:
+                            [45, 45, 45],
+
+                        valign:
+                            'middle',
+
+                        overflow:
+                            'linebreak',
+
+                        cellWidth:
+                            'wrap',
+
+                        lineWidth:
+                            0,
+
+                        cellPadding: {
+                            top: 2.8,
+                            right: 3,
+                            bottom: 2.8,
+                            left: 3
+                        }
+                    },
+
+
+                    /* =================================================
+                       ENCABEZADO
+                    ================================================= */
+
+                    headStyles: {
+
+                        font:
+                            'helvetica',
+
+                        fontStyle:
+                            'bold',
+
+                        fontSize:
+                            7.5,
+
+                        textColor:
+                            [255, 255, 255],
+
+                        fillColor:
+                            [45, 45, 45],
+
+                        halign:
+                            'center',
+
+                        valign:
+                            'middle',
+
+                        cellPadding: {
+                            top: 3,
+                            right: 3,
+                            bottom: 3,
+                            left: 3
+                        },
+
+                        lineWidth:
+                            0
+                    },
+
+
+                    /* =================================================
+                       COLUMNAS
+                    ================================================= */
+
+                    columnStyles: {
+
+                        0: {
+
+                            cellWidth:
+                                anchoID,
+
+                            halign:
+                                'center'
+                        },
+
+                        1: {
+
+                            cellWidth:
+                                anchoFecha,
+
+                            halign:
+                                'center'
+                        },
+
+                        2: {
+
+                            cellWidth:
+                                anchoMedicion,
+
+                            halign:
+                                'center'
+                        },
+
+                        3: {
+
+                            cellWidth:
+                                anchoUnidad,
+
+                            halign:
+                                'center'
+                        },
+
+                        4: {
+
+                            cellWidth:
+                                anchoPlaca,
+
+                            halign:
+                                'center'
+                        },
+
+                        5: {
+
+                            cellWidth:
+                                anchoTipoMantenimiento,
+
+                            halign:
+                                'left'
+                        }
+                    },
+
+
+                    /* =================================================
+                       FILAS ALTERNADAS
+                    ================================================= */
+
+                    alternateRowStyles: {
+
+                        fillColor:
+                            [249, 249, 249]
+                    },
+
+
+                    /* =================================================
+                       EVITAR PARTIR FILAS
+                    ================================================= */
+
+                    rowPageBreak:
+                        'avoid',
+
+
+                    /* =================================================
+                       REPETIR ENCABEZADO
+                    ================================================= */
+
+                    showHead:
+                        'everyPage',
+
+
+                    /* =================================================
+                       PARSEAR CELDAS
+                    ================================================= */
+
+                    didParseCell:
+                        function(data) {
+
+                            if (
+                                data.section !==
+                                'body'
+                            ) {
+                                return;
+                            }
+
+
+                            const fila =
+                                body[
+                                    data.row.index
+                                ];
+
+
+                            if (!fila) {
+                                return;
+                            }
+
+
+                            /* =====================================
+                               FILA PRINCIPAL
+                            ===================================== */
+
+                            if (
+                                fila.tipoFila ===
+                                'principal'
+                            ) {
+
+                                data.cell.styles.fontSize =
+                                    7.5;
+
+                                data.cell.styles.valign =
+                                    'middle';
+
+
+                                if (
+                                    data.column.index ===
+                                    5
+                                ) {
+
+                                    data.cell.styles.halign =
+                                        'left';
+
+                                } else {
+
+                                    data.cell.styles.halign =
+                                        'center';
+                                }
+
+
+                                return;
+                            }
+
+
+                            /* =====================================
+                               FILA DESCRIPCIÓN
+                            ===================================== */
+
+                            if (
+                                fila.tipoFila ===
+                                'descripcion'
+                            ) {
+
+                                data.cell.styles.fontSize =
+                                    7.5;
+
+                                data.cell.styles.valign =
+                                    'top';
+
+                                data.cell.styles.fillColor =
+                                    [248, 248, 248];
+
+                                data.cell.styles.minCellHeight =
+                                    8;
+
+
+                                /* =================================
+                                   ETIQUETA DESCRIPCIÓN
+                                ================================= */
+
+                                if (
+                                    data.column.index ===
+                                    0
+                                ) {
+
+                                    data.cell.styles.fontSize =
+                                        7;
+
+                                    data.cell.styles.fontStyle =
+                                        'bold';
+
+                                    data.cell.styles.halign =
+                                        'left';
+
+                                    data.cell.styles.overflow =
+                                        'visible';
+
+                                    data.cell.styles.cellPadding = {
+
+                                        top: 3,
+
+                                        right: 3,
+
+                                        bottom: 3,
+
+                                        left: 3
+                                    };
+                                }
+
+
+                                /* =================================
+                                   TEXTO
+                                ================================= */
+
+                                if (
+                                    data.column.index ===
+                                    1
+                                ) {
+
+                                    data.cell.styles.fontStyle =
+                                        'normal';
+
+                                    data.cell.styles.halign =
+                                        'left';
+
+                                    data.cell.styles.overflow =
+                                        'linebreak';
+
+                                    data.cell.styles.cellPadding = {
+
+                                        top: 3,
+
+                                        right: 4,
+
+                                        bottom: 3,
+
+                                        left: 5
+                                    };
+                                }
+                            }
+                        },
+
+
+                    /* =================================================
+                       DIBUJAR BORDES
+
+                       Un solo borde por cada celda.
+                       No usamos theme:grid.
+                    ================================================= */
+
+                    didDrawCell:
+                        function(data) {
+
+                            if (
+                                data.section !== 'body' &&
+                                data.section !== 'head'
+                            ) {
+                                return;
+                            }
+
+
+                            const x =
+                                data.cell.x;
+
+                            const y =
+                                data.cell.y;
+
+                            const width =
+                                data.cell.width;
+
+                            const height =
+                                data.cell.height;
+
+
+                            /* =====================================
+                               COLOR
+                            ===================================== */
+
+                            if (
+                                data.section ===
+                                'head'
+                            ) {
+
+                                doc.setDrawColor(
+                                    45,
+                                    45,
+                                    45
+                                );
+
+                            } else {
+
+                                doc.setDrawColor(
+                                    205,
+                                    205,
+                                    205
+                                );
+                            }
+
+
+                            doc.setLineWidth(
+                                0.18
+                            );
+
+
+                            /* =====================================
+                               IZQUIERDA
+                            ===================================== */
+
+                            doc.line(
+                                x,
+                                y,
+                                x,
+                                y + height
+                            );
+
+
+                            /* =====================================
+                               ARRIBA
+                            ===================================== */
+
+                            doc.line(
+                                x,
+                                y,
+                                x + width,
+                                y
+                            );
+
+
+                            /* =====================================
+                               DERECHA
+                            ===================================== */
+
+                            doc.line(
+                                x + width,
+                                y,
+                                x + width,
+                                y + height
+                            );
+
+
+                            /* =====================================
+                               ABAJO
+                            ===================================== */
+
+                            doc.line(
+                                x,
+                                y + height,
+                                x + width,
+                                y + height
+                            );
+                        },
+
+
+                    /* =================================================
+                       DESPUÉS DE CADA PÁGINA
+
+                       Aquí volvemos a colocar el pie.
+                    ================================================= */
+
+                    didDrawPage:
+                        function(data) {
+
+                            dibujarPiePaginaPDF(
+                                doc,
+                                anchoPagina,
+                                altoPagina,
+                                data.pageNumber
+                            );
+                        }
+
+                });
+
+
+                /* =================================================
+                   ACTUALIZAR POSICIÓN
+                ================================================= */
+
+                posicionY =
+                    doc.lastAutoTable.finalY +
+                    8;
+
+
+                /* =================================================
+                   SEPARADOR ENTRE UNIDADES
+
+                   Solamente si todavía queda espacio.
+                ================================================= */
+
+                if (
+                    indiceGrupo <
+                    grupos.length - 1
+                ) {
+
+                    if (
+                        posicionY <
+                        altoPagina -
+                        margenInferior -
+                        8
+                    ) {
+
+                        doc.setDrawColor(
+                            220,
+                            220,
+                            220
+                        );
+
+                        doc.setLineWidth(
+                            0.25
+                        );
+
+                        doc.line(
+                            margenIzquierdo,
+                            posicionY - 4,
+                            anchoPagina - margenDerecho,
+                            posicionY - 4
+                        );
+                    }
+                }
+
+            }
+        );
+
+
+        /* ========================================================
+           PIE DE TODAS LAS PÁGINAS
+
+           Se vuelve a dibujar al final para actualizar
+           correctamente "Página X de Y".
+        ======================================================== */
+
+        const paginas =
+            doc.getNumberOfPages();
+
+
+        for (
+            let pagina = 1;
+            pagina <= paginas;
+            pagina++
+        ) {
+
+            doc.setPage(
+                pagina
+            );
+
+
+            dibujarPiePaginaPDF(
+                doc,
+                anchoPagina,
+                altoPagina,
+                pagina
+            );
+        }
+
+
+        /* ========================================================
+           GUARDAR PDF
+        ======================================================== */
+
+        const fechaArchivo =
+            obtenerFechaParaArchivo(
+                fechaGeneracion
+            );
+
+
+        const nombreArchivo =
+            `Bitacora_de_Mantenimientos_${fechaArchivo}.pdf`;
+
+
+        doc.save(
+            nombreArchivo
+        );
+
+
+        mostrarExito(
+            `PDF generado correctamente con ${
+                registros.length
+            } ${
+                registros.length === 1
+                    ? 'mantenimiento'
+                    : 'mantenimientos'
+            }.`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            'Error al generar PDF:',
+            error
+        );
+
+
+        mostrarError(
+            error.message ||
+            'No fue posible generar el PDF.'
+        );
+    }
+}
+
+
+/* ============================================================
+   CARGAR LIBRERÍAS PDF DINÁMICAMENTE
+============================================================ */
+
+async function cargarLibreriasPDF() {
+
+    /* ========================================================
+       YA CARGADAS
+    ======================================================== */
+
+    if (
+        window.jspdf &&
+        window.jspdf.jsPDF &&
+        window.jspdf.jsPDF.API &&
+        typeof window.jspdf.jsPDF.API.autoTable ===
+            'function'
+    ) {
+
+        return;
+    }
+
+
+    /* ========================================================
+       CARGAR JSDPDF
+    ======================================================== */
+
+    if (
+        !window.jspdf ||
+        !window.jspdf.jsPDF
+    ) {
+
+        await cargarScriptExterno(
+            'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+            'jspdf'
+        );
+    }
+
+
+    /* ========================================================
+       CARGAR AUTOTABLE
+    ======================================================== */
+
+    if (
+        !window.jspdf?.jsPDF?.API ||
+        typeof window.jspdf.jsPDF.API.autoTable !==
+            'function'
+    ) {
+
+        await cargarScriptExterno(
+            'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+            'jspdf-autotable'
+        );
+    }
+
+
+    /* ========================================================
+       VERIFICACIÓN
+    ======================================================== */
+
+    if (
+        !window.jspdf ||
+        !window.jspdf.jsPDF ||
+        !window.jspdf.jsPDF.API ||
+        typeof window.jspdf.jsPDF.API.autoTable !==
+            'function'
+    ) {
+
+        throw new Error(
+            'Las librerías jsPDF y AutoTable no pudieron cargarse correctamente.'
+        );
+    }
+}
+
+
+/* ============================================================
+   CARGAR SCRIPT EXTERNO
+============================================================ */
+
+function cargarScriptExterno(
+    src,
+    id
+) {
+
+    return new Promise(
+        (
+            resolve,
+            reject
+        ) => {
+
+            /* ================================================
+               COMPROBAR SI YA EXISTE
+            ================================================= */
+
+            const existente =
+                document.getElementById(
+                    id
+                );
+
+
+            if (existente) {
+
+                if (
+                    id === 'jspdf' &&
+                    window.jspdf &&
+                    window.jspdf.jsPDF
+                ) {
+
+                    resolve();
+
+                    return;
+                }
+
+
+                if (
+                    id === 'jspdf-autotable' &&
+                    window.jspdf?.jsPDF?.API &&
+                    typeof window.jspdf.jsPDF.API
+                        .autoTable ===
+                        'function'
+                ) {
+
+                    resolve();
+
+                    return;
+                }
+
+
+                existente.addEventListener(
+                    'load',
+                    () => resolve(),
+                    {
+                        once: true
+                    }
+                );
+
+
+                existente.addEventListener(
+                    'error',
+                    () =>
+                        reject(
+                            new Error(
+                                `No se pudo cargar la librería PDF: ${src}`
+                            )
+                        ),
+                    {
+                        once: true
+                    }
+                );
+
+
+                return;
+            }
+
+
+            /* ================================================
+               CREAR SCRIPT
+            ================================================= */
+
+            const script =
+                document.createElement(
+                    'script'
+                );
+
+
+            script.id =
+                id;
+
+
+            script.src =
+                src;
+
+
+            script.async =
+                true;
+
+
+            script.onload =
+                () => {
+
+                    resolve();
+                };
+
+
+            script.onerror =
+                () => {
+
+                    reject(
+                        new Error(
+                            `No se pudo cargar la librería PDF: ${src}`
+                        )
+                    );
+                };
+
+
+            document.head.appendChild(
+                script
+            );
+        }
+    );
+}
+
+
+/* ============================================================
+   CARGAR IMAGEN COMO BASE64
+============================================================ */
+
+function cargarImagenComoBase64(
+    url
+) {
+
+    return new Promise(
+        (
+            resolve,
+            reject
+        ) => {
+
+            const imagen =
+                new Image();
+
+
+            imagen.onload =
+                () => {
+
+                    try {
+
+                        const canvas =
+                            document.createElement(
+                                'canvas'
+                            );
+
+
+                        canvas.width =
+                            imagen.naturalWidth ||
+                            imagen.width;
+
+
+                        canvas.height =
+                            imagen.naturalHeight ||
+                            imagen.height;
+
+
+                        const contexto =
+                            canvas.getContext(
+                                '2d'
+                            );
+
+
+                        contexto.drawImage(
+                            imagen,
+                            0,
+                            0
+                        );
+
+
+                        const base64 =
+                            canvas.toDataURL(
+                                'image/png'
+                            );
+
+
+                        resolve(
+                            base64
+                        );
+
+                    } catch (error) {
+
+                        reject(
+                            error
+                        );
+                    }
+                };
+
+
+            imagen.onerror =
+                () => {
+
+                    reject(
+                        new Error(
+                            `No se pudo cargar la imagen: ${url}`
+                        )
+                    );
+                };
+
+
+            imagen.src =
+                url;
+        }
+    );
+}
+
+
+/* ============================================================
+   ENCABEZADO PDF
+============================================================ */
+
+function dibujarEncabezadoPDF({
+
+    doc,
+    logoBase64,
+    anchoPagina,
+    margenIzquierdo,
+    margenDerecho
+
+}) {
+
+    /* ========================================================
+       FRANJA SUPERIOR
+    ======================================================== */
+
+    doc.setFillColor(
+        35,
+        35,
+        35
+    );
+
+
+    doc.rect(
+        0,
+        0,
+        anchoPagina,
+        38,
+        'F'
+    );
+
+
+    /* ========================================================
+       LOGO
+    ======================================================== */
+
+    if (
+        logoBase64
+    ) {
+
+        try {
+
+            doc.addImage(
+                logoBase64,
+                'PNG',
+                margenIzquierdo,
+                5,
+                35,
+                28,
+                undefined,
+                'FAST'
+            );
+
+        } catch (error) {
+
+            console.warn(
+                'No se pudo insertar el logo:',
+                error
+            );
+        }
+    }
+
+
+    /* ========================================================
+       TEXTO INSTITUCIONAL
+    ======================================================== */
+
+    const posicionTexto =
+        logoBase64
+            ? 53
+            : margenIzquierdo;
+
+
+    doc.setFont(
+        'helvetica',
+        'bold'
+    );
+
+
+    doc.setFontSize(
+        14
+    );
+
+
+    doc.setTextColor(
+        255,
+        255,
+        255
+    );
+
+
+    doc.text(
+        'CONTROL DE MANTENIMIENTOS',
+        posicionTexto,
+        15
+    );
+
+
+    doc.setFont(
+        'helvetica',
+        'normal'
+    );
+
+
+    doc.setFontSize(
+        8
+    );
+
+
+    doc.setTextColor(
+        220,
+        220,
+        220
+    );
+
+
+    doc.text(
+        'Registro y seguimiento de mantenimiento de unidades',
+        posicionTexto,
+        22
+    );
+
+
+    doc.setFontSize(
+        7.5
+    );
+
+
+    doc.text(
+        'Documento generado desde el sistema de gestión de flota',
+        posicionTexto,
+        28
+    );
+
+
+    /* ========================================================
+       LÍNEA DECORATIVA
+    ======================================================== */
+
+    doc.setDrawColor(
+        255,
+        255,
+        255
+    );
+
+
+    doc.setLineWidth(
+        0.4
+    );
+
+
+    doc.line(
+        posicionTexto,
+        31,
+        anchoPagina - margenDerecho,
+        31
+    );
+}
+
+
+/* ============================================================
+   RESUMEN DE FILTROS
+============================================================ */
+
+function dibujarResumenFiltrosPDF({
+
+    doc,
+    resumenFiltros,
+    cantidadRegistros,
+    x,
+    y,
+    ancho
+
+}) {
+
+    const alto =
+        11;
+
+
+    doc.setFillColor(
+        246,
+        246,
+        246
+    );
+
+
+    doc.setDrawColor(
+        220,
+        220,
+        220
+    );
+
+
+    doc.setLineWidth(
+        0.25
+    );
+
+
+    doc.roundedRect(
+        x,
+        y,
+        ancho,
+        alto,
+        2,
+        2,
+        'FD'
+    );
+
+
+    doc.setFont(
+        'helvetica',
+        'bold'
+    );
+
+
+    doc.setFontSize(
+        7.5
+    );
+
+
+    doc.setTextColor(
+        55,
+        55,
+        55
+    );
+
+
+    doc.text(
+        'FILTROS:',
+        x + 4,
+        y + 7
+    );
+
+
+    doc.setFont(
+        'helvetica',
+        'normal'
+    );
+
+
+    const textoFiltros =
+        resumenFiltros ||
+        'Sin filtros aplicados';
+
+
+    const anchoTexto =
+        Math.max(
+            50,
+            ancho - 65
+        );
+
+
+    const textoAjustado =
+        doc.splitTextToSize(
+            textoFiltros,
+            anchoTexto
+        );
+
+
+    doc.text(
+        textoAjustado[0] ||
+            '',
+        x + 25,
+        y + 7
+    );
+
+
+    doc.setFont(
+        'helvetica',
+        'bold'
+    );
+
+
+    doc.setTextColor(
+        35,
+        35,
+        35
+    );
+
+
+    doc.text(
+        `Total: ${cantidadRegistros}`,
+        x + ancho - 4,
+        y + 7,
+        {
+            align: 'right'
+        }
+    );
+}
+
+
+/* ============================================================
+   OBTENER RESUMEN DE FILTROS
+============================================================ */
+
+function obtenerResumenFiltrosPDF() {
+
+    const filtros = [];
+
+
+    /* ========================================================
+       UNIDAD
+    ======================================================== */
+
+    if (
+        DOM.filtroUnidad &&
+        DOM.filtroUnidad.value
+    ) {
+
+        const valor =
+            DOM.filtroUnidad.value;
+
+
+        const unidad =
+            STATE.unidades.find(
+                item =>
+                    String(
+                        item.idUnidad
+                    ) ===
+                    String(
+                        valor
+                    )
+            );
+
+
+        filtros.push(
+            `Unidad: ${
+                unidad
+                    ? obtenerNombreUnidad(
+                        unidad
+                    )
+                    : valor
+            }`
+        );
+    }
+
+
+    /* ========================================================
+       TIPO DE MANTENIMIENTO
+    ======================================================== */
+
+    if (
+        DOM.filtroTipo &&
+        DOM.filtroTipo.value
+    ) {
+
+        filtros.push(
+            `Mantenimiento: ${
+                formatearTipo(
+                    DOM.filtroTipo.value
+                )
+            }`
+        );
+    }
+
+
+    /* ========================================================
+       TIPO DE MEDICIÓN
+    ======================================================== */
+
+    if (
+        DOM.filtroMedicionTipo &&
+        DOM.filtroMedicionTipo.value
+    ) {
+
+        filtros.push(
+            `Medición: ${
+                DOM.filtroMedicionTipo.value
+            }`
+        );
+    }
+
+
+    /* ========================================================
+       DESDE
+    ======================================================== */
+
+    if (
+        DOM.filtroDesde &&
+        DOM.filtroDesde.value
+    ) {
+
+        filtros.push(
+            `Desde: ${
+                formatearFecha(
+                    DOM.filtroDesde.value
+                )
+            }`
+        );
+    }
+
+
+    /* ========================================================
+       HASTA
+    ======================================================== */
+
+    if (
+        DOM.filtroHasta &&
+        DOM.filtroHasta.value
+    ) {
+
+        filtros.push(
+            `Hasta: ${
+                formatearFecha(
+                    DOM.filtroHasta.value
+                )
+            }`
+        );
+    }
+
+
+    /* ========================================================
+       BÚSQUEDA
+    ======================================================== */
+
+    if (
+        DOM.filtroBuscar &&
+        DOM.filtroBuscar.value.trim()
+    ) {
+
+        filtros.push(
+            `Búsqueda: "${DOM.filtroBuscar.value.trim()}"`
+        );
+    }
+
+
+    if (
+        filtros.length === 0
+    ) {
+
+        return 'Sin filtros aplicados';
+    }
+
+
+    return filtros.join(
+        '  |  '
+    );
+}
+
+
+/* ============================================================
+   PIE DE PÁGINA PDF
+============================================================ */
+
+function dibujarPiePaginaPDF(
+    doc,
+    anchoPagina,
+    altoPagina,
+    numeroPagina
+) {
+
+    const margen =
+        12;
+
+
+    doc.setDrawColor(
+        210,
+        210,
+        210
+    );
+
+
+    doc.setLineWidth(
+        0.25
+    );
+
+
+    doc.line(
+        margen,
+        altoPagina - 12,
+        anchoPagina - margen,
+        altoPagina - 12
+    );
+
+
+    doc.setFont(
+        'helvetica',
+        'normal'
+    );
+
+
+    doc.setFontSize(
+        7
+    );
+
+
+    doc.setTextColor(
+        110,
+        110,
+        110
+    );
+
+
+    doc.text(
+        'Bitácora de Mantenimientos',
+        margen,
+        altoPagina - 6
+    );
+
+
+    doc.text(
+        `Página ${numeroPagina} de ${doc.getNumberOfPages()}`,
+        anchoPagina - margen,
+        altoPagina - 6,
+        {
+            align: 'right'
+        }
+    );
+}
+
+
+/* ============================================================
+   FECHA PARA NOMBRE DE ARCHIVO
+============================================================ */
+
+function obtenerFechaParaArchivo(
+    fecha
+) {
+
+    const anio =
+        fecha.getFullYear();
+
+
+    const mes =
+        String(
+            fecha.getMonth() + 1
+        ).padStart(
+            2,
+            '0'
+        );
+
+
+    const dia =
+        String(
+            fecha.getDate()
+        ).padStart(
+            2,
+            '0'
+        );
+
+
+    return `${anio}-${mes}-${dia}`;
+}
+
+
+/* ============================================================
+   NOTIFICACIONES
+============================================================ */
+
+function inicializarNotificaciones() {
+
+    actualizarContadorNotificaciones();
+
+}
+
+
+function marcarNotificacionesLeidas() {
+
+    document
+        .querySelectorAll(
+            '.notification-item.unread'
+        )
+        .forEach(
+            notificacion => {
+
+                notificacion.classList.remove(
+                    'unread'
+                );
+
+
+                const estado =
+                    notificacion.querySelector(
+                        '.notification-status'
+                    );
+
+
+                if (estado) {
+
+                    estado.remove();
+
+                }
+
+            }
+        );
+
+
+    actualizarContadorNotificaciones();
+
+}
+
+
+function actualizarContadorNotificaciones() {
+
+    if (!DOM.notificationDot) {
+
+        return;
+
+    }
+
+
+    const cantidad =
+        document.querySelectorAll(
+            '.notification-item.unread'
+        ).length;
+
+
+    if (cantidad === 0) {
+
+        DOM.notificationDot.style.display =
+            'none';
+
+        return;
+
+    }
+
+
+    DOM.notificationDot.style.display =
+        'flex';
+
+
+    DOM.notificationDot.textContent =
+        cantidad;
+
+}
+
+
+/* ============================================================
+   TOASTS
+============================================================ */
+
+function mostrarToast(toastId) {
+
+    const elemento =
+        document.getElementById(
+            toastId
+        );
+
+
+    if (!elemento) {
+
+        return;
+
+    }
+
+
+    if (
+
+        typeof bootstrap === 'undefined' ||
+
+        !bootstrap.Toast
+
+    ) {
+
+        console.warn(
+            'Bootstrap Toast no está disponible.'
+        );
+
+        return;
+
+    }
+
+
+    const toast =
+        bootstrap.Toast.getOrCreateInstance(
+            elemento,
+            {
+                delay:
+                    CONFIG.toastDelay
+            }
+        );
+
+
+    toast.show();
+
+}
+
+
+/* ============================================================
+   TOAST ÉXITO
+============================================================ */
+
+function mostrarExito(mensaje) {
+
+    const elemento =
+        document.getElementById(
+            'successToastMessage'
+        );
+
+
+    if (elemento) {
+
+        elemento.textContent =
+            mensaje;
+
+    }
+
+
+    mostrarToast(
+        'successToast'
+    );
+
+}
+
+
+/* ============================================================
+   TOAST ERROR
+============================================================ */
+
+function mostrarError(mensaje) {
+
+    const elemento =
+        document.getElementById(
+            'errorToastMessage'
+        );
+
+
+    if (elemento) {
+
+        elemento.textContent =
+            mensaje;
+
+    }
+
+
+    mostrarToast(
+        'errorToast'
+    );
+
+}
+
+
+/* ============================================================
+   MODALES
+============================================================ */
+
+function abrirModal(elementoModal) {
+
+    if (!elementoModal) {
+
+        return;
+
+    }
+
+
+    if (
+
+        typeof bootstrap === 'undefined' ||
+
+        !bootstrap.Modal
+
+    ) {
+
+        console.warn(
+            'Bootstrap Modal no está disponible.'
+        );
+
+        return;
+
+    }
+
+
+    bootstrap.Modal
+        .getOrCreateInstance(
+            elementoModal
+        )
+        .show();
+
+}
+
+
+function cerrarModal(elementoModal) {
+
+    if (!elementoModal) {
+
+        return;
+
+    }
+
+
+    if (
+
+        typeof bootstrap === 'undefined' ||
+
+        !bootstrap.Modal
+
+    ) {
+
+        return;
+
+    }
+
+
+    const modal =
+        bootstrap.Modal.getInstance(
+            elementoModal
+        );
+
+
+    if (modal) {
+
+        modal.hide();
+
+    }
+
+}
+
+
+/* ============================================================
+   UTILIDADES
+============================================================ */
+
+function formatearNumeroMantenimiento(id) {
+
+    if (
+
+        id === null ||
+
+        id === undefined ||
+
+        id === ''
+
+    ) {
+
+        return '#—';
+
+    }
+
+
+    return `#${String(id).padStart(4, '0')}`;
+
+}
+
+
+/* ============================================================
+   FORMATEAR FECHA
+============================================================ */
+
+function formatearFecha(fecha) {
+
+    if (!fecha) {
+
+        return '—';
+
+    }
+
+
+    const partes =
+        String(fecha).split('-');
+
+
+    if (partes.length !== 3) {
+
+        if (
+            String(fecha).includes('T')
+        ) {
+
+            const fechaParte =
+                String(fecha).split('T')[0];
+
+
+            const partesISO =
+                fechaParte.split('-');
+
+
+            if (
+                partesISO.length === 3
+            ) {
+
+                return `${partesISO[2]}/${partesISO[1]}/${partesISO[0]}`;
+
+            }
+
+        }
+
+
+        return fecha;
+
+    }
+
+
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+}
+
+
+/* ============================================================
+   FORMATEAR MEDICIÓN
+============================================================ */
+
+function formatearMedicion(
+    mantenimiento
+) {
+
+    if (
+
+        mantenimiento.medicionValor === null ||
+
+        mantenimiento.medicionValor === undefined
+
+    ) {
+
+        return '—';
+
+    }
+
+
+    const valor =
+        Number(
+            mantenimiento.medicionValor
+        )
+            .toLocaleString('es-HN');
+
+
+    const tipo =
+        mantenimiento.medicionTipo ||
+        '';
+
+
+    if (!tipo) {
+
+        return valor;
+
+    }
+
+
+    return `${valor} ${tipo}`;
+
+}
+
+
+/* ============================================================
+   FORMATEAR TIPO
+============================================================ */
+
+function formatearTipo(tipo) {
+
+    const tipos = {
+
+        PREVENTIVO:
+            'Preventivo',
+
+        CORRECTIVO:
+            'Correctivo',
+
+        REVISION:
+            'Revisión',
+
+        REPARACION:
+            'Reparación',
+
+        RESCATE:
+            'Rescate',
+
+        OTRO:
+            'Otro'
+
+    };
+
+
+    return tipos[tipo] ||
+        tipo ||
+        '—';
+
+}
+
+
+/* ============================================================
+   CLASE TIPO
+============================================================ */
+
+function obtenerClaseTipo(tipo) {
+
+    const clases = {
+
+        PREVENTIVO:
+            'preventive',
+
+        CORRECTIVO:
+            'corrective',
+
+        REVISION:
+            'review',
+
+        REPARACION:
+            'repair',
+
+        RESCATE:
+            'rescue',
+
+        OTRO:
+            'other'
+
+    };
+
+
+    return clases[tipo] ||
+        '';
+
+}
+
+
+/* ============================================================
+   RESUMIR TEXTO
+============================================================ */
+
+function resumirTexto(
+    texto,
+    maximo
+) {
+
+    if (!texto) {
+
+        return '—';
+
+    }
+
+
+    if (texto.length <= maximo) {
+
+        return texto;
+
+    }
+
+
+    return `${texto.substring(
+        0,
+        maximo
+    )}...`;
+
+}
+
+
+/* ============================================================
+   ESCAPAR HTML
+============================================================ */
+
+function escaparHtml(valor) {
+
+    const div =
+        document.createElement(
+            'div'
+        );
+
+
+    div.textContent =
+        valor ?? '';
+
+
+    return div.innerHTML;
+
+}
+
+
+/* ============================================================
+   MENSAJE ERROR BACKEND
+============================================================ */
+
+async function obtenerMensajeError(
+    respuesta
+) {
+
+    try {
+
+        const contenido =
+            await respuesta.text();
+
+
+        if (!contenido) {
+
+            return `Error HTTP ${respuesta.status}`;
+
+        }
+
+
+        try {
+
+            const json =
+                JSON.parse(contenido);
+
+
+            return (
+
+                json.message ||
+
+                json.error ||
+
+                json.detail ||
+
+                `Error HTTP ${respuesta.status}`
+
+            );
+
+
+        } catch {
+
+            return contenido;
+
+        }
+
+
+    } catch {
+
+        return `Error HTTP ${respuesta.status}`;
+
+    }
+
+}
+
+
+/* ============================================================
+   CARGANDO TABLA
+============================================================ */
+
+function mostrarCargandoTabla() {
+
+    if (!DOM.tablaMantenimientos) {
+
+        return;
+
+    }
+
+
+    DOM.tablaMantenimientos.innerHTML = `
+
+        <tr>
+
+            <td
+                colspan="8"
+                class="text-center py-5 text-muted"
+            >
+
+                <div
+                    class="spinner-border"
+                    role="status"
+                ></div>
+
+                <p class="mt-3 mb-0">
+                    Cargando mantenimientos...
+                </p>
+
+            </td>
+
+        </tr>
+
+    `;
+
+}

@@ -1,324 +1,164 @@
 package com.proyecto.camiones.model;
 
-
-import java.math.BigDecimal;
+import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-import jakarta.persistence.*;
-
-
 
 @Entity
 @Table(name = "mantenimientos")
 public class Mantenimiento {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id_mantenimiento")
+    private Integer idMantenimiento;
 
+    @Column(name = "fecha_mantenimiento", nullable = false)
+    private LocalDate fechaMantenimiento;
 
+    @Column(name = "medicion_valor")
+    private Integer medicionValor;
 
-    // ==========================================
-    // RELACION CON CAMION
-    // ==========================================
+    @Column(name = "medicion_tipo", length = 10)
+    private String medicionTipo;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "camion_id", nullable = false)
-    private Camion camion;
-
-
-
-
-    // ==========================================
-    // RELACION CON REPUESTOS
-    // ==========================================
-
-    @OneToMany(
-            mappedBy = "mantenimiento",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
+    @JoinColumn(
+        name = "unidad_id",
+        nullable = false,
+        foreignKey = @ForeignKey(name = "fk_mantenimientos_unidad")
     )
-    private List<Repuesto> repuestos = new ArrayList<>();
+    private Unidad unidad;
 
-
-
-
-
-    // ==========================================
-    // DATOS DEL MANTENIMIENTO
-    // ==========================================
-
-
-    @Column(name = "fecha")
-    private LocalDate fecha;
-
-
-
-    @Column(name = "tipo", length = 50)
+    @Column(name = "tipo", nullable = false, length = 20)
     private String tipo;
 
-
-
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "descripcion", nullable = false, length = 1000)
     private String descripcion;
 
+    @Column(name = "fecha_creacion")
+    private LocalDateTime fechaCreacion;
 
+    @Column(name = "fecha_modificacion")
+    private LocalDateTime fechaModificacion;
 
-    @Column(name = "kilometraje")
-    private Integer kilometraje;
+    public Mantenimiento() {
+    }
 
+    // =========================
+    // ID
+    // =========================
 
+    public Integer getIdMantenimiento() {
+        return idMantenimiento;
+    }
 
-    @Column(name = "costo", precision = 10, scale = 2)
-    private BigDecimal costo;
+    public void setIdMantenimiento(Integer idMantenimiento) {
+        this.idMantenimiento = idMantenimiento;
+    }
 
-
-
-    @Column(name = "taller", length = 100)
-    private String taller;
-
-
-
-    @Column(name = "proximo_mantenimiento")
-    private Integer proximoMantenimiento;
-
-
-
-    @Column(columnDefinition = "TEXT")
-    private String observaciones;
-
-
-
-    @Column(name = "proxima_fecha")
-    private LocalDate proximaFecha;
-
-
-
-    @Column(name = "estado", length = 20)
-    private String estado;
-
-
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-
-
-
-
-    // ==========================================
-    // PRE PERSIST
-    // ==========================================
-
-    @PrePersist
-    public void prePersist() {
-
-
-        if(createdAt == null){
-
-            createdAt = LocalDateTime.now();
-
+    /**
+     * Número formateado para mostrar en la interfaz.
+     * Ejemplo: 128 -> #0128
+     */
+    @Transient
+    public String getNumeroMantenimiento() {
+        if (idMantenimiento == null) {
+            return "";
         }
 
-
-
-        if(estado == null || estado.isEmpty()){
-
-            estado = "FINALIZADO";
-
-        }
-
-
+        return String.format("#%04d", idMantenimiento);
     }
 
+    // =========================
+    // FECHA MANTENIMIENTO
+    // =========================
 
-
-
-
-    // ==========================================
-    // GETTERS Y SETTERS
-    // ==========================================
-
-
-    public Long getId() {
-        return id;
+    public LocalDate getFechaMantenimiento() {
+        return fechaMantenimiento;
     }
 
-
-    public void setId(Long id) {
-        this.id = id;
+    public void setFechaMantenimiento(LocalDate fechaMantenimiento) {
+        this.fechaMantenimiento = fechaMantenimiento;
     }
 
+    // =========================
+    // MEDICIÓN
+    // =========================
 
-
-
-    public Camion getCamion() {
-        return camion;
+    public Integer getMedicionValor() {
+        return medicionValor;
     }
 
-
-    public void setCamion(Camion camion) {
-        this.camion = camion;
+    public void setMedicionValor(Integer medicionValor) {
+        this.medicionValor = medicionValor;
     }
 
-
-
-
-
-    public List<Repuesto> getRepuestos() {
-        return repuestos;
+    public String getMedicionTipo() {
+        return medicionTipo;
     }
 
-
-    public void setRepuestos(List<Repuesto> repuestos) {
-        this.repuestos = repuestos;
+    public void setMedicionTipo(String medicionTipo) {
+        this.medicionTipo = medicionTipo;
     }
 
+    // =========================
+    // UNIDAD
+    // =========================
 
-
-
-
-    public LocalDate getFecha() {
-        return fecha;
+    public Unidad getUnidad() {
+        return unidad;
     }
 
-
-    public void setFecha(LocalDate fecha) {
-        this.fecha = fecha;
+    public void setUnidad(Unidad unidad) {
+        this.unidad = unidad;
     }
 
-
-
-
+    // =========================
+    // TIPO
+    // =========================
 
     public String getTipo() {
         return tipo;
     }
 
-
     public void setTipo(String tipo) {
         this.tipo = tipo;
     }
 
-
-
-
+    // =========================
+    // DESCRIPCIÓN
+    // =========================
 
     public String getDescripcion() {
         return descripcion;
     }
 
-
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
 
+    // =========================
+    // FECHA DE CREACIÓN
+    // =========================
 
-
-
-
-    public Integer getKilometraje() {
-        return kilometraje;
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
     }
 
-
-    public void setKilometraje(Integer kilometraje) {
-        this.kilometraje = kilometraje;
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
     }
 
+    // =========================
+    // FECHA DE MODIFICACIÓN
+    // =========================
 
-
-
-
-    public BigDecimal getCosto() {
-        return costo;
+    public LocalDateTime getFechaModificacion() {
+        return fechaModificacion;
     }
 
-
-    public void setCosto(BigDecimal costo) {
-        this.costo = costo;
+    public void setFechaModificacion(LocalDateTime fechaModificacion) {
+        this.fechaModificacion = fechaModificacion;
     }
-
-
-
-
-
-    public String getTaller() {
-        return taller;
-    }
-
-
-    public void setTaller(String taller) {
-        this.taller = taller;
-    }
-
-
-
-
-
-    public Integer getProximoMantenimiento() {
-        return proximoMantenimiento;
-    }
-
-
-    public void setProximoMantenimiento(Integer proximoMantenimiento) {
-        this.proximoMantenimiento = proximoMantenimiento;
-    }
-
-
-
-
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
-    }
-
-
-
-
-
-    public LocalDate getProximaFecha() {
-        return proximaFecha;
-    }
-
-
-    public void setProximaFecha(LocalDate proximaFecha) {
-        this.proximaFecha = proximaFecha;
-    }
-
-
-
-
-
-    public String getEstado() {
-        return estado;
-    }
-
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-
-
-
-
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
 }

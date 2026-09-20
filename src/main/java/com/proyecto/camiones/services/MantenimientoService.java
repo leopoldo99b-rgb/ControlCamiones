@@ -1,103 +1,65 @@
 package com.proyecto.camiones.services;
 
-
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.proyecto.camiones.model.Mantenimiento;
+import com.proyecto.camiones.repository.MantenimientoRepository;
 import org.springframework.stereotype.Service;
 
-import com.proyecto.camiones.model.Mantenimiento;
-import com.proyecto.camiones.model.Repuesto;
-import com.proyecto.camiones.repository.MantenimientoRepository;
-
-
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class MantenimientoService {
 
+    private final MantenimientoRepository mantenimientoRepository;
 
-    @Autowired
-    private MantenimientoRepository mantenimientoRepository;
-
-
-
-
-    // ==========================================
-    // LISTAR TODOS
-    // ==========================================
-
-    public List<Mantenimiento> listarTodos(){
-
-        return mantenimientoRepository.findAll();
-
+    public MantenimientoService(MantenimientoRepository mantenimientoRepository) {
+        this.mantenimientoRepository = mantenimientoRepository;
     }
 
+    // =========================
+    // LISTAR TODOS
+    // =========================
 
+    public List<Mantenimiento> listarTodos() {
+        return mantenimientoRepository.findAll();
+    }
 
+    // =========================
+    // BUSCAR POR ID
+    // =========================
 
-    // ==========================================
-    // GUARDAR MANTENIMIENTO + REPUESTOS
-    // ==========================================
+    public Optional<Mantenimiento> buscarPorId(Integer id) {
+        return mantenimientoRepository.findById(id);
+    }
 
-    public Mantenimiento guardar(Mantenimiento mantenimiento){
+    // =========================
+    // GUARDAR
+    // =========================
 
+    public Mantenimiento guardar(Mantenimiento mantenimiento) {
 
-        // Validamos si trae repuestos
+        LocalDateTime ahora = LocalDateTime.now();
 
-        if(mantenimiento.getRepuestos() != null){
-
-
-            for(Repuesto repuesto : mantenimiento.getRepuestos()){
-
-
-                repuesto.setMantenimiento(mantenimiento);
-
-
-            }
-
-
+        // Solo se asigna la fecha de creación cuando
+        // el mantenimiento es nuevo.
+        if (mantenimiento.getIdMantenimiento() == null) {
+            mantenimiento.setFechaCreacion(ahora);
         }
 
+        // Se actualiza cada vez que se guarda.
+        mantenimiento.setFechaModificacion(ahora);
 
-
+        // El ID NO se asigna aquí.
+        // La base de datos lo genera automáticamente.
         return mantenimientoRepository.save(mantenimiento);
-
-
     }
 
-
-
-
-
-    // ==========================================
-    // BUSCAR POR ID
-    // ==========================================
-
-    public Mantenimiento buscarPorId(Long id){
-
-
-        return mantenimientoRepository.findById(id)
-                .orElse(null);
-
-
-    }
-
-
-
-
-
-    // ==========================================
+    // =========================
     // ELIMINAR
-    // ==========================================
+    // =========================
 
-    public void eliminar(Long id){
-
-
+    public void eliminar(Integer id) {
         mantenimientoRepository.deleteById(id);
-
-
     }
-
-
-
 }
