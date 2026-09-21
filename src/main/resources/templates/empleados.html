@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Gestión de Empleados</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/empleados.css}">
+</head>
+
+<body>
+
+<!-- =========================================================
+     TOPBAR
+========================================================= -->
+<header class="topbar">
+
+    <div class="logo">
+        <div class="logo-icon">
+            <i class="fa-solid fa-users"></i>
+        </div>
+
+        <div class="logo-text">
+            <span>Gestión de Empleados</span>
+            <small>Administración de personal</small>
+        </div>
+    </div>
+
+    <a th:href="@{/dashboard}" href="/dashboard" class="btn-back">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver al Dashboard</span>
+    </a>
+
+</header>
+
+
+<!-- =========================================================
+     CONTENIDO PRINCIPAL
+========================================================= -->
+<main class="container">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+    <section class="page-header">
+
+        <div>
+            <div class="breadcrumb">
+                <i class="fa-solid fa-house"></i>
+                <i class="fa-solid fa-chevron-right"></i>
+                <span>Empleados</span>
+            </div>
+
+            <h1>Empleados</h1>
+
+            <p>
+                Administra la información personal, laboral,
+                salarial y bancaria de tus empleados.
+            </p>
+        </div>
+
+        <button type="button"
+                class="btn-primary"
+                onclick="abrirModalEmpleado()">
+
+            <i class="fa-solid fa-user-plus"></i>
+
+            Nuevo empleado
+
+        </button>
+
+    </section>
+
+
+    <!-- =====================================================
+         ESTADÍSTICAS
+    ====================================================== -->
+    <section class="stats-grid">
+
+        <div class="stat-card">
+
+            <div class="stat-icon blue">
+                <i class="fa-solid fa-users"></i>
+            </div>
+
+            <div>
+                <span class="stat-label">Total empleados</span>
+
+                <strong id="totalEmpleados">
+                    0
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon green">
+                <i class="fa-solid fa-user-check"></i>
+            </div>
+
+            <div>
+                <span class="stat-label">Empleados activos</span>
+
+                <strong id="empleadosActivos">
+                    0
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon purple">
+                <i class="fa-solid fa-money-bill-wave"></i>
+            </div>
+
+            <div>
+                <span class="stat-label">Salarios Aprox.</span>
+
+                <strong id="nominaMensual">
+                    L 0.00
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon orange">
+                <i class="fa-solid fa-briefcase"></i>
+            </div>
+
+            <div>
+                <span class="stat-label">Puestos registrados</span>
+
+                <strong id="puestosRegistrados">
+                    0
+                </strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         TABLA DE EMPLEADOS
+    ====================================================== -->
+    <section class="table-panel">
+
+        <!-- TOOLBAR -->
+        <div class="table-toolbar">
+
+            <div class="toolbar-title">
+
+                <div class="toolbar-icon">
+                    <i class="fa-solid fa-address-book"></i>
+                </div>
+
+                <div>
+                    <h2>Listado de empleados</h2>
+
+                    <p>
+                        Consulta y administra tu personal
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="toolbar-actions">
+
+                <!-- BUSCAR -->
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                            type="search"
+                            id="buscarEmpleado"
+                            placeholder="Buscar empleado..."
+                            autocomplete="off">
+
+                </div>
+
+
+                <!-- FILTRO ESTADO -->
+                <select id="filtroEstado"
+                        class="filter-select">
+
+                    <option value="">
+                        Todos los estados
+                    </option>
+
+                    <option value="ACTIVO">
+                        Activos
+                    </option>
+
+                    <option value="INACTIVO">
+                        Inactivos
+                    </option>
+
+                    <option value="DESPEDIDO">
+                        Despedidos
+                    </option>
+
+                    <option value="RETIRADO">
+                        Retirados
+                    </option>
+
+                </select>
+
+
+                <!-- FILTRO TIPO SALARIO -->
+                <select id="filtroSalario"
+                        class="filter-select">
+
+                    <option value="">
+                        Todos los salarios
+                    </option>
+
+                    <option value="MENSUAL">
+                        Mensual
+                    </option>
+
+                    <option value="QUINCENAL">
+                        Quincenal
+                    </option>
+
+                    <option value="SEMANAL">
+                        Semanal
+                    </option>
+
+                    <option value="DIARIO">
+                        Diario
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             TABLA
+        ================================================== -->
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                <tr>
+
+                    <th>ID</th>
+
+                    <th>Fecha contratación</th>
+
+                    <th>Identidad</th>
+
+                    <th>Empleado</th>
+
+                    <th>Cargo</th>
+
+                    <th>Tipo salario</th>
+
+                    <th>Salario</th>
+
+                    <th>Estado</th>
+
+                    <th>Acciones</th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody id="empleadosTableBody">
+
+                <!-- =================================================
+                     EJEMPLO DE EMPLEADO
+                     Puedes reemplazarlo por th:each
+                ================================================== -->
+
+                <tr
+                    data-id="1"
+                    data-telefono="9999-9999"
+                    data-banco="Banco Atlántida"
+                    data-cuenta="010101010101">
+
+                    <!-- ID -->
+                    <td>
+
+                        <span class="employee-id">
+                            001
+                        </span>
+
+                    </td>
+
+
+                    <!-- FECHA -->
+                    <td>
+
+                        <div class="date-cell">
+
+                            <i class="fa-regular fa-calendar"></i>
+
+                            <span>
+                                15/01/2025
+                            </span>
+
+                        </div>
+
+                    </td>
+
+
+                    <!-- IDENTIDAD -->
+                    <td>
+
+                        <span class="identity-number">
+                            0801-1990-12345
+                        </span>
+
+                    </td>
+
+
+                    <!-- EMPLEADO -->
+                    <td>
+
+                        <div class="employee-name">
+
+                            <div class="avatar">
+                                JP
+                            </div>
+
+                            <div class="employee-info">
+
+                                <strong>
+                                    Juan Pérez
+                                </strong>
+
+                                <span class="employee-status-text active">
+
+                                    <i class="fa-solid fa-circle"></i>
+
+                                    Activo
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <!-- CARGO -->
+                    <td>
+
+                        <div class="job-cell">
+
+                            <i class="fa-solid fa-briefcase"></i>
+
+                            <span>
+                                Administrador
+                            </span>
+
+                        </div>
+
+                    </td>
+
+
+                    <!-- TIPO SALARIO -->
+                    <td>
+
+                        <span class="salary-type">
+                            Mensual
+                        </span>
+
+                    </td>
+
+
+                    <!-- SALARIO -->
+                    <td>
+
+                        <strong class="salary">
+                            L 25,000.00
+                        </strong>
+
+                    </td>
+
+
+                    <!-- ESTADO -->
+                    <td>
+
+                        <div class="status-cell">
+
+                            <span class="status-badge active">
+
+                                <i class="fa-solid fa-circle"></i>
+
+                                Activo
+
+                            </span>
+
+                            <small>
+                                Desde 15/01/2025
+                            </small>
+
+                        </div>
+
+                    </td>
+
+
+                    <!-- ACCIONES -->
+                    <td>
+
+                        <div class="actions">
+
+                            <!-- VER -->
+                            <button
+                                    type="button"
+                                    class="action-btn view"
+                                    title="Ver información"
+                                    onclick="verEmpleado(this)">
+
+                                <i class="fa-solid fa-eye"></i>
+
+                            </button>
+
+
+                            <!-- EDITAR -->
+                            <button
+                                    type="button"
+                                    class="action-btn edit"
+                                    title="Editar empleado"
+                                    onclick="editarEmpleado(this)">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+
+                            <!-- ELIMINAR -->
+                            <button
+                                    type="button"
+                                    class="action-btn delete"
+                                    title="Eliminar empleado"
+                                    onclick="confirmarEliminar(this)">
+
+                                <i class="fa-solid fa-trash"></i>
+
+                            </button>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- =================================================
+                     ESTADO VACÍO
+                     Si no hay empleados, tu JS puede mostrar esto
+                ================================================== -->
+
+                <!--
+                <tr id="emptyRow">
+                    <td colspan="9">
+
+                        <div class="empty-state">
+
+                            <div class="empty-icon">
+                                <i class="fa-solid fa-users-slash"></i>
+                            </div>
+
+                            <h3>
+                                No hay empleados registrados
+                            </h3>
+
+                            <p>
+                                Agrega tu primer empleado para comenzar.
+                            </p>
+
+                        </div>
+
+                    </td>
+                </tr>
+                -->
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =========================================================
+     MODAL NUEVO / EDITAR EMPLEADO
+========================================================= -->
+<div id="empleadoModal"
+     class="modal-overlay">
+
+    <div class="modal modal-large">
+
+        <!-- HEADER -->
+        <div class="modal-header">
+
+            <div class="modal-title">
+
+                <div class="modal-icon">
+
+                    <i class="fa-solid fa-user-plus"></i>
+
+                </div>
+
+                <div>
+
+                    <h2 id="modalEmpleadoTitulo">
+                        Registrar empleado
+                    </h2>
+
+                    <p>
+                        Completa la información del empleado
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                    type="button"
+                    class="modal-close"
+                    onclick="cerrarModalEmpleado()"
+                    aria-label="Cerrar">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- FORMULARIO -->
+        <form id="empleadoForm"
+              onsubmit="guardarEmpleado(event)">
+
+            <!-- ID OCULTO -->
+            <input
+                    type="hidden"
+                    id="empleadoId"
+                    name="id">
+
+
+            <!-- =================================================
+                 INFORMACIÓN PERSONAL
+            ================================================== -->
+            <section class="form-section">
+
+                <div class="section-title">
+
+                    <i class="fa-solid fa-user"></i>
+
+                    <div>
+
+                        <h3>
+                            Información personal
+                        </h3>
+
+                        <p>
+                            Datos básicos del empleado
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <!-- IDENTIDAD -->
+                    <div class="form-group">
+
+                        <label for="identidad">
+                            Número de identidad
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-id-card"></i>
+
+                            <input
+                                    type="text"
+                                    id="identidad"
+                                    name="identidad"
+                                    placeholder="0801-1990-12345"
+                                    maxlength="20"
+                                    autocomplete="off"
+                                    required>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- NOMBRE -->
+                    <div class="form-group">
+
+                        <label for="nombreCompleto">
+                            Nombre completo
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-user"></i>
+
+                            <input
+                                    type="text"
+                                    id="nombreCompleto"
+                                    name="nombreCompleto"
+                                    placeholder="Nombre y apellidos"
+                                    maxlength="150"
+                                    autocomplete="name"
+                                    required>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- TELÉFONO -->
+                    <div class="form-group">
+
+                        <label for="telefono">
+                            Número de teléfono
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-phone"></i>
+
+                            <input
+                                    type="tel"
+                                    id="telefono"
+                                    name="telefono"
+                                    class="phone-input"
+                                    placeholder="9999-9999"
+                                    maxlength="20"
+                                    inputmode="tel"
+                                    autocomplete="tel"
+                                    pattern="[0-9+()\- ]{8,20}"
+                                    required>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 INFORMACIÓN LABORAL
+            ================================================== -->
+            <section class="form-section">
+
+                <div class="section-title">
+
+                    <i class="fa-solid fa-briefcase"></i>
+
+                    <div>
+
+                        <h3>
+                            Información laboral
+                        </h3>
+
+                        <p>
+                            Datos relacionados con el puesto
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <!-- FECHA CONTRATACIÓN -->
+                    <div class="form-group">
+
+                        <label for="fechaContratacion">
+                            Fecha de contratación
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-calendar-days"></i>
+
+                            <input
+                                    type="date"
+                                    id="fechaContratacion"
+                                    name="fechaContratacion"
+                                    required>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CARGO -->
+                    <div class="form-group">
+
+                        <label for="cargo">
+                            Cargo
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-briefcase"></i>
+
+                            <input
+                                    type="text"
+                                    id="cargo"
+                                    name="cargo"
+                                    placeholder="Ej. Administrador"
+                                    maxlength="100"
+                                    required>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 INFORMACIÓN SALARIAL
+            ================================================== -->
+            <section class="form-section">
+
+                <div class="section-title">
+
+                    <i class="fa-solid fa-money-bill-wave"></i>
+
+                    <div>
+
+                        <h3>
+                            Información salarial
+                        </h3>
+
+                        <p>
+                            Configura el salario del empleado
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <!-- TIPO SALARIO -->
+                    <div class="form-group">
+
+                        <label for="tipoSalario">
+                            Tipo de salario
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-money-check-dollar"></i>
+
+                            <select
+                                    id="tipoSalario"
+                                    name="tipoSalario"
+                                    required>
+
+                                <option value="">
+                                    Seleccionar tipo
+                                </option>
+
+                                <option value="MENSUAL">
+                                    Mensual
+                                </option>
+
+                                <option value="QUINCENAL">
+                                    Quincenal
+                                </option>
+
+                                <option value="SEMANAL">
+                                    Semanal
+                                </option>
+
+                                <option value="DIARIO">
+                                    Diario
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- SALARIO -->
+                    <div class="form-group">
+
+                        <label for="salario">
+                            Salario
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-money">
+
+                            <span>
+                                L
+                            </span>
+
+                            <input
+                                    type="number"
+                                    id="salario"
+                                    name="salario"
+                                    placeholder="0.00"
+                                    min="0"
+                                    step="0.01"
+                                    required>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 INFORMACIÓN BANCARIA
+            ================================================== -->
+            <section class="form-section bank-section">
+
+                <div class="section-title">
+
+                    <i class="fa-solid fa-building-columns"></i>
+
+                    <div>
+
+                        <h3>
+                            Información bancaria
+                        </h3>
+
+                        <p>
+                            Cuenta donde se realizará el depósito del salario
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <!-- BANCO -->
+                    <div class="form-group">
+
+                        <label for="banco">
+                            Banco
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-building-columns"></i>
+
+                            <select
+                                    id="banco"
+                                    name="banco"
+                                    required>
+
+                                <option value="">
+                                    Seleccionar banco
+                                </option>
+
+                                <option value="Banco Atlántida">
+                                    Banco Atlántida
+                                </option>
+
+                                <option value="Banco de América Central Honduras">
+                                    Banco de América Central Honduras (BAC)
+                                </option>
+
+                                <option value="Banco Azteca Honduras">
+                                    Banco Azteca Honduras
+                                </option>
+
+                                <option value="Banco CUSCATLAN Honduras">
+                                    Banco CUSCATLAN Honduras
+                                </option>
+
+                                <option value="Banco Davivienda Honduras">
+                                    Banco Davivienda Honduras
+                                </option>
+
+                                <option value="Banco del País">
+                                    Banco del País (Banpaís)
+                                </option>
+
+                                <option value="Banco Ficohsa">
+                                    Banco Ficohsa
+                                </option>
+
+                                <option value="Banco Hondureño del Café">
+                                    Banco Hondureño del Café (BANHCAFE)
+                                </option>
+
+                                <option value="Banco Lafise Honduras">
+                                    Banco Lafise Honduras
+                                </option>
+
+                                <option value="Banco de Occidente">
+                                    Banco de Occidente
+                                </option>
+
+                                <option value="Banco Promerica">
+                                    Banco Promerica
+                                </option>
+
+                                <option value="Banco de los Trabajadores">
+                                    Banco de los Trabajadores
+                                </option>
+
+                                <option value="Banrural Honduras">
+                                    Banrural Honduras
+                                </option>
+
+                                <option value="Banco Popular">
+                                    Banco Popular
+                                </option>
+
+                                <option value="Otro">
+                                    Otro banco
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- NÚMERO DE CUENTA -->
+                    <div class="form-group">
+
+                        <label for="numeroCuenta">
+                            Número de cuenta
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-credit-card"></i>
+
+                            <input
+                                    type="text"
+                                    id="numeroCuenta"
+                                    name="numeroCuenta"
+                                    class="bank-account"
+                                    placeholder="Número de cuenta"
+                                    maxlength="40"
+                                    inputmode="numeric"
+                                    autocomplete="off"
+                                    required>
+
+                        </div>
+
+                        <small class="bank-account-hint">
+                            Se guarda como texto para conservar ceros iniciales.
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 ESTADO
+            ================================================== -->
+            <section class="form-section status-section">
+
+                <div class="section-title">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    <div>
+
+                        <h3>
+                            Estado del empleado
+                        </h3>
+
+                        <p>
+                            Define la situación actual del empleado
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <!-- ESTADO -->
+                    <div class="form-group">
+
+                        <label for="estado">
+                            Estado
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-icon status-select">
+
+                            <i class="fa-solid fa-circle-check"></i>
+
+                            <select
+                                    id="estado"
+                                    name="estado"
+                                    required>
+
+                                <option value="ACTIVO">
+                                    Activo
+                                </option>
+
+                                <option value="INACTIVO">
+                                    Inactivo
+                                </option>
+
+                                <option value="DESPEDIDO">
+                                    Despedido
+                                </option>
+
+                                <option value="RETIRADO">
+                                    Retirado
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- FECHA CAMBIO ESTADO -->
+                    <div class="form-group">
+
+                        <label for="fechaCambioEstado">
+                            Fecha del cambio
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-calendar-days"></i>
+
+                            <input
+                                    type="date"
+                                    id="fechaCambioEstado"
+                                    name="fechaCambioEstado">
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- OBSERVACIÓN -->
+                    <div class="form-group full-width">
+
+                        <label for="observacionEstado">
+                            Observación
+                            <small>Opcional</small>
+                        </label>
+
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-note-sticky"></i>
+
+                            <textarea
+                                    id="observacionEstado"
+                                    name="observacionEstado"
+                                    placeholder="Agrega una observación..."
+                                    maxlength="500"></textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PREVISUALIZACIÓN ESTADO -->
+                <div id="estadoPreview"
+                     class="status-preview active">
+
+                    <div class="status-preview-icon">
+
+                        <i class="fa-solid fa-circle-check"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Empleado activo
+                        </strong>
+
+                        <span>
+                            Actualmente puede recibir pagos y beneficios.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- FOOTER -->
+            <div class="modal-footer">
+
+                <button
+                        type="button"
+                        class="btn-secondary"
+                        onclick="cerrarModalEmpleado()">
+
+                    Cancelar
+
+                </button>
+
+
+                <button
+                        type="submit"
+                        class="btn-primary">
+
+                    <i class="fa-solid fa-floppy-disk"></i>
+
+                    Guardar empleado
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL DETALLE / OJO
+========================================================= -->
+<div id="detalleModal"
+     class="modal-overlay">
+
+    <div class="modal modal-detail">
+
+        <!-- HEADER -->
+        <div class="modal-header">
+
+            <div class="modal-title">
+
+                <div class="modal-icon blue">
+
+                    <i class="fa-solid fa-eye"></i>
+
+                </div>
+
+                <div>
+
+                    <h2>
+                        Información del empleado
+                    </h2>
+
+                    <p>
+                        Detalle completo del empleado
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                    type="button"
+                    class="modal-close"
+                    onclick="cerrarDetalleModal()"
+                    aria-label="Cerrar">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- CUERPO -->
+        <div class="detail-body">
+
+            <!-- PERFIL -->
+            <div class="detail-profile">
+
+                <div id="detalleAvatar"
+                     class="detail-avatar">
+
+                    JP
+
+                </div>
+
+                <div>
+
+                    <h2 id="detalleNombre">
+                        Juan Pérez
+                    </h2>
+
+                    <span id="detalleCargo">
+                        Administrador
+                    </span>
+
+                    <div class="detail-profile-status">
+
+                        <i class="fa-solid fa-circle"></i>
+
+                        <span id="detalleEstadoTexto">
+                            Activo
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- TARJETA ESTADO -->
+            <div id="detalleEstadoCard"
+                 class="detail-status-card active">
+
+                <div class="detail-status-icon">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                </div>
+
+                <div>
+
+                    <span>
+                        Estado actual
+                    </span>
+
+                    <strong id="detalleEstado">
+                        Activo
+                    </strong>
+
+                    <small id="detalleFechaEstado">
+                        Desde 15/01/2025
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 DATOS
+            ================================================== -->
+            <div class="detail-grid">
+
+                <!-- ID -->
+                <div class="detail-item">
+
+                    <span>
+                        <i class="fa-solid fa-hashtag"></i>
+                        ID
+                    </span>
+
+                    <strong id="detalleId">
+                        001
+                    </strong>
+
+                </div>
+
+
+                <!-- IDENTIDAD -->
+                <div class="detail-item">
+
+                    <span>
+                        <i class="fa-solid fa-id-card"></i>
+                        Identidad
+                    </span>
+
+                    <strong id="detalleIdentidad">
+                        0801-1990-12345
+                    </strong>
+
+                </div>
+
+
+                <!-- FECHA -->
+                <div class="detail-item">
+
+                    <span>
+                        <i class="fa-regular fa-calendar"></i>
+                        Fecha contratación
+                    </span>
+
+                    <strong id="detalleFecha">
+                        15/01/2025
+                    </strong>
+
+                </div>
+
+
+                <!-- TELÉFONO -->
+                <div class="detail-item">
+
+                    <span>
+                        <i class="fa-solid fa-phone"></i>
+                        Teléfono
+                    </span>
+
+                    <strong id="detalleTelefono">
+                        9999-9999
+                    </strong>
+
+                </div>
+
+
+                <!-- TIPO SALARIO -->
+                <div class="detail-item">
+
+                    <span>
+                        <i class="fa-solid fa-money-check-dollar"></i>
+                        Tipo de salario
+                    </span>
+
+                    <strong id="detalleTipo">
+                        Mensual
+                    </strong>
+
+                </div>
+
+
+                <!-- SALARIO -->
+                <div class="detail-item">
+
+                    <span>
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                        Salario
+                    </span>
+
+                    <strong
+                            id="detalleSalario"
+                            class="detail-salary">
+
+                        L 25,000.00
+
+                    </strong>
+
+                </div>
+
+
+                <!-- BANCO -->
+                <div class="detail-item detail-bank">
+
+                    <span>
+                        <i class="fa-solid fa-building-columns"></i>
+                        Banco
+                    </span>
+
+                    <strong
+                            id="detalleBanco"
+                            class="bank-name">
+
+                        Banco Atlántida
+
+                    </strong>
+
+                </div>
+
+
+                <!-- CUENTA -->
+                <div class="detail-item detail-bank">
+
+                    <span>
+                        <i class="fa-solid fa-credit-card"></i>
+                        Número de cuenta
+                    </span>
+
+                    <strong
+                            id="detalleCuenta">
+
+                        010101010101
+
+                    </strong>
+
+                </div>
+
+
+                <!-- OBSERVACIÓN -->
+                <div class="detail-item full">
+
+                    <span>
+                        <i class="fa-solid fa-note-sticky"></i>
+                        Observación
+                    </span>
+
+                    <strong
+                            id="detalleObservacion"
+                            class="detail-observation">
+
+                        Sin observaciones.
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+        <div class="modal-footer">
+
+            <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="cerrarDetalleModal()">
+
+                Cerrar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL ELIMINAR
+========================================================= -->
+<div id="eliminarModal"
+     class="modal-overlay">
+
+    <div class="modal modal-delete">
+
+        <div class="delete-icon">
+
+            <i class="fa-solid fa-trash"></i>
+
+        </div>
+
+
+        <h2>
+            ¿Eliminar empleado?
+        </h2>
+
+
+        <p>
+
+            Estás a punto de eliminar a
+
+            <strong id="empleadoEliminarNombre">
+                este empleado
+            </strong>.
+
+            Esta acción no se puede deshacer.
+
+        </p>
+
+
+        <div class="delete-warning">
+
+            <i class="fa-solid fa-triangle-exclamation"></i>
+
+            <span>
+                Se eliminará la información del empleado.
+            </span>
+
+        </div>
+
+
+        <div class="delete-actions">
+
+            <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="cerrarEliminarModal()">
+
+                Cancelar
+
+            </button>
+
+
+            <button
+                    type="button"
+                    class="btn-danger"
+                    onclick="eliminarEmpleado()">
+
+                <i class="fa-solid fa-trash"></i>
+
+                Sí, eliminar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     TOASTS
+========================================================= -->
+<div id="toastContainer"
+     class="toast-container">
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+<script th:src="@{/js/empleados.js}"
+        src="/js/empleados.js">
+</script>
+
+</body>
+</html>

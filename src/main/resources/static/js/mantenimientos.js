@@ -4715,89 +4715,132 @@ function actualizarInformacionTabla() {
 
 
 /* ============================================================
+
    EXPORTAR MANTENIMIENTOS A PDF
+
    VERSIÓN COMPLETA CORREGIDA
+
 ============================================================ */
 
 async function exportarMantenimientos() {
 
     const registros =
+
         Array.isArray(STATE.mantenimientosFiltrados)
+
             ? STATE.mantenimientosFiltrados
+
             : [];
 
     if (registros.length === 0) {
 
         mostrarError(
+
             'No hay registros para exportar con los filtros seleccionados.'
+
         );
 
         return;
+
     }
 
     try {
 
         /* ========================================================
+
            CARGAR LIBRERÍAS
+
         ======================================================== */
 
         await cargarLibreriasPDF();
 
         if (
+
             typeof window.jspdf === 'undefined' ||
+
             typeof window.jspdf.jsPDF === 'undefined'
+
         ) {
+
             throw new Error(
+
                 'No fue posible cargar la librería para generar el PDF.'
+
             );
+
         }
 
         if (
+
             typeof window.jspdf.jsPDF.API.autoTable !== 'function'
+
         ) {
+
             throw new Error(
+
                 'No fue posible cargar el módulo de tablas PDF.'
+
             );
+
         }
 
         const { jsPDF } = window.jspdf;
 
 
         /* ========================================================
+
            CREAR DOCUMENTO
+
         ======================================================== */
 
         const doc = new jsPDF({
+
             orientation: 'landscape',
+
             unit: 'mm',
+
             format: 'letter',
+
             compress: true
+
         });
 
 
         /* ========================================================
+
            MÁRGENES
+
         ======================================================== */
 
         const margenIzquierdo = 12;
+
         const margenDerecho = 12;
+
         const margenSuperior = 18;
+
         const margenInferior = 18;
 
         const anchoPagina =
+
             doc.internal.pageSize.getWidth();
 
         const altoPagina =
+
             doc.internal.pageSize.getHeight();
 
         const anchoUtil =
+
             anchoPagina -
+
             margenIzquierdo -
+
             margenDerecho;
 
 
         /* ========================================================
+
            CARGAR LOGO
+
         ======================================================== */
 
         let logoBase64 = null;
@@ -4805,225 +4848,938 @@ async function exportarMantenimientos() {
         try {
 
             logoBase64 =
+
                 await cargarImagenComoBase64(
+
                     CONFIG.logoPdfUrl
+
                 );
 
         } catch (error) {
 
             console.warn(
+
                 'No fue posible cargar el logo:',
+
                 error
+
             );
+
         }
 
 
         /* ========================================================
+
            FECHA Y HORA
+
         ======================================================== */
 
         const fechaGeneracion = new Date();
 
         const fechaTexto =
+
             fechaGeneracion.toLocaleDateString(
+
                 'es-HN',
+
                 {
+
                     day: '2-digit',
+
                     month: '2-digit',
+
                     year: 'numeric'
+
                 }
+
             );
 
         const horaTexto =
+
             fechaGeneracion.toLocaleTimeString(
+
                 'es-HN',
+
                 {
+
                     hour: '2-digit',
+
                     minute: '2-digit'
+
                 }
+
             );
 
 
         /* ========================================================
+
            ENCABEZADO PRINCIPAL
+
         ======================================================== */
 
         dibujarEncabezadoPDF({
+
             doc,
+
             logoBase64,
+
             anchoPagina,
+
             margenIzquierdo,
+
             margenDerecho
+
         });
 
 
         doc.setFont(
+
             'helvetica',
+
             'bold'
+
         );
 
         doc.setFontSize(18);
 
         doc.setTextColor(
+
             35,
+
             35,
+
             35
+
         );
 
         doc.text(
+
             'Bitácora de Mantenimientos',
+
             margenIzquierdo,
+
             48
+
         );
 
 
         doc.setFont(
+
             'helvetica',
+
             'normal'
+
         );
 
         doc.setFontSize(8.5);
 
         doc.setTextColor(
+
             95,
+
             95,
+
             95
+
         );
 
         doc.text(
+
             'Registro histórico de mantenimientos de unidades',
+
             margenIzquierdo,
+
             54
+
         );
 
 
         doc.text(
+
             `Generado: ${fechaTexto} ${horaTexto}`,
+
             anchoPagina - margenDerecho,
+
             54,
+
             {
+
                 align: 'right'
+
             }
+
         );
 
 
         /* ========================================================
+
            RESUMEN DE FILTROS
+
         ======================================================== */
 
         const resumenFiltros =
+
             obtenerResumenFiltrosPDF();
 
 
         dibujarResumenFiltrosPDF({
+
             doc,
+
             resumenFiltros,
+
             cantidadRegistros: registros.length,
+
             x: margenIzquierdo,
+
             y: 61,
+
             ancho: anchoUtil
+
         });
 
 
         /* ========================================================
+
            AGRUPAR REGISTROS POR UNIDAD
+
         ======================================================== */
 
         const gruposPorUnidad = new Map();
 
 
         registros.forEach(
+
             mantenimiento => {
 
                 const unidad =
+
                     obtenerUnidadCompleta(
+
                         mantenimiento.unidad
+
                     );
 
 
                 const nombreUnidad =
+
                     obtenerNombreUnidad(
+
                         unidad
+
                     ) ||
+
                     'Unidad sin identificar';
 
 
                 const placa =
+
                     obtenerPlacaUnidad(
+
                         unidad
+
                     ) ||
+
                     '—';
 
 
                 const clave =
+
                     `${nombreUnidad}||${placa}`;
 
 
                 if (
+
                     !gruposPorUnidad.has(clave)
+
                 ) {
 
                     gruposPorUnidad.set(
+
                         clave,
+
                         {
+
                             nombre: nombreUnidad,
+
                             placa: placa,
+
                             registros: []
+
                         }
+
                     );
+
                 }
 
 
                 gruposPorUnidad
+
                     .get(clave)
+
                     .registros
+
                     .push(
+
                         mantenimiento
+
                     );
+
             }
+
         );
 
 
         const grupos =
+
             Array.from(
+
                 gruposPorUnidad.values()
+
             );
 
 
         /* ========================================================
-           CONFIGURACIÓN DE COLUMNAS
+           TABLAS POR UNIDAD - DISEÑO DE IMPRESIÓN
 
-           CARTA LANDSCAPE:
-           279.4 mm de ancho
-           Márgenes: 12 + 12
-           Ancho útil: 255.4 mm
-
-           La suma de estas columnas es exactamente
-           el ancho útil disponible.
+           - El encabezado institucional/logo aparece SOLO en la
+             primera página.
+           - Cada unidad tiene su propia tabla, claramente separada
+             y titulada con el nombre de la unidad.
+           - Cada registro queda unido: fila de datos + descripción,
+             sin espacios que hagan parecer que son tablas distintas.
+           - La columna se llama "Medición".
+           - Las descripciones largas aumentan la altura del registro
+             sin montarse sobre el siguiente.
         ======================================================== */
 
-        const anchoID = 18;
-        const anchoFecha = 25;
-        const anchoMedicion = 30;
-        const anchoUnidad = 38;
-        const anchoPlaca = 24;
+        const alturaTituloUnidad = 9;
+        const alturaEncabezadoTabla = 8;
+        const alturaFilaPrincipal = 16;
+        const separacionEntreUnidades = 8;
+        const radioTabla = 2.4;
 
+        const colorTituloUnidad = [232, 234, 237];
+        const colorEncabezado = [72, 74, 77];
+        const colorBorde = [185, 188, 192];
+        const colorLinea = [215, 217, 220];
+        const colorTexto = [35, 35, 35];
+        const colorDescripcion = [247, 248, 250];
+        const colorTextoDescripcion = [25, 48, 82];
 
-        const anchoTipoMantenimiento =
-            anchoUtil -
-            anchoID -
-            anchoFecha -
-            anchoMedicion -
-            anchoUnidad -
-            anchoPlaca;
+        const anchoID = 62;
+        const anchoFecha = 75;
+        const anchoMedicion =
+            anchoUtil - anchoID - anchoFecha;
 
+        const obtenerColorTipo = tipo => {
+            const tipoLower = String(tipo || '').toLowerCase();
+
+            if (tipoLower.includes('correct')) {
+                return [220, 105, 12];
+            }
+
+            if (tipoLower.includes('revis')) {
+                return [55, 110, 180];
+            }
+
+            if (tipoLower.includes('prevent')) {
+                return [24, 125, 65];
+            }
+
+            if (
+                tipoLower.includes('repar') ||
+                tipoLower.includes('otro')
+            ) {
+                return [35, 135, 75];
+            }
+
+            return [90, 95, 100];
+        };
+
+        const medirDescripcion = descripcion => {
+            const anchoTexto = anchoUtil - 10;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+
+            const lineas = doc.splitTextToSize(
+                descripcion,
+                anchoTexto
+            );
+
+            const altoLinea = 3.6;
+            const alto =
+                4.5 +
+                Math.max(1, lineas.length) * altoLinea +
+                4.5;
+
+            return {
+                lineas,
+                alto
+            };
+        };
+
+        const obtenerDatosRegistro = registro => {
+            const unidad = obtenerUnidadCompleta(
+                registro.unidad
+            );
+
+            const placa =
+                obtenerPlacaUnidad(unidad) || '—';
+
+            const medicionValor =
+                registro.medicionValor === null ||
+                registro.medicionValor === undefined
+                    ? '—'
+                    : Number(
+                        registro.medicionValor
+                    ).toLocaleString('es-HN');
+
+            const medicionTipo =
+                registro.medicionTipo || '';
+
+            const medicion =
+                medicionTipo && medicionValor !== '—'
+                    ? `${medicionValor} ${medicionTipo}`
+                    : medicionValor;
+
+            const id = formatearNumeroMantenimiento(
+                registro.idMantenimiento
+            );
+
+            const fecha = formatearFecha(
+                registro.fechaMantenimiento
+            );
+
+            const tipo =
+                formatearTipo(registro.tipo) || '—';
+
+            const descripcion = String(
+                registro.descripcion || '—'
+            ).trim();
+
+            return {
+                placa,
+                medicion,
+                id,
+                fecha,
+                tipo,
+                descripcion,
+                descripcionMedida:
+                    medirDescripcion(descripcion)
+            };
+        };
+
+        const alturaRegistro = registro => {
+            const datos = obtenerDatosRegistro(registro);
+
+            return (
+                alturaFilaPrincipal +
+                datos.descripcionMedida.alto
+            );
+        };
+
+        /*
+         * Dibuja el título de una unidad.
+         * Ejemplo:
+         *   UNIDAD 7118                         PLACA: TRB-8189
+         */
+        const dibujarTituloUnidad = (
+            y,
+            grupo
+        ) => {
+            const x = margenIzquierdo;
+            const w = anchoUtil;
+
+            doc.setFillColor(
+                colorTituloUnidad[0],
+                colorTituloUnidad[1],
+                colorTituloUnidad[2]
+            );
+
+            doc.setDrawColor(
+                colorBorde[0],
+                colorBorde[1],
+                colorBorde[2]
+            );
+
+            doc.setLineWidth(0.25);
+
+            doc.roundedRect(
+                x,
+                y,
+                w,
+                alturaTituloUnidad,
+                radioTabla,
+                radioTabla,
+                'FD'
+            );
+
+            /* Base recta para que solo las esquinas superiores
+               conserven el redondeo y la tabla quede visualmente unida. */
+            doc.setFillColor(
+                colorTituloUnidad[0],
+                colorTituloUnidad[1],
+                colorTituloUnidad[2]
+            );
+
+            doc.rect(
+                x,
+                y + 2.2,
+                w,
+                alturaTituloUnidad - 2.2,
+                'F'
+            );
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.5);
+            doc.setTextColor(
+                colorTexto[0],
+                colorTexto[1],
+                colorTexto[2]
+            );
+
+            doc.text(
+                `UNIDAD ${grupo.nombre}`,
+                x + 5,
+                y + 6.1
+            );
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(85, 88, 92);
+
+            doc.text(
+                `Placa: ${grupo.placa || '—'}`,
+                x + w - 5,
+                y + 6.1,
+                { align: 'right' }
+            );
+
+            return y + alturaTituloUnidad;
+        };
+
+        /*
+         * Encabezado de columnas. Se usa al inicio de cada tabla
+         * y nuevamente si una misma unidad continúa en otra página.
+         */
+        const dibujarEncabezadoTabla = y => {
+            const x = margenIzquierdo;
+            const w = anchoUtil;
+
+            doc.setFillColor(
+                colorEncabezado[0],
+                colorEncabezado[1],
+                colorEncabezado[2]
+            );
+
+            doc.rect(
+                x,
+                y,
+                w,
+                alturaEncabezadoTabla,
+                'F'
+            );
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.8);
+            doc.setTextColor(255, 255, 255);
+
+            doc.text(
+                'ID',
+                x + 4,
+                y + 5.5
+            );
+
+            doc.text(
+                'Fecha',
+                x + anchoID + anchoFecha / 2,
+                y + 5.5,
+                { align: 'center' }
+            );
+
+            doc.text(
+                'Medición',
+                x + w - 4,
+                y + 5.5,
+                { align: 'right' }
+            );
+
+            return y + alturaEncabezadoTabla;
+        };
+
+        /*
+         * Dibuja un registro como un bloque único:
+         *
+         * ┌──────────────────────────────────────────────┐
+         * │ ID                 Fecha              Medición│
+         * │ badge  placa                                  │
+         * ├──────────────────────────────────────────────┤
+         * │ DESCRIPCIÓN                                  │
+         * │ texto...                                     │
+         * └──────────────────────────────────────────────┘
+         *
+         * No hay separación vertical entre la fila principal
+         * y la descripción.
+         */
+        const dibujarRegistro = (
+            registro,
+            y,
+            esUltimo
+        ) => {
+            const x = margenIzquierdo;
+            const w = anchoUtil;
+            const datos = obtenerDatosRegistro(registro);
+
+            const descripcionY =
+                y + alturaFilaPrincipal;
+
+            const altoDescripcion =
+                datos.descripcionMedida.alto;
+
+            const altoTotal =
+                alturaFilaPrincipal +
+                altoDescripcion;
+
+            /* Fondo completo del registro. */
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(
+                colorBorde[0],
+                colorBorde[1],
+                colorBorde[2]
+            );
+            doc.setLineWidth(0.22);
+
+            doc.rect(
+                x,
+                y,
+                w,
+                altoTotal,
+                'FD'
+            );
+
+            /* Área de descripción. */
+            doc.setFillColor(
+                colorDescripcion[0],
+                colorDescripcion[1],
+                colorDescripcion[2]
+            );
+
+            doc.rect(
+                x + 0.25,
+                descripcionY,
+                w - 0.5,
+                altoDescripcion - 0.25,
+                'F'
+            );
+
+            /* Línea divisoria entre datos y descripción. */
+            doc.setDrawColor(
+                colorLinea[0],
+                colorLinea[1],
+                colorLinea[2]
+            );
+
+            doc.setLineWidth(0.2);
+
+            doc.line(
+                x,
+                descripcionY,
+                x + w,
+                descripcionY
+            );
+
+            /* ID */
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.2);
+            doc.setTextColor(
+                colorTexto[0],
+                colorTexto[1],
+                colorTexto[2]
+            );
+
+            doc.text(
+                datos.id,
+                x + 4,
+                y + 5.5
+            );
+
+            /* Badge de mantenimiento */
+            const badgeColor =
+                obtenerColorTipo(datos.tipo);
+
+            const badgeH = 5.1;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.3);
+
+            const badgeW = Math.max(
+                18,
+                doc.getTextWidth(datos.tipo) + 7
+            );
+
+            const badgeY = y + 9.0;
+
+            doc.setFillColor(
+                badgeColor[0],
+                badgeColor[1],
+                badgeColor[2]
+            );
+
+            doc.roundedRect(
+                x + 4,
+                badgeY,
+                badgeW,
+                badgeH,
+                2.5,
+                2.5,
+                'F'
+            );
+
+            doc.setTextColor(255, 255, 255);
+
+            doc.text(
+                datos.tipo,
+                x + 4 + badgeW / 2,
+                badgeY + 3.45,
+                { align: 'center' }
+            );
+
+            /* Placa */
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.2);
+            doc.setTextColor(
+                colorTexto[0],
+                colorTexto[1],
+                colorTexto[2]
+            );
+
+            doc.text(
+                datos.placa,
+                x + 4 + badgeW + 4,
+                badgeY + 3.45
+            );
+
+            /* Fecha */
+            doc.setFontSize(7.8);
+
+            doc.text(
+                datos.fecha,
+                x + anchoID + anchoFecha / 2,
+                y + 9.4,
+                { align: 'center' }
+            );
+
+            /* Medición */
+            doc.text(
+                datos.medicion,
+                x + w - 4,
+                y + 9.4,
+                { align: 'right' }
+            );
+
+            /* Descripción */
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.5);
+            doc.setTextColor(70, 75, 82);
+
+            doc.text(
+                'DESCRIPCIÓN',
+                x + 5,
+                descripcionY + 4.2
+            );
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(
+                colorTextoDescripcion[0],
+                colorTextoDescripcion[1],
+                colorTextoDescripcion[2]
+            );
+
+            doc.text(
+                datos.descripcionMedida.lineas,
+                x + 5,
+                descripcionY + 8.0,
+                {
+                    baseline: 'top',
+                    lineHeightFactor: 1.15
+                }
+            );
+
+            return {
+                yFinal: y + altoTotal,
+                altoTotal
+            };
+        };
+
+        /*
+         * Dibuja la tabla de una unidad aprovechando el espacio disponible.
+         * Una unidad puede continuar en otra página, pero cada registro
+         * siempre se mantiene como un bloque unido.
+         */
+        const dibujarGrupoUnidad = (
+            grupo,
+            paginaActualEsPrimera
+        ) => {
+            const registrosGrupo =
+                grupo.registros || [];
+
+            if (registrosGrupo.length === 0) {
+                return;
+            }
+
+            const limiteY =
+                altoPagina - margenInferior - 2;
+
+            /*
+             * No obligamos a que toda la unidad quepa en una sola página.
+             * Primero comprobamos únicamente que haya espacio para el
+             * título, el encabezado y AL MENOS un registro.
+             *
+             * Así, si una unidad anterior deja espacio suficiente, la
+             * siguiente unidad comienza en la misma página en lugar de
+             * desperdiciar el espacio restante.
+             */
+            const alturaMinimaUnidad =
+                alturaTituloUnidad +
+                alturaEncabezadoTabla +
+                alturaRegistro(registrosGrupo[0]);
+
+            if (
+                posicionY +
+                alturaMinimaUnidad >
+                limiteY &&
+                posicionY > 25
+            ) {
+                doc.addPage();
+                posicionY = 18;
+            }
+
+            posicionY =
+                dibujarTituloUnidad(
+                    posicionY,
+                    grupo
+                );
+
+            posicionY =
+                dibujarEncabezadoTabla(
+                    posicionY
+                );
+
+            registrosGrupo.forEach(
+                (
+                    registro,
+                    indiceRegistro
+                ) => {
+                    const altoNecesario =
+                        alturaRegistro(registro);
+
+                    /*
+                     * Si el registro completo no cabe, pasa entero
+                     * a la siguiente página. No se parte la descripción.
+                     */
+                    if (
+                        posicionY +
+                        altoNecesario >
+                        limiteY
+                    ) {
+                        doc.addPage();
+                        posicionY = 18;
+
+                        /*
+                         * En una continuación no repetimos el logo ni
+                         * el encabezado institucional. Solo indicamos
+                         * que la tabla de la unidad continúa.
+                         */
+                        posicionY =
+                            dibujarTituloUnidad(
+                                posicionY,
+                                grupo
+                            );
+
+                        posicionY =
+                            dibujarEncabezadoTabla(
+                                posicionY
+                            );
+                    }
+
+                    const resultado =
+                        dibujarRegistro(
+                            registro,
+                            posicionY,
+                            indiceRegistro ===
+                                registrosGrupo.length - 1
+                        );
+
+                    posicionY =
+                        resultado.yFinal;
+
+                    /*
+                     * Separador mínimo entre registros, sin crear
+                     * "huecos" visuales. El siguiente registro empieza
+                     * inmediatamente debajo del anterior.
+                     */
+                    if (
+                        indiceRegistro <
+                        registrosGrupo.length - 1
+                    ) {
+                        doc.setDrawColor(
+                            colorLinea[0],
+                            colorLinea[1],
+                            colorLinea[2]
+                        );
+                        doc.setLineWidth(0.18);
+
+                        doc.line(
+                            margenIzquierdo,
+                            posicionY,
+                            anchoPagina - margenDerecho,
+                            posicionY
+                        );
+                    }
+                }
+            );
+
+            /*
+             * Borde exterior de la tabla de unidad.
+             * Se utiliza como guía visual cuando termina el grupo.
+             */
+            if (
+                posicionY <
+                altoPagina - margenInferior - 1
+            ) {
+                doc.setDrawColor(
+                    colorBorde[0],
+                    colorBorde[1],
+                    colorBorde[2]
+                );
+                doc.setLineWidth(0.25);
+
+                /*
+                 * Línea inferior: mantiene la tabla visualmente cerrada.
+                 */
+                doc.line(
+                    margenIzquierdo,
+                    posicionY,
+                    anchoPagina - margenDerecho,
+                    posicionY
+                );
+            }
+
+            posicionY += separacionEntreUnidades;
+        };
 
         /* ========================================================
            POSICIÓN INICIAL
+
+           La primera página conserva el encabezado institucional,
+           logo, título y resumen. Las páginas siguientes NO vuelven
+           a dibujar ese encabezado.
         ======================================================== */
 
         let posicionY = 78;
-
 
         /* ========================================================
            RECORRER UNIDADES
@@ -5034,918 +5790,31 @@ async function exportarMantenimientos() {
                 grupo,
                 indiceGrupo
             ) => {
-
-
-                /* =================================================
-                   ALTURAS
-                ================================================= */
-
-                const alturaTituloUnidad = 9;
-
-                const alturaSeparacion = 3;
-
-                const alturaEncabezadoTabla = 10;
-
-                const espacioNecesarioMinimo =
-                    alturaTituloUnidad +
-                    alturaSeparacion +
-                    alturaEncabezadoTabla +
-                    12;
-
-
-                /* =================================================
-                   COMPROBAR ESPACIO
-                ================================================= */
-
-                if (
-                    posicionY +
-                    espacioNecesarioMinimo >
-                    altoPagina -
-                    margenInferior -
-                    5
-                ) {
-
-                    doc.addPage();
-
-                    posicionY = 20;
-                }
-
-
-                /* =================================================
-                   FUNCIÓN PARA DIBUJAR TÍTULO DE UNIDAD
-                ================================================= */
-
-                const dibujarTituloUnidad =
-                    () => {
-
-                        doc.setFont(
-                            'helvetica',
-                            'bold'
-                        );
-
-                        doc.setFontSize(
-                            10
-                        );
-
-                        doc.setTextColor(
-                            45,
-                            45,
-                            45
-                        );
-
-
-                        doc.text(
-                            `UNIDAD: ${grupo.nombre}`,
-                            margenIzquierdo,
-                            posicionY
-                        );
-
-
-                        doc.setFont(
-                            'helvetica',
-                            'normal'
-                        );
-
-                        doc.setFontSize(
-                            8
-                        );
-
-                        doc.setTextColor(
-                            90,
-                            90,
-                            90
-                        );
-
-
-                        doc.text(
-                            `Placa: ${grupo.placa}`,
-                            anchoPagina - margenDerecho,
-                            posicionY,
-                            {
-                                align: 'right'
-                            }
-                        );
-
-
-                        posicionY +=
-                            alturaTituloUnidad;
-                    };
-
-
-                /* =================================================
-                   DIBUJAR TÍTULO
-                ================================================= */
-
-                dibujarTituloUnidad();
-
-
-                /* =================================================
-                   CREAR FILAS
-                ================================================= */
-
-                const body = [];
-
-
-                grupo.registros.forEach(
-                    mantenimiento => {
-
-                        const unidad =
-                            obtenerUnidadCompleta(
-                                mantenimiento.unidad
-                            );
-
-
-                        const placa =
-                            obtenerPlacaUnidad(
-                                unidad
-                            ) ||
-                            '—';
-
-
-                        /* =========================================
-                           MEDICIÓN
-                        ========================================= */
-
-                        const medicionValor =
-                            mantenimiento.medicionValor === null ||
-                            mantenimiento.medicionValor === undefined
-                                ? '—'
-                                : Number(
-                                    mantenimiento.medicionValor
-                                ).toLocaleString(
-                                    'es-HN'
-                                );
-
-
-                        const medicionTipo =
-                            mantenimiento.medicionTipo ||
-                            '';
-
-
-                        const medicion =
-                            medicionTipo &&
-                            medicionValor !== '—'
-                                ? `${medicionValor} ${medicionTipo}`
-                                : medicionValor;
-
-
-                        /* =========================================
-                           TIPO
-                        ========================================= */
-
-                        const tipoMantenimiento =
-                            formatearTipo(
-                                mantenimiento.tipo
-                            ) ||
-                            '—';
-
-
-                        /* =========================================
-                           DESCRIPCIÓN
-                        ========================================= */
-
-                        const descripcion =
-                            String(
-                                mantenimiento.descripcion ||
-                                '—'
-                            )
-                                .trim();
-
-
-                        /* =========================================
-                           FILA PRINCIPAL
-                        ========================================= */
-
-                        body.push({
-
-                            tipoFila:
-                                'principal',
-
-                            id:
-                                formatearNumeroMantenimiento(
-                                    mantenimiento.idMantenimiento
-                                ),
-
-                            fecha:
-                                formatearFecha(
-                                    mantenimiento.fechaMantenimiento
-                                ),
-
-                            medicion:
-                                medicion,
-
-                            unidad:
-                                obtenerNombreUnidad(
-                                    unidad
-                                ) ||
-                                '—',
-
-                            placa:
-                                placa,
-
-                            tipoMantenimiento:
-                                tipoMantenimiento
-                        });
-
-
-                        /* =========================================
-                           FILA DESCRIPCIÓN
-                        ========================================= */
-
-                        body.push({
-
-                            tipoFila:
-                                'descripcion',
-
-                            descripcion:
-                                descripcion
-                        });
-
-                    }
+                dibujarGrupoUnidad(
+                    grupo,
+                    indiceGrupo === 0
                 );
-
-
-                /* =================================================
-                   CONVERTIR A AUTOTABLE
-
-                   La descripción ocupa DOS columnas para
-                   que "Descripción:" tenga espacio suficiente.
-
-                   Las otras CUATRO columnas se utilizan para
-                   el texto de la descripción.
-                ================================================= */
-
-                const filasTabla = [];
-
-
-                body.forEach(
-                    fila => {
-
-                        if (
-                            fila.tipoFila ===
-                            'principal'
-                        ) {
-
-                            filasTabla.push([
-                                fila.id,
-                                fila.fecha,
-                                fila.medicion,
-                                fila.unidad,
-                                fila.placa,
-                                fila.tipoMantenimiento
-                            ]);
-
-                            return;
-                        }
-
-
-                        filasTabla.push([
-
-                            {
-                                content:
-                                    'Descripción:',
-
-                                colSpan:
-                                    2,
-
-                                styles: {
-
-                                    fontStyle:
-                                        'bold',
-
-                                    fontSize:
-                                        7,
-
-                                    halign:
-                                        'left',
-
-                                    valign:
-                                        'top',
-
-                                    fillColor:
-                                        [248, 248, 248],
-
-                                    cellPadding: {
-                                        top: 3,
-                                        right: 3,
-                                        bottom: 3,
-                                        left: 3
-                                    }
-                                }
-                            },
-
-
-                            {
-                                content:
-                                    fila.descripcion,
-
-                                colSpan:
-                                    4,
-
-                                styles: {
-
-                                    fontStyle:
-                                        'normal',
-
-                                    fontSize:
-                                        7.5,
-
-                                    halign:
-                                        'left',
-
-                                    valign:
-                                        'top',
-
-                                    overflow:
-                                        'linebreak',
-
-                                    fillColor:
-                                        [248, 248, 248],
-
-                                    cellPadding: {
-                                        top: 3,
-                                        right: 4,
-                                        bottom: 3,
-                                        left: 5
-                                    }
-                                }
-                            }
-
-                        ]);
-
-                    }
-                );
-
-
-                /* =================================================
-                   CREAR TABLA
-                ================================================= */
-
-                doc.autoTable({
-
-                    startY:
-                        posicionY + 2,
-
-
-                    margin: {
-
-                        left:
-                            margenIzquierdo,
-
-                        right:
-                            margenDerecho,
-
-                        top:
-                            margenSuperior,
-
-                        bottom:
-                            margenInferior + 3
-                    },
-
-
-                    head: [
-
-                        [
-                            'ID',
-                            'Fecha',
-                            'Medición',
-                            'Unidad',
-                            'Placa',
-                            'Tipo de mantenimiento'
-                        ]
-
-                    ],
-
-
-                    body:
-                        filasTabla,
-
-
-                    /* =================================================
-                       SIN GRID AUTOMÁTICO
-
-                       Los bordes se dibujan manualmente una sola vez.
-                       Esto evita las dobles líneas.
-                    ================================================= */
-
-                    theme:
-                        'plain',
-
-
-                    styles: {
-
-                        font:
-                            'helvetica',
-
-                        fontStyle:
-                            'normal',
-
-                        fontSize:
-                            7.5,
-
-                        textColor:
-                            [45, 45, 45],
-
-                        valign:
-                            'middle',
-
-                        overflow:
-                            'linebreak',
-
-                        cellWidth:
-                            'wrap',
-
-                        lineWidth:
-                            0,
-
-                        cellPadding: {
-                            top: 2.8,
-                            right: 3,
-                            bottom: 2.8,
-                            left: 3
-                        }
-                    },
-
-
-                    /* =================================================
-                       ENCABEZADO
-                    ================================================= */
-
-                    headStyles: {
-
-                        font:
-                            'helvetica',
-
-                        fontStyle:
-                            'bold',
-
-                        fontSize:
-                            7.5,
-
-                        textColor:
-                            [255, 255, 255],
-
-                        fillColor:
-                            [45, 45, 45],
-
-                        halign:
-                            'center',
-
-                        valign:
-                            'middle',
-
-                        cellPadding: {
-                            top: 3,
-                            right: 3,
-                            bottom: 3,
-                            left: 3
-                        },
-
-                        lineWidth:
-                            0
-                    },
-
-
-                    /* =================================================
-                       COLUMNAS
-                    ================================================= */
-
-                    columnStyles: {
-
-                        0: {
-
-                            cellWidth:
-                                anchoID,
-
-                            halign:
-                                'center'
-                        },
-
-                        1: {
-
-                            cellWidth:
-                                anchoFecha,
-
-                            halign:
-                                'center'
-                        },
-
-                        2: {
-
-                            cellWidth:
-                                anchoMedicion,
-
-                            halign:
-                                'center'
-                        },
-
-                        3: {
-
-                            cellWidth:
-                                anchoUnidad,
-
-                            halign:
-                                'center'
-                        },
-
-                        4: {
-
-                            cellWidth:
-                                anchoPlaca,
-
-                            halign:
-                                'center'
-                        },
-
-                        5: {
-
-                            cellWidth:
-                                anchoTipoMantenimiento,
-
-                            halign:
-                                'left'
-                        }
-                    },
-
-
-                    /* =================================================
-                       FILAS ALTERNADAS
-                    ================================================= */
-
-                    alternateRowStyles: {
-
-                        fillColor:
-                            [249, 249, 249]
-                    },
-
-
-                    /* =================================================
-                       EVITAR PARTIR FILAS
-                    ================================================= */
-
-                    rowPageBreak:
-                        'avoid',
-
-
-                    /* =================================================
-                       REPETIR ENCABEZADO
-                    ================================================= */
-
-                    showHead:
-                        'everyPage',
-
-
-                    /* =================================================
-                       PARSEAR CELDAS
-                    ================================================= */
-
-                    didParseCell:
-                        function(data) {
-
-                            if (
-                                data.section !==
-                                'body'
-                            ) {
-                                return;
-                            }
-
-
-                            const fila =
-                                body[
-                                    data.row.index
-                                ];
-
-
-                            if (!fila) {
-                                return;
-                            }
-
-
-                            /* =====================================
-                               FILA PRINCIPAL
-                            ===================================== */
-
-                            if (
-                                fila.tipoFila ===
-                                'principal'
-                            ) {
-
-                                data.cell.styles.fontSize =
-                                    7.5;
-
-                                data.cell.styles.valign =
-                                    'middle';
-
-
-                                if (
-                                    data.column.index ===
-                                    5
-                                ) {
-
-                                    data.cell.styles.halign =
-                                        'left';
-
-                                } else {
-
-                                    data.cell.styles.halign =
-                                        'center';
-                                }
-
-
-                                return;
-                            }
-
-
-                            /* =====================================
-                               FILA DESCRIPCIÓN
-                            ===================================== */
-
-                            if (
-                                fila.tipoFila ===
-                                'descripcion'
-                            ) {
-
-                                data.cell.styles.fontSize =
-                                    7.5;
-
-                                data.cell.styles.valign =
-                                    'top';
-
-                                data.cell.styles.fillColor =
-                                    [248, 248, 248];
-
-                                data.cell.styles.minCellHeight =
-                                    8;
-
-
-                                /* =================================
-                                   ETIQUETA DESCRIPCIÓN
-                                ================================= */
-
-                                if (
-                                    data.column.index ===
-                                    0
-                                ) {
-
-                                    data.cell.styles.fontSize =
-                                        7;
-
-                                    data.cell.styles.fontStyle =
-                                        'bold';
-
-                                    data.cell.styles.halign =
-                                        'left';
-
-                                    data.cell.styles.overflow =
-                                        'visible';
-
-                                    data.cell.styles.cellPadding = {
-
-                                        top: 3,
-
-                                        right: 3,
-
-                                        bottom: 3,
-
-                                        left: 3
-                                    };
-                                }
-
-
-                                /* =================================
-                                   TEXTO
-                                ================================= */
-
-                                if (
-                                    data.column.index ===
-                                    1
-                                ) {
-
-                                    data.cell.styles.fontStyle =
-                                        'normal';
-
-                                    data.cell.styles.halign =
-                                        'left';
-
-                                    data.cell.styles.overflow =
-                                        'linebreak';
-
-                                    data.cell.styles.cellPadding = {
-
-                                        top: 3,
-
-                                        right: 4,
-
-                                        bottom: 3,
-
-                                        left: 5
-                                    };
-                                }
-                            }
-                        },
-
-
-                    /* =================================================
-                       DIBUJAR BORDES
-
-                       Un solo borde por cada celda.
-                       No usamos theme:grid.
-                    ================================================= */
-
-                    didDrawCell:
-                        function(data) {
-
-                            if (
-                                data.section !== 'body' &&
-                                data.section !== 'head'
-                            ) {
-                                return;
-                            }
-
-
-                            const x =
-                                data.cell.x;
-
-                            const y =
-                                data.cell.y;
-
-                            const width =
-                                data.cell.width;
-
-                            const height =
-                                data.cell.height;
-
-
-                            /* =====================================
-                               COLOR
-                            ===================================== */
-
-                            if (
-                                data.section ===
-                                'head'
-                            ) {
-
-                                doc.setDrawColor(
-                                    45,
-                                    45,
-                                    45
-                                );
-
-                            } else {
-
-                                doc.setDrawColor(
-                                    205,
-                                    205,
-                                    205
-                                );
-                            }
-
-
-                            doc.setLineWidth(
-                                0.18
-                            );
-
-
-                            /* =====================================
-                               IZQUIERDA
-                            ===================================== */
-
-                            doc.line(
-                                x,
-                                y,
-                                x,
-                                y + height
-                            );
-
-
-                            /* =====================================
-                               ARRIBA
-                            ===================================== */
-
-                            doc.line(
-                                x,
-                                y,
-                                x + width,
-                                y
-                            );
-
-
-                            /* =====================================
-                               DERECHA
-                            ===================================== */
-
-                            doc.line(
-                                x + width,
-                                y,
-                                x + width,
-                                y + height
-                            );
-
-
-                            /* =====================================
-                               ABAJO
-                            ===================================== */
-
-                            doc.line(
-                                x,
-                                y + height,
-                                x + width,
-                                y + height
-                            );
-                        },
-
-
-                    /* =================================================
-                       DESPUÉS DE CADA PÁGINA
-
-                       Aquí volvemos a colocar el pie.
-                    ================================================= */
-
-                    didDrawPage:
-                        function(data) {
-
-                            dibujarPiePaginaPDF(
-                                doc,
-                                anchoPagina,
-                                altoPagina,
-                                data.pageNumber
-                            );
-                        }
-
-                });
-
-
-                /* =================================================
-                   ACTUALIZAR POSICIÓN
-                ================================================= */
-
-                posicionY =
-                    doc.lastAutoTable.finalY +
-                    8;
-
-
-                /* =================================================
-                   SEPARADOR ENTRE UNIDADES
-
-                   Solamente si todavía queda espacio.
-                ================================================= */
-
-                if (
-                    indiceGrupo <
-                    grupos.length - 1
-                ) {
-
-                    if (
-                        posicionY <
-                        altoPagina -
-                        margenInferior -
-                        8
-                    ) {
-
-                        doc.setDrawColor(
-                            220,
-                            220,
-                            220
-                        );
-
-                        doc.setLineWidth(
-                            0.25
-                        );
-
-                        doc.line(
-                            margenIzquierdo,
-                            posicionY - 4,
-                            anchoPagina - margenDerecho,
-                            posicionY - 4
-                        );
-                    }
-                }
-
             }
         );
 
-
         /* ========================================================
+
            PIE DE TODAS LAS PÁGINAS
 
-           Se vuelve a dibujar al final para actualizar
-           correctamente "Página X de Y".
+           Como las tablas se dibujan manualmente, el pie se
+           coloca aquí al final para que todas las páginas
+           tengan "Página X de Y" correctamente.
+
         ======================================================== */
 
-        const paginas =
-            doc.getNumberOfPages();
-
+        const paginas = doc.getNumberOfPages();
 
         for (
             let pagina = 1;
             pagina <= paginas;
             pagina++
         ) {
-
-            doc.setPage(
-                pagina
-            );
-
+            doc.setPage(pagina);
 
             dibujarPiePaginaPDF(
                 doc,
@@ -5957,637 +5826,972 @@ async function exportarMantenimientos() {
 
 
         /* ========================================================
+
            GUARDAR PDF
+
         ======================================================== */
 
         const fechaArchivo =
+
             obtenerFechaParaArchivo(
+
                 fechaGeneracion
+
             );
 
 
         const nombreArchivo =
+
             `Bitacora_de_Mantenimientos_${fechaArchivo}.pdf`;
 
 
         doc.save(
+
             nombreArchivo
+
         );
 
 
         mostrarExito(
+
             `PDF generado correctamente con ${
+
                 registros.length
+
             } ${
+
                 registros.length === 1
+
                     ? 'mantenimiento'
+
                     : 'mantenimientos'
+
             }.`
+
         );
 
 
     } catch (error) {
 
         console.error(
+
             'Error al generar PDF:',
+
             error
+
         );
 
 
         mostrarError(
+
             error.message ||
+
             'No fue posible generar el PDF.'
+
         );
+
     }
+
 }
 
 
 /* ============================================================
+
    CARGAR LIBRERÍAS PDF DINÁMICAMENTE
+
 ============================================================ */
 
 async function cargarLibreriasPDF() {
 
     /* ========================================================
+
        YA CARGADAS
+
     ======================================================== */
 
     if (
+
         window.jspdf &&
+
         window.jspdf.jsPDF &&
+
         window.jspdf.jsPDF.API &&
+
         typeof window.jspdf.jsPDF.API.autoTable ===
+
             'function'
+
     ) {
 
         return;
+
     }
 
 
     /* ========================================================
+
        CARGAR JSDPDF
+
     ======================================================== */
 
     if (
+
         !window.jspdf ||
+
         !window.jspdf.jsPDF
+
     ) {
 
         await cargarScriptExterno(
+
             'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+
             'jspdf'
+
         );
+
     }
 
 
     /* ========================================================
+
        CARGAR AUTOTABLE
+
     ======================================================== */
 
     if (
+
         !window.jspdf?.jsPDF?.API ||
+
         typeof window.jspdf.jsPDF.API.autoTable !==
+
             'function'
+
     ) {
 
         await cargarScriptExterno(
+
             'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+
             'jspdf-autotable'
+
         );
+
     }
 
 
     /* ========================================================
+
        VERIFICACIÓN
+
     ======================================================== */
 
     if (
+
         !window.jspdf ||
+
         !window.jspdf.jsPDF ||
+
         !window.jspdf.jsPDF.API ||
+
         typeof window.jspdf.jsPDF.API.autoTable !==
+
             'function'
+
     ) {
 
         throw new Error(
+
             'Las librerías jsPDF y AutoTable no pudieron cargarse correctamente.'
+
         );
+
     }
+
 }
 
 
 /* ============================================================
+
    CARGAR SCRIPT EXTERNO
+
 ============================================================ */
 
 function cargarScriptExterno(
+
     src,
+
     id
+
 ) {
 
     return new Promise(
+
         (
+
             resolve,
+
             reject
+
         ) => {
 
             /* ================================================
+
                COMPROBAR SI YA EXISTE
+
             ================================================= */
 
             const existente =
+
                 document.getElementById(
+
                     id
+
                 );
 
 
             if (existente) {
 
                 if (
+
                     id === 'jspdf' &&
+
                     window.jspdf &&
+
                     window.jspdf.jsPDF
+
                 ) {
 
                     resolve();
 
                     return;
+
                 }
 
 
                 if (
+
                     id === 'jspdf-autotable' &&
+
                     window.jspdf?.jsPDF?.API &&
+
                     typeof window.jspdf.jsPDF.API
+
                         .autoTable ===
+
                         'function'
+
                 ) {
 
                     resolve();
 
                     return;
+
                 }
 
 
                 existente.addEventListener(
+
                     'load',
+
                     () => resolve(),
+
                     {
+
                         once: true
+
                     }
+
                 );
 
 
                 existente.addEventListener(
+
                     'error',
+
                     () =>
+
                         reject(
+
                             new Error(
+
                                 `No se pudo cargar la librería PDF: ${src}`
+
                             )
+
                         ),
+
                     {
+
                         once: true
+
                     }
+
                 );
 
 
                 return;
+
             }
 
 
             /* ================================================
+
                CREAR SCRIPT
+
             ================================================= */
 
             const script =
+
                 document.createElement(
+
                     'script'
+
                 );
 
 
             script.id =
+
                 id;
 
 
             script.src =
+
                 src;
 
 
             script.async =
+
                 true;
 
 
             script.onload =
+
                 () => {
 
                     resolve();
+
                 };
 
 
             script.onerror =
+
                 () => {
 
                     reject(
+
                         new Error(
+
                             `No se pudo cargar la librería PDF: ${src}`
+
                         )
+
                     );
+
                 };
 
 
             document.head.appendChild(
+
                 script
+
             );
+
         }
+
     );
+
 }
 
 
 /* ============================================================
+
    CARGAR IMAGEN COMO BASE64
+
 ============================================================ */
 
 function cargarImagenComoBase64(
+
     url
+
 ) {
 
     return new Promise(
+
         (
+
             resolve,
+
             reject
+
         ) => {
 
             const imagen =
+
                 new Image();
 
 
             imagen.onload =
+
                 () => {
 
                     try {
 
                         const canvas =
+
                             document.createElement(
+
                                 'canvas'
+
                             );
 
 
                         canvas.width =
+
                             imagen.naturalWidth ||
+
                             imagen.width;
 
 
                         canvas.height =
+
                             imagen.naturalHeight ||
+
                             imagen.height;
 
 
                         const contexto =
+
                             canvas.getContext(
+
                                 '2d'
+
                             );
 
 
                         contexto.drawImage(
+
                             imagen,
+
                             0,
+
                             0
+
                         );
 
 
                         const base64 =
+
                             canvas.toDataURL(
+
                                 'image/png'
+
                             );
 
 
                         resolve(
+
                             base64
+
                         );
 
                     } catch (error) {
 
                         reject(
+
                             error
+
                         );
+
                     }
+
                 };
 
 
             imagen.onerror =
+
                 () => {
 
                     reject(
+
                         new Error(
+
                             `No se pudo cargar la imagen: ${url}`
+
                         )
+
                     );
+
                 };
 
 
             imagen.src =
+
                 url;
+
         }
+
     );
+
 }
 
 
 /* ============================================================
+
    ENCABEZADO PDF
+
 ============================================================ */
 
 function dibujarEncabezadoPDF({
 
     doc,
+
     logoBase64,
+
     anchoPagina,
+
     margenIzquierdo,
+
     margenDerecho
 
 }) {
 
     /* ========================================================
+
        FRANJA SUPERIOR
+
     ======================================================== */
 
     doc.setFillColor(
+
         35,
+
         35,
+
         35
+
     );
 
 
     doc.rect(
+
         0,
+
         0,
+
         anchoPagina,
+
         38,
+
         'F'
+
     );
 
 
     /* ========================================================
+
        LOGO
+
     ======================================================== */
 
     if (
+
         logoBase64
+
     ) {
 
         try {
 
             doc.addImage(
+
                 logoBase64,
+
                 'PNG',
+
                 margenIzquierdo,
+
                 5,
+
                 35,
+
                 28,
+
                 undefined,
+
                 'FAST'
+
             );
 
         } catch (error) {
 
             console.warn(
+
                 'No se pudo insertar el logo:',
+
                 error
+
             );
+
         }
+
     }
 
 
     /* ========================================================
+
        TEXTO INSTITUCIONAL
+
     ======================================================== */
 
     const posicionTexto =
+
         logoBase64
+
             ? 53
+
             : margenIzquierdo;
 
 
     doc.setFont(
+
         'helvetica',
+
         'bold'
+
     );
 
 
     doc.setFontSize(
+
         14
+
     );
 
 
     doc.setTextColor(
+
         255,
+
         255,
+
         255
+
     );
 
 
     doc.text(
+
         'CONTROL DE MANTENIMIENTOS',
+
         posicionTexto,
+
         15
+
     );
 
 
     doc.setFont(
+
         'helvetica',
+
         'normal'
+
     );
 
 
     doc.setFontSize(
+
         8
+
     );
 
 
     doc.setTextColor(
+
         220,
+
         220,
+
         220
+
     );
 
 
     doc.text(
+
         'Registro y seguimiento de mantenimiento de unidades',
+
         posicionTexto,
+
         22
+
     );
 
 
     doc.setFontSize(
+
         7.5
+
     );
 
 
     doc.text(
+
         'Documento generado desde el sistema de gestión de flota',
+
         posicionTexto,
+
         28
+
     );
 
 
     /* ========================================================
+
        LÍNEA DECORATIVA
+
     ======================================================== */
 
     doc.setDrawColor(
+
         255,
+
         255,
+
         255
+
     );
 
 
     doc.setLineWidth(
+
         0.4
+
     );
 
 
     doc.line(
+
         posicionTexto,
+
         31,
+
         anchoPagina - margenDerecho,
+
         31
+
     );
+
 }
 
 
 /* ============================================================
+
    RESUMEN DE FILTROS
+
 ============================================================ */
 
 function dibujarResumenFiltrosPDF({
 
     doc,
+
     resumenFiltros,
+
     cantidadRegistros,
+
     x,
+
     y,
+
     ancho
 
 }) {
 
     const alto =
+
         11;
 
 
     doc.setFillColor(
+
         246,
+
         246,
+
         246
+
     );
 
 
     doc.setDrawColor(
+
         220,
+
         220,
+
         220
+
     );
 
 
     doc.setLineWidth(
+
         0.25
+
     );
 
 
     doc.roundedRect(
+
         x,
+
         y,
+
         ancho,
+
         alto,
+
         2,
+
         2,
+
         'FD'
+
     );
 
 
     doc.setFont(
+
         'helvetica',
+
         'bold'
+
     );
 
 
     doc.setFontSize(
+
         7.5
+
     );
 
 
     doc.setTextColor(
+
         55,
+
         55,
+
         55
+
     );
 
 
     doc.text(
+
         'FILTROS:',
+
         x + 4,
+
         y + 7
+
     );
 
 
     doc.setFont(
+
         'helvetica',
+
         'normal'
+
     );
 
 
     const textoFiltros =
+
         resumenFiltros ||
+
         'Sin filtros aplicados';
 
 
     const anchoTexto =
+
         Math.max(
+
             50,
+
             ancho - 65
+
         );
 
 
     const textoAjustado =
+
         doc.splitTextToSize(
+
             textoFiltros,
+
             anchoTexto
+
         );
 
 
     doc.text(
+
         textoAjustado[0] ||
+
             '',
+
         x + 25,
+
         y + 7
+
     );
 
 
     doc.setFont(
+
         'helvetica',
+
         'bold'
+
     );
 
 
     doc.setTextColor(
+
         35,
+
         35,
+
         35
+
     );
 
 
     doc.text(
+
         `Total: ${cantidadRegistros}`,
+
         x + ancho - 4,
+
         y + 7,
+
         {
+
             align: 'right'
+
         }
+
     );
+
 }
 
 
 /* ============================================================
+
    OBTENER RESUMEN DE FILTROS
+
 ============================================================ */
 
 function obtenerResumenFiltrosPDF() {
@@ -6596,247 +6800,389 @@ function obtenerResumenFiltrosPDF() {
 
 
     /* ========================================================
+
        UNIDAD
+
     ======================================================== */
 
     if (
+
         DOM.filtroUnidad &&
+
         DOM.filtroUnidad.value
+
     ) {
 
         const valor =
+
             DOM.filtroUnidad.value;
 
 
         const unidad =
+
             STATE.unidades.find(
+
                 item =>
+
                     String(
+
                         item.idUnidad
+
                     ) ===
+
                     String(
+
                         valor
+
                     )
+
             );
 
 
         filtros.push(
+
             `Unidad: ${
+
                 unidad
+
                     ? obtenerNombreUnidad(
+
                         unidad
+
                     )
+
                     : valor
+
             }`
+
         );
+
     }
 
 
     /* ========================================================
+
        TIPO DE MANTENIMIENTO
+
     ======================================================== */
 
     if (
+
         DOM.filtroTipo &&
+
         DOM.filtroTipo.value
+
     ) {
 
         filtros.push(
+
             `Mantenimiento: ${
+
                 formatearTipo(
+
                     DOM.filtroTipo.value
+
                 )
+
             }`
+
         );
+
     }
 
 
     /* ========================================================
+
        TIPO DE MEDICIÓN
+
     ======================================================== */
 
     if (
+
         DOM.filtroMedicionTipo &&
+
         DOM.filtroMedicionTipo.value
+
     ) {
 
         filtros.push(
+
             `Medición: ${
+
                 DOM.filtroMedicionTipo.value
+
             }`
+
         );
+
     }
 
 
     /* ========================================================
+
        DESDE
+
     ======================================================== */
 
     if (
+
         DOM.filtroDesde &&
+
         DOM.filtroDesde.value
+
     ) {
 
         filtros.push(
+
             `Desde: ${
+
                 formatearFecha(
+
                     DOM.filtroDesde.value
+
                 )
+
             }`
+
         );
+
     }
 
 
     /* ========================================================
+
        HASTA
+
     ======================================================== */
 
     if (
+
         DOM.filtroHasta &&
+
         DOM.filtroHasta.value
+
     ) {
 
         filtros.push(
+
             `Hasta: ${
+
                 formatearFecha(
+
                     DOM.filtroHasta.value
+
                 )
+
             }`
+
         );
+
     }
 
 
     /* ========================================================
+
        BÚSQUEDA
+
     ======================================================== */
 
     if (
+
         DOM.filtroBuscar &&
+
         DOM.filtroBuscar.value.trim()
+
     ) {
 
         filtros.push(
+
             `Búsqueda: "${DOM.filtroBuscar.value.trim()}"`
+
         );
+
     }
 
 
     if (
+
         filtros.length === 0
+
     ) {
 
         return 'Sin filtros aplicados';
+
     }
 
 
     return filtros.join(
+
         '  |  '
+
     );
+
 }
 
 
 /* ============================================================
+
    PIE DE PÁGINA PDF
+
 ============================================================ */
 
 function dibujarPiePaginaPDF(
+
     doc,
+
     anchoPagina,
+
     altoPagina,
+
     numeroPagina
+
 ) {
 
     const margen =
+
         12;
 
 
     doc.setDrawColor(
+
         210,
+
         210,
+
         210
+
     );
 
 
     doc.setLineWidth(
+
         0.25
+
     );
 
 
     doc.line(
+
         margen,
+
         altoPagina - 12,
+
         anchoPagina - margen,
+
         altoPagina - 12
+
     );
 
 
     doc.setFont(
+
         'helvetica',
+
         'normal'
+
     );
 
 
     doc.setFontSize(
+
         7
+
     );
 
 
     doc.setTextColor(
+
         110,
+
         110,
+
         110
+
     );
 
 
     doc.text(
+
         'Bitácora de Mantenimientos',
+
         margen,
+
         altoPagina - 6
+
     );
 
 
     doc.text(
+
         `Página ${numeroPagina} de ${doc.getNumberOfPages()}`,
+
         anchoPagina - margen,
+
         altoPagina - 6,
+
         {
+
             align: 'right'
+
         }
+
     );
+
 }
 
 
 /* ============================================================
+
    FECHA PARA NOMBRE DE ARCHIVO
+
 ============================================================ */
 
 function obtenerFechaParaArchivo(
+
     fecha
+
 ) {
 
     const anio =
+
         fecha.getFullYear();
 
 
     const mes =
+
         String(
+
             fecha.getMonth() + 1
+
         ).padStart(
+
             2,
+
             '0'
+
         );
 
 
     const dia =
+
         String(
+
             fecha.getDate()
+
         ).padStart(
+
             2,
+
             '0'
+
         );
 
 
     return `${anio}-${mes}-${dia}`;
+
 }
 
 
@@ -7441,4 +7787,591 @@ function mostrarCargandoTabla() {
 
     `;
 
+}
+
+
+
+/* ============================================================
+   IMPRIMIR UNIDADES - TABLA MEMBRETADA
+   ============================================================ */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const btnImprimirUnidades =
+        document.getElementById("btnImprimirUnidades");
+
+    if (btnImprimirUnidades) {
+        btnImprimirUnidades.addEventListener(
+            "click",
+            imprimirUnidadesMembretadas
+        );
+    }
+
+});
+
+
+function imprimirUnidadesMembretadas() {
+
+    const tabla = document.querySelector(".units-table");
+
+    if (!tabla) {
+        alert("No se encontró la tabla de unidades.");
+        return;
+    }
+
+    const tbody = tabla.querySelector("tbody");
+
+    if (!tbody) {
+        alert("No hay información para imprimir.");
+        return;
+    }
+
+    /*
+     * Clonamos solamente la tabla.
+     * Así no modificamos la tabla original del modal.
+     */
+    const tablaClonada = tabla.cloneNode(true);
+
+    /*
+     * Eliminamos la columna ACCIONES.
+     */
+    tablaClonada
+        .querySelectorAll("tr")
+        .forEach(fila => {
+
+            if (fila.lastElementChild) {
+                fila.lastElementChild.remove();
+            }
+
+        });
+
+
+    /*
+     * Eliminamos la fila de "No hay unidades..."
+     * si está presente.
+     */
+    const filaVacia =
+        tablaClonada.querySelector("#emptyUnitsRow");
+
+    if (filaVacia) {
+        filaVacia.remove();
+    }
+
+
+    /*
+     * Fecha y hora de impresión.
+     */
+    const ahora = new Date();
+
+    const fecha = ahora.toLocaleDateString("es-HN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    });
+
+    const hora = ahora.toLocaleTimeString("es-HN", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+
+    /*
+     * Total de unidades.
+     */
+    const filasUnidades =
+        tbody.querySelectorAll("tr:not(#emptyUnitsRow)");
+
+    const totalUnidades = filasUnidades.length;
+
+
+    /*
+     * Intentamos obtener el logo de la aplicación.
+     *
+     * IMPORTANTE:
+     * Si tu logo tiene otro selector/ruta, puedes
+     * cambiarlo aquí.
+     */
+    let logoSrc = "";
+
+    const logoExistente =
+        document.querySelector(
+            ".topbar img, .navbar img, header img, img.logo"
+        );
+
+    if (logoExistente) {
+        logoSrc = logoExistente.src;
+    }
+
+
+    /*
+     * Creamos una ventana exclusivamente para impresión.
+     */
+    const ventana =
+        window.open(
+            "",
+            "_blank",
+            "width=1100,height=800"
+        );
+
+    if (!ventana) {
+        alert(
+            "El navegador bloqueó la ventana de impresión. " +
+            "Permite ventanas emergentes para este sitio."
+        );
+
+        return;
+    }
+
+
+    ventana.document.open();
+
+    ventana.document.write(`
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Unidades de la Flota</title>
+
+    <style>
+
+        @page {
+            size: letter landscape;
+            margin: 12mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            color: #1f2937;
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+        }
+
+        body {
+            padding: 0;
+        }
+
+        .documento {
+            width: 100%;
+        }
+
+        /* =====================================================
+           MEMBRETE
+           ===================================================== */
+
+        .membrete {
+            width: 100%;
+            border-bottom: 2px solid #1f4e79;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .membrete-contenido {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .membrete-logo {
+            width: 90px;
+            max-height: 70px;
+            object-fit: contain;
+        }
+
+        .membrete-centro {
+            flex: 1;
+            text-align: center;
+        }
+
+        .membrete-institucion {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            text-transform: uppercase;
+        }
+
+        .membrete-titulo {
+            margin: 4px 0 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1f4e79;
+            text-transform: uppercase;
+        }
+
+        .membrete-subtitulo {
+            margin: 4px 0 0;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .membrete-fecha {
+            width: 130px;
+            text-align: right;
+            font-size: 10px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+
+        /* =====================================================
+           RESUMEN
+           ===================================================== */
+
+        .resumen {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .resumen-titulo {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .resumen-total {
+            font-size: 11px;
+            color: #4b5563;
+        }
+
+
+        /* =====================================================
+           TABLA
+           ===================================================== */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        th {
+            background: #1f4e79 !important;
+            color: #ffffff !important;
+            border: 1px solid #1f4e79;
+            padding: 8px 7px;
+            font-size: 10px;
+            font-weight: 700;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        td {
+            border: 1px solid #d1d5db;
+            padding: 8px 7px;
+            font-size: 10px;
+            vertical-align: middle;
+            color: #1f2937;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        tbody tr:nth-child(even) td {
+            background: #f8fafc !important;
+        }
+
+
+        /* ANCHOS */
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 8%;
+            text-align: center;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 18%;
+        }
+
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 17%;
+        }
+
+        th:nth-child(4),
+        td:nth-child(4) {
+            width: 42%;
+        }
+
+        th:nth-child(5),
+        td:nth-child(5) {
+            width: 15%;
+            text-align: center;
+        }
+
+
+        /* =====================================================
+           ESTADO
+           ===================================================== */
+
+        .badge {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 700;
+            border: 1px solid;
+        }
+
+        .badge-activa {
+            background: #ecfdf3 !important;
+            color: #166534 !important;
+            border-color: #86efac !important;
+        }
+
+        .badge-inactiva {
+            background: #fef2f2 !important;
+            color: #991b1b !important;
+            border-color: #fca5a5 !important;
+        }
+
+
+        /* =====================================================
+           PIE
+           ===================================================== */
+
+        .pie {
+            margin-top: 16px;
+            padding-top: 7px;
+            border-top: 1px solid #d1d5db;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #6b7280;
+        }
+
+
+        @media print {
+
+            body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <div class="documento">
+
+        <!-- =================================================
+             MEMBRETE
+             ================================================= -->
+
+        <div class="membrete">
+
+            <div class="membrete-contenido">
+
+                ${
+                    logoSrc
+                        ? `
+                        <div>
+                            <img
+                                src="${logoSrc}"
+                                class="membrete-logo"
+                                alt="Logo institucional">
+                        </div>
+                        `
+                        : `
+                        <div style="width:90px;"></div>
+                        `
+                }
+
+                <div class="membrete-centro">
+
+                    <h1 class="membrete-institucion">
+                        CONTROL DE FLOTA
+                    </h1>
+
+                    <div class="membrete-titulo">
+                        UNIDADES DE LA FLOTA
+                    </div>
+
+                    <div class="membrete-subtitulo">
+                        Catálogo actual de unidades registradas
+                    </div>
+
+                </div>
+
+                <div class="membrete-fecha">
+
+                    <div>
+                        Fecha:
+                        <strong>${fecha}</strong>
+                    </div>
+
+                    <div>
+                        Hora:
+                        <strong>${hora}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             RESUMEN
+             ================================================= -->
+
+        <div class="resumen">
+
+            <div class="resumen-titulo">
+                Unidades registradas
+            </div>
+
+            <div class="resumen-total">
+                Total de unidades:
+                <strong>${totalUnidades}</strong>
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             TABLA
+             ================================================= -->
+
+        ${tablaClonada.outerHTML}
+
+
+        <!-- =================================================
+             PIE
+             ================================================= -->
+
+        <div class="pie">
+
+            <span>
+                Documento generado desde el sistema de
+                Control de Flota
+            </span>
+
+            <span>
+                Página impresa
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        /*
+         * Convertir los estados de la tabla original
+         * en badges para impresión.
+         */
+        document
+            .querySelectorAll("tbody tr")
+            .forEach(function (fila) {
+
+                const celdas = fila.querySelectorAll("td");
+
+                if (celdas.length >= 5) {
+
+                    const celdaEstado = celdas[4];
+
+                    const texto =
+                        celdaEstado.textContent
+                            .trim()
+                            .toLowerCase();
+
+                    if (
+                        texto.includes("activa")
+                        &&
+                        !texto.includes("inactiva")
+                    ) {
+
+                        celdaEstado.innerHTML =
+                            '<span class="badge badge-activa">' +
+                            'ACTIVA' +
+                            '</span>';
+
+                    } else if (
+                        texto.includes("inactiva")
+                    ) {
+
+                        celdaEstado.innerHTML =
+                            '<span class="badge badge-inactiva">' +
+                            'INACTIVA' +
+                            '</span>';
+
+                    }
+
+                }
+
+            });
+
+
+        /*
+         * Esperamos a que cargue el documento y
+         * abrimos automáticamente el diálogo de impresión.
+         */
+        window.onload = function () {
+
+            setTimeout(function () {
+
+                window.print();
+
+            }, 300);
+
+        };
+
+
+        /*
+         * Cerramos la ventana después de imprimir.
+         */
+        window.onafterprint = function () {
+
+            setTimeout(function () {
+
+                window.close();
+
+            }, 200);
+
+        };
+
+    <\/script>
+
+</body>
+
+</html>
+    `);
+
+    ventana.document.close();
 }
