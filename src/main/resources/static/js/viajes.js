@@ -26,7 +26,7 @@ let viajeSeleccionado = null;
  *=                 DOCUMENT READY
  *=========================================================*/
 
-$(document).ready(function () {
+$(document).ready(function() {
 
     console.log("========================================");
     console.log("VIAJES.JS INICIADO");
@@ -44,7 +44,7 @@ $(document).ready(function () {
      =              BOTÓN EXPORTAR PDF
      =====================================================*/
 
-    $("#btnExportarPDF").on("click", function () {
+    $("#btnExportarPDF").on("click", function() {
 
         if (typeof exportarAuditoriaPDF === "function") {
 
@@ -65,7 +65,7 @@ $(document).ready(function () {
      =              MODAL NUEVO / EDITAR
      =====================================================*/
 
-    $modalNuevoViaje.on("shown.bs.modal", function () {
+    $modalNuevoViaje.on("shown.bs.modal", function() {
 
         cargarConductores();
         cargarPlacas();
@@ -92,7 +92,7 @@ $(document).ready(function () {
      =              BUSCAR AUDITORÍA
      =====================================================*/
 
-    $("#btnBuscar").on("click", function () {
+    $("#btnBuscar").on("click", function() {
 
         aplicarFiltrosAuditoria();
 
@@ -103,7 +103,7 @@ $(document).ready(function () {
      =              LIMPIAR AUDITORÍA
      =====================================================*/
 
-    $("#btnLimpiar").on("click", function () {
+    $("#btnLimpiar").on("click", function() {
 
         $("#txtFechaInicio").val("");
         $("#txtFechaFin").val("");
@@ -121,7 +121,7 @@ $(document).ready(function () {
      =              ACTUALIZAR
      =====================================================*/
 
-    $("#btnActualizar").on("click", function () {
+    $("#btnActualizar").on("click", function() {
 
         cargarFiltrosAuditoria();
         cargarViajes();
@@ -140,7 +140,7 @@ $(document).ready(function () {
         "#cmbConductor, " +
         "#cmbEstadoODT, " +
         "#cmbEstadoFurgon"
-    ).on("change", function () {
+    ).on("change", function() {
 
         aplicarFiltrosAuditoria();
 
@@ -151,7 +151,7 @@ $(document).ready(function () {
      =              AGREGAR NOTA
      =====================================================*/
 
-    $(document).on("click", "#btnAgregarNota", function () {
+    $(document).on("click", "#btnAgregarNota", function() {
 
         if (!viajeSeleccionado) {
 
@@ -170,7 +170,7 @@ $(document).ready(function () {
      =              MODIFICAR NOTA
      =====================================================*/
 
-    $(document).on("click", "#btnModificarNota", function () {
+    $(document).on("click", "#btnModificarNota", function() {
 
         if (!viajeSeleccionado) {
 
@@ -189,7 +189,7 @@ $(document).ready(function () {
      =              VER NOTAS
      =====================================================*/
 
-    $(document).on("click", ".btn-ver-notas", function () {
+    $(document).on("click", ".btn-ver-notas", function() {
 
         const id = $(this).data("id");
 
@@ -212,7 +212,7 @@ $(document).ready(function () {
      =              FORMULARIO NOTA
      =====================================================*/
 
-    $(document).on("submit", "#formNotaViaje", function (e) {
+    $(document).on("submit", "#formNotaViaje", function(e) {
 
         e.preventDefault();
 
@@ -225,7 +225,7 @@ $(document).ready(function () {
      =              MODAL NUEVO VIAJE
      =====================================================*/
 
-    $("#modalNuevoViaje").on("hidden.bs.modal", function () {
+    $("#modalNuevoViaje").on("hidden.bs.modal", function() {
 
         /*
          * No limpiamos aquí porque también se utiliza
@@ -237,22 +237,25 @@ $(document).ready(function () {
 });
 
 
-/*=========================================================*
- *=              INICIALIZAR DATATABLE
- *=========================================================*/
+/* =========================================================
+   INICIALIZAR DATATABLE
+   ========================================================= */
 
 function inicializarTabla() {
 
     if (!$("#tblViajes").length) {
 
         console.error(
-            "ERROR: No existe la tabla #tblViajes en el HTML."
+            "ERROR: No existe #tblViajes en el HTML."
         );
 
         return;
-
     }
 
+
+    /* =====================================================
+       EVITAR DUPLICAR DATATABLE
+       ===================================================== */
 
     if ($.fn.DataTable.isDataTable("#tblViajes")) {
 
@@ -261,7 +264,6 @@ function inicializarTabla() {
         );
 
         return;
-
     }
 
 
@@ -270,11 +272,103 @@ function inicializarTabla() {
     );
 
 
-    $("#tblViajes").DataTable({
+    /* =====================================================
+       CONFIGURACIÓN DE PAGINACIÓN
+
+       IMPORTANTE:
+
+       numbers_length = 5
+
+       Hace que DataTables mantenga la paginación
+       compacta.
+
+       Ejemplo:
+
+       ‹ 1 2 3 4 5 ... 100 ›
+
+       En páginas intermedias:
+
+       ‹ 1 ... 48 49 50 51 52 ... 100 ›
+       ===================================================== */
+
+    if (
+        $.fn.dataTable.ext &&
+        $.fn.dataTable.ext.pager
+    ) {
+
+        $.fn.dataTable.ext.pager.numbers_length = 5;
+    }
+
+
+    /* =====================================================
+       CREAR DATATABLE
+       ===================================================== */
+
+    const tabla = $("#tblViajes").DataTable({
+
+        /* =================================================
+           CONFIGURACIÓN GENERAL
+           ================================================= */
+
+        autoWidth: false,
+
+        responsive: false,
+
+        processing: false,
+
+        stateSave: false,
+
+
+        /* =================================================
+           PAGINACIÓN
+           ================================================= */
+
+        paging: true,
+
+        pageLength: 40,
+
+        lengthChange: false,
+
+        pagingType: "full_numbers",
+
+
+        /* =================================================
+           ORDEN INICIAL
+
+           Columna 1 = FECHA
+
+           DESC = MÁS RECIENTE PRIMERO
+           ================================================= */
+
+        order: [
+            [1, "desc"]
+        ],
+
+
+        /* =================================================
+           BÚSQUEDA
+           ================================================= */
+
+        searching: true,
+
+
+        /* =================================================
+           ORDENAMIENTO
+           ================================================= */
+
+        ordering: true,
+
+
+        /* =================================================
+           IDIOMA
+           ================================================= */
 
         language: {
 
-            search: "Buscar:",
+            search: "",
+
+            searchPlaceholder:
+                "Buscar viaje, conductor, placa, ruta...",
 
             zeroRecords:
                 "No se encontraron viajes",
@@ -283,63 +377,185 @@ function inicializarTabla() {
                 "No hay viajes registrados",
 
             info:
-                "Mostrando _TOTAL_ registros",
+                "Mostrando _START_–_END_ de _TOTAL_ viajes",
 
             infoEmpty:
-                "Mostrando 0 registros",
+                "Mostrando 0 viajes",
 
             infoFiltered:
-                "(filtrado de _MAX_ registros)"
+                "(de _MAX_ viajes)",
 
+            paginate: {
+
+                first:
+                    '<i class="bi bi-chevron-double-left"></i>',
+
+                previous:
+                    '<i class="bi bi-chevron-left"></i>',
+
+                next:
+                    '<i class="bi bi-chevron-right"></i>',
+
+                last:
+                    '<i class="bi bi-chevron-double-right"></i>'
+            }
         },
 
 
-        /*
-         * Sin paginación.
-         */
+        /* =================================================
+           COLUMNAS
 
-        paging: false,
-
-        ordering: true,
-
-        searching: true,
-
-        responsive: true,
-
-        autoWidth: false,
-
-
-        /*
-         * =================================================
-         * COLUMNAS
-         *
-         * 14 = NOTAS OCULTAS
-         * 15 = ACCIONES
-         * =================================================
-         */
+           0  Número
+           1  Fecha
+           2  Conductor
+           3  Placa
+           4  Furgón
+           5  Origen
+           6  Destino
+           7  Salida
+           8  Llegada
+           9  Tiempo real
+           10 Tiempo máximo
+           11 Exceso
+           12 Estado ODT
+           13 Estado Furgón
+           14 Notas
+           15 Acciones
+           ================================================= */
 
         columnDefs: [
 
+            /* =============================================
+               NOTAS
+               ============================================= */
+
             {
                 targets: 14,
+
                 visible: false,
+
                 searchable: false,
+
                 orderable: false
             },
 
+
+            /* =============================================
+               ACCIONES
+               ============================================= */
+
             {
                 targets: 15,
+
                 orderable: false,
+
                 searchable: false
             }
+        ],
 
-        ]
 
+        /* =================================================
+           CALLBACK AL DIBUJAR TABLA
+           ================================================= */
+
+        drawCallback: function () {
+
+            const api = this.api();
+
+            const info = api.page.info();
+
+
+            /* =============================================
+               ACTUALIZAR CONTADOR EXTERNO
+               ============================================= */
+
+            if ($("#lblRegistros").length) {
+
+                $("#lblRegistros").text(
+                    info.recordsDisplay
+                );
+            }
+
+
+            /* =============================================
+               ANIMACIÓN DE FILAS
+               ============================================= */
+
+            $("#tblViajes tbody tr")
+                .css(
+                    "animation",
+                    "tableRowIn .18s ease both"
+                );
+        }
     });
 
+
+    /* =====================================================
+       MOVER EL BUSCADOR AL HEADER
+       ===================================================== */
+
+    const filter =
+        $("#tblViajes_wrapper .dataTables_filter");
+
+
+    const tableHeader =
+        $(".table-panel-header");
+
+
+    if (
+        filter.length &&
+        tableHeader.length
+    ) {
+
+        /* ================================================
+           EVITAR DUPLICAR BUSCADOR
+           ================================================ */
+
+        if (
+            !tableHeader.find(
+                ".table-search-container"
+            ).length
+        ) {
+
+            const searchContainer = $(
+                '<div class="table-search-container"></div>'
+            );
+
+
+            searchContainer.append(filter);
+
+
+            tableHeader.append(
+                searchContainer
+            );
+        }
+    }
+
+
+    /* =====================================================
+       ASEGURAR ORDEN POR FECHA
+       ===================================================== */
+
+    tabla
+        .order([1, "desc"])
+        .draw();
+
+
+    console.log(
+        "DataTable inicializada correctamente."
+    );
 }
 
 
+/* =========================================================
+   INICIALIZAR CUANDO EL DOCUMENTO ESTÉ LISTO
+   ========================================================= */
+
+$(document).ready(function () {
+
+    inicializarTabla();
+
+});
 /*=========================================================*
  *=                  CONDUCTORES
  *=========================================================*/
@@ -354,7 +570,7 @@ function cargarConductores() {
 
         dataType: "json",
 
-        success: function (conductores) {
+        success: function(conductores) {
 
             $cmbConductor.empty();
 
@@ -375,7 +591,7 @@ function cargarConductores() {
             }
 
 
-            conductores.forEach(function (conductor) {
+            conductores.forEach(function(conductor) {
 
                 const id =
                     conductor.id ??
@@ -405,7 +621,7 @@ function cargarConductores() {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error cargando conductores:",
@@ -434,7 +650,7 @@ function cargarPlacas() {
 
         dataType: "json",
 
-        success: function (camiones) {
+        success: function(camiones) {
 
             $("#listaPlacas").empty();
 
@@ -451,7 +667,7 @@ function cargarPlacas() {
             }
 
 
-            camiones.forEach(function (camion) {
+            camiones.forEach(function(camion) {
 
                 if (!camion.placa) {
 
@@ -471,7 +687,7 @@ function cargarPlacas() {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error cargando placas:",
@@ -500,7 +716,7 @@ function cargarRutas() {
 
         dataType: "json",
 
-        success: function (rutas) {
+        success: function(rutas) {
 
             $cmbDestino.empty();
 
@@ -521,7 +737,7 @@ function cargarRutas() {
             }
 
 
-            rutas.forEach(function (ruta) {
+            rutas.forEach(function(ruta) {
 
                 if (!ruta.destino) {
 
@@ -546,7 +762,7 @@ function cargarRutas() {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error cargando rutas:",
@@ -579,7 +795,7 @@ function cargarFiltrosAuditoria() {
 
         dataType: "json",
 
-        success: function (conductores) {
+        success: function(conductores) {
 
             const $filtroConductor =
                 $("#cmbConductor");
@@ -604,7 +820,7 @@ function cargarFiltrosAuditoria() {
             }
 
 
-            conductores.forEach(function (conductor) {
+            conductores.forEach(function(conductor) {
 
                 const nombreCompleto =
                     (
@@ -635,7 +851,7 @@ function cargarFiltrosAuditoria() {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error cargando conductores para auditoría:",
@@ -659,7 +875,7 @@ function cargarFiltrosAuditoria() {
 
         dataType: "json",
 
-        success: function (rutas) {
+        success: function(rutas) {
 
             const $filtroRuta =
                 $("#cmbRuta");
@@ -684,7 +900,7 @@ function cargarFiltrosAuditoria() {
             }
 
 
-            rutas.forEach(function (ruta) {
+            rutas.forEach(function(ruta) {
 
                 if (!ruta.destino) {
 
@@ -714,7 +930,7 @@ function cargarFiltrosAuditoria() {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error cargando rutas para auditoría:",
@@ -853,7 +1069,7 @@ function normalizarFecha(fecha) {
 
 $.fn.dataTable.ext.search.push(
 
-    function (
+    function(
         settings,
         data,
         dataIndex
@@ -1109,7 +1325,7 @@ function aplicarFiltrosAuditoria() {
  *=                  CAMBIO DESTINO
  *=========================================================*/
 
-$cmbDestino.on("change", function () {
+$cmbDestino.on("change", function() {
 
     const odt =
         $(this)
@@ -1312,7 +1528,7 @@ function obtenerEstadoFurgon(furgon) {
 $(document).on(
     "click",
     ".btn-editar-viaje",
-    function () {
+    function() {
 
         const id =
             $(this).data("id");
@@ -1373,7 +1589,7 @@ $(document).on(
 $(document).on(
     "click",
     "#btnModificarInformacion",
-    function () {
+    function() {
 
         if (!viajeSeleccionado) {
 
@@ -1445,7 +1661,7 @@ function cargarViajeParaEditar(id) {
 
         dataType: "json",
 
-        success: function (viajes) {
+        success: function(viajes) {
 
             if (!Array.isArray(viajes)) {
 
@@ -1459,7 +1675,7 @@ function cargarViajeParaEditar(id) {
 
 
             const viaje =
-                viajes.find(function (item) {
+                viajes.find(function(item) {
 
                     return String(item.id) ===
                         String(id);
@@ -1484,7 +1700,7 @@ function cargarViajeParaEditar(id) {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error obteniendo viaje:",
@@ -1555,7 +1771,7 @@ function cargarDatosViajeEnFormulario(viaje) {
 
 
     $("#conductor option").each(
-        function () {
+        function() {
 
             const texto =
                 $(this)
@@ -1857,7 +2073,7 @@ function obtenerHora(valor) {
 
 $("#formNuevoViaje").on(
     "submit",
-    function (e) {
+    function(e) {
 
         e.preventDefault();
 
@@ -2085,7 +2301,7 @@ $("#formNuevoViaje").on(
                 JSON.stringify(viaje),
 
             success:
-                function (response) {
+                function(response) {
 
                     console.log(
                         "Respuesta servidor:",
@@ -2153,7 +2369,7 @@ $("#formNuevoViaje").on(
 
 
                     setTimeout(
-                        function () {
+                        function() {
 
                             actualizarDashboard();
 
@@ -2176,7 +2392,7 @@ $("#formNuevoViaje").on(
 
 
             error:
-                function (xhr) {
+                function(xhr) {
 
                     console.error(
                         "ERROR GUARDANDO VIAJE"
@@ -2269,7 +2485,7 @@ function abrirModalNota(modificar) {
 
         dataType: "json",
 
-        success: function (viajes) {
+        success: function(viajes) {
 
             if (!Array.isArray(viajes)) {
 
@@ -2283,7 +2499,7 @@ function abrirModalNota(modificar) {
 
 
             const viaje =
-                viajes.find(function (item) {
+                viajes.find(function(item) {
 
                     return String(item.id) ===
                         String(viajeSeleccionado);
@@ -2359,7 +2575,7 @@ function abrirModalNota(modificar) {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error obteniendo viaje para nota:",
@@ -2425,7 +2641,7 @@ function guardarNotaViaje() {
 
         dataType: "json",
 
-        success: function (viajes) {
+        success: function(viajes) {
 
             if (!Array.isArray(viajes)) {
 
@@ -2439,7 +2655,7 @@ function guardarNotaViaje() {
 
 
             const viaje =
-                viajes.find(function (item) {
+                viajes.find(function(item) {
 
                     return String(item.id) ===
                         String(idViaje);
@@ -2484,7 +2700,7 @@ function guardarNotaViaje() {
                     JSON.stringify(viaje),
 
                 success:
-                    function (response) {
+                    function(response) {
 
                         console.log(
                             "Nota guardada:",
@@ -2530,7 +2746,7 @@ function guardarNotaViaje() {
 
 
                 error:
-                    function (xhr) {
+                    function(xhr) {
 
                         console.error(
                             "Error guardando nota:",
@@ -2588,7 +2804,7 @@ function guardarNotaViaje() {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error obteniendo viaje:",
@@ -2622,7 +2838,7 @@ function verNotasViaje(id) {
 
         dataType: "json",
 
-        success: function (viajes) {
+        success: function(viajes) {
 
             if (!Array.isArray(viajes)) {
 
@@ -2636,7 +2852,7 @@ function verNotasViaje(id) {
 
 
             const viaje =
-                viajes.find(function (item) {
+                viajes.find(function(item) {
 
                     return String(item.id) ===
                         String(id);
@@ -2659,7 +2875,7 @@ function verNotasViaje(id) {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error cargando notas:",
@@ -2868,10 +3084,9 @@ function mostrarModalNotas(viaje) {
                             <div
                                 class="p-3 bg-light rounded">
 
-                                ${
-                                    nota
-                                        ? escapeHtml(nota)
-                                        : `
+                                ${nota
+            ? escapeHtml(nota)
+            : `
                                             <span
                                                 class="text-muted">
 
@@ -2880,7 +3095,7 @@ function mostrarModalNotas(viaje) {
 
                                             </span>
                                         `
-                                }
+        }
 
                             </div>
 
@@ -2906,9 +3121,8 @@ function mostrarModalNotas(viaje) {
                         </button>
 
 
-                        ${
-                            nota
-                            ? `
+                        ${nota
+            ? `
 
                                 <button
                                     type="button"
@@ -2924,8 +3138,8 @@ function mostrarModalNotas(viaje) {
                                 </button>
 
                               `
-                            : ""
-                        }
+            : ""
+        }
 
                     </div>
 
@@ -2960,7 +3174,7 @@ function mostrarModalNotas(viaje) {
 
     $(elemento).on(
         "hidden.bs.modal",
-        function () {
+        function() {
 
             $(this).remove();
 
@@ -2995,7 +3209,7 @@ function eliminarNota(id) {
 
         dataType: "json",
 
-        success: function (viajes) {
+        success: function(viajes) {
 
             if (!Array.isArray(viajes)) {
 
@@ -3009,7 +3223,7 @@ function eliminarNota(id) {
 
 
             const viaje =
-                viajes.find(function (item) {
+                viajes.find(function(item) {
 
                     return String(item.id) ===
                         String(id);
@@ -3047,7 +3261,7 @@ function eliminarNota(id) {
                     JSON.stringify(viaje),
 
                 success:
-                    function () {
+                    function() {
 
                         const elemento =
                             document.getElementById(
@@ -3078,7 +3292,7 @@ function eliminarNota(id) {
                     },
 
                 error:
-                    function (xhr) {
+                    function(xhr) {
 
                         console.error(
                             "Error eliminando nota:",
@@ -3097,7 +3311,7 @@ function eliminarNota(id) {
 
         },
 
-        error: function (xhr) {
+        error: function(xhr) {
 
             console.error(
                 "Error obteniendo viaje:",
@@ -3185,7 +3399,7 @@ function agregarFila(viaje) {
     const tiempoExcedido =
 
         viaje.tiempoExcedido !== null &&
-        viaje.tiempoExcedido !== undefined
+            viaje.tiempoExcedido !== undefined
 
             ?
 
@@ -3463,7 +3677,7 @@ function actualizarDashboard() {
     let furgonIncumplidos = 0;
 
 
-    filasFiltradas.every(function () {
+    filasFiltradas.every(function() {
 
         const fila =
             this.data();
@@ -3652,7 +3866,7 @@ function cargarViajes() {
         dataType: "json",
 
         success:
-            function (viajes) {
+            function(viajes) {
 
                 console.log(
                     "Respuesta /viajes/lista:",
@@ -3695,7 +3909,7 @@ function cargarViajes() {
 
 
                 viajes.forEach(
-                    function (viaje) {
+                    function(viaje) {
 
                         agregarFila(
                             viaje
@@ -3719,7 +3933,7 @@ function cargarViajes() {
 
 
         error:
-            function (xhr) {
+            function(xhr) {
 
                 console.error(
                     "========================================"
@@ -3782,7 +3996,7 @@ function eliminarViaje(id) {
             "DELETE",
 
         success:
-            function () {
+            function() {
 
                 cargarViajes();
 
@@ -3794,7 +4008,7 @@ function eliminarViaje(id) {
             },
 
         error:
-            function (xhr) {
+            function(xhr) {
 
                 console.error(
                     "Error eliminando:",
@@ -3857,7 +4071,7 @@ const PDF_VIAJES_CONFIG = {
  * FUNCIÓN PÚBLICA
  * ========================================================= */
 
-window.exportarAuditoriaPDF = async function () {
+window.exportarAuditoriaPDF = async function() {
 
     try {
 
@@ -4140,7 +4354,7 @@ function obtenerDatosViajesPDF() {
 
     tabla.rows({
         search: "applied"
-    }).every(function () {
+    }).every(function() {
 
         const fila =
             this.data();
@@ -4283,14 +4497,14 @@ function obtenerDatosViajesPDF() {
                 obtenerTextoPDF(
                     fila[12]
                 )
-                .toUpperCase(),
+                    .toUpperCase(),
 
 
             estadoFurgon:
                 obtenerTextoPDF(
                     fila[13]
                 )
-                .toUpperCase(),
+                    .toUpperCase(),
 
 
             /* ---------------------------------------------
@@ -4327,7 +4541,7 @@ function obtenerDatosViajesPDF() {
     console.log(
         "Viajes con notas:",
         resultado.filter(
-            function (viaje) {
+            function(viaje) {
 
                 return obtenerTextoPDF(
                     viaje.notas
@@ -4394,7 +4608,7 @@ function obtenerViajesConNotasPDF(
 
 
     return datos.filter(
-        function (viaje) {
+        function(viaje) {
 
             /* ---------------------------------------------
              * DEBE TENER NOTA
@@ -4708,7 +4922,7 @@ function calcularEstadisticasPDF(datos) {
 
 
     datos.forEach(
-        function (viaje) {
+        function(viaje) {
 
             /* -----------------------------------------
              * TIEMPO TOTAL DE RECORRIDO
@@ -4987,7 +5201,7 @@ function calcularEstadisticasPDF(datos) {
     const rutasArray =
         Object.keys(rutas)
             .map(
-                function (nombre) {
+                function(nombre) {
 
                     return {
 
@@ -5010,7 +5224,7 @@ function calcularEstadisticasPDF(datos) {
                 }
             )
             .sort(
-                function (a, b) {
+                function(a, b) {
 
                     return (
                         b.total -
@@ -5024,7 +5238,7 @@ function calcularEstadisticasPDF(datos) {
     const furgonesArray =
         Object.keys(furgones)
             .map(
-                function (nombre) {
+                function(nombre) {
 
                     return {
 
@@ -5044,7 +5258,7 @@ function calcularEstadisticasPDF(datos) {
                 }
             )
             .sort(
-                function (a, b) {
+                function(a, b) {
 
                     return (
                         b.total -
@@ -5058,7 +5272,7 @@ function calcularEstadisticasPDF(datos) {
     const conductoresArray =
         Object.keys(conductores)
             .map(
-                function (nombre) {
+                function(nombre) {
 
                     return {
 
@@ -5078,7 +5292,7 @@ function calcularEstadisticasPDF(datos) {
                 }
             )
             .sort(
-                function (a, b) {
+                function(a, b) {
 
                     return (
                         b.incumplidos -
@@ -5756,7 +5970,7 @@ function dibujarPaginaResumenPDF(
 
 
     filtrosPDF.forEach(
-        function (filtro, indice) {
+        function(filtro, indice) {
 
             const fila =
                 Math.floor(
@@ -5980,7 +6194,7 @@ function dibujarPaginaResumenPDF(
 
 
     tarjetas.forEach(
-        function (tarjeta, indice) {
+        function(tarjeta, indice) {
 
             const fila =
                 Math.floor(
@@ -6977,7 +7191,7 @@ function dibujarPaginaAnalisisPDF(
 
 
     indicadoresTiempo.forEach(
-        function (item, indice) {
+        function(item, indice) {
 
             const x =
                 PDF_VIAJES_CONFIG.margen +
@@ -7157,7 +7371,7 @@ function dibujarPaginaAnalisisPDF(
 
         body:
             rutas.map(
-                function (ruta) {
+                function(ruta) {
 
                     const porcentajeRuta =
                         ruta.total > 0
@@ -7284,7 +7498,7 @@ function dibujarPaginaAnalisisPDF(
         },
 
         didParseCell:
-            function (data) {
+            function(data) {
 
                 if (
                     data.section !==
@@ -7417,7 +7631,7 @@ function dibujarPaginaAnalisisPDF(
 
         body:
             furgones.map(
-                function (item) {
+                function(item) {
 
                     const porcentajeFurgon =
                         item.total > 0
@@ -7555,7 +7769,7 @@ function dibujarDetalleViajesPDF(
 
     const filas =
         datos.map(
-            function (viaje) {
+            function(viaje) {
 
                 return [
 
@@ -7816,7 +8030,7 @@ function dibujarDetalleViajesPDF(
         },
 
         didParseCell:
-            function (data) {
+            function(data) {
 
                 if (
                     data.section !==
@@ -7952,7 +8166,7 @@ function dibujarDetalleViajesPDF(
             },
 
         didDrawPage:
-            function (data) {
+            function(data) {
 
                 if (
                     data.pageNumber > 1
@@ -8083,7 +8297,7 @@ function dibujarNotasViajesPDF(
 
     const filas =
         viajesConNotas.map(
-            function (viaje, indice) {
+            function(viaje, indice) {
 
                 const ruta =
                     (
@@ -8341,7 +8555,7 @@ function dibujarNotasViajesPDF(
         },
 
         didParseCell:
-            function (data) {
+            function(data) {
 
                 if (
                     data.section !==
@@ -8506,7 +8720,7 @@ function dibujarNotasViajesPDF(
             },
 
         didDrawPage:
-            function (data) {
+            function(data) {
 
                 if (
                     data.pageNumber > 1

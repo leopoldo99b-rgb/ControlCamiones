@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Movimientos de Empleados</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link
+	href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+	rel="stylesheet">
+
+<!-- Font Awesome -->
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<!-- CSS -->
+<link rel="stylesheet" th:href="@{/css/movimientos.css}"
+	href="/css/movimientos.css">
+</head>
+
+<body>
+
+	<!-- =========================================================
+     TOPBAR
+========================================================= -->
+
+	<header class="topbar">
+
+		<div class="logo">
+
+			<div class="logo-icon">
+				<i class="fa-solid fa-money-bill-transfer"></i>
+			</div>
+
+			<div class="logo-text">
+				<span>Movimientos de Empleados</span> <small>Bonos,
+					deducciones y anticipos</small>
+			</div>
+
+		</div>
+
+		<a th:href="@{/empleados}" href="/empleados" class="btn-back"> <i
+			class="fa-solid fa-arrow-left"></i> <span>Volver a Empleados</span>
+
+		</a>
+
+	</header>
+
+
+	<!-- =========================================================
+     CONTENIDO
+========================================================= -->
+
+	<main class="container">
+
+
+		<!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+		<section class="page-header">
+
+			<div>
+
+				<div class="breadcrumb">
+
+					<i class="fa-solid fa-house"></i> <i
+						class="fa-solid fa-chevron-right"></i> <span>Empleados</span> <i
+						class="fa-solid fa-chevron-right"></i> <span>Movimientos</span>
+
+				</div>
+
+				<h1>Movimientos de empleados</h1>
+
+				<p>Registra y administra bonos, deducciones y anticipos
+					asociados a cada empleado.</p>
+
+			</div>
+
+		</section>
+
+
+		<!-- =====================================================
+         ESTADÍSTICAS
+    ====================================================== -->
+
+		<section class="stats-grid">
+
+			<!-- BONOS -->
+
+			<div class="stat-card">
+
+				<div class="stat-icon green">
+
+					<i class="fa-solid fa-circle-plus"></i>
+
+				</div>
+
+				<div>
+
+					<span class="stat-label"> Bonos registrados </span> <strong
+						id="totalBonos"> L 0.00 </strong>
+
+				</div>
+
+			</div>
+
+
+			<!-- DEDUCCIONES -->
+
+			<div class="stat-card">
+
+				<div class="stat-icon red">
+
+					<i class="fa-solid fa-circle-minus"></i>
+
+				</div>
+
+				<div>
+
+					<span class="stat-label"> Deducciones </span> <strong
+						id="totalDeducciones"> L 0.00 </strong>
+
+				</div>
+
+			</div>
+
+
+			<!-- ANTICIPOS -->
+
+			<div class="stat-card">
+
+				<div class="stat-icon orange">
+
+					<i class="fa-solid fa-hand-holding-dollar"></i>
+
+				</div>
+
+				<div>
+
+					<span class="stat-label"> Anticipos </span> <strong
+						id="totalAnticipos"> L 0.00 </strong>
+
+				</div>
+
+			</div>
+
+
+			<!-- MOVIMIENTOS -->
+
+			<div class="stat-card">
+
+				<div class="stat-icon purple">
+
+					<i class="fa-solid fa-list-check"></i>
+
+				</div>
+
+				<div>
+
+					<span class="stat-label"> Movimientos </span> <strong
+						id="totalMovimientos"> 0 </strong>
+
+				</div>
+
+			</div>
+
+		</section>
+
+
+		<!-- =====================================================
+         PANEL REGISTRAR
+    ====================================================== -->
+
+		<section class="movement-panel">
+
+
+			<!-- HEADER -->
+
+			<div class="panel-header">
+
+				<div class="panel-title">
+
+					<div class="panel-icon">
+
+						<i class="fa-solid fa-file-circle-plus"></i>
+
+					</div>
+
+					<div>
+
+						<h2>Registrar movimiento</h2>
+
+						<p>Selecciona el empleado y registra el movimiento
+							correspondiente.</p>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+			<!-- FORMULARIO -->
+
+			<form id="movimientoForm" onsubmit="guardarMovimiento(event)">
+
+				<input type="hidden" id="movimientoId">
+
+
+				<!-- =================================================
+                 EMPLEADO
+            ================================================== -->
+
+				<div class="employee-selector-section">
+
+					<div class="section-heading">
+
+						<div class="section-heading-icon blue">
+
+							<i class="fa-solid fa-user"></i>
+
+						</div>
+
+						<div>
+
+							<h3>Empleado</h3>
+
+							<p>Selecciona a quién se aplicará el movimiento.</p>
+
+						</div>
+
+					</div>
+
+
+					<div class="employee-search-wrapper">
+
+						<label for="buscarEmpleadoMovimiento"> Empleado <span>*</span>
+
+						</label>
+
+
+						<div class="employee-search">
+
+							<i class="fa-solid fa-magnifying-glass"></i> <input type="text"
+								id="buscarEmpleadoMovimiento"
+								placeholder="Buscar por nombre, identidad o ID..."
+								autocomplete="off">
+
+						</div>
+
+
+						<!-- RESULTADOS -->
+
+						<div id="employeeResults" class="employee-results hidden"></div>
+
+
+						<!-- EMPLEADO SELECCIONADO -->
+
+						<div id="selectedEmployee" class="selected-employee hidden">
+
+							<div class="selected-avatar" id="selectedEmployeeAvatar">
+
+								JP</div>
+
+							<div class="selected-info">
+
+								<strong id="selectedEmployeeName"> Juan Pérez </strong> <span
+									id="selectedEmployeeDetails"> Administrador ·
+									0801-1990-12345 </span>
+
+							</div>
+
+							<button type="button" class="remove-employee"
+								onclick="quitarEmpleado()" title="Cambiar empleado">
+
+								<i class="fa-solid fa-xmark"></i>
+
+							</button>
+
+						</div>
+
+						<input type="hidden" id="empleadoSeleccionadoId" required>
+
+					</div>
+
+				</div>
+
+
+				<!-- =================================================
+                 DATOS DEL MOVIMIENTO
+            ================================================== -->
+
+				<div class="movement-form-section">
+
+					<div class="section-heading">
+
+						<div class="section-heading-icon purple">
+
+							<i class="fa-solid fa-money-bill-transfer"></i>
+
+						</div>
+
+						<div>
+
+							<h3>Información del movimiento</h3>
+
+							<p>Define el tipo, monto y motivo del movimiento.</p>
+
+						</div>
+
+					</div>
+
+
+					<div class="form-grid">
+
+
+						<!-- TIPO -->
+
+						<div class="form-group">
+
+							<label for="tipoMovimiento"> Tipo de movimiento <span>*</span>
+
+							</label>
+
+							<div class="input-icon">
+
+								<i class="fa-solid fa-list"></i> <select id="tipoMovimiento"
+									required>
+
+									<option value="">Seleccionar tipo</option>
+
+									<option value="BONO">Bono</option>
+
+									<option value="DEDUCCION">Deducción</option>
+
+									<option value="ANTICIPO">Anticipo</option>
+
+								</select>
+
+							</div>
+
+						</div>
+
+
+						<!-- MONTO -->
+
+						<div class="form-group">
+
+							<label for="montoMovimiento"> Monto <span>*</span>
+
+							</label>
+
+							<div class="input-money">
+
+								<span>L</span> <input type="number" id="montoMovimiento" min="0"
+									step="0.01" placeholder="0.00" required>
+
+							</div>
+
+						</div>
+
+
+						<!-- FECHA -->
+
+						<div class="form-group">
+
+							<label for="fechaMovimiento"> Fecha <span>*</span>
+
+							</label>
+
+							<div class="input-icon">
+
+								<i class="fa-solid fa-calendar-days"></i> <input type="date"
+									id="fechaMovimiento" required>
+
+							</div>
+
+						</div>
+
+
+						<!-- DESCRIPCIÓN -->
+
+						<div class="form-group full-width">
+
+							<label for="descripcionMovimiento"> Descripción <small>
+									Opcional </small>
+
+							</label>
+
+							<div class="textarea-icon">
+
+								<i class="fa-solid fa-note-sticky"></i>
+
+								<textarea id="descripcionMovimiento" maxlength="500"
+									placeholder="Describe el motivo del movimiento..."></textarea>
+
+							</div>
+
+							<div class="character-counter">
+
+								<span id="descripcionCounter"> 0 </span> / 500
+
+							</div>
+
+						</div>
+
+					</div>
+
+				</div>
+
+
+				<!-- =================================================
+                 PREVISUALIZACIÓN
+            ================================================== -->
+
+				<div id="movementPreview" class="movement-preview hidden">
+
+					<div class="preview-icon">
+
+						<i id="previewIcon" class="fa-solid fa-money-bill-wave"></i>
+
+					</div>
+
+					<div class="preview-info">
+
+						<span> Movimiento a registrar </span> <strong id="previewText">
+							Bono · L 0.00 </strong> <small id="previewEmployee"> Sin empleado
+							seleccionado </small>
+
+					</div>
+
+				</div>
+
+
+				<!-- =================================================
+                 FOOTER
+            ================================================== -->
+
+				<div class="form-footer">
+
+					<button type="button" class="btn-secondary"
+						onclick="limpiarFormulario()">
+
+						<i class="fa-solid fa-rotate-left"></i> Limpiar
+
+					</button>
+
+
+					<button type="submit" class="btn-primary">
+
+						<i class="fa-solid fa-floppy-disk"></i> <span id="btnGuardarTexto">
+							Registrar movimiento </span>
+
+					</button>
+
+				</div>
+
+			</form>
+
+		</section>
+
+
+		<!-- =====================================================
+         HISTORIAL
+    ====================================================== -->
+
+		<section class="table-panel">
+
+
+			<!-- TOOLBAR -->
+			<div class="table-toolbar">
+
+				<!-- TÍTULO -->
+				<div class="toolbar-title">
+
+					<div class="toolbar-icon">
+						<i class="fa-solid fa-clock-rotate-left"></i>
+					</div>
+
+					<div>
+						<h2>Historial de movimientos</h2>
+						<p>Consulta los movimientos registrados por empleado.</p>
+					</div>
+
+				</div>
+
+
+				<!-- FILTROS Y ACCIONES -->
+				<div class="toolbar-actions">
+
+					<!-- BUSCAR -->
+					<div class="search-box">
+
+						<i class="fa-solid fa-magnifying-glass"></i> <input type="search"
+							id="buscarMovimiento" placeholder="Buscar movimiento..."
+							autocomplete="off">
+
+					</div>
+
+
+					<!-- EMPLEADO -->
+					<select id="filtroEmpleado" class="filter-select">
+						<option value="">Todos los empleados</option>
+					</select>
+
+
+					<!-- TIPO -->
+					<select id="filtroTipo" class="filter-select">
+						<option value="">Todos los tipos</option>
+						<option value="BONO">Bonos</option>
+						<option value="DEDUCCION">Deducciones</option>
+						<option value="ANTICIPO">Anticipos</option>
+					</select>
+
+
+					<!-- IMPRIMIR -->
+					<button type="button" class="btn-print"
+						onclick="imprimirMovimientos()">
+						<i class="fa-solid fa-print"></i> <span>Imprimir</span>
+					</button>
+
+				</div>
+
+			</div>
+			<!-- FIN DE TABLE-TOOLBAR -->
+
+
+			<!-- =====================================================
+     TABLA
+====================================================== -->
+
+			<div class="table-container">
+
+				<table>
+
+					<thead>
+						<tr>
+							<th>Fecha</th>
+							<th>Empleado</th>
+							<th>Tipo</th>
+							<th>Descripción</th>
+							<th>Monto</th>
+							<th>Acciones</th>
+						</tr>
+					</thead>
+
+					<tbody id="movimientosTableBody">
+					</tbody>
+
+				</table>
+
+
+				<!-- VACÍO -->
+				<div id="emptyState" class="empty-state hidden">
+
+					<div class="empty-icon">
+						<i class="fa-solid fa-file-circle-xmark"></i>
+					</div>
+
+					<h3>No hay movimientos</h3>
+
+					<p>Todavía no se han registrado movimientos para los filtros
+						seleccionados.</p>
+
+				</div>
+
+			</div>
+
+		</section>
+
+	</main>
+
+
+	<!-- =========================================================
+     MODAL ELIMINAR
+========================================================= -->
+
+	<div id="deleteModal" class="modal-overlay hidden">
+
+		<div class="delete-modal">
+
+			<div class="delete-icon">
+
+				<i class="fa-solid fa-trash"></i>
+
+			</div>
+
+			<h2>¿Eliminar movimiento?</h2>
+
+			<p>
+
+				Estás a punto de eliminar este movimiento. <strong
+					id="deleteMovementInfo"> - </strong>
+
+			</p>
+
+			<div class="delete-warning">
+
+				<i class="fa-solid fa-triangle-exclamation"></i> <span> Esta
+					acción no se puede deshacer. </span>
+
+			</div>
+
+			<div class="delete-actions">
+
+				<button type="button" class="btn-secondary"
+					onclick="cerrarDeleteModal()">Cancelar</button>
+
+				<button type="button" class="btn-danger"
+					onclick="confirmarEliminarMovimiento()">
+
+					<i class="fa-solid fa-trash"></i> Sí, eliminar
+
+				</button>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+	<!-- =========================================================
+     MODAL VER MOVIMIENTO
+========================================================= -->
+
+	<div id="viewMovementModal" class="modal-overlay hidden">
+
+		<div class="view-movement-modal">
+
+			<!-- HEADER -->
+			<div class="view-modal-header">
+
+				<div class="view-modal-title">
+
+					<div class="view-modal-icon">
+						<i class="fa-solid fa-file-invoice-dollar"></i>
+					</div>
+
+					<div>
+						<h2>Detalle del movimiento</h2>
+						<p>Información completa del movimiento registrado.</p>
+					</div>
+
+				</div>
+
+				<button type="button" class="modal-close"
+					onclick="cerrarViewMovementModal()" title="Cerrar">
+
+					<i class="fa-solid fa-xmark"></i>
+
+				</button>
+
+			</div>
+
+
+			<!-- CONTENIDO -->
+			<div class="view-modal-body">
+
+				<!-- EMPLEADO -->
+				<div class="detail-employee">
+
+					<div class="detail-avatar" id="viewEmployeeAvatar">JP</div>
+
+					<div class="detail-employee-info">
+
+						<span>Empleado</span> <strong id="viewEmployeeName"> Juan
+							Pérez </strong> <small id="viewEmployeeDetails"> Administrador ·
+							0801-1990-12345 </small>
+
+					</div>
+
+				</div>
+
+
+				<!-- INFORMACIÓN -->
+				<div class="detail-grid">
+
+					<!-- FECHA -->
+					<div class="detail-item">
+
+						<span class="detail-label"> <i
+							class="fa-solid fa-calendar-days"></i> Fecha
+						</span> <strong id="viewMovementDate"> 00/00/0000 </strong>
+
+					</div>
+
+
+					<!-- TIPO -->
+					<div class="detail-item">
+
+						<span class="detail-label"> <i class="fa-solid fa-tag"></i>
+							Tipo de movimiento
+						</span> <strong id="viewMovementType" class="movement-badge">
+							Bono </strong>
+
+					</div>
+
+
+					<!-- MONTO -->
+					<div class="detail-item">
+
+						<span class="detail-label"> <i
+							class="fa-solid fa-money-bill-wave"></i> Monto
+						</span> <strong id="viewMovementAmount" class="detail-amount"> L
+							0.00 </strong>
+
+					</div>
+
+				</div>
+
+
+				<!-- DESCRIPCIÓN -->
+				<div class="detail-description">
+
+					<div class="detail-description-header">
+
+						<span class="detail-label"> <i
+							class="fa-solid fa-align-left"></i> Descripción
+						</span>
+
+					</div>
+
+					<div id="viewMovementDescription" class="description-content">
+
+						Sin descripción registrada.</div>
+
+				</div>
+
+			</div>
+
+
+			<!-- FOOTER -->
+			<div class="view-modal-footer">
+
+				<button type="button" class="btn-secondary"
+					onclick="cerrarViewMovementModal()">
+
+					<i class="fa-solid fa-xmark"></i> Cerrar
+
+				</button>
+
+			</div>
+
+		</div>
+
+	</div>
+
+	<!-- =========================================================
+     TOAST
+========================================================= -->
+
+	<div id="toastContainer" class="toast-container"></div>
+
+
+	<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+	<script th:src="@{/js/movimientos.js}" src="/js/movimientos.js">
+		
+	</script>
+
+</body>
+</html>

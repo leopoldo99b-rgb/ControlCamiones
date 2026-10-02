@@ -3,33 +3,29 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Planillas | Sistema de Planillas</title>
-
-
-    <!-- Bootstrap -->
-
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet">
+<title>Planillas | Sistema de Planillas</title>
 
 
-    <!-- Bootstrap Icons -->
+<!-- Bootstrap -->
 
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+	rel="stylesheet">
 
 
-    <!-- CSS propio -->
+<!-- Bootstrap Icons -->
 
-    <link
-        rel="stylesheet"
-        th:href="@{/css/planillas.css}">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+
+<!-- CSS propio -->
+
+<link rel="stylesheet" th:href="@{/css/planillas.css}">
 
 </head>
 
@@ -37,744 +33,551 @@
 <body>
 
 
-<div class="planillas-container">
+	<div class="planillas-container">
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          ENCABEZADO
     ====================================================== -->
 
-    <div class="page-header">
+		<div class="page-header">
 
-        <div>
+			<div>
 
-            <div class="breadcrumb-custom">
+				<div class="breadcrumb-custom">
 
-                <i class="bi bi-bar-chart"></i>
+					<i class="bi bi-bar-chart"></i> Reportes <span>/</span> Planillas
 
-                Reportes
-
-                <span>/</span>
-
-                Planillas
-
-            </div>
+				</div>
 
 
-            <h1>
-                Planillas
-            </h1>
+				<h1>Planillas</h1>
 
 
-            <p class="page-description">
+				<p class="page-description">Gestión y control de las planillas
+					de pago de la empresa.</p>
 
-                Gestión y control de las planillas
-                de pago de la empresa.
+			</div>
 
-            </p>
-
-        </div>
-
-    </div>
+		</div>
 
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          TARJETAS PRINCIPALES
     ====================================================== -->
 
-    <div class="row g-4 mb-4">
+		<div class="row g-4 mb-4">
 
 
-        <!-- =========================
+			<!-- =========================
              EMPLEADOS
         ========================== -->
 
-        <div class="col-xl-3 col-md-6">
+			<div class="col-xl-3 col-md-6">
 
-            <div class="summary-card">
+				<div class="summary-card">
 
-                <div class="summary-icon employees">
+					<div class="summary-icon employees">
 
-                    <i class="bi bi-people-fill"></i>
+						<i class="bi bi-people-fill"></i>
 
-                </div>
-
-
-                <div class="summary-content">
-
-                    <span class="summary-label">
-
-                        Empleados activos
-
-                    </span>
+					</div>
 
 
-                    <h3>
-                        24
-                    </h3>
+					<div class="summary-content">
+
+						<span class="summary-label"> Empleados activos </span>
 
 
-                    <span class="summary-info">
+						<h3>24</h3>
 
-                        Empleados en planilla
 
-                    </span>
+						<span class="summary-info"> Empleados en planilla </span>
 
-                </div>
+					</div>
 
-            </div>
+				</div>
 
-        </div>
+			</div>
 
 
 
-        <!-- =========================
+			<!-- =========================
              PLANILLA ACTUAL
         ========================== -->
 
-        <div class="col-xl-3 col-md-6">
+			<div class="col-xl-3 col-md-6">
 
-            <div class="summary-card">
+				<div class="summary-card">
 
-                <div class="summary-icon payroll">
+					<div class="summary-icon payroll">
 
-                    <i class="bi bi-calendar-check-fill"></i>
+						<i class="bi bi-calendar-check-fill"></i>
 
-                </div>
-
-
-                <div class="summary-content">
-
-                    <span class="summary-label">
-
-                        Planilla actual
-
-                    </span>
+					</div>
 
 
-                    <h3>
-                        L 48,500.00
-                    </h3>
+					<div class="summary-content">
+
+						<span class="summary-label"> Planilla actual </span>
 
 
-                    <span class="summary-info">
+						<h3>L 48,500.00</h3>
 
-                        Semana actual
 
-                    </span>
+						<span class="summary-info"> Semana actual </span>
 
-                </div>
+					</div>
 
-            </div>
+				</div>
 
-        </div>
+			</div>
 
 
 
-        <!-- =========================
+			<!-- =========================
              ANTICIPOS
         ========================== -->
 
-        <div class="col-xl-3 col-md-6">
+			<div class="col-xl-3 col-md-6">
 
-            <div class="summary-card">
+				<div class="summary-card">
 
-                <div class="summary-icon advances">
+					<div class="summary-icon advances">
 
-                    <i class="bi bi-cash-stack"></i>
+						<i class="bi bi-cash-stack"></i>
 
-                </div>
-
-
-                <div class="summary-content">
-
-                    <span class="summary-label">
-
-                        Anticipos pendientes
-
-                    </span>
+					</div>
 
 
-                    <h3>
-                        L 3,500.00
-                    </h3>
+					<div class="summary-content">
+
+						<span class="summary-label"> Anticipos pendientes </span>
 
 
-                    <span class="summary-info">
+						<h3>L 3,500.00</h3>
 
-                        4 anticipos pendientes
 
-                    </span>
+						<span class="summary-info"> 4 anticipos pendientes </span>
 
-                </div>
+					</div>
 
-            </div>
+				</div>
 
-        </div>
+			</div>
 
 
 
-        <!-- =========================
+			<!-- =========================
              ÚLTIMO PAGO
         ========================== -->
 
-        <div class="col-xl-3 col-md-6">
+			<div class="col-xl-3 col-md-6">
 
-            <div class="summary-card">
+				<div class="summary-card">
 
-                <div class="summary-icon paid">
+					<div class="summary-icon paid">
 
-                    <i class="bi bi-check-circle-fill"></i>
+						<i class="bi bi-check-circle-fill"></i>
 
-                </div>
-
-
-                <div class="summary-content">
-
-                    <span class="summary-label">
-
-                        Última planilla pagada
-
-                    </span>
+					</div>
 
 
-                    <h3>
-                        L 46,800.00
-                    </h3>
+					<div class="summary-content">
+
+						<span class="summary-label"> Última planilla pagada </span>
 
 
-                    <span class="summary-info">
-
-                        07/09/2026
-
-                    </span>
-
-                </div>
-
-            </div>
-
-        </div>
+						<h3>L 46,800.00</h3>
 
 
-    </div>
+						<span class="summary-info"> 07/09/2026 </span>
+
+					</div>
+
+				</div>
+
+			</div>
+
+
+		</div>
 
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          ACCESOS RÁPIDOS
     ====================================================== -->
 
-    <div class="section-title">
+		<div class="section-title">
 
-        <div>
+			<div>
 
-            <h2>
-                Gestión de planillas
-            </h2>
+				<h2>Gestión de planillas</h2>
 
 
-            <p>
-                Selecciona una opción para continuar.
-            </p>
+				<p>Selecciona una opción para continuar.</p>
 
-        </div>
+			</div>
 
-    </div>
+		</div>
 
 
 
-    <div class="row g-4 mb-5">
+		<div class="row g-4 mb-5">
 
 
-        <!-- =================================================
+			<!-- =================================================
              NUEVA PLANILLA
              ESTA ES LA ÚNICA CARD QUE LLEVA A OTRA VISTA
         ================================================== -->
 
-        <div class="col-xl-4 col-md-6">
+			<div class="col-xl-4 col-md-6">
 
-            <a
-                th:href="@{/planillas/nueva}"
-                class="management-card">
+				<a th:href="@{/planillas/nueva}" class="management-card">
 
-                <div class="management-icon blue">
+					<div class="management-icon blue">
 
-                    <i class="bi bi-file-earmark-plus-fill"></i>
+						<i class="bi bi-file-earmark-plus-fill"></i>
 
-                </div>
+					</div>
 
 
-                <div class="management-content">
+					<div class="management-content">
 
-                    <h4>
-                        Nueva planilla
-                    </h4>
+						<h4>Nueva planilla</h4>
 
 
-                    <p>
-
-                        Crear y procesar la planilla semanal
-                        correspondiente al período actual.
-
-                    </p>
+						<p>Crear y procesar la planilla semanal correspondiente al
+							período actual.</p>
 
 
-                    <span class="card-link">
+						<span class="card-link"> Crear planilla <i
+							class="bi bi-arrow-right"></i>
 
-                        Crear planilla
+						</span>
 
-                        <i class="bi bi-arrow-right"></i>
+					</div>
 
-                    </span>
+				</a>
 
-                </div>
-
-            </a>
-
-        </div>
+			</div>
 
 
 
-        <!-- =================================================
+			<!-- =================================================
      HISTORIAL
 ================================================== -->
 
-<div class="col-xl-4 col-md-6">
+			<div class="col-xl-4 col-md-6">
 
-    <a
-        th:href="@{/planillas/historial}"
-        class="management-card">
+				<a th:href="@{/planillas/historial}" class="management-card">
 
-        <div class="management-icon purple">
+					<div class="management-icon purple">
 
-            <i class="bi bi-clock-history"></i>
+						<i class="bi bi-clock-history"></i>
 
-        </div>
+					</div>
 
-        <div class="management-content">
+					<div class="management-content">
 
-            <h4>
-                Historial de planillas
-            </h4>
+						<h4>Historial de planillas</h4>
 
-            <p>
-                Consulta las planillas anteriores,
-                pagos realizados y detalles por empleado.
-            </p>
+						<p>Consulta las planillas anteriores, pagos realizados y
+							detalles por empleado.</p>
 
-            <span class="card-link">
+						<span class="card-link"> Ver historial <i
+							class="bi bi-arrow-right"></i>
 
-                Ver historial
+						</span>
 
-                <i class="bi bi-arrow-right"></i>
+					</div>
 
-            </span>
+				</a>
 
-        </div>
-
-    </a>
-
-</div>
+			</div>
 
 
 
-        <!-- =================================================
-             ANTICIPOS
-        ================================================== -->
+			<!-- =================================================
+     ANTICIPOS
+================================================== -->
 
-        <div class="col-xl-4 col-md-6">
+			<div class="col-xl-4 col-md-6">
 
-            <a
-                href="#"
-                class="management-card">
+				<a th:href="@{/movimientos}" href="/movimientos" class="management-card">
 
-                <div class="management-icon green">
+					<div class="management-icon green">
+						<i class="bi bi-wallet2"></i>
+					</div>
 
-                    <i class="bi bi-wallet2"></i>
+					<div class="management-content">
 
-                </div>
+						<h4>Anticipos de salario</h4>
 
+						<p>Registrar adelantos y consultar los anticipos pendientes de
+							aplicar.</p>
 
-                <div class="management-content">
+						<span class="card-link"> Gestionar anticipos <i
+							class="bi bi-arrow-right"></i>
+						</span>
 
-                    <h4>
-                        Anticipos de salario
-                    </h4>
+					</div>
 
+				</a>
 
-                    <p>
-
-                        Registrar adelantos y consultar
-                        los anticipos pendientes de aplicar.
-
-                    </p>
+			</div>
 
 
-                    <span class="card-link">
-
-                        Gestionar anticipos
-
-                        <i class="bi bi-arrow-right"></i>
-
-                    </span>
-
-                </div>
-
-            </a>
-
-        </div>
-
-
-
-        <!-- =================================================
+			<!-- =================================================
              AGUINALDO
         ================================================== -->
 
-        <div class="col-xl-4 col-md-6">
+			<div class="col-xl-4 col-md-6">
 
-            <a
-                href="#"
-                class="management-card">
+				<a href="#" class="management-card">
 
-                <div class="management-icon orange">
+					<div class="management-icon orange">
 
-                    <i class="bi bi-gift-fill"></i>
+						<i class="bi bi-gift-fill"></i>
 
-                </div>
+					</div>
 
 
-                <div class="management-content">
+					<div class="management-content">
 
-                    <h4>
-                        Aguinaldo
-                    </h4>
+						<h4>Aguinaldo</h4>
 
 
-                    <p>
-
-                        Calcular, registrar y consultar
-                        los pagos correspondientes al
-                        décimo tercer mes.
-
-                    </p>
+						<p>Calcular, registrar y consultar los pagos correspondientes
+							al décimo tercer mes.</p>
 
 
-                    <span class="card-link">
+						<span class="card-link"> Gestionar aguinaldo <i
+							class="bi bi-arrow-right"></i>
 
-                        Gestionar aguinaldo
+						</span>
 
-                        <i class="bi bi-arrow-right"></i>
+					</div>
 
-                    </span>
+				</a>
 
-                </div>
-
-            </a>
-
-        </div>
+			</div>
 
 
 
-        <!-- =================================================
+			<!-- =================================================
              DÉCIMO CUARTO
         ================================================== -->
 
-        <div class="col-xl-4 col-md-6">
+			<div class="col-xl-4 col-md-6">
 
-            <a
-                href="#"
-                class="management-card">
+				<a href="#" class="management-card">
 
-                <div class="management-icon teal">
+					<div class="management-icon teal">
 
-                    <i class="bi bi-calendar2-heart-fill"></i>
+						<i class="bi bi-calendar2-heart-fill"></i>
 
-                </div>
+					</div>
 
 
-                <div class="management-content">
+					<div class="management-content">
 
-                    <h4>
-                        Décimo cuarto
-                    </h4>
+						<h4>Décimo cuarto</h4>
 
 
-                    <p>
-
-                        Calcular, registrar y consultar
-                        los pagos correspondientes al
-                        décimo cuarto mes.
-
-                    </p>
+						<p>Calcular, registrar y consultar los pagos correspondientes
+							al décimo cuarto mes.</p>
 
 
-                    <span class="card-link">
+						<span class="card-link"> Gestionar décimo cuarto <i
+							class="bi bi-arrow-right"></i>
 
-                        Gestionar décimo cuarto
+						</span>
 
-                        <i class="bi bi-arrow-right"></i>
+					</div>
 
-                    </span>
+				</a>
 
-                </div>
-
-            </a>
-
-        </div>
+			</div>
 
 
 
-        <!-- =================================================
+			<!-- =================================================
              RECIBOS
         ================================================== -->
 
-        <div class="col-xl-4 col-md-6">
+			<div class="col-xl-4 col-md-6">
 
-            <a
-                href="#"
-                class="management-card">
+				<a href="#" class="management-card">
 
-                <div class="management-icon red">
+					<div class="management-icon red">
 
-                    <i class="bi bi-receipt-cutoff"></i>
+						<i class="bi bi-receipt-cutoff"></i>
 
-                </div>
+					</div>
 
 
-                <div class="management-content">
+					<div class="management-content">
 
-                    <h4>
-                        Recibos de pago
-                    </h4>
+						<h4>Recibos de pago</h4>
 
 
-                    <p>
-
-                        Consulta y genera los recibos
-                        de pago correspondientes a
-                        cada empleado.
-
-                    </p>
+						<p>Consulta y genera los recibos de pago correspondientes a
+							cada empleado.</p>
 
 
-                    <span class="card-link">
+						<span class="card-link"> Ver recibos <i
+							class="bi bi-arrow-right"></i>
 
-                        Ver recibos
+						</span>
 
-                        <i class="bi bi-arrow-right"></i>
+					</div>
 
-                    </span>
+				</a>
 
-                </div>
-
-            </a>
-
-        </div>
+			</div>
 
 
-    </div>
+		</div>
 
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          ÚLTIMA PLANILLA
     ====================================================== -->
 
-    <div class="section-title">
+		<div class="section-title">
 
-        <div>
+			<div>
 
-            <h2>
-                Última planilla
-            </h2>
+				<h2>Última planilla</h2>
 
 
-            <p>
+				<p>Resumen de la planilla procesada más recientemente.</p>
 
-                Resumen de la planilla procesada
-                más recientemente.
-
-            </p>
-
-        </div>
+			</div>
 
 
-        <a
-            href="#"
-            class="view-all">
+			<a href="#" class="view-all"> Ver todas <i
+				class="bi bi-arrow-right"></i>
 
-            Ver todas
+			</a>
 
-            <i class="bi bi-arrow-right"></i>
-
-        </a>
-
-    </div>
+		</div>
 
 
 
-    <div class="latest-payroll">
+		<div class="latest-payroll">
 
 
-        <!-- =========================
+			<!-- =========================
              INFORMACIÓN
         ========================== -->
 
-        <div class="latest-info">
+			<div class="latest-info">
 
 
-            <div class="payroll-number">
+				<div class="payroll-number">
 
-                <span>
-                    PLANILLA
-                </span>
+					<span> PLANILLA </span> <strong> #2026-37 </strong>
 
-
-                <strong>
-                    #2026-37
-                </strong>
-
-            </div>
+				</div>
 
 
 
-            <div class="payroll-period">
+				<div class="payroll-period">
 
-                <span>
-                    Período
-                </span>
+					<span> Período </span> <strong> 07/09/2026 - 13/09/2026 </strong>
 
-
-                <strong>
-                    07/09/2026 - 13/09/2026
-                </strong>
-
-            </div>
+				</div>
 
 
 
-            <div class="payroll-date">
+				<div class="payroll-date">
 
-                <span>
-                    Fecha de pago
-                </span>
+					<span> Fecha de pago </span> <strong> 14/09/2026 </strong>
 
-
-                <strong>
-                    14/09/2026
-                </strong>
-
-            </div>
+				</div>
 
 
 
-            <div class="payroll-employees">
+				<div class="payroll-employees">
 
-                <span>
-                    Empleados
-                </span>
+					<span> Empleados </span> <strong> 24 </strong>
 
-
-                <strong>
-                    24
-                </strong>
-
-            </div>
+				</div>
 
 
-        </div>
+			</div>
 
 
 
-        <!-- =========================
+			<!-- =========================
              TOTAL
         ========================== -->
 
-        <div class="latest-total">
+			<div class="latest-total">
 
-            <span>
-                Total pagado
-            </span>
+				<span> Total pagado </span> <strong> L 48,500.00 </strong> <span
+					class="status-badge"> <i class="bi bi-check-circle-fill"></i>
 
+					PAGADA
 
-            <strong>
-                L 48,500.00
-            </strong>
+				</span>
 
-
-            <span class="status-badge">
-
-                <i class="bi bi-check-circle-fill"></i>
-
-                PAGADA
-
-            </span>
-
-        </div>
+			</div>
 
 
 
-        <!-- =========================
+			<!-- =========================
              BOTÓN DETALLE
         ========================== -->
 
-        <div class="latest-action">
+			<div class="latest-action">
 
-            <a
-                href="#"
-                class="btn btn-outline-primary">
+				<a href="#" class="btn btn-outline-primary"> <i
+					class="bi bi-eye"></i> Ver detalle
 
-                <i class="bi bi-eye"></i>
+				</a>
 
-                Ver detalle
-
-            </a>
-
-        </div>
+			</div>
 
 
-    </div>
+		</div>
 
 
 
-    <!-- =====================================================
+		<!-- =====================================================
          AVISO / CONTROL
     ====================================================== -->
 
-    <div class="payroll-notice">
+		<div class="payroll-notice">
 
 
-        <div class="notice-icon">
+			<div class="notice-icon">
 
-            <i class="bi bi-shield-check"></i>
+				<i class="bi bi-shield-check"></i>
 
-        </div>
-
-
-        <div>
-
-            <h5>
-                Control de pagos
-            </h5>
+			</div>
 
 
-            <p>
+			<div>
 
-                Las planillas aprobadas quedan registradas
-                en el historial y pueden ser consultadas
-                posteriormente junto con sus recibos y
-                movimientos asociados.
-
-            </p>
-
-        </div>
+				<h5>Control de pagos</h5>
 
 
-    </div>
+				<p>Las planillas aprobadas quedan registradas en el historial y
+					pueden ser consultadas posteriormente junto con sus recibos y
+					movimientos asociados.</p>
+
+			</div>
 
 
-</div>
+		</div>
+
+
+	</div>
 
 
 </body>

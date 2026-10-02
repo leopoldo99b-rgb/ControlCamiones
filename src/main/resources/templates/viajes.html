@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="es">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+```
 <title>Gestión de Viajes</title>
 
 <!-- Bootstrap -->
@@ -24,256 +25,248 @@
 
 <!-- CSS -->
 <link rel="stylesheet" href="css/viajes.css">
+```
 
 </head>
 
 <body>
 
-	<div class="container-fluid py-4">
+	```
+	<div class="container-fluid viajes-page">
 
-		<!--============================================-->
-		<!-- ENCABEZADO -->
-		<!--============================================-->
+		<!-- =====================================================
+         HEADER
+    ====================================================== -->
+		<section class="page-header">
 
-		<div class="row align-items-center mb-4">
+			<div class="page-header-main">
 
-			<div class="col-lg-8">
+				<div class="page-header-icon">
+					<i class="bi bi-truck"></i>
+				</div>
 
-				<h2 class="page-title">
+				<div>
+					<div class="page-eyebrow">CONTROL LOGÍSTICO</div>
 
-					<i class="bi bi-truck"></i> Gestión de Viajes
+					<h1 class="page-title">Gestión de Viajes</h1>
 
-				</h2>
-
-				<p class="text-muted">Registro, monitoreo y auditoría del
-					cumplimiento de tiempos de viaje.</p>
+					<p class="page-description">Registro, monitoreo y auditoría del
+						cumplimiento de tiempos de viaje.</p>
+				</div>
 
 			</div>
 
-			<div class="col-lg-4 text-end">
+			<div class="page-header-actions">
 
-				<button id="btnNuevoViaje" class="btn btn-primary"
+				<button id="btnNuevoViaje" class="btn btn-primary btn-new-trip"
 					data-bs-toggle="modal" data-bs-target="#modalNuevoViaje">
 
-					<i class="bi bi-plus-circle"></i> Nuevo Viaje
+					<i class="bi bi-plus-lg"></i> <span>Nuevo Viaje</span>
 
 				</button>
 
 			</div>
 
-		</div>
+		</section>
 
 
-		<!--============================================-->
-		<!-- DASHBOARD -->
-		<!--============================================-->
+		<!-- =====================================================
+         KPI DASHBOARD
+    ====================================================== -->
+		<section class="dashboard-section">
 
-		<div
-			class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 row-cols-xxl-7 g-4 mb-4">
+			<div class="dashboard-grid">
 
+				<!-- TOTAL -->
+				<div class="kpi-card kpi-blue">
 
-			<!-- TOTAL -->
-			<div class="col">
+					<div class="kpi-top">
 
-				<div class="card card-dashboard">
-
-					<div class="card-body">
-
-						<div class="card-icon bg-primary">
+						<div class="kpi-icon">
 							<i class="bi bi-truck"></i>
 						</div>
 
-						<div class="card-info">
+						<span class="kpi-label"> TOTAL VIAJES </span>
 
-							<span>Total Viajes</span>
+					</div>
 
-							<h3 id="lblTotalViajes">0</h3>
+					<div class="kpi-bottom">
 
-						</div>
+						<h3 id="lblTotalViajes">0</h3>
+
+						<span class="kpi-description"> Registrados </span>
 
 					</div>
 
 				</div>
 
-			</div>
 
+				<!-- ODT CUMPLIDOS -->
+				<div class="kpi-card kpi-green">
 
+					<div class="kpi-top">
 
-			<!-- ODT CUMPLIDOS -->
-			<div class="col">
-
-				<div class="card card-dashboard">
-
-					<div class="card-body">
-
-						<div class="card-icon bg-success">
-							<i class="bi bi-check-circle"></i>
+						<div class="kpi-icon">
+							<i class="bi bi-check2-circle"></i>
 						</div>
 
-						<div class="card-info">
+						<span class="kpi-label"> ODT CUMPLIDOS </span>
 
-							<span>ODT Cumplidos</span>
+					</div>
 
-							<h3 id="lblODTCumplidos">0</h3>
+					<div class="kpi-bottom">
 
-						</div>
+						<h3 id="lblODTCumplidos">0</h3>
+
+						<span class="kpi-description"> Dentro del tiempo </span>
 
 					</div>
 
 				</div>
 
-			</div>
 
+				<!-- ODT INCUMPLIDOS -->
+				<div class="kpi-card kpi-red">
 
+					<div class="kpi-top">
 
-
-			<!-- ODT INCUMPLIDOS -->
-			<div class="col">
-
-				<div class="card card-dashboard">
-
-					<div class="card-body">
-
-						<div class="card-icon bg-danger">
+						<div class="kpi-icon">
 							<i class="bi bi-x-circle"></i>
 						</div>
 
-						<div class="card-info">
+						<span class="kpi-label"> ODT INCUMPLIDOS </span>
 
-							<span>ODT Incumplidos</span>
+					</div>
 
-							<h3 id="lblODTIncumplidos">0</h3>
+					<div class="kpi-bottom">
 
-						</div>
+						<h3 id="lblODTIncumplidos">0</h3>
+
+						<span class="kpi-description"> Tiempo excedido </span>
 
 					</div>
 
 				</div>
 
-			</div>
 
+				<!-- FURGON CUMPLIDOS -->
+				<div class="kpi-card kpi-cyan">
 
+					<div class="kpi-top">
 
-
-
-			<!-- FURGON CUMPLIDOS -->
-			<div class="col">
-
-				<div class="card card-dashboard">
-
-					<div class="card-body">
-
-						<div class="card-icon bg-info">
+						<div class="kpi-icon">
 							<i class="bi bi-box-seam"></i>
 						</div>
 
-						<div class="card-info">
+						<span class="kpi-label"> FURGÓN CUMPLIDOS </span>
 
-							<span>Furgón Cumplidos</span>
+					</div>
 
-							<h3 id="lblFurgonCumplidos">0</h3>
+					<div class="kpi-bottom">
 
-						</div>
+						<h3 id="lblFurgonCumplidos">0</h3>
+
+						<span class="kpi-description"> Dentro del tiempo </span>
 
 					</div>
 
 				</div>
 
-			</div>
 
+				<!-- FURGON INCUMPLIDOS -->
+				<div class="kpi-card kpi-orange">
 
+					<div class="kpi-top">
 
-
-
-
-			<!-- FURGON INCUMPLIDOS -->
-			<div class="col">
-
-				<div class="card card-dashboard">
-
-					<div class="card-body">
-
-						<div class="card-icon bg-warning">
+						<div class="kpi-icon">
 							<i class="bi bi-exclamation-circle"></i>
 						</div>
 
-						<div class="card-info">
+						<span class="kpi-label"> FURGÓN INCUMPLIDOS </span>
 
-							<span>Furgón Incumplidos</span>
+					</div>
 
-							<h3 id="lblFurgonIncumplidos">0</h3>
+					<div class="kpi-bottom">
 
-						</div>
+						<h3 id="lblFurgonIncumplidos">0</h3>
+
+						<span class="kpi-description"> Tiempo excedido </span>
 
 					</div>
 
 				</div>
 
-			</div>
 
+				<!-- % ODT -->
+				<div class="kpi-card kpi-green">
 
+					<div class="kpi-top">
 
-
-
-
-
-			<!-- % CUMPLIMIENTO ODT -->
-			<div class="col">
-
-				<div class="card card-dashboard">
-
-					<div class="card-body">
-
-						<div class="card-icon bg-success">
-
+						<div class="kpi-icon">
 							<i class="bi bi-percent"></i>
-
 						</div>
 
+						<span class="kpi-label"> CUMPLIMIENTO ODT </span>
 
-						<div class="card-info">
+					</div>
 
-							<span>% Cumplimiento ODT</span>
+					<div class="kpi-bottom">
 
-							<h3 id="lblPorcentajeODT">0%</h3>
+						<h3 id="lblPorcentajeODT">0%</h3>
 
-						</div>
-
+						<span class="kpi-description"> Nivel de cumplimiento </span>
 
 					</div>
 
 				</div>
 
-			</div>
 
+				<!-- % FURGON -->
+				<div class="kpi-card kpi-cyan">
 
+					<div class="kpi-top">
 
-
-
-
-
-			<!-- % CUMPLIMIENTO FURGON -->
-			<div class="col">
-
-				<div class="card card-dashboard">
-
-					<div class="card-body">
-
-						<div class="card-icon bg-info">
-
+						<div class="kpi-icon">
 							<i class="bi bi-percent"></i>
-
 						</div>
 
+						<span class="kpi-label"> CUMPLIMIENTO FURGÓN </span>
 
-						<div class="card-info">
+					</div>
 
-							<span>% Cumplimiento Furgón</span>
+					<div class="kpi-bottom">
 
-							<h3 id="lblPorcentajeFurgon">0%</h3>
+						<h3 id="lblPorcentajeFurgon">0%</h3>
 
-						</div>
+						<span class="kpi-description"> Nivel de cumplimiento </span>
 
+					</div>
+
+				</div>
+
+			</div>
+
+		</section>
+
+
+		<!-- =====================================================
+         FILTROS
+    ====================================================== -->
+		<section class="filter-panel">
+
+			<div class="filter-header">
+
+				<div class="filter-title-wrapper">
+
+					<div class="filter-icon">
+						<i class="bi bi-sliders2"></i>
+					</div>
+
+					<div>
+
+						<h2>Auditoría de Viajes</h2>
+
+						<span> Utiliza los filtros para consultar el historial. </span>
 
 					</div>
 
@@ -282,160 +275,145 @@
 			</div>
 
 
-
-		</div>
-
-
-		<!-- FILTROS DE AUDITORÍA -->
-		<!--============================================-->
-
-		<div class="card card-filter mb-4">
-
-			<div class="card-header">
-
-				<div class="d-flex justify-content-between align-items-center">
-
-					<h5 class="mb-0">
-
-						<i class="bi bi-funnel-fill"></i> Auditoría de Viajes
-
-					</h5>
-
-				</div>
-
-			</div>
-
-
-			<div class="card-body">
+			<div class="filter-body">
 
 				<div class="row g-3">
 
-
-					<!--=========================================
-            =            FECHA DESDE
-            ==========================================-->
-
+					<!-- DESDE -->
 					<div class="col-xl-2 col-lg-3 col-md-6">
 
-						<label for="txtFechaInicio" class="form-label"> Desde </label> <input
-							type="date" class="form-control" id="txtFechaInicio">
+						<label for="txtFechaInicio" class="form-label"> Desde </label>
+
+						<div class="input-with-icon">
+
+							<i class="bi bi-calendar3"></i> <input type="date"
+								class="form-control" id="txtFechaInicio">
+
+						</div>
 
 					</div>
 
 
-					<!--=========================================
-            =            FECHA HASTA
-            ==========================================-->
-
+					<!-- HASTA -->
 					<div class="col-xl-2 col-lg-3 col-md-6">
 
-						<label for="txtFechaFin" class="form-label"> Hasta </label> <input
-							type="date" class="form-control" id="txtFechaFin">
+						<label for="txtFechaFin" class="form-label"> Hasta </label>
+
+						<div class="input-with-icon">
+
+							<i class="bi bi-calendar3"></i> <input type="date"
+								class="form-control" id="txtFechaFin">
+
+						</div>
 
 					</div>
 
 
-					<!--=========================================
-            =            RUTA
-            ==========================================-->
-
+					<!-- RUTA -->
 					<div class="col-xl-2 col-lg-3 col-md-6">
 
-						<label for="cmbRuta" class="form-label"> Ruta </label> <select
-							class="form-select" id="cmbRuta">
+						<label for="cmbRuta" class="form-label"> Ruta </label>
 
-							<option value="">Todas las rutas</option>
+						<div class="input-with-icon">
 
-						</select>
+							<i class="bi bi-signpost-2"></i> <select class="form-select"
+								id="cmbRuta">
+
+								<option value="">Todas las rutas</option>
+
+							</select>
+
+						</div>
 
 					</div>
 
 
-					<!--=========================================
-            =            CONDUCTOR
-            ==========================================-->
-
+					<!-- CONDUCTOR -->
 					<div class="col-xl-2 col-lg-3 col-md-6">
 
-						<label for="cmbConductor" class="form-label"> Conductor </label> <select
-							class="form-select" id="cmbConductor">
+						<label for="cmbConductor" class="form-label"> Conductor </label>
 
-							<option value="">Todos los conductores</option>
+						<div class="input-with-icon">
 
-						</select>
+							<i class="bi bi-person"></i> <select class="form-select"
+								id="cmbConductor">
+
+								<option value="">Todos los conductores</option>
+
+							</select>
+
+						</div>
 
 					</div>
 
 
-					<!--=========================================
-            =            ESTADO ODT
-            ==========================================-->
-
+					<!-- ESTADO ODT -->
 					<div class="col-xl-2 col-lg-3 col-md-6">
 
 						<label for="cmbEstadoODT" class="form-label"> Estado ODT </label>
 
-						<select class="form-select" id="cmbEstadoODT">
+						<div class="input-with-icon">
 
-							<option value="">Todos</option>
+							<i class="bi bi-clipboard-check"></i> <select class="form-select"
+								id="cmbEstadoODT">
 
-							<option value="CUMPLIDO">Cumplido</option>
+								<option value="">Todos</option>
 
-							<option value="INCUMPLIDO">Incumplido</option>
+								<option value="CUMPLIDO">Cumplido</option>
 
-						</select>
+								<option value="INCUMPLIDO">Incumplido</option>
+
+							</select>
+
+						</div>
 
 					</div>
 
 
-					<!--=========================================
-            =            ESTADO FURGÓN
-            ==========================================-->
-
+					<!-- ESTADO FURGON -->
 					<div class="col-xl-2 col-lg-3 col-md-6">
 
 						<label for="cmbEstadoFurgon" class="form-label"> Estado
-							Furgón </label> <select class="form-select" id="cmbEstadoFurgon">
+							Furgón </label>
 
-							<option value="">Todos</option>
+						<div class="input-with-icon">
 
-							<option value="CUMPLIDO">Cumplido</option>
+							<i class="bi bi-box"></i> <select class="form-select"
+								id="cmbEstadoFurgon">
 
-							<option value="INCUMPLIDO">Incumplido</option>
+								<option value="">Todos</option>
 
-						</select>
+								<option value="CUMPLIDO">Cumplido</option>
+
+								<option value="INCUMPLIDO">Incumplido</option>
+
+							</select>
+
+						</div>
 
 					</div>
 
 				</div>
 
 
-				<hr>
+				<div class="filter-divider"></div>
 
 
-				<!--=========================================
-        =            BOTONES
-        ==========================================-->
-
-				<div class="d-flex flex-wrap justify-content-end gap-2">
-
-
-					<!-- LIMPIAR -->
+				<div class="filter-actions">
 
 					<button type="button" class="btn btn-secondary" id="btnLimpiar">
 
-						<i class="bi bi-eraser"></i> Limpiar
+						<i class="bi bi-arrow-counterclockwise"></i> Limpiar
 
 					</button>
 
-
-					<!-- EXPORTAR PDF -->
 
 					<button type="button" class="btn btn-danger" id="btnExportarPDF">
 
-						<i class="bi bi-file-earmark-pdf-fill"></i> PDF
+						<i class="bi bi-file-earmark-pdf"></i> PDF
 
 					</button>
+
 
 					<button type="button" id="btnPresentacion" class="btn btn-primary">
 
@@ -447,103 +425,113 @@
 
 			</div>
 
-		</div>
+		</section>
 
-		<!--================================================-->
-		<!-- HISTORIAL DE VIAJES -->
-		<!--================================================-->
 
-		<div class="card card-table">
+		<!-- =====================================================
+         TABLA
+    ====================================================== -->
+		<section class="table-panel">
 
-			<div class="card-header">
+			<div class="table-panel-header">
 
-				<div class="row align-items-center">
+				<div class="table-heading">
 
-					<div class="col-lg-6">
-
-						<h5 class="mb-0">
-
-							<i class="bi bi-clock-history"></i> Historial de Viajes
-
-						</h5>
-
-						<small class="text-muted"> Viajes registrados según los
-							filtros seleccionados. </small>
-
+					<div class="table-heading-icon">
+						<i class="bi bi-clock-history"></i>
 					</div>
 
-					<div class="col-lg-6 text-end">
+					<div>
 
-						<span class="badge bg-primary fs-6"> Total Registros: <span
-							id="lblRegistros"> 0 </span>
+						<h2>Historial de Viajes</h2>
 
-						</span>
+						<p>Registro detallado de viajes realizados.</p>
 
 					</div>
 
 				</div>
 
-			</div>
 
-			<div class="card-body">
+				<div class="records-counter">
 
-				<div class="table-responsive">
-
-					<table id="tblViajes"
-						class="table table-hover table-striped align-middle">
-
-						<thead>
-
-							<tr>
-
-								<th>#</th>
-
-								<th>Fecha</th>
-
-								<th>Conductor</th>
-
-								<th>Placa</th>
-
-								<th>Furgon</th>
-
-								<th>Origen</th>
-
-								<th>Destino</th>
-
-								<th>Salida</th>
-
-								<th>Llegada</th>
-
-								<th>ODT</th>
-
-								<th>Tiempo Maximo</th>
-
-								<th>Tiempo Excedido</th>
-
-								<th>Estado ODT</th>
-
-								<th>Estado Furgon</th>
-								
-									<th>notas</th>
-
-								<th class="text-center">Acciones</th>
-
-							</tr>
-
-						</thead>
-
-						<tbody>
-					</table>
+					<span> REGISTROS </span> <strong id="lblRegistros"> 0 </strong>
 
 				</div>
 
 			</div>
 
-		</div>
+
+			<div class="table-toolbar">
+
+				<div class="table-toolbar-info">
+
+					<i class="bi bi-info-circle"></i> <span> Consulta, filtra y
+						gestiona los viajes registrados. </span>
+
+				</div>
+
+			</div>
+
+
+			<div class="table-wrapper">
+
+				<table id="tblViajes" class="table table-hover align-middle">
+
+					<thead>
+
+						<tr>
+
+							<th>#</th>
+
+							<th>Fecha</th>
+
+							<th>Conductor</th>
+
+							<th>Placa</th>
+
+							<th>Furgon</th>
+
+							<th>Origen</th>
+
+							<th>Destino</th>
+
+							<th>Salida</th>
+
+							<th>Llegada</th>
+
+							<th>ODT</th>
+
+							<th>Tiempo Maximo</th>
+
+							<th>Tiempo Excedido</th>
+
+							<th>Estado ODT</th>
+
+							<th>Estado Furgon</th>
+
+							<th>notas</th>
+
+							<th class="text-center">Acciones</th>
+
+						</tr>
+
+					</thead>
+
+					<tbody>
+					</tbody>
+
+				</table>
+
+			</div>
+
+		</section>
 
 	</div>
 
-	<!-- MODAL VER NOTA -->
+
+	<!-- =====================================================
+     MODAL VER NOTA
+====================================================== -->
 	<div id="modalVerNota" class="modal-nota-overlay">
 
 		<div class="modal-nota">
@@ -551,18 +539,28 @@
 			<div class="modal-nota-header">
 
 				<div class="modal-nota-title">
+
 					<div class="modal-nota-icon">
+
 						<i class="fa-solid fa-note-sticky"></i>
+
 					</div>
 
 					<div>
+
 						<h2>Nota del viaje</h2>
-						<span>Información registrada</span>
+
+						<span> Información registrada </span>
+
 					</div>
+
 				</div>
 
+
 				<button class="modal-nota-close" onclick="cerrarModalNota()">
+
 					<i class="fa-solid fa-xmark"></i>
+
 				</button>
 
 			</div>
@@ -573,19 +571,31 @@
 				<div class="nota-info-grid">
 
 					<div class="nota-info-item">
-						<span>Conductor</span> <strong id="notaConductor">---</strong>
+
+						<span> Conductor </span> <strong id="notaConductor"> ---
+						</strong>
+
 					</div>
 
-					<div class="nota-info-item">
-						<span>Placa</span> <strong id="notaPlaca">---</strong>
-					</div>
 
 					<div class="nota-info-item">
-						<span>Fecha</span> <strong id="notaFecha">---</strong>
+
+						<span> Placa </span> <strong id="notaPlaca"> --- </strong>
+
 					</div>
 
+
 					<div class="nota-info-item">
-						<span>Ruta</span> <strong id="notaRuta">---</strong>
+
+						<span> Fecha </span> <strong id="notaFecha"> --- </strong>
+
+					</div>
+
+
+					<div class="nota-info-item">
+
+						<span> Ruta </span> <strong id="notaRuta"> --- </strong>
+
 					</div>
 
 				</div>
@@ -594,7 +604,9 @@
 				<div class="nota-contenedor">
 
 					<div class="nota-label">
+
 						<i class="fa-solid fa-message"></i> Nota
+
 					</div>
 
 					<div id="notaTexto" class="nota-texto"></div>
@@ -613,6 +625,7 @@
 
 				</button>
 
+
 				<button type="button" class="btn-cerrar-nota"
 					onclick="cerrarModalNota()">Cerrar</button>
 
@@ -626,47 +639,51 @@
 	<!-- =====================================================
      MODAL NUEVO VIAJE
 ====================================================== -->
-
-
 	<div class="modal fade" id="modalNuevoViaje" tabindex="-1">
-
 
 		<div class="modal-dialog modal-lg modal-dialog-centered">
 
+			<div class="modal-content trip-modal">
 
-			<div class="modal-content">
+				<div class="modal-header trip-modal-header">
 
+					<div class="modal-heading">
 
-				<div class="modal-header bg-primary text-white">
+						<div class="modal-heading-icon">
+							<i class="bi bi-truck"></i>
+						</div>
 
+						<div>
 
-					<h5 class="modal-title">
+							<h5 class="modal-title">Registrar Nuevo Viaje</h5>
 
-						<i class="bi bi-truck"></i> Registrar Nuevo Viaje
+							<span> Ingresa la información del recorrido. </span>
 
-					</h5>
+						</div>
+
+					</div>
 
 
 					<button type="button" class="btn-close btn-close-white"
 						data-bs-dismiss="modal"></button>
 
-
 				</div>
-
 
 
 				<form id="formNuevoViaje">
 
-
 					<div class="modal-body">
+
+						<div class="form-section-title">
+
+							<i class="bi bi-card-text"></i> Información general
+
+						</div>
 
 
 						<div class="row g-3">
 
-
-
 							<!-- FECHA -->
-
 							<div class="col-md-4">
 
 								<label class="form-label"> Fecha </label> <input type="date"
@@ -675,9 +692,7 @@
 							</div>
 
 
-
 							<!-- CONDUCTOR -->
-
 							<div class="col-md-8">
 
 								<label class="form-label"> Conductor </label> <select
@@ -685,243 +700,223 @@
 
 									<option value="">Seleccionar conductor</option>
 
-
 								</select>
 
-
 							</div>
-
-
 
 
 							<!-- PLACA -->
-
-
 							<div class="col-md-6">
 
-								<label class="form-label">Placa</label> <input type="text"
+								<label class="form-label"> Placa </label> <input type="text"
 									class="form-control" id="placa" list="listaPlacas"
 									placeholder="Escriba o seleccione una placa" required>
 
-								<datalist id="listaPlacas"></datalist>
+								<datalist id="listaPlacas">
+								</datalist>
 
 							</div>
 
 
-
-
-
 							<!-- FURGON -->
-
-
 							<div class="col-md-6">
-
 
 								<label class="form-label"> Furgón </label> <select
 									class="form-select" id="furgon" name="furgon" required>
 
-
 									<option value="">Seleccionar</option>
-
 
 									<option value="CHC">CHC</option>
 
-
 									<option value="CMI">CMI</option>
 
-
 									<option value="LOGITRANS">LOGITRANS</option>
-
 
 									<option value="TRANSPORTES JUAN JOSE">TRANSPORTES JUAN
 										JOSE</option>
 
-
 								</select>
-
 
 							</div>
 
+						</div>
 
 
+						<div class="form-section-title form-section-spacing">
+
+							<i class="bi bi-geo-alt"></i> Recorrido
+
+						</div>
 
 
+						<div class="row g-3">
 
 							<!-- ORIGEN -->
-
-
 							<div class="col-md-6">
-
 
 								<label class="form-label"> Origen </label> <input type="text"
 									class="form-control" id="origen" name="origen"
 									placeholder="Ingrese origen" required>
 
-
 							</div>
 
 
-
-
-
-
 							<!-- DESTINO -->
-
-
 							<div class="col-md-6">
-
 
 								<label class="form-label"> Destino </label> <select
 									class="form-select" id="destino" name="destino" required>
 
-
 									<option value="">Seleccionar destino</option>
-
 
 								</select>
 
-
 							</div>
 
+						</div>
 
 
+						<div class="form-section-title form-section-spacing">
+
+							<i class="bi bi-clock"></i> Control de tiempos
+
+						</div>
 
 
-
+						<div class="row g-3">
 
 							<!-- SALIDA -->
-
-
 							<div class="col-md-4">
-
 
 								<label class="form-label"> Hora Salida </label> <input
 									type="time" class="form-control" id="salida" name="salida"
 									required>
 
-
 							</div>
 
 
-
-
-
-
-
 							<!-- LLEGADA -->
-
-
 							<div class="col-md-4">
-
 
 								<label class="form-label"> Hora Llegada </label> <input
 									type="time" class="form-control" id="llegada" name="llegada"
 									required>
 
-
 							</div>
-
-
-
-
 
 
 							<!-- TIEMPO MAXIMO -->
-
-
 							<div class="col-md-4">
 
-
 								<label class="form-label"> Tiempo Máximo </label> <input
-									type="text" class="form-control" id="tiempo_maximo"
-									name="tiempo_maximo" readonly>
-
+									type="text" class="form-control readonly-field"
+									id="tiempo_maximo" name="tiempo_maximo" readonly>
 
 							</div>
 
-
-
 						</div>
-
 
 					</div>
 
 
-
-
-
-					<div class="modal-footer">
-
+					<div class="modal-footer trip-modal-footer">
 
 						<button type="button" class="btn btn-secondary"
 							data-bs-dismiss="modal">Cancelar</button>
 
 
-
 						<button type="submit" class="btn btn-primary">
 
-							<i class="bi bi-save"></i> Guardar Viaje
+							<i class="bi bi-check2"></i> Guardar Viaje
 
 						</button>
 
-
 					</div>
-
-
 
 				</form>
 
-
 			</div>
 
-
 		</div>
-
 
 	</div>
 
 
 	<!-- =====================================================
-     MODAL ACCIONES DEL VIAJE
+     MODAL ACCIONES
 ====================================================== -->
 	<div class="modal fade" id="modalAccionesViaje" tabindex="-1">
-		<div class="modal-dialog modal-dialog-centered">
-			<div class="modal-content">
 
-				<div class="modal-header bg-warning">
-					<h5 class="modal-title">
-						<i class="bi bi-pencil-square"></i> ¿Qué deseas hacer?
-					</h5>
+		<div class="modal-dialog modal-dialog-centered">
+
+			<div class="modal-content action-modal">
+
+				<div class="modal-header action-modal-header">
+
+					<div>
+
+						<div class="action-modal-icon">
+							<i class="bi bi-pencil-square"></i>
+						</div>
+
+						<div>
+
+							<h5 class="modal-title">¿Qué deseas hacer?</h5>
+
+							<span> Selecciona una acción para este viaje. </span>
+
+						</div>
+
+					</div>
+
 
 					<button type="button" class="btn-close" data-bs-dismiss="modal">
 					</button>
+
 				</div>
+
 
 				<div class="modal-body">
 
-					<p class="text-muted mb-3">Selecciona la acción que deseas
-						realizar sobre este viaje.</p>
+					<div class="action-list">
 
-					<div class="d-grid gap-2">
-
-						<button type="button" class="btn btn-primary"
+						<button type="button" class="action-option action-blue"
 							id="btnModificarInformacion">
 
-							<i class="bi bi-pencil-square"></i> Modificar información del
-							viaje
+							<span class="action-option-icon"> <i
+								class="bi bi-pencil-square"></i>
+							</span> <span class="action-option-content"> <strong>
+									Modificar información </strong> <small> Editar los datos del
+									viaje. </small>
+
+							</span> <i class="bi bi-chevron-right"></i>
 
 						</button>
 
-						<button type="button" class="btn btn-success" id="btnAgregarNota">
 
-							<i class="bi bi-plus-circle"></i> Agregar una nota al viaje
+						<button type="button" class="action-option action-green"
+							id="btnAgregarNota">
+
+							<span class="action-option-icon"> <i
+								class="bi bi-plus-circle"></i>
+							</span> <span class="action-option-content"> <strong>
+									Agregar una nota </strong> <small> Registrar información
+									adicional. </small>
+
+							</span> <i class="bi bi-chevron-right"></i>
 
 						</button>
 
-						<button type="button" class="btn btn-warning"
+
+						<button type="button" class="action-option action-orange"
 							id="btnModificarNota">
 
-							<i class="bi bi-sticky"></i> Modificar la nota del viaje
+							<span class="action-option-icon"> <i class="bi bi-sticky"></i>
+							</span> <span class="action-option-content"> <strong>
+									Modificar la nota </strong> <small> Actualizar la nota
+									existente. </small>
+
+							</span> <i class="bi bi-chevron-right"></i>
 
 						</button>
 
@@ -930,7 +925,9 @@
 				</div>
 
 			</div>
+
 		</div>
+
 	</div>
 
 
@@ -938,19 +935,37 @@
      MODAL NOTA DEL VIAJE
 ====================================================== -->
 	<div class="modal fade" id="modalNotaViaje" tabindex="-1">
+
 		<div class="modal-dialog modal-dialog-centered">
-			<div class="modal-content">
 
-				<div class="modal-header bg-success text-white">
+			<div class="modal-content note-form-modal">
 
-					<h5 class="modal-title" id="tituloModalNota">
-						<i class="bi bi-sticky"></i> Nota del viaje
-					</h5>
+				<div class="modal-header note-form-header">
+
+					<div class="modal-heading">
+
+						<div class="modal-heading-icon">
+							<i class="bi bi-sticky"></i>
+						</div>
+
+						<div>
+
+							<h5 class="modal-title" id="tituloModalNota">Nota del viaje
+
+							</h5>
+
+							<span> Registra información adicional. </span>
+
+						</div>
+
+					</div>
+
 
 					<button type="button" class="btn-close btn-close-white"
 						data-bs-dismiss="modal"></button>
 
 				</div>
+
 
 				<form id="formNotaViaje">
 
@@ -958,26 +973,28 @@
 
 						<input type="hidden" id="idViajeNota">
 
+
 						<div class="mb-3">
 
 							<label for="txtNotaViaje" class="form-label"> Nota </label>
 
 							<textarea class="form-control" id="txtNotaViaje" rows="6"
-								placeholder="Escriba la nota del viaje..." required>
-                        </textarea>
+								placeholder="Escriba la nota del viaje..." required></textarea>
 
 						</div>
 
 					</div>
+
 
 					<div class="modal-footer">
 
 						<button type="button" class="btn btn-secondary"
 							data-bs-dismiss="modal">Cancelar</button>
 
+
 						<button type="submit" class="btn btn-success">
 
-							<i class="bi bi-save"></i> Guardar Nota
+							<i class="bi bi-check2"></i> Guardar Nota
 
 						</button>
 
@@ -986,11 +1003,15 @@
 				</form>
 
 			</div>
+
 		</div>
+
 	</div>
-	<!--================================================-->
-	<!-- Bootstrap -->
-	<!--================================================-->
+
+
+	<!-- =====================================================
+     SCRIPTS
+====================================================== -->
 
 	<!-- Bootstrap -->
 	<script
@@ -1026,7 +1047,9 @@
 
 	<!-- Soporte SVG para jsPDF -->
 	<script
-		src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/dist/svg2pdf.umd.min.js"></script>
+		src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/dist/svg2pdf.umd.min.js">
+		
+	</script>
 
 	<!-- AutoTable -->
 	<script
@@ -1034,16 +1057,17 @@
 		
 	</script>
 
-	<!-- =====================================================
-     FONT AWESOME
-     ===================================================== -->
-
+	<!-- Font Awesome -->
 	<script
-		src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js"></script>
+		src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js">
+		
+	</script>
 
-	<!-- JS -->
+	<!-- JS existente -->
 	<script src="js/viajes.js"></script>
+
 	<script src="/js/viajes-presentacion.js"></script>
+	```
 
 </body>
 

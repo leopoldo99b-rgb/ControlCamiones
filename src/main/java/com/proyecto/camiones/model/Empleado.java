@@ -1,5 +1,6 @@
 package com.proyecto.camiones.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
         )
     }
 )
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Empleado {
 
     @Id
@@ -91,8 +93,6 @@ public class Empleado {
     protected void onUpdate() {
         fechaActualizacion = LocalDateTime.now();
     }
-
-    // GETTERS Y SETTERS
 
     public Long getId() {
         return id;

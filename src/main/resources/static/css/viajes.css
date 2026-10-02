@@ -1,147 +1,326 @@
 @charset "UTF-8";
 
-/*=========================================================
-=                 GESTIÓN DE VIAJES                       =
-=              CSS PROFESIONAL OPTIMIZADO                 =
-=========================================================*/
-
-
-/*=========================================================
-=                    VARIABLES                            =
-=========================================================*/
+/* =========================================================
+   GESTIÓN DE VIAJES
+   REDISEÑO PROFESIONAL
+   ========================================================= */
 
 :root {
 
     --primary: #2563eb;
     --primary-dark: #1d4ed8;
+    --primary-soft: #eff6ff;
 
     --success: #16a34a;
-    --danger: #dc2626;
-    --warning: #f59e0b;
+    --success-soft: #ecfdf5;
 
-    --dark: #1e293b;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+
+    --warning: #f59e0b;
+    --warning-soft: #fffbeb;
+
+    --info: #0891b2;
+    --info-soft: #ecfeff;
+
+    --dark: #0f172a;
+    --dark-soft: #1e293b;
+
+    --gray-dark: #475569;
     --gray: #64748b;
+    --gray-light: #94a3b8;
+
     --light: #f8fafc;
     --white: #ffffff;
 
-    --border: #e5e7eb;
+    --border: #e2e8f0;
+    --border-soft: #edf2f7;
 
-    --bg-body: #eef2f7;
+    --bg-body: #f1f5f9;
+
+    --shadow-sm:
+        0 2px 8px rgba(15, 23, 42, 0.05);
 
     --shadow:
-        0 10px 30px rgba(15,23,42,.08);
+        0 8px 25px rgba(15, 23, 42, 0.07);
 
-    --shadow-hover:
-        0 18px 40px rgba(15,23,42,.14);
+    --shadow-lg:
+        0 18px 45px rgba(15, 23, 42, 0.12);
 
-    --radius: 18px;
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 18px;
 
-    --transition:
-        .30s ease;
-
+    --transition: 0.25s ease;
 }
 
 
-
-/*=========================================================
-=                    RESET GLOBAL                         =
-=========================================================*/
-
+/* =========================================================
+   RESET
+   ========================================================= */
 
 * {
-
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 
 html {
-
-    scroll-behavior:smooth;
-
+    scroll-behavior: smooth;
 }
 
 
 body {
 
-    background:var(--bg-body);
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(37, 99, 235, 0.045),
+            transparent 28%
+        ),
+        var(--bg-body);
+
+    color: var(--dark);
 
     font-family:
-        'Segoe UI',
+        "Inter",
+        "Segoe UI",
         Tahoma,
         Geneva,
         Verdana,
         sans-serif;
-
-    color:var(--dark);
-
 }
 
 
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
 
-/*=========================================================
-=                    TITULOS                              =
-=========================================================*/
+::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+
+::-webkit-scrollbar-track {
+    background: #e8edf3;
+}
+
+
+::-webkit-scrollbar-thumb {
+
+    background: #a8b4c3;
+
+    border-radius: 20px;
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+    background: #7c8b9d;
+}
+
+
+/* =========================================================
+   SELECCIÓN
+   ========================================================= */
+
+::selection {
+
+    background: var(--primary);
+
+    color: var(--white);
+}
+
+
+/* =========================================================
+   CONTENEDOR PRINCIPAL
+   ========================================================= */
+
+.container-fluid.viajes-page {
+
+    width: 100%;
+
+    max-width: 1780px;
+
+    margin: 0 auto;
+
+    padding:
+        28px
+        32px
+        50px;
+}
+
+
+/* =========================================================
+   HEADER PRINCIPAL
+   ========================================================= */
+
+.page-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 25px;
+
+    margin-bottom: 28px;
+}
+
+
+.page-header-main {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 17px;
+}
+
+
+.page-header-icon {
+
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 17px;
+
+    color: var(--white);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--primary),
+            var(--primary-dark)
+        );
+
+    box-shadow:
+        0 10px 25px rgba(37, 99, 235, 0.22);
+
+    font-size: 24px;
+}
+
+
+.page-eyebrow {
+
+    margin-bottom: 4px;
+
+    color: var(--primary);
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.4px;
+}
 
 
 .page-title {
 
-    font-size:2rem;
+    margin: 0;
 
-    font-weight:700;
+    color: var(--dark);
 
-    color:var(--dark);
+    font-size: 30px;
 
-    margin-bottom:5px;
+    line-height: 1.15;
 
+    font-weight: 800;
+
+    letter-spacing: -0.7px;
 }
 
 
-.page-title i {
+.page-description {
 
-    color:var(--primary);
+    margin: 7px 0 0;
 
-    margin-right:8px;
+    color: var(--gray);
 
+    font-size: 14px;
 }
 
 
-.text-muted {
-
-    color:var(--gray)!important;
-
+.page-header-actions {
+    flex-shrink: 0;
 }
 
 
+/* =========================================================
+   BOTÓN NUEVO VIAJE
+   ========================================================= */
 
-/*=========================================================
-=                    BOTONES                              =
-=========================================================*/
+.btn-new-trip {
 
+    height: 48px;
+
+    padding: 0 20px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    box-shadow:
+        0 8px 20px rgba(37, 99, 235, 0.20);
+
+    transition:
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+
+.btn-new-trip:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 13px 28px rgba(37, 99, 235, 0.28);
+}
+
+
+/* =========================================================
+   BOTONES GENERALES
+   ========================================================= */
 
 .btn {
 
-    border-radius:12px;
+    border-radius: 10px;
 
-    font-weight:600;
+    font-weight: 650;
 
     transition:
-        var(--transition);
-
+        transform var(--transition),
+        box-shadow var(--transition),
+        background var(--transition);
 }
 
 
 .btn:hover {
-
-    transform:translateY(-2px);
-
+    transform: translateY(-1px);
 }
 
-
-
-/* Botón principal */
 
 .btn-primary {
 
@@ -152,433 +331,316 @@ body {
             var(--primary-dark)
         );
 
-    border:none;
-
+    border: none;
 }
 
 
-.btn-primary:hover {
+.btn-secondary {
 
-    box-shadow:
-        0 10px 25px rgba(37,99,235,.35);
+    background: #64748b;
 
+    border: none;
 }
 
 
+.btn-danger {
 
-/* Botones secundarios */
+    background:
+        linear-gradient(
+            135deg,
+            #dc2626,
+            #b91c1c
+        );
 
-.btn-success:hover,
-.btn-danger:hover,
-.btn-warning:hover,
-.btn-secondary:hover,
-.btn-outline-secondary:hover {
-
-    transform:translateY(-2px);
-
+    border: none;
 }
 
 
+.btn-success {
 
-/* Botón nuevo viaje */
+    background:
+        linear-gradient(
+            135deg,
+            #16a34a,
+            #15803d
+        );
 
-
-#btnNuevoViaje {
-
-    padding:
-        12px 24px;
-
-    font-size:
-        1rem;
-
-    border-radius:
-        14px;
-
-    box-shadow:
-        0 8px 20px rgba(37,99,235,.25);
-
+    border: none;
 }
 
 
-#btnNuevoViaje:hover {
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
 
-    box-shadow:
-        0 14px 30px rgba(37,99,235,.35);
-
+.dashboard-section {
+    margin-bottom: 24px;
 }
 
 
+.dashboard-grid {
 
-/*=========================================================
-=                    TARJETAS                             =
-=========================================================*/
+    display: grid;
+
+    grid-template-columns:
+        repeat(7, minmax(0, 1fr));
+
+    gap: 13px;
+}
 
 
-.card {
+/* =========================================================
+   KPI CARD
+   ========================================================= */
 
-    border:none;
+.kpi-card {
 
-    border-radius:
-        var(--radius);
+    position: relative;
 
-    overflow:hidden;
+    min-height: 142px;
 
-    background:white;
+    padding: 18px;
 
-    box-shadow:
-        var(--shadow);
+    overflow: hidden;
+
+    background: var(--white);
+
+    border:
+        1px solid
+        rgba(226, 232, 240, 0.85);
+
+    border-radius: 16px;
+
+    box-shadow: var(--shadow-sm);
 
     transition:
-        var(--transition);
-
+        transform var(--transition),
+        box-shadow var(--transition);
 }
 
 
-.card:hover {
+.kpi-card::after {
 
-    box-shadow:
-        var(--shadow-hover);
+    content: "";
 
+    position: absolute;
+
+    width: 85px;
+    height: 85px;
+
+    right: -32px;
+    bottom: -32px;
+
+    border-radius: 50%;
+
+    background: currentColor;
+
+    opacity: 0.045;
+
+    pointer-events: none;
 }
 
 
+.kpi-card:hover {
 
-.card-header {
+    transform: translateY(-4px);
 
-    background:white;
-
-    border-bottom:
-        1px solid var(--border);
-
-    padding:
-        18px 25px;
-
+    box-shadow: var(--shadow);
 }
 
 
+.kpi-top {
 
-.card-body {
+    display: flex;
 
-    padding:
-        25px;
+    align-items: center;
 
+    justify-content: space-between;
+
+    gap: 8px;
 }
 
 
+.kpi-icon {
 
-/*=========================================================
-=                    DASHBOARD KPI                        =
-=========================================================*/
+    width: 38px;
+    height: 38px;
 
+    display: flex;
 
-.card-dashboard {
+    align-items: center;
+    justify-content: center;
 
-    cursor:pointer;
-height: 130px;
-    animation:
-        fadeIn .5s ease;
+    border-radius: 11px;
 
+    color: var(--white);
+
+    font-size: 17px;
 }
 
 
+.kpi-label {
 
-.card-dashboard:hover {
+    flex: 1;
 
-    transform:
-        translateY(-6px);
+    color: var(--gray);
 
+    font-size: 10px;
+
+    font-weight: 800;
+
+    line-height: 1.3;
+
+    text-align: right;
+
+    letter-spacing: 0.55px;
 }
 
 
-
-.card-dashboard{
-
-    height:100%;
-
-}
-
-.card-dashboard .card-body{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:12px;
-
-    padding:18px;
-
-    min-height:110px;
-
+.kpi-bottom {
+    margin-top: 18px;
 }
 
 
-/*=========================================================
-=                    ICONOS KPI                           =
-=========================================================*/
+.kpi-bottom h3 {
 
+    margin: 0;
 
-.card-icon{
+    color: var(--dark);
 
-    width:52px;
-    height:52px;
+    font-size: 27px;
 
-    border-radius:14px;
+    line-height: 1;
 
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    font-weight: 800;
 
-    color:white;
-
-    font-size:22px;
-
-    flex-shrink:0;
-
+    letter-spacing: -0.8px;
 }
 
 
-/* Colores KPI */
+.kpi-description {
+
+    display: block;
+
+    margin-top: 8px;
+
+    color: var(--gray-light);
+
+    font-size: 11px;
+}
 
 
-.bg-primary {
+/* =========================================================
+   KPI COLORS
+   ========================================================= */
+
+.kpi-blue {
+    color: var(--primary);
+}
+
+
+.kpi-blue .kpi-icon {
 
     background:
         linear-gradient(
             135deg,
             #2563eb,
             #3b82f6
-        )!important;
-
+        );
 }
 
 
-.bg-success {
+.kpi-green {
+    color: var(--success);
+}
+
+
+.kpi-green .kpi-icon {
 
     background:
         linear-gradient(
             135deg,
             #16a34a,
             #22c55e
-        )!important;
-
+        );
 }
 
 
-.bg-danger {
+.kpi-red {
+    color: var(--danger);
+}
+
+
+.kpi-red .kpi-icon {
 
     background:
         linear-gradient(
             135deg,
             #dc2626,
             #ef4444
-        )!important;
-
+        );
 }
 
 
-.bg-warning {
+.kpi-cyan {
+    color: var(--info);
+}
+
+
+.kpi-cyan .kpi-icon {
+
+    background:
+        linear-gradient(
+            135deg,
+            #0891b2,
+            #06b6d4
+        );
+}
+
+
+.kpi-orange {
+    color: var(--warning);
+}
+
+
+.kpi-orange .kpi-icon {
 
     background:
         linear-gradient(
             135deg,
             #d97706,
             #f59e0b
-        )!important;
-
+        );
 }
 
 
+/* =========================================================
+   FILTER PANEL
+   ========================================================= */
 
-/*=========================================================
-=                    INFORMACIÓN KPI                      =
-=========================================================*/
+.filter-panel {
 
+    margin-bottom: 24px;
 
-.card-info{
+    overflow: hidden;
 
-    flex:1;
+    background: var(--white);
 
-    margin-left:0;
-
-    overflow:hidden;
-
-}
-
-
-.card-info span{
-
-    display:block;
-
-    color:var(--gray);
-
- font-size: .82rem;
-    line-height:1.2;
-
-    margin-bottom:4px;
-
-    white-space:normal;
-
-}
-
-
-.card-info h3{
-
-    margin:0;
-
-   font-size: 1.8rem;
-    font-weight:700;
-
-    color:#111827;
-
-}
-
-
-
-/*=========================================================
-=                    BADGES GENERALES                     =
-=========================================================*/
-
-
-.badge {
-
-    padding:
-        8px 14px;
-
-    border-radius:
-        25px;
-
-    font-size:
-        .82rem;
-
-    font-weight:
-        700;
-
-    letter-spacing:
-        .3px;
-
-}
-
-
-
-.badge.bg-success {
-
-    background:
-        linear-gradient(
-            135deg,
-            #16a34a,
-            #22c55e
-        )!important;
-
-}
-
-
-
-.badge.bg-danger {
-
-    background:
-        linear-gradient(
-            135deg,
-            #dc2626,
-            #ef4444
-        )!important;
-
-}
-
-
-
-.badge.bg-warning {
-
-    background:
-        linear-gradient(
-            135deg,
-            #d97706,
-            #f59e0b
-        )!important;
-
-}
-
-
-
-.badge.bg-primary {
-
-    background:
-        linear-gradient(
-            135deg,
-            #2563eb,
-            #3b82f6
-        )!important;
-
-}
-
-
-
-/*=========================================================
-=                    SEPARADORES                          =
-=========================================================*/
-
-
-hr {
-
-    border-color:
+    border:
+        1px solid
         var(--border);
 
-    opacity:1;
+    border-radius: 17px;
 
+    box-shadow: var(--shadow-sm);
 }
 
 
+.filter-header {
 
-/*=========================================================
-=                    ANIMACIONES                          =
-=========================================================*/
-
-
-@keyframes fadeIn {
-
-
-    from {
-
-        opacity:0;
-
-        transform:
-            translateY(20px);
-
-    }
-
-
-    to {
-
-        opacity:1;
-
-        transform:
-            translateY(0);
-
-    }
-
-}
- 
-/*=========================================================
-=                 PANEL DE FILTROS                        =
-=========================================================*/
-
-
-.card-filter {
-
-    background:white;
-
-    border-radius:
-        20px;
-
-    overflow:hidden;
-
-    animation:
-        fadeIn .6s ease;
-
-}
-
-
-
-.card-filter .card-header {
+    padding:
+        18px
+        22px;
 
     background:
         linear-gradient(
@@ -588,1441 +650,798 @@ hr {
         );
 
     border-bottom:
-        1px solid #edf2f7;
-
+        1px solid
+        var(--border-soft);
 }
 
 
+.filter-title-wrapper {
 
-.card-filter h5 {
+    display: flex;
 
-    font-size:
-        1.1rem;
+    align-items: center;
 
-    font-weight:
-        700;
-
-    color:
-        var(--dark);
-
+    gap: 12px;
 }
 
 
+.filter-icon {
 
-.card-filter h5 i {
+    width: 40px;
+    height: 40px;
 
-    color:
-        var(--primary);
+    display: flex;
 
-    margin-right:
-        8px;
+    align-items: center;
+    justify-content: center;
 
+    border-radius: 11px;
+
+    background: var(--primary-soft);
+
+    color: var(--primary);
+
+    font-size: 17px;
 }
 
 
+.filter-header h2 {
 
-/*=========================================================
-=                    LABELS                              =
-=========================================================*/
+    margin: 0;
 
+    color: var(--dark);
+
+    font-size: 15px;
+
+    font-weight: 750;
+}
+
+
+.filter-header span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--gray);
+
+    font-size: 12px;
+}
+
+
+.filter-body {
+
+    padding:
+        21px
+        22px
+        19px;
+}
+
+
+/* =========================================================
+   LABELS
+   ========================================================= */
 
 .form-label {
 
-    font-size:
-        .90rem;
+    display: block;
 
-    font-weight:
-        600;
+    margin-bottom: 7px;
 
-    color:
-        #475569;
+    color: #475569;
 
-    margin-bottom:
-        8px;
+    font-size: 11px;
 
+    font-weight: 750;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.3px;
 }
 
 
+/* =========================================================
+   INPUT WITH ICON
+   ========================================================= */
 
-/*=========================================================
-=                    INPUTS                              =
-=========================================================*/
+.input-with-icon {
+    position: relative;
+}
 
+
+.input-with-icon > i {
+
+    position: absolute;
+
+    left: 14px;
+    top: 50%;
+
+    z-index: 3;
+
+    transform: translateY(-50%);
+
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    pointer-events: none;
+}
+
+
+.input-with-icon .form-control,
+.input-with-icon .form-select {
+    padding-left: 40px;
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
 
 .form-control,
 .form-select {
 
+    width: 100%;
 
-    height:
-        48px;
-
-
-    border-radius:
-        12px;
-
+    height: 44px;
 
     border:
-        1px solid #dbe2ea;
+        1px solid
+        #dbe2ea;
 
+    border-radius: 10px;
 
-    background:
-        #fbfcfe;
+    background: #fbfcfe;
 
+    color: #1e293b;
 
-    font-size:
-        .92rem;
-
+    font-size: 13px;
 
     transition:
-        .25s ease;
-
-
+        border-color var(--transition),
+        box-shadow var(--transition),
+        background var(--transition);
 }
-
 
 
 .form-control:hover,
 .form-select:hover {
-
-
-    border-color:
-        #60a5fa;
-
-
+    border-color: #b7c5d6;
 }
-
 
 
 .form-control:focus,
 .form-select:focus {
 
+    border-color: var(--primary);
 
-    border-color:
-        var(--primary);
-
-
-    background:white;
-
+    background: var(--white);
 
     box-shadow:
-        0 0 0 .20rem rgba(37,99,235,.15);
-
-
+        0 0 0 3px
+        rgba(37, 99, 235, 0.10);
 }
 
 
-
-/*=========================================================
-=              BOTONES PANEL FILTROS                     =
-=========================================================*/
-
-
-.card-filter .btn {
-
-
-    height:
-        44px;
-
-
-    min-width:
-        120px;
-
-
-    border-radius:
-        10px;
-
-
-    font-size:
-        .90rem;
-
-
+.form-control::placeholder {
+    color: #a0acba;
 }
 
 
+/* =========================================================
+   FILTER DIVIDER
+   ========================================================= */
 
-.card-filter .btn i {
+.filter-divider {
 
+    height: 1px;
 
-    margin-right:
-        6px;
+    margin:
+        19px
+        0
+        15px;
 
-
+    background: var(--border-soft);
 }
 
 
+/* =========================================================
+   FILTER ACTIONS
+   ========================================================= */
 
-/*=========================================================
-=          TABLA VIAJES - DISEÑO PROFESIONAL              =
-=========================================================*/
+.filter-actions {
 
+    display: flex;
 
-/* CONTENEDOR TABLA */
+    justify-content: flex-end;
 
-.card-table {
+    align-items: center;
 
-    border-radius:20px;
-
-    overflow:hidden;
-
-    background:#ffffff;
-
-    box-shadow:
-        0 12px 35px rgba(15,23,42,.08);
-
+    gap: 8px;
 }
 
 
+.filter-actions .btn {
 
-/* Scroll */
+    height: 40px;
 
-.table-responsive {
+    min-width: 108px;
 
-    overflow-x:auto;
+    display: inline-flex;
 
-    overflow-y:auto;
+    align-items: center;
+    justify-content: center;
 
-    max-height:620px;
+    gap: 7px;
 
+    font-size: 12px;
 }
 
 
+/* =========================================================
+   PANEL PRINCIPAL DE TABLA
+   ========================================================= */
 
-/* Scroll tabla */
+.table-panel {
 
-.table-responsive::-webkit-scrollbar {
+    overflow: hidden;
 
-    height:10px;
-
-}
-
-
-.table-responsive::-webkit-scrollbar-thumb {
-
-    background:#cbd5e1;
-
-    border-radius:20px;
-
-}
-
-
-.table-responsive::-webkit-scrollbar-thumb:hover {
-
-    background:#94a3b8;
-
-}
-
-
-
-/*=========================================================
-=                    TABLA PRINCIPAL                     =
-=========================================================*/
-
-
-#tblViajes {
-
-    width:100%;
-
-    min-width:1350px;
-
-    border-collapse:separate;
-
-    border-spacing:0;
-
-    background:white;
-
-}
-
-
-
-/*=========================================================
-=                    ENCABEZADO                          =
-=========================================================*/
-
-
-#tblViajes thead th {
-
-
-    position:sticky;
-
-    top:0;
-
-    z-index:10;
-
-
-    background:#0f172a;
-
-
-    color:#ffffff;
-
-
-    font-size:12px;
-
-
-    font-weight:700;
-
-
-    text-transform:uppercase;
-
-
-    letter-spacing:.5px;
-
-
-    padding:16px 14px;
-
-
-    text-align:center;
-
-
-    border:none;
-
-
-}
-
-
-
-#tblViajes thead th:first-child {
-
-
-    border-top-left-radius:16px;
-
-
-}
-
-
-
-#tblViajes thead th:last-child {
-
-
-    border-top-right-radius:16px;
-
-
-}
-
-
-
-
-/*=========================================================
-=                    CUERPO TABLA                        =
-=========================================================*/
-
-
-#tblViajes tbody tr {
-
-
-    background:#ffffff;
-
-
-    transition:.25s ease;
-
-
-}
-
-
-
-#tblViajes tbody tr:nth-child(even){
-
-
-    background:#f8fafc;
-
-
-}
-
-
-
-#tblViajes tbody tr:hover {
-
-
-    background:#eff6ff;
-
-
-    transform:
-        scale(1.002);
-
-
-}
-
-
-
-#tblViajes tbody td {
-
-
-    padding:16px 14px;
-
-
-    font-size:13px;
-
-
-    color:#334155;
-
-
-    border-bottom:
-
-        1px solid #e5e7eb;
-
-
-    vertical-align:middle;
-
-
-    text-align:center;
-
-
-}
-
-
-
-/*=========================================================
-=                    COLUMNAS                            =
-=========================================================*/
-
-
-.col-id {
-
-
-    width:60px;
-
-
-    font-weight:700;
-
-
-    color:#2563eb;
-
-
-}
-
-
-
-.col-fecha {
-
-
-    width:110px;
-
-
-}
-
-
-
-.col-conductor {
-
-
-    width:220px;
-
-
-    text-align:left!important;
-
-
-    font-weight:600;
-
-
-    color:#1e293b;
-
-
-}
-
-
-
-.col-placa {
-
-
-    width:110px;
-
-
-    font-weight:700;
-
-
-}
-
-
-
-.col-furgon {
-
-
-    width:110px;
-
-
-}
-
-
-
-.col-origen,
-.col-destino {
-
-
-    width:150px;
-
-
-    text-align:left!important;
-
-
-}
-
-
-
-.col-hora {
-
-
-    width:100px;
-
-
-}
-
-
-
-.col-tiempo {
-
-
-    width:130px;
-
-
-    font-weight:700;
-
-
-}
-
-
-
-.col-estado {
-
-
-    width:150px;
-
-
-}
-
-
-
-.col-acciones {
-
-
-    width:130px;
-
-
-}
-
-
-
-/*=========================================================
-=                    ESTADOS                              =
-=========================================================*/
-
-
-#tblViajes .badge {
-
-
-    padding:
-
-        7px 14px;
-
-
-    border-radius:
-
-        20px;
-
-
-    font-size:
-
-        11px;
-
-
-    font-weight:
-
-        700;
-
-
-}
-
-
-
-/* Estado correcto */
-
-
-.tiempo-ok {
-
-
-    display:inline-block;
-
-
-    color:#15803d;
-
-
-    background:#dcfce7;
-
-
-    padding:
-
-        6px 12px;
-
-
-    border-radius:
-
-        20px;
-
-
-    font-weight:700;
-
-
-}
-
-
-
-/* Estado alerta */
-
-
-.tiempo-alerta {
-
-
-    display:inline-block;
-
-
-    color:#dc2626;
-
-
-    background:#fee2e2;
-
-
-    padding:
-
-        6px 12px;
-
-
-    border-radius:
-
-        20px;
-
-
-    font-weight:700;
-
-
-}
-
-
-
-/*=========================================================
-=                 BOTONES ACCIONES                        =
-=========================================================*/
-
-
-.acciones {
-
-
-    display:flex;
-
-
-    justify-content:center;
-
-
-    align-items:center;
-
-
-    gap:8px;
-
-
-}
-
-
-
-#tblViajes .btn {
-
-
-    width:36px;
-
-
-    height:36px;
-
-
-    border-radius:10px;
-
-
-    display:inline-flex;
-
-
-    align-items:center;
-
-
-    justify-content:center;
-
-
-    padding:0;
-
-
-    border:none;
-
-
-    transition:.25s ease;
-
-
-}
-
-
-
-#tblViajes .btn i {
-
-
-    font-size:14px;
-
-
-}
-
-
-
-#tblViajes .btn:hover {
-
-
-    transform:
-
-        translateY(-3px);
-
-
-}
-
-
-
-/*=========================================================
-=              COLORES BOTONES                          =
-=========================================================*/
-
-
-#tblViajes .btn-info {
-
-
-    background:#06b6d4;
-
-    color:white;
-
-
-}
-
-
-#tblViajes .btn-warning {
-
-
-    background:#f59e0b;
-
-    color:white;
-
-
-}
-
-
-#tblViajes .btn-danger {
-
-
-    background:#dc2626;
-
-    color:white;
-
-
-}
-
-
-
-/*=========================================================
-=                    RESPONSIVE                           =
-=========================================================*/
-
-
-@media(max-width:768px){
-
-
-    #tblViajes {
-
-
-        min-width:1300px;
-
-
-    }
-
-
-}
-
-
-/*=========================================================
-=                    DATATABLES                            =
-=========================================================*/
-
-
-.dataTables_wrapper {
-
-
-    padding-top:
-        10px;
-
-
-    color:
-        var(--dark);
-
-
-}
-
-
-
-/* Selector cantidad registros */
-
-
-.dataTables_length label,
-.dataTables_filter label {
-
-
-    font-weight:
-        600;
-
-
-    color:
-        #475569;
-
-
-}
-
-
-
-/* Buscador */
-
-
-.dataTables_filter input {
-
-
-    border-radius:
-        12px !important;
-
+    background: var(--white);
 
     border:
-        1px solid #dbe2ea !important;
+        1px solid
+        var(--border);
 
+    border-radius: 18px;
 
-    padding:
-        9px 14px !important;
-
-
-    background:
-        white;
-
-
-    margin-left:
-        8px;
-
-
+    box-shadow: var(--shadow);
 }
 
 
+/* =========================================================
+   CABECERA DE TABLA
+   ========================================================= */
 
-.dataTables_filter input:focus {
+.table-panel-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding:
+        20px
+        22px;
+
+    background: var(--white);
+
+    border-bottom:
+        1px solid
+        var(--border-soft);
+}
 
 
-    outline:none;
+/* =========================================================
+   TÍTULO DE TABLA
+   ========================================================= */
 
+.table-heading {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    min-width: 0;
+
+    flex: 1;
+}
+
+
+.table-heading-icon {
+
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    background: #f1f5f9;
+
+    color: #475569;
+
+    font-size: 17px;
+}
+
+
+.table-heading h2 {
+
+    margin: 0;
+
+    color: var(--dark);
+
+    font-size: 16px;
+
+    font-weight: 750;
+}
+
+
+.table-heading p {
+
+    margin: 3px 0 0;
+
+    color: var(--gray);
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   CONTADOR
+   ========================================================= */
+
+.records-counter {
+
+    min-width: 90px;
+
+    padding:
+        8px
+        13px;
+
+    text-align: center;
+
+    border:
+        1px solid
+        #dbe5ef;
+
+    border-radius: 10px;
+
+    background: #f8fafc;
+
+    flex-shrink: 0;
+}
+
+
+.records-counter span {
+
+    display: block;
+
+    color: #94a3b8;
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+
+.records-counter strong {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--dark);
+
+    font-size: 17px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   CONTENEDOR DEL BUSCADOR
+   ========================================================= */
+
+.table-search-container {
+
+    display: flex;
+
+    align-items: center;
+
+    flex-shrink: 0;
+
+    margin-left: auto;
+}
+
+
+/* =========================================================
+   BUSCADOR DATATABLES
+   ========================================================= */
+
+.table-panel .dataTables_filter {
+
+    display: flex !important;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    width: auto !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    float: none !important;
+}
+
+
+.table-panel .dataTables_filter label {
+
+    display: flex;
+
+    align-items: center;
+
+    width: auto;
+
+    margin: 0;
+
+    padding: 0;
+
+    color: transparent;
+
+    font-size: 0;
+
+    white-space: nowrap;
+}
+
+
+.table-panel .dataTables_filter input {
+
+    width: 330px !important;
+
+    height: 40px !important;
+
+    margin: 0 !important;
+
+    padding:
+        8px
+        13px
+        8px
+        38px !important;
+
+    border:
+        1px solid
+        #d7e0ea !important;
+
+    border-radius: 10px !important;
+
+    background-color: var(--white) !important;
+
+    color: #1e293b !important;
+
+    font-size: 12px !important;
+
+    outline: none !important;
+
+    box-shadow: none !important;
+
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11 6a5 5 0 1 1-10 0 5 5 0 0 1 10 0zm-1.293 4.707a6 6 0 1 1 1-1l3.793 3.793-1 1-3.793-3.793z'/%3E%3C/svg%3E") !important;
+
+    background-repeat: no-repeat !important;
+
+    background-position:
+        13px
+        center !important;
+
+    background-size:
+        14px
+        14px !important;
+
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition),
+        background var(--transition);
+}
+
+
+.table-panel .dataTables_filter input::placeholder {
+    color: #a0acba !important;
+}
+
+
+.table-panel .dataTables_filter input:hover {
+
+    border-color:
+        #b8c5d3 !important;
+}
+
+
+.table-panel .dataTables_filter input:focus {
 
     border-color:
         var(--primary) !important;
 
+    background-color:
+        var(--white) !important;
 
     box-shadow:
-        0 0 0 .20rem rgba(37,99,235,.15);
-
-
+        0 0 0 3px
+        rgba(37, 99, 235, 0.09) !important;
 }
 
 
+/* =========================================================
+   DATATABLES 2
+   ========================================================= */
 
-/* Selector mostrar registros */
+.table-panel .dt-search {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 0;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+}
 
 
-.dataTables_length select {
+.table-panel .dt-search label {
+    display: none !important;
+}
 
 
-    border-radius:
-        10px;
+.table-panel .dt-search input {
 
+    width: 330px !important;
 
-    border:
-        1px solid #dbe2ea;
+    height: 40px !important;
 
+    margin: 0 !important;
 
     padding:
-        6px 10px;
-
-
-}
-
-
-
-/* Información tabla */
-
-
-.dataTables_info {
-
-
-    color:
-        var(--gray);
-
-
-    font-weight:
-        500;
-
-
-    padding-top:
-        15px !important;
-
-
-}
-
-
-
-/*=========================================================
-=                    PAGINACIÓN                           =
-=========================================================*/
-
-
-.dataTables_paginate {
-
-
-    margin-top:
-        15px !important;
-
-
-}
-
-
-
-.page-link {
-
+        8px
+        13px
+        8px
+        38px !important;
 
     border:
-        none;
+        1px solid
+        #d7e0ea !important;
 
+    border-radius: 10px !important;
 
-    border-radius:
-        10px !important;
+    background-color:
+        var(--white) !important;
 
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11 6a5 5 0 1 1-10 0 5 5 0 0 1 10 0zm-1.293 4.707a6 6 0 1 1 1-1l3.793 3.793-1 1-3.793-3.793z'/%3E%3C/svg%3E") !important;
 
-    margin:
-        0 3px;
+    background-repeat: no-repeat !important;
 
+    background-position:
+        13px
+        center !important;
 
-    color:
-        #334155;
+    background-size:
+        14px
+        14px !important;
 
+    color: #1e293b !important;
 
-    transition:
-        .25s ease;
+    font-size: 12px !important;
 
+    outline: none !important;
 
+    box-shadow: none !important;
 }
 
 
+.table-panel .dt-search input:focus {
 
-.page-link:hover {
-
-
-    background:
-        var(--primary);
-
-
-    color:
-        white;
-
-
-}
-
-
-
-.page-item.active .page-link {
-
-
-    background:
-        var(--primary);
-
-
-    color:
-        white;
-
+    border-color:
+        var(--primary) !important;
 
     box-shadow:
-        0 6px 16px rgba(37,99,235,.30);
-
-
-}
-
-
-
-/*=========================================================
-=                    ICONOS                               =
-=========================================================*/
-
-
-.bi {
-
-
-    vertical-align:
-        middle;
-
-
-}
-
-
-
-/*=========================================================
-=              CONTENEDOR PRINCIPAL                      =
-=========================================================*/
-
-
-.container-fluid {
-
-
-    max-width:
-        1700px;
-
-
-}
-
-
-
-/*=========================================================
-=                    RESPONSIVE                           =
-=========================================================*/
-
-
-@media(max-width:1200px){
-
-
-    .card-dashboard .card-body {
-
-
-        flex-direction:
-            column;
-
-
-        text-align:
-            center;
-
-
-    }
-
-
-
-    .card-info {
-
-
-        margin-left:
-            0;
-
-
-        margin-top:
-            15px;
-
-
-    }
-
-
-
-}
-
-
-
-
-@media(max-width:992px){
-
-
-    .page-title {
-
-
-        font-size:
-            1.6rem;
-
-
-    }
-
-
-
-    .card-header {
-
-
-        padding:
-            15px;
-
-
-    }
-
-
-
-    .card-body {
-
-
-        padding:
-            20px;
-
-
-    }
-
-
-
-}
-
-
-
-/* Tablets */
-
-
-@media(max-width:768px){
-
-
-
-    .page-title {
-
-
-        font-size:
-            1.45rem;
-
-
-    }
-
-
-
-    .card-dashboard {
-
-
-        margin-bottom:
-            15px;
-
-
-    }
-
-
-
-    .card-icon {
-
-
-        width:
-            60px;
-
-
-        height:
-            60px;
-
-
-        font-size:
-            24px;
-
-
-    }
-
-
-
-    .card-info h3 {
-
-
-        font-size:
-            1.5rem;
-
-
-    }
-
-
-
-    /*
-      Los botones generales ocupan ancho completo,
-      excepto acciones de tabla
-    */
-
-
-    .card-filter .btn {
-
-
-        width:
-            100%;
-
-
-        margin-bottom:
-            8px;
-
-
-    }
-
-
-
-    #tblViajes .btn {
-
-
-        width:
-            38px;
-
-
-        margin-bottom:
-            0;
-
-
-    }
-
-
-
-}
-
-
-
-/* Móviles pequeños */
-
-
-@media(max-width:576px){
-
-
-
-    body {
-
-
-        font-size:
-            .90rem;
-
-
-    }
-
-
-
-    .page-title {
-
-
-        font-size:
-            1.30rem;
-
-
-    }
-
-
-
-    .card-body {
-
-
-        padding:
-            15px;
-
-
-    }
-
-
-
-    .card-dashboard .card-body {
-
-
-        padding:
-            18px;
-
-
-    }
-
-
-
-}
-
-
-
-
-/*=========================================================
-=                 SCROLL GENERAL                          =
-=========================================================*/
-
-
-::-webkit-scrollbar {
-
-
-    width:
-        10px;
-
-
-    height:
-        10px;
-
-
-}
-
-
-
-::-webkit-scrollbar-track {
-
-
-    background:
-        #edf2f7;
-
-
-}
-
-
-
-::-webkit-scrollbar-thumb {
-
-
-    background:
-        #94a3b8;
-
-
-    border-radius:
-        20px;
-
-
-}
-
-
-
-::-webkit-scrollbar-thumb:hover {
-
-
-    background:
-        #64748b;
-
-
-}
-
-
-
-/*=========================================================
-=                 SELECCIÓN TEXTO                         =
-=========================================================*/
-
-
-::selection {
-
-
-    background:
-        var(--primary);
-
-
-    color:
-        white;
-
-
-}
-
-
-
-/*=========================================================
-=                 MEJORAS EXTRA                           =
-=========================================================*/
-
-
-input::placeholder {
-
-
-    color:
-        #94a3b8;
-
-
-}
-
-
-
-button {
-
-
-    cursor:pointer;
-
-
-}
-
-
-
-.table {
-
-
-    margin-bottom:
-        0;
-
-
-}
-
-
-
-/* Animación suave para aparición */
-
-
-.card-filter,
-.card-table {
-
-
-    animation:
-        fadeIn .6s ease both;
-
-
-}
-
-/* =========================================================
-   MODAL - NOTA DEL VIAJE
-   ========================================================= */
-
-#modalNotaViaje .modal-dialog {
-    max-width: 600px;
-    width: calc(100% - 30px);
-    margin: 1.75rem auto;
+        0 0 0 3px
+        rgba(37, 99, 235, 0.09) !important;
 }
 
 
 /* =========================================================
-   CONTENIDO DEL MODAL
+   OCULTAR CONTROLES SUPERIORES DE DATATABLES
    ========================================================= */
 
-#modalNotaViaje .modal-content {
-    border: none;
-    border-radius: 18px;
-    overflow: hidden;
-    background: #ffffff;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+.dataTables_length,
+.table-panel .dt-length {
+
+    display: none !important;
 }
 
 
 /* =========================================================
-   HEADER
+   DATATABLES 2 - FILA SUPERIOR
    ========================================================= */
 
-#modalNotaViaje .modal-header {
-    position: relative;
-    padding: 20px 24px;
-    border: none;
-    background: linear-gradient(
-        135deg,
-        #198754 0%,
-        #157347 100%
-    ) !important;
+.table-panel .dt-layout-row:first-child {
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    border: none !important;
 }
 
 
-/* TÍTULO */
+.table-panel .dt-layout-row:first-child .dt-layout-cell {
 
-#modalNotaViaje .modal-title {
+    padding: 0 !important;
+}
+
+
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
+
+.table-toolbar {
+
     display: flex;
+
     align-items: center;
-    gap: 10px;
 
-    margin: 0;
+    justify-content: space-between;
 
-    font-size: 1.15rem;
-    font-weight: 600;
-    letter-spacing: 0.2px;
+    min-height: 42px;
+
+    padding:
+        7px
+        22px;
+
+    background: var(--white);
+
+    border-bottom:
+        1px solid
+        var(--border-soft);
 }
 
 
-/* ICONO DEL TÍTULO */
+.table-toolbar-info {
 
-#modalNotaViaje .modal-title i {
     display: flex;
+
     align-items: center;
-    justify-content: center;
 
-    width: 38px;
-    height: 38px;
+    gap: 7px;
 
-    border-radius: 10px;
+    color: #94a3b8;
 
-    background: rgba(255, 255, 255, 0.15);
-
-    font-size: 1.2rem;
+    font-size: 11px;
 }
 
 
-/* BOTÓN CERRAR */
-
-#modalNotaViaje .btn-close {
-    opacity: 0.9;
-    transition: all 0.2s ease;
+.table-toolbar-info i {
+    color: #64748b;
 }
 
-#modalNotaViaje .btn-close:hover {
-    opacity: 1;
-    transform: rotate(90deg);
+
+/* =========================================================
+   WRAPPER TABLA
+   ========================================================= */
+
+.table-wrapper {
+
+    width: 100%;
+
+    overflow-x: auto;
+
+    overflow-y: visible;
+
+    background: var(--white);
+}
+
+
+.table-wrapper::-webkit-scrollbar {
+    height: 9px;
+}
+
+
+.table-wrapper::-webkit-scrollbar-thumb {
+
+    background: #cbd5e1;
+
+    border-radius: 20px;
+}
+
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+
+/* =========================================================
+   TABLA PRINCIPAL
+   ========================================================= */
+
+#tblViajes {
+
+    width: 100% !important;
+
+    min-width: 1500px;
+
+    margin: 0 !important;
+
+    border-collapse: separate;
+
+    border-spacing: 0;
+
+    background: var(--white);
+}
+
+
+/* =========================================================
+   ENCABEZADO TABLA
+   ========================================================= */
+
+#tblViajes thead th {
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 10;
+
+    height: 50px;
+
+    padding:
+        11px
+        13px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #172033 0%,
+            #111827 100%
+        );
+
+    color: #cbd5e1;
+
+    border: none;
+
+    border-bottom:
+        1px solid
+        #263248;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.7px;
+
+    white-space: nowrap;
+
+    text-align: center;
+
+    vertical-align: middle;
+}
+
+
+#tblViajes thead th:first-child {
+    padding-left: 18px;
+}
+
+
+#tblViajes thead th:last-child {
+    padding-right: 18px;
 }
 
 
@@ -2030,405 +1449,1436 @@ button {
    BODY
    ========================================================= */
 
-#modalNotaViaje .modal-body {
-    padding: 26px 24px 20px;
+#tblViajes tbody tr {
+
+    background: var(--white);
+
+    transition:
+        background var(--transition),
+        box-shadow var(--transition);
+}
+
+
+#tblViajes tbody tr:nth-child(even) {
+    background: #fbfcfe;
+}
+
+
+#tblViajes tbody tr:hover {
+    background: #f0f6ff;
+}
+
+
+#tblViajes tbody td {
+
+    height: 55px;
+
+    padding:
+        9px
+        13px;
+
+    border-bottom:
+        1px solid
+        #edf1f5;
+
+    color: #475569;
+
+    font-size: 12px;
+
+    white-space: nowrap;
+
+    text-align: center;
+
+    vertical-align: middle;
+}
+
+
+#tblViajes tbody tr:last-child td {
+    border-bottom: none;
 }
 
 
 /* =========================================================
-   LABEL
+   COLUMNAS
    ========================================================= */
 
-#modalNotaViaje .form-label {
+.col-id {
+
+    width: 55px;
+
+    color: var(--primary) !important;
+
+    font-weight: 800;
+}
+
+
+.col-fecha {
+    width: 105px;
+}
+
+
+.col-conductor {
+
+    width: 210px;
+
+    text-align: left !important;
+
+    color: #1e293b !important;
+
+    font-weight: 650;
+}
+
+
+.col-placa {
+
+    width: 95px;
+
+    color: #1e293b !important;
+
+    font-weight: 750;
+}
+
+
+.col-furgon {
+    width: 120px;
+}
+
+
+.col-origen,
+.col-destino {
+
+    width: 150px;
+
+    text-align: left !important;
+}
+
+
+.col-hora {
+    width: 90px;
+}
+
+
+.col-tiempo {
+
+    width: 125px;
+
+    font-weight: 700;
+}
+
+
+.col-estado {
+    width: 130px;
+}
+
+
+.col-acciones {
+    width: 130px;
+}
+
+
+/* =========================================================
+   FECHA
+   ========================================================= */
+
+#tblViajes .fecha-viaje {
+
+    color: #334155;
+
+    font-weight: 700;
+}
+
+
+#tblViajes .fecha-viaje small {
+
     display: block;
 
-    margin-bottom: 9px;
+    margin-top: 2px;
 
-    color: #343a40;
+    color: #94a3b8;
 
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 9px;
+
+    font-weight: 500;
 }
 
 
 /* =========================================================
-   TEXTAREA
+   BADGES
    ========================================================= */
 
-#modalNotaViaje #txtNotaViaje {
-    width: 100%;
+#tblViajes .badge {
 
-    min-height: 150px;
-    max-height: 350px;
+    display: inline-flex;
 
-    padding: 14px 16px;
-
-    resize: vertical;
-
-    border: 1px solid #dee2e6;
-    border-radius: 12px;
-
-    background-color: #f8f9fa;
-
-    color: #212529;
-
-    font-size: 0.95rem;
-    line-height: 1.6;
-
-    transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        background-color 0.2s ease;
-}
-
-
-/* PLACEHOLDER */
-
-#modalNotaViaje #txtNotaViaje::placeholder {
-    color: #adb5bd;
-}
-
-
-/* FOCUS */
-
-#modalNotaViaje #txtNotaViaje:focus {
-    outline: none;
-
-    background-color: #ffffff;
-
-    border-color: #198754;
-
-    box-shadow:
-        0 0 0 3px rgba(25, 135, 84, 0.12);
-}
-
-
-/* =========================================================
-   FOOTER
-   ========================================================= */
-
-#modalNotaViaje .modal-footer {
-    display: flex;
-    justify-content: flex-end;
     align-items: center;
 
-    gap: 10px;
+    justify-content: center;
 
-    padding: 18px 24px 22px;
+    min-height: 26px;
 
-    border-top: 1px solid #edf0f2;
+    padding:
+        5px
+        10px;
 
-    background: #ffffff;
+    border-radius: 20px;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.2px;
+
+    border:
+        1px solid
+        transparent;
+}
+
+
+#tblViajes .badge.bg-success {
+
+    background:
+        var(--success-soft) !important;
+
+    color: #15803d;
+
+    border-color: #bbf7d0;
+}
+
+
+#tblViajes .badge.bg-danger {
+
+    background:
+        var(--danger-soft) !important;
+
+    color: #b91c1c;
+
+    border-color: #fecaca;
+}
+
+
+#tblViajes .badge.bg-warning {
+
+    background:
+        var(--warning-soft) !important;
+
+    color: #b45309;
+
+    border-color: #fde68a;
+}
+
+
+#tblViajes .badge.bg-primary {
+
+    background:
+        var(--primary-soft) !important;
+
+    color: #1d4ed8;
+
+    border-color: #bfdbfe;
 }
 
 
 /* =========================================================
-   BOTONES
+   TIEMPOS
    ========================================================= */
 
-#modalNotaViaje .modal-footer .btn {
-    min-height: 42px;
+.tiempo-ok,
+.tiempo-alerta {
 
-    padding: 9px 18px;
+    display: inline-flex;
 
-    border-radius: 10px;
+    align-items: center;
 
-    font-size: 0.9rem;
-    font-weight: 500;
+    min-height: 27px;
 
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        background-color 0.2s ease;
+    padding:
+        5px
+        10px;
+
+    border-radius: 8px;
+
+    font-size: 10px;
+
+    font-weight: 750;
 }
 
 
-/* BOTÓN CANCELAR */
+.tiempo-ok {
 
-#modalNotaViaje .modal-footer .btn-secondary {
-    border: none;
+    color: #15803d;
 
-    background: #6c757d;
+    background:
+        var(--success-soft);
+
+    border:
+        1px solid
+        #bbf7d0;
 }
 
 
-#modalNotaViaje .modal-footer .btn-secondary:hover {
-    background: #5c636a;
+.tiempo-alerta {
 
-    transform: translateY(-1px);
+    color: #b91c1c;
 
-    box-shadow:
-        0 4px 10px rgba(108, 117, 125, 0.25);
-}
+    background:
+        var(--danger-soft);
 
-
-/* BOTÓN GUARDAR */
-
-#modalNotaViaje .modal-footer .btn-success {
-    border: none;
-
-    background: linear-gradient(
-        135deg,
-        #198754 0%,
-        #157347 100%
-    );
-}
-
-
-#modalNotaViaje .modal-footer .btn-success:hover {
-    background: linear-gradient(
-        135deg,
-        #157347 0%,
-        #146c43 100%
-    );
-
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 5px 14px rgba(25, 135, 84, 0.30);
-}
-
-
-/* ICONOS DE LOS BOTONES */
-
-#modalNotaViaje .modal-footer .btn i {
-    margin-right: 6px;
+    border:
+        1px solid
+        #fecaca;
 }
 
 
 /* =========================================================
-   ANIMACIÓN DEL MODAL
+   ACCIONES
    ========================================================= */
 
-#modalNotaViaje.show .modal-dialog {
-    animation: modalNotaEntrada 0.25s ease-out;
+.acciones {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
 }
 
 
-@keyframes modalNotaEntrada {
+#tblViajes .btn {
 
-    from {
-        opacity: 0;
-        transform: translateY(-15px) scale(0.98);
-    }
+    width: 33px;
+    height: 33px;
 
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    display: inline-flex;
 
-}
-
-
-/* =========================================================
-   RESPONSIVE - TABLET
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-    #modalNotaViaje .modal-dialog {
-        width: calc(100% - 20px);
-        margin: 1rem auto;
-    }
-
-
-    #modalNotaViaje .modal-header {
-        padding: 17px 18px;
-    }
-
-
-    #modalNotaViaje .modal-title {
-        font-size: 1.05rem;
-    }
-
-
-    #modalNotaViaje .modal-title i {
-        width: 34px;
-        height: 34px;
-    }
-
-
-    #modalNotaViaje .modal-body {
-        padding: 22px 18px 16px;
-    }
-
-
-    #modalNotaViaje .modal-footer {
-        padding: 16px 18px 18px;
-    }
-
-}
-
-
-/* =========================================================
-   RESPONSIVE - CELULAR
-   ========================================================= */
-
-@media (max-width: 576px) {
-
-    #modalNotaViaje .modal-dialog {
-        width: calc(100% - 16px);
-
-        margin: 0.5rem auto;
-    }
-
-
-    #modalNotaViaje .modal-content {
-        border-radius: 14px;
-    }
-
-
-    #modalNotaViaje .modal-header {
-        padding: 15px 16px;
-    }
-
-
-    #modalNotaViaje .modal-title {
-        font-size: 1rem;
-        gap: 8px;
-    }
-
-
-    #modalNotaViaje .modal-title i {
-        width: 32px;
-        height: 32px;
-
-        border-radius: 8px;
-
-        font-size: 1rem;
-    }
-
-
-    #modalNotaViaje .modal-body {
-        padding: 20px 16px 14px;
-    }
-
-
-    #modalNotaViaje #txtNotaViaje {
-        min-height: 140px;
-
-        padding: 12px 13px;
-
-        font-size: 0.9rem;
-
-        border-radius: 10px;
-    }
-
-
-    #modalNotaViaje .modal-footer {
-        flex-direction: column-reverse;
-
-        align-items: stretch;
-
-        padding: 14px 16px 16px;
-
-        gap: 8px;
-    }
-
-
-    #modalNotaViaje .modal-footer .btn {
-        width: 100%;
-
-        min-height: 44px;
-    }
-
-}
-
-
-/* =========================================================
-   CELULARES MUY PEQUEÑOS
-   ========================================================= */
-
-@media (max-width: 380px) {
-
-    #modalNotaViaje .modal-dialog {
-        width: calc(100% - 10px);
-    }
-
-
-    #modalNotaViaje .modal-title {
-        font-size: 0.95rem;
-    }
-
-
-    #modalNotaViaje #txtNotaViaje {
-        min-height: 120px;
-    }
-
-}
-
-
-/* =========================================================
-   MODO OSCURO - OPCIONAL
-   Si tu proyecto utiliza dark mode
-   ========================================================= */
-
-@media (prefers-color-scheme: dark) {
-
-    #modalNotaViaje .modal-content {
-        background: #212529;
-        color: #f8f9fa;
-    }
-
-
-    #modalNotaViaje .modal-body {
-        background: #212529;
-    }
-
-
-    #modalNotaViaje .modal-footer {
-        background: #212529;
-        border-top-color: #343a40;
-    }
-
-
-    #modalNotaViaje .form-label {
-        color: #f8f9fa;
-    }
-
-
-    #modalNotaViaje #txtNotaViaje {
-        background: #2b3035;
-
-        border-color: #495057;
-
-        color: #f8f9fa;
-    }
-
-
-    #modalNotaViaje #txtNotaViaje::placeholder {
-        color: #868e96;
-    }
-
-
-    #modalNotaViaje #txtNotaViaje:focus {
-        background: #343a40;
-
-        border-color: #198754;
-
-        box-shadow:
-            0 0 0 3px rgba(25, 135, 84, 0.2);
-    }
-
-}
-
-/* ================================
-   MODAL VER NOTA
-================================ */
-
-.modal-nota-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-
-    display: none;
     align-items: center;
     justify-content: center;
 
-    z-index: 9999;
+    padding: 0;
 
-    backdrop-filter: blur(5px);
+    border: none;
+
+    border-radius: 9px;
+
+    font-size: 13px;
+
+    transition:
+        transform var(--transition),
+        box-shadow var(--transition);
 }
+
+
+#tblViajes .btn:hover {
+    transform: translateY(-2px);
+}
+
+
+#tblViajes .btn-info {
+
+    background: var(--info-soft);
+
+    color: #0891b2;
+
+    border:
+        1px solid
+        #a5f3fc;
+}
+
+
+#tblViajes .btn-warning {
+
+    background: var(--warning-soft);
+
+    color: #d97706;
+
+    border:
+        1px solid
+        #fde68a;
+}
+
+
+#tblViajes .btn-danger {
+
+    background: var(--danger-soft);
+
+    color: #dc2626;
+
+    border:
+        1px solid
+        #fecaca;
+}
+
+
+.btn-ver-nota {
+
+    width: 33px;
+    height: 33px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid
+        #a7f3d0;
+
+    border-radius: 9px;
+
+    background: var(--success-soft);
+
+    color: #047857;
+
+    cursor: pointer;
+
+    transition:
+        transform var(--transition),
+        background var(--transition),
+        color var(--transition);
+}
+
+
+.btn-ver-nota:hover {
+
+    transform: translateY(-2px);
+
+    background: #047857;
+
+    color: var(--white);
+}
+
+
+.acciones-nota {
+    text-align: center;
+}
+
+
+/* =========================================================
+   DATATABLES GENERAL
+   ========================================================= */
+
+.dataTables_wrapper {
+
+    width: 100% !important;
+
+    padding: 0 !important;
+
+    color: var(--dark);
+}
+
+
+.dataTables_wrapper .row:first-child {
+
+    padding: 0;
+
+    margin: 0;
+
+    background: transparent;
+
+    border: none;
+}
+
+
+/* =========================================================
+   INFO DE REGISTROS
+   ========================================================= */
+
+.dataTables_info {
+
+    padding-top: 0 !important;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    font-weight: 550;
+}
+
+
+/* =========================================================
+   FILA INFERIOR DATATABLES
+   ========================================================= */
+
+.dataTables_wrapper .row:last-child {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin: 0;
+
+    padding:
+        15px
+        22px
+        17px;
+
+    background: var(--white);
+
+    border-top:
+        1px solid
+        var(--border-soft);
+}
+
+
+/* =========================================================
+   PAGINACIÓN DATATABLES 1.x
+   ========================================================= */
+
+.dataTables_wrapper .dataTables_paginate {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 4px;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   BOTONES DE PAGINACIÓN
+   ========================================================= */
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+
+    min-width: 34px;
+
+    height: 34px;
+
+    display: inline-flex !important;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin: 0 !important;
+
+    padding:
+        0
+        9px !important;
+
+    border:
+        1px solid
+        transparent !important;
+
+    border-radius: 9px !important;
+
+    background: transparent !important;
+
+    color: #64748b !important;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+    text-decoration: none !important;
+
+    box-shadow: none !important;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transition),
+        color var(--transition),
+        border-color var(--transition),
+        transform var(--transition);
+}
+
+
+/* =========================================================
+   HOVER
+   ========================================================= */
+
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button:hover {
+
+    background:
+        #eff6ff !important;
+
+    color:
+        var(--primary) !important;
+
+    border-color:
+        #dbeafe !important;
+
+    transform:
+        translateY(-1px);
+}
+
+
+/* =========================================================
+   PÁGINA ACTUAL
+   ========================================================= */
+
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.current,
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.current:hover {
+
+    background:
+        var(--primary) !important;
+
+    color:
+        var(--white) !important;
+
+    border-color:
+        var(--primary) !important;
+
+    box-shadow:
+        0 5px 12px
+        rgba(37, 99, 235, 0.20) !important;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   DESHABILITADOS
+   ========================================================= */
+
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.disabled,
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.disabled:hover {
+
+    background:
+        transparent !important;
+
+    color:
+        #cbd5e1 !important;
+
+    border-color:
+        transparent !important;
+
+    cursor:
+        not-allowed;
+
+    transform:
+        none;
+}
+
+
+/* =========================================================
+   PUNTOS SUSPENSIVOS
+   ========================================================= */
+
+.dataTables_wrapper
+.dataTables_paginate
+.ellipsis {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-width: 25px;
+
+    height: 34px;
+
+    padding: 0 4px;
+
+    color: #94a3b8;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   PRIMERO / ÚLTIMO
+   ========================================================= */
+
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.first,
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.last {
+
+    min-width: 34px;
+
+    padding:
+        0
+        8px !important;
+}
+
+
+/* =========================================================
+   ANTERIOR / SIGUIENTE
+   ========================================================= */
+
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.previous,
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.next {
+
+    min-width: 34px;
+
+    padding:
+        0
+        9px !important;
+
+    color:
+        #475569 !important;
+}
+
+
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.previous:hover,
+.dataTables_wrapper
+.dataTables_paginate
+.paginate_button.next:hover {
+
+    background:
+        #f1f5f9 !important;
+
+    color:
+        var(--primary) !important;
+}
+
+
+/* =========================================================
+   PAGINACIÓN DATATABLES 2
+   ========================================================= */
+
+.dt-container .dt-paging {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 4px;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    white-space: nowrap;
+}
+
+
+.dt-container .dt-paging .dt-paging-button {
+
+    min-width: 34px;
+
+    height: 34px;
+
+    display: inline-flex !important;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin: 0 !important;
+
+    padding:
+        0
+        9px !important;
+
+    border:
+        1px solid
+        transparent !important;
+
+    border-radius: 9px !important;
+
+    background: transparent !important;
+
+    color: #64748b !important;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    box-shadow: none !important;
+
+    transition:
+        background var(--transition),
+        color var(--transition),
+        border-color var(--transition),
+        transform var(--transition);
+}
+
+
+.dt-container .dt-paging .dt-paging-button:hover {
+
+    background:
+        #eff6ff !important;
+
+    color:
+        var(--primary) !important;
+
+    border-color:
+        #dbeafe !important;
+
+    transform:
+        translateY(-1px);
+}
+
+
+.dt-container .dt-paging .dt-paging-button.current,
+.dt-container .dt-paging .dt-paging-button.current:hover {
+
+    background:
+        var(--primary) !important;
+
+    color:
+        var(--white) !important;
+
+    border-color:
+        var(--primary) !important;
+
+    box-shadow:
+        0 5px 12px
+        rgba(37, 99, 235, 0.20) !important;
+
+    transform: none;
+}
+
+
+.dt-container .dt-paging .dt-paging-button.disabled,
+.dt-container .dt-paging .dt-paging-button.disabled:hover {
+
+    background:
+        transparent !important;
+
+    color:
+        #cbd5e1 !important;
+
+    border-color:
+        transparent !important;
+
+    cursor:
+        not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   MODALES - GENERAL
+   ========================================================= */
+
+.modal-content {
+
+    border: none;
+
+    border-radius: 17px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 25px 70px
+        rgba(15, 23, 42, 0.20);
+}
+
+
+.modal-backdrop.show {
+    opacity: 0.55;
+}
+
+
+/* =========================================================
+   MODAL NUEVO VIAJE
+   ========================================================= */
+
+.trip-modal {
+    background: var(--white);
+}
+
+
+.trip-modal-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding:
+        18px
+        21px;
+
+    border: none;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1d4ed8,
+            #2563eb
+        );
+
+    color: var(--white);
+}
+
+
+.modal-heading {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.modal-heading-icon {
+
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.13);
+
+    color: var(--white);
+
+    font-size: 18px;
+}
+
+
+.modal-title {
+
+    margin: 0;
+
+    font-size: 16px;
+
+    font-weight: 750;
+}
+
+
+.modal-heading span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color:
+        rgba(255, 255, 255, 0.72);
+
+    font-size: 11px;
+}
+
+
+.trip-modal .modal-body {
+
+    padding:
+        25px
+        24px;
+}
+
+
+.form-section-title {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 14px;
+
+    padding-bottom: 9px;
+
+    border-bottom:
+        1px solid
+        var(--border-soft);
+
+    color: #334155;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.4px;
+}
+
+
+.form-section-title i {
+
+    color: var(--primary);
+
+    font-size: 14px;
+}
+
+
+.form-section-spacing {
+    margin-top: 25px;
+}
+
+
+.trip-modal .form-label {
+
+    text-transform: none;
+
+    letter-spacing: 0;
+
+    font-size: 12px;
+}
+
+
+.trip-modal .form-control,
+.trip-modal .form-select {
+    height: 45px;
+}
+
+
+.readonly-field {
+
+    background: #f1f5f9 !important;
+
+    color: #64748b !important;
+
+    cursor: not-allowed;
+}
+
+
+.trip-modal-footer {
+
+    padding:
+        16px
+        24px;
+
+    border-top:
+        1px solid
+        var(--border-soft);
+
+    background: #fafbfc;
+}
+
+
+.trip-modal-footer .btn {
+
+    min-width: 110px;
+
+    height: 40px;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   MODAL ACCIONES
+   ========================================================= */
+
+.action-modal {
+
+    max-width: 500px;
+
+    margin: auto;
+}
+
+
+.action-modal-header {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    padding:
+        20px
+        21px;
+
+    background: var(--white);
+
+    border-bottom:
+        1px solid
+        var(--border-soft);
+}
+
+
+.action-modal-header > div:first-child {
+
+    display: flex;
+
+    gap: 12px;
+}
+
+
+.action-modal-icon {
+
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 11px;
+
+    background: #fff7ed;
+
+    color: #d97706;
+
+    font-size: 18px;
+}
+
+
+.action-modal-header .modal-title {
+
+    color: var(--dark);
+
+    font-size: 16px;
+}
+
+
+.action-modal-header span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--gray);
+
+    font-size: 11px;
+}
+
+
+.action-modal .modal-body {
+    padding: 18px;
+}
+
+
+.action-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 9px;
+}
+
+
+.action-option {
+
+    width: 100%;
+
+    min-height: 70px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding:
+        10px
+        12px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 12px;
+
+    background: var(--white);
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        transform var(--transition),
+        border-color var(--transition),
+        background var(--transition),
+        box-shadow var(--transition);
+}
+
+
+.action-option:hover {
+
+    transform: translateX(3px);
+
+    box-shadow: var(--shadow-sm);
+}
+
+
+.action-option-icon {
+
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 10px;
+
+    font-size: 16px;
+}
+
+
+.action-option-content {
+    flex: 1;
+}
+
+
+.action-option-content strong {
+
+    display: block;
+
+    color: #1e293b;
+
+    font-size: 12px;
+
+    font-weight: 750;
+}
+
+
+.action-option-content small {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #94a3b8;
+
+    font-size: 10px;
+}
+
+
+.action-option > i:last-child {
+
+    color: #94a3b8;
+
+    font-size: 12px;
+}
+
+
+.action-blue .action-option-icon {
+
+    background: #eff6ff;
+
+    color: #2563eb;
+}
+
+
+.action-blue:hover {
+
+    border-color: #bfdbfe;
+
+    background: #f8fbff;
+}
+
+
+.action-green .action-option-icon {
+
+    background: #ecfdf5;
+
+    color: #16a34a;
+}
+
+
+.action-green:hover {
+
+    border-color: #bbf7d0;
+
+    background: #f8fffb;
+}
+
+
+.action-orange .action-option-icon {
+
+    background: #fffbeb;
+
+    color: #d97706;
+}
+
+
+.action-orange:hover {
+
+    border-color: #fde68a;
+
+    background: #fffdf7;
+}
+
+
+/* =========================================================
+   MODAL NOTA FORMULARIO
+   ========================================================= */
+
+.note-form-modal {
+
+    max-width: 600px;
+
+    margin: auto;
+}
+
+
+.note-form-header {
+
+    padding:
+        18px
+        21px;
+
+    border: none;
+
+    background:
+        linear-gradient(
+            135deg,
+            #15803d,
+            #16a34a
+        );
+}
+
+
+.note-form-modal .modal-body {
+    padding: 24px;
+}
+
+
+.note-form-modal .form-label {
+
+    text-transform: none;
+
+    letter-spacing: 0;
+
+    font-size: 12px;
+
+    color: #334155;
+}
+
+
+#modalNotaViaje #txtNotaViaje {
+
+    min-height: 165px;
+
+    resize: vertical;
+
+    padding:
+        13px
+        15px;
+
+    border:
+        1px solid
+        #dbe2ea;
+
+    border-radius: 11px;
+
+    background: #fbfcfe;
+
+    color: #1e293b;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    box-shadow: none;
+}
+
+
+#modalNotaViaje #txtNotaViaje:focus {
+
+    background: var(--white);
+
+    border-color: #16a34a;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(22, 163, 74, 0.10);
+}
+
+
+#modalNotaViaje #txtNotaViaje::placeholder {
+    color: #a0acba;
+}
+
+
+.note-form-modal .modal-footer {
+
+    padding:
+        15px
+        24px;
+
+    background: #fafbfc;
+
+    border-top:
+        1px solid
+        var(--border-soft);
+}
+
+
+.note-form-modal .modal-footer .btn {
+
+    min-width: 110px;
+
+    height: 40px;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   MODAL VER NOTA
+   ========================================================= */
+
+.modal-nota-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    display: none;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        rgba(2, 6, 23, 0.62);
+
+    backdrop-filter: blur(7px);
+
+    z-index: 9999;
+}
+
 
 .modal-nota-overlay.active {
     display: flex;
@@ -2436,76 +2886,107 @@ button {
 
 
 .modal-nota {
-    width: min(620px, 92%);
-    background: #101414;
 
-    border-radius: 20px;
+    width: min(650px, 94vw);
 
     overflow: hidden;
 
-    box-shadow:
-        0 25px 70px rgba(0, 0, 0, 0.55);
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.08);
 
-    animation: aparecerNota .2s ease;
+    border-radius: 18px;
+
+    background: #111827;
+
+    box-shadow:
+        0 30px 80px
+        rgba(0, 0, 0, 0.42);
+
+    animation:
+        aparecerNota
+        0.22s
+        ease;
 }
 
 
 @keyframes aparecerNota {
 
     from {
+
         opacity: 0;
-        transform: translateY(20px) scale(.97);
+
+        transform:
+            translateY(15px)
+            scale(0.98);
     }
 
     to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
 
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
 }
 
 
-/* HEADER */
+/* =========================================================
+   MODAL NOTA HEADER
+   ========================================================= */
 
 .modal-nota-header {
 
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 
-    padding: 20px 24px;
+    gap: 20px;
 
-    background: linear-gradient(
-        135deg,
-        #064e3b,
-        #047857
-    );
+    padding:
+        20px
+        22px;
 
-    color: white;
+    background:
+        linear-gradient(
+            135deg,
+            #064e3b,
+            #047857
+        );
+
+    color: var(--white);
 }
 
 
 .modal-nota-title {
+
     display: flex;
+
     align-items: center;
-    gap: 14px;
+
+    gap: 12px;
 }
 
 
 .modal-nota-icon {
 
-    width: 45px;
-    height: 45px;
-
-    border-radius: 12px;
+    width: 43px;
+    height: 43px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
-    background: rgba(255,255,255,.12);
+    border-radius: 11px;
 
-    font-size: 19px;
+    background:
+        rgba(255, 255, 255, 0.12);
+
+    font-size: 17px;
 }
 
 
@@ -2513,9 +2994,11 @@ button {
 
     margin: 0;
 
-    font-size: 20px;
-    font-weight: 600;
+    color: var(--white);
 
+    font-size: 18px;
+
+    font-weight: 700;
 }
 
 
@@ -2525,48 +3008,56 @@ button {
 
     margin-top: 3px;
 
-    font-size: 12px;
+    color:
+        rgba(255, 255, 255, 0.68);
 
-    opacity: .75;
-
+    font-size: 11px;
 }
 
 
 .modal-nota-close {
 
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
 
     border: none;
 
-    border-radius: 10px;
+    border-radius: 9px;
 
-    background: transparent;
+    background:
+        rgba(255, 255, 255, 0.08);
 
-    color: white;
+    color: var(--white);
 
-    font-size: 20px;
+    font-size: 17px;
 
     cursor: pointer;
 
-    transition: .2s;
-
+    transition:
+        background var(--transition);
 }
 
 
 .modal-nota-close:hover {
 
-    background: rgba(255,255,255,.15);
-
+    background:
+        rgba(255, 255, 255, 0.18);
 }
 
 
-/* BODY */
+/* =========================================================
+   MODAL NOTA BODY
+   ========================================================= */
 
 .modal-nota-body {
-
-    padding: 24px;
-
+    padding: 22px;
 }
 
 
@@ -2574,25 +3065,28 @@ button {
 
     display: grid;
 
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns:
+        repeat(2, 1fr);
 
-    gap: 12px;
+    gap: 10px;
 
-    margin-bottom: 22px;
-
+    margin-bottom: 17px;
 }
 
 
 .nota-info-item {
 
-    padding: 14px;
+    padding:
+        12px
+        14px;
 
-    border-radius: 12px;
+    border:
+        1px solid
+        #263342;
 
-    background: #181d1d;
+    border-radius: 11px;
 
-    border: 1px solid #252d2d;
-
+    background: #18212d;
 }
 
 
@@ -2600,188 +3094,899 @@ button {
 
     display: block;
 
-    font-size: 11px;
+    margin-bottom: 4px;
+
+    color: #8492a5;
+
+    font-size: 9px;
+
+    font-weight: 750;
 
     text-transform: uppercase;
 
-    letter-spacing: .6px;
-
-    color: #8b9999;
-
-    margin-bottom: 5px;
-
+    letter-spacing: 0.7px;
 }
 
 
 .nota-info-item strong {
 
-    font-size: 14px;
-
-    color: #e8eeee;
-
-}
-
-
-/* NOTA */
-
-.nota-contenedor {
-
-    border: 1px solid #293333;
-
-    border-radius: 14px;
+    display: block;
 
     overflow: hidden;
 
+    color: #e7edf5;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   CONTENEDOR NOTA
+   ========================================================= */
+
+.nota-contenedor {
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        #263342;
+
+    border-radius: 12px;
+
+    background: #141c27;
 }
 
 
 .nota-label {
 
-    padding: 12px 15px;
+    padding:
+        11px
+        14px;
 
-    background: #171d1d;
+    background: #18212d;
 
-    color: #a9b5b5;
+    color: #aab7c7;
 
-    font-size: 13px;
+    border-bottom:
+        1px solid
+        #263342;
 
-    font-weight: 600;
+    font-size: 11px;
 
+    font-weight: 700;
 }
 
 
 .nota-label i {
 
-    margin-right: 7px;
+    margin-right: 6px;
 
     color: #34d399;
-
 }
 
 
 .nota-texto {
 
-    min-height: 100px;
+    min-height: 115px;
 
-    padding: 18px;
+    padding: 17px;
 
-    color: #e4e9e9;
+    color: #dce5ef;
 
-    line-height: 1.6;
+    font-size: 13px;
 
-    font-size: 14px;
+    line-height: 1.65;
 
     white-space: pre-wrap;
 
+    word-break: break-word;
 }
 
 
-/* FOOTER */
+/* =========================================================
+   MODAL NOTA FOOTER
+   ========================================================= */
 
 .modal-nota-footer {
 
     display: flex;
 
+    align-items: center;
+
     justify-content: flex-end;
 
-    gap: 10px;
+    gap: 8px;
 
-    padding: 18px 24px;
+    padding:
+        15px
+        22px;
 
-    background: #0c1010;
+    background: #0d141e;
 
-    border-top: 1px solid #222828;
-
+    border-top:
+        1px solid
+        #222d3a;
 }
 
 
 .btn-eliminar-nota,
 .btn-cerrar-nota {
 
+    min-height: 38px;
+
+    padding:
+        8px
+        14px;
+
     border: none;
 
-    border-radius: 10px;
+    border-radius: 9px;
 
-    padding: 11px 17px;
+    font-size: 11px;
 
-    font-size: 13px;
-
-    font-weight: 600;
+    font-weight: 700;
 
     cursor: pointer;
 
-    transition: .2s;
-
+    transition:
+        transform var(--transition),
+        background var(--transition);
 }
 
 
 .btn-eliminar-nota {
 
-    background: #7f1d1d;
+    background: #3b161c;
 
-    color: #fecaca;
+    color: #fda4af;
 
+    border:
+        1px solid
+        #57202a;
 }
 
 
 .btn-eliminar-nota:hover {
 
-    background: #991b1b;
+    transform: translateY(-1px);
 
+    background: #571b23;
 }
 
 
 .btn-cerrar-nota {
 
-    background: #293333;
+    background: #273342;
 
-    color: #d5dddd;
-
+    color: #d7e0eb;
 }
 
 
 .btn-cerrar-nota:hover {
 
-    background: #374242;
-
-}
-
-
-/* BOTON OJO DE LA TABLA */
-
-.btn-ver-nota {
-
-    width: 34px;
-    height: 34px;
-
-    border: 1px solid #245c4a;
-
-    border-radius: 9px;
-
-    background: #12352c;
-
-    color: #6ee7b7;
-
-    cursor: pointer;
-
-    transition: .2s;
-
-}
-
-
-.btn-ver-nota:hover {
-
-    background: #075c43;
-
-    color: white;
-
     transform: translateY(-1px);
 
+    background: #344256;
 }
 
 
-.acciones-nota {
+/* =========================================================
+   RESPONSIVE - 1600
+   ========================================================= */
 
-    text-align: center;
+@media (max-width: 1600px) {
 
+    .dashboard-grid {
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - 1200
+   ========================================================= */
+
+@media (max-width: 1200px) {
+
+    .container-fluid.viajes-page {
+
+        padding:
+            24px
+            22px
+            40px;
+    }
+
+
+    .dashboard-grid {
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+    }
+
+
+    .table-panel .dataTables_filter input,
+    .table-panel .dt-search input {
+
+        width: 290px !important;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - 992
+   ========================================================= */
+
+@media (max-width: 992px) {
+
+    .page-header {
+
+        align-items: flex-start;
+    }
+
+
+    .dashboard-grid {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    .filter-actions {
+
+        justify-content: stretch;
+    }
+
+
+    .filter-actions .btn {
+        flex: 1;
+    }
+
+
+    /* ================================================
+       HEADER DE TABLA
+       ================================================ */
+
+    .table-panel-header {
+
+        flex-wrap: wrap;
+    }
+
+
+    .table-heading {
+
+        flex:
+            1
+            1
+            auto;
+    }
+
+
+    .table-search-container {
+
+        width: 100%;
+
+        margin-left: 0;
+
+        order: 3;
+    }
+
+
+    .table-panel .dataTables_filter {
+
+        width: 100% !important;
+
+        justify-content: stretch;
+    }
+
+
+    .table-panel .dataTables_filter label {
+
+        width: 100%;
+    }
+
+
+    .table-panel .dataTables_filter input {
+
+        width: 100% !important;
+    }
+
+
+    .table-panel .dt-search {
+
+        width: 100%;
+    }
+
+
+    .table-panel .dt-search input {
+
+        width: 100% !important;
+    }
+
+
+    /* ================================================
+       PAGINACIÓN
+       ================================================ */
+
+    .dataTables_wrapper .row:last-child {
+
+        flex-direction: column;
+
+        align-items: center;
+
+        justify-content: center;
+    }
+
+
+    .dataTables_wrapper .dataTables_paginate,
+    .dt-container .dt-paging {
+
+        justify-content: center;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - 768
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .container-fluid.viajes-page {
+
+        padding:
+            18px
+            14px
+            30px;
+    }
+
+
+    .page-header {
+
+        flex-direction: column;
+    }
+
+
+    .page-header-main {
+        width: 100%;
+    }
+
+
+    .page-header-actions {
+        width: 100%;
+    }
+
+
+    .btn-new-trip {
+        width: 100%;
+    }
+
+
+    .page-title {
+        font-size: 24px;
+    }
+
+
+    .page-description {
+        font-size: 12px;
+    }
+
+
+    .page-header-icon {
+
+        width: 50px;
+        height: 50px;
+
+        font-size: 20px;
+    }
+
+
+    .dashboard-grid {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .kpi-card {
+
+        min-height: 130px;
+
+        padding: 15px;
+    }
+
+
+    .kpi-bottom h3 {
+        font-size: 24px;
+    }
+
+
+    .filter-body {
+
+        padding:
+            17px
+            15px;
+    }
+
+
+    .filter-header {
+
+        padding:
+            16px
+            15px;
+    }
+
+
+    .filter-actions {
+        flex-direction: column;
+    }
+
+
+    .filter-actions .btn {
+        width: 100%;
+    }
+
+
+    .table-panel-header {
+
+        align-items: flex-start;
+
+        padding:
+            16px
+            15px;
+    }
+
+
+    .table-toolbar {
+
+        padding:
+            8px
+            15px;
+    }
+
+
+    .table-search-container {
+        width: 100%;
+    }
+
+
+    .table-panel .dataTables_filter {
+        width: 100% !important;
+    }
+
+
+    .table-panel .dataTables_filter input {
+        width: 100% !important;
+    }
+
+
+    .table-panel .dt-search {
+        width: 100%;
+    }
+
+
+    .table-panel .dt-search input {
+        width: 100% !important;
+    }
+
+
+    .dataTables_wrapper .row:last-child {
+
+        padding:
+            13px
+            14px
+            15px;
+    }
+
+
+    .dataTables_info {
+        text-align: center;
+    }
+
+
+    .dataTables_wrapper .dataTables_paginate,
+    .dt-container .dt-paging {
+
+        width: 100%;
+
+        overflow-x: auto;
+
+        justify-content: center;
+    }
+
+
+    .dataTables_wrapper
+    .dataTables_paginate .paginate_button {
+
+        flex-shrink: 0;
+    }
+
+
+    .dt-container
+    .dt-paging
+    .dt-paging-button {
+
+        flex-shrink: 0;
+    }
+
+
+    .trip-modal .modal-body,
+    .note-form-modal .modal-body {
+
+        padding:
+            20px
+            17px;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - 576
+   ========================================================= */
+
+@media (max-width: 576px) {
+
+    .page-header-main {
+
+        align-items: flex-start;
+    }
+
+
+    .page-header-icon {
+
+        width: 46px;
+        height: 46px;
+
+        border-radius: 13px;
+
+        font-size: 18px;
+    }
+
+
+    .page-eyebrow {
+        font-size: 9px;
+    }
+
+
+    .page-title {
+        font-size: 21px;
+    }
+
+
+    .page-description {
+
+        margin-top: 5px;
+
+        font-size: 11px;
+
+        line-height: 1.5;
+    }
+
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .kpi-card {
+        min-height: 110px;
+    }
+
+
+    .kpi-bottom {
+        margin-top: 13px;
+    }
+
+
+    .kpi-bottom h3 {
+        font-size: 25px;
+    }
+
+
+    .table-panel-header {
+
+        flex-direction: column;
+    }
+
+
+    .table-heading {
+        width: 100%;
+    }
+
+
+    .records-counter {
+        width: 100%;
+    }
+
+
+    .table-search-container {
+        width: 100%;
+    }
+
+
+    .table-panel .dataTables_filter,
+    .table-panel .dataTables_filter label {
+
+        width: 100% !important;
+    }
+
+
+    .table-panel .dataTables_filter input {
+
+        width: 100% !important;
+    }
+
+
+    .table-panel .dt-search,
+    .table-panel .dt-search input {
+
+        width: 100% !important;
+    }
+
+
+    .dataTables_wrapper .row:last-child {
+
+        flex-direction: column;
+
+        padding:
+            13px
+            14px
+            15px;
+    }
+
+
+    .nota-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .modal-nota {
+
+        width:
+            calc(100vw - 22px);
+    }
+
+
+    .modal-nota-header {
+
+        padding:
+            17px
+            16px;
+    }
+
+
+    .modal-nota-body {
+        padding: 16px;
+    }
+
+
+    .modal-nota-footer {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        padding:
+            13px
+            16px;
+    }
+
+
+    .btn-eliminar-nota,
+    .btn-cerrar-nota {
+
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - 380
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+    .container-fluid.viajes-page {
+
+        padding-left: 10px;
+
+        padding-right: 10px;
+    }
+
+
+    .page-title {
+        font-size: 19px;
+    }
+
+
+    .page-header-main {
+        gap: 10px;
+    }
+
+
+    .filter-title-wrapper {
+        align-items: flex-start;
+    }
+
+
+    .filter-icon {
+
+        width: 35px;
+        height: 35px;
+
+        font-size: 14px;
+    }
+
+
+    .filter-header h2 {
+        font-size: 13px;
+    }
+
+
+    .action-modal .modal-body {
+        padding: 12px;
+    }
+
+
+    .dataTables_wrapper
+    .dataTables_paginate
+    .paginate_button {
+
+        min-width: 30px;
+
+        height: 30px;
+
+        padding:
+            0
+            7px !important;
+
+        font-size: 10px;
+    }
+
+
+    .dt-container
+    .dt-paging
+    .dt-paging-button {
+
+        min-width: 30px;
+
+        height: 30px;
+
+        padding:
+            0
+            7px !important;
+
+        font-size: 10px;
+    }
+}
+
+
+/* =========================================================
+   ANIMACIONES
+   ========================================================= */
+
+@keyframes pageFadeIn {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(8px);
+    }
+
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+}
+
+
+.page-header,
+.dashboard-section,
+.filter-panel,
+.table-panel {
+
+    animation:
+        pageFadeIn
+        0.45s
+        ease
+        both;
+}
+
+
+.dashboard-section {
+    animation-delay: 0.04s;
+}
+
+
+.filter-panel {
+    animation-delay: 0.08s;
+}
+
+
+.table-panel {
+    animation-delay: 0.12s;
+}
+
+
+/* =========================================================
+   ANIMACIÓN FILAS
+   ========================================================= */
+
+@keyframes tableRowIn {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(3px);
+    }
+
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+}
+
+
+/* =========================================================
+   ACCESIBILIDAD
+   ========================================================= */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+
+    outline:
+        3px solid
+        rgba(37, 99, 235, 0.20);
+
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   BOOTSTRAP OVERRIDES
+   ========================================================= */
+
+.text-muted {
+    color: var(--gray) !important;
+}
+
+
+.bi {
+    vertical-align: middle;
+}
+
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+@media (prefers-color-scheme: dark) {
+
+    .modal-nota {
+        background: #111827;
+    }
 }
