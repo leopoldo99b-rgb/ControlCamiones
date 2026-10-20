@@ -1341,17 +1341,6 @@ function construirFilaEmpleado(datos) {
                     <i class="fa-solid fa-pen"></i>
 
                 </button>
-
-                <button
-                    type="button"
-                    class="action-btn delete"
-                    title="Eliminar empleado"
-                    onclick="confirmarEliminar(this)">
-
-                    <i class="fa-solid fa-trash"></i>
-
-                </button>
-
             </div>
 
         </td>
