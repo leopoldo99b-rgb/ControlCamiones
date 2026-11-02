@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -165,7 +166,7 @@ public class MonitoreoAutomaticoService {
         }
 
         if (abierta.isEmpty()) {
-            abrirParada(viaje, lat, lng, ahora);
+            abrirParada(viaje, lat, lng, lugar(tracker, lat, lng), ahora);
         }
     }
 
@@ -195,7 +196,8 @@ public class MonitoreoAutomaticoService {
     }
 
     private void abrirParada(
-            MonitoreoViaje viaje, double lat, double lng, LocalDateTime ahora) {
+            MonitoreoViaje viaje, double lat, double lng,
+            String lugar, LocalDateTime ahora) {
 
         MonitoreoParada parada = new MonitoreoParada();
         parada.setViaje(viaje);
@@ -205,8 +207,24 @@ public class MonitoreoAutomaticoService {
         parada.setLatitud(BigDecimal.valueOf(lat).setScale(7, RoundingMode.HALF_UP));
         parada.setLongitud(BigDecimal.valueOf(lng).setScale(7, RoundingMode.HALF_UP));
         parada.setEstado(PARADA_ABIERTA);
+        parada.setObservaciones(lugar); // dónde se detuvo
         // motivo = null: lo escribe el usuario después.
         paradaRepo.save(parada);
+    }
+
+    /**
+     * Lugar donde se detuvo la unidad: la dirección que reporta VTracker
+     * (Tracker_Location) o, si no viene, las coordenadas.
+     */
+    private String lugar(JsonNode tracker, double lat, double lng) {
+        String direccion = GpsUtil.texto(
+                tracker, "Tracker_Location", "address", "location");
+
+        String texto = direccion != null
+                ? direccion
+                : String.format(Locale.US, "Lat %.6f, Lng %.6f", lat, lng);
+
+        return texto.length() > 500 ? texto.substring(0, 500) : texto;
     }
 
     private void cerrarParada(MonitoreoParada parada, LocalDateTime ahora) {

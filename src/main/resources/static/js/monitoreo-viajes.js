@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Transportes CHC - Viajes, recorrido y paradas (frontend)
+ * Transportes CHC - Viajes, recorrido, paradas, línea de tiempo e impresión
  * Cargar DESPUÉS de /js/monitoreo-gps.js (usa window.TransportesCHCGPS.getMap()).
  */
 (() => {
@@ -20,6 +20,8 @@
     const estado = {
         viajes: [],
         rutaId: null,
+        ruta: null,        // última ruta cargada (para imprimir la línea de tiempo)
+        reporte: null,     // último reporte generado (para imprimirlo)
         capa: null,
         primeraCarga: true
     };
@@ -33,6 +35,12 @@
         if (clase) e.className = clase;
         if (texto !== undefined) e.textContent = texto;
         return e;
+    }
+
+    function esc(valor) {
+        return String(valor ?? "").replace(/[&<>"']/g, c => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[c]);
     }
 
     function fmt(valor) {
@@ -52,10 +60,21 @@
         return `${Math.floor(min / 60)} h ${min % 60} min`;
     }
 
+    /** "2026-10-20" -> "20/10/2026" */
+    function fechaCorta(iso) {
+        return String(iso || "").split("-").reverse().join("/");
+    }
+
     function ahoraLocalISO() {
         const d = new Date();
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         return d.toISOString().slice(0, 16);
+    }
+
+    /** "Unidad | Placa | Conductor" -> [unidad, placa, conductor] */
+    function partesUnidad(texto) {
+        const [unidad, placa, conductor] = (texto || "").split(" | ");
+        return [unidad || "—", placa || "", conductor || "—"];
     }
 
     function csrfHeaders() {
@@ -148,6 +167,9 @@
             if (v.estado === "En curso") {
                 caja.appendChild(botonAccion("Finalizar", "bi-flag", "finalizar", v.idViaje));
             }
+            const eliminar = botonAccion("Eliminar", "bi-trash", "eliminar", v.idViaje);
+            eliminar.classList.add("btn-eliminar-viaje");
+            caja.appendChild(eliminar);
             tdAcciones.appendChild(caja);
 
             tr.append(
@@ -189,7 +211,7 @@
     }
 
     // -----------------------------------------------------
-    // Ruta y paradas en el mapa
+    // Ruta, paradas y línea de tiempo
     // -----------------------------------------------------
 
     function iconoParada(numero) {
@@ -217,6 +239,8 @@
             document.createElement("br"),
             el("span", "", `Duración: ${fmtDuracion(p.duracionMinutos)}`),
             document.createElement("br"),
+            el("span", "", `Lugar: ${p.observaciones || "—"}`),
+            document.createElement("br"),
             el("span", "", `Motivo: ${p.motivo || "Sin registrar"}`),
             document.createElement("br")
         );
@@ -229,13 +253,14 @@
         return caja;
     }
 
-    async function mostrarRuta(id, { ajustar = true } = {}) {
+    /** Dibuja el recorrido y las paradas en el mapa (si el mapa está disponible). */
+    function dibujarRutaEnMapa(ruta, idViaje, ajustar) {
         const mapa = getMapa();
-        if (!mapa) return;
 
-        const ruta = await api(`${API}/viajes/${id}/ruta`);
-
-        estado.rutaId = id;
+        if (!mapa) {
+            console.warn("El mapa no está disponible: se muestra solo la línea de tiempo.");
+            return;
+        }
 
         if (!estado.capa) {
             estado.capa = L.layerGroup().addTo(mapa);
@@ -264,7 +289,7 @@
             puntosParada.push([p.latitud, p.longitud]);
 
             L.marker([p.latitud, p.longitud], { icon: iconoParada(p.numeroParada) })
-                .bindPopup(() => popupParada(p, id))
+                .bindPopup(() => popupParada(p, idViaje))
                 .addTo(estado.capa);
         });
 
@@ -273,44 +298,74 @@
         if (ajustar && todos.length) {
             mapa.fitBounds(todos, { padding: [40, 40], maxZoom: 16 });
         }
+    }
 
+    async function mostrarRuta(id, { ajustar = true } = {}) {
+        const ruta = await api(`${API}/viajes/${id}/ruta`);
+
+        estado.rutaId = id;
+        estado.ruta = ruta;
+
+        // La línea de tiempo se muestra siempre, aunque el mapa falle.
         renderTimeline(ruta);
+        dibujarRutaEnMapa(ruta, id, ajustar);
+    }
+
+    /** Eventos de la línea de tiempo (se usan en pantalla y al imprimir). */
+    function eventosTimeline(ruta) {
+        const v = ruta.viaje;
+
+        const eventos = [{
+            titulo: "Inicio del viaje",
+            detalle: `${fmt(v.fechaInicio)} · ${v.origen || "—"} → ${v.destino || "—"}`
+        }];
+
+        ruta.paradas.forEach(p => {
+            eventos.push({
+                titulo: `Parada ${p.numeroParada}: ${p.motivo || "motivo pendiente"}`,
+                detalle: `${fmt(p.inicio)} → ${p.fin ? fmt(p.fin) : "en curso"} ` +
+                         `(${fmtDuracion(p.duracionMinutos)})`,
+                lugar: p.observaciones || ""
+            });
+        });
+
+        if (v.fechaFin) {
+            eventos.push({ titulo: "Fin del viaje", detalle: fmt(v.fechaFin) });
+        }
+
+        return eventos;
     }
 
     function renderTimeline(ruta) {
         const v = ruta.viaje;
-        const [unidad] = (v.conductorUnidad || "").split(" | ");
+        const [unidad] = partesUnidad(v.conductorUnidad);
 
         const u = $("timelineUnidad");
         const vi = $("timelineViaje");
         const es = $("timelineEstado");
         const cont = $("timelineEventos");
 
-        if (u) u.textContent = unidad || "Unidad";
+        if (u) u.textContent = unidad;
         if (vi) vi.textContent = `#${v.idViaje}`;
         if (es) es.textContent = v.estado;
+
+        const btnImprimir = $("btnImprimirTimeline");
+        if (btnImprimir) btnImprimir.disabled = false;
+
         if (!cont) return;
 
         cont.replaceChildren();
 
-        const item = (titulo, detalle) => {
+        eventosTimeline(ruta).forEach(e => {
             const d = el("div", "timeline-item");
-            d.append(el("strong", "", titulo), el("small", "", detalle));
+            d.append(el("strong", "", e.titulo), el("small", "", e.detalle));
+
+            if (e.lugar) {
+                d.appendChild(el("small", "", `Lugar: ${e.lugar}`));
+            }
+
             cont.appendChild(d);
-        };
-
-        item("Inicio del viaje", `${fmt(v.fechaInicio)} · ${v.origen} → ${v.destino}`);
-
-        ruta.paradas.forEach(p => {
-            item(
-                `Parada ${p.numeroParada}: ${p.motivo || "motivo pendiente"}`,
-                `${fmt(p.inicio)} → ${p.fin ? fmt(p.fin) : "en curso"} (${fmtDuracion(p.duracionMinutos)})`
-            );
         });
-
-        if (v.fechaFin) {
-            item("Fin del viaje", fmt(v.fechaFin));
-        }
     }
 
     // -----------------------------------------------------
@@ -358,7 +413,10 @@
             );
 
             const campoMotivo = campoParada("Motivo", p.motivo || "Sin registrar");
-            campos.append(campoMotivo, campoParada("Observaciones", p.observaciones || "—"));
+            campos.append(
+                campoMotivo,
+                campoParada("Lugar / observaciones", p.observaciones || "—")
+            );
 
             editar.addEventListener("click", () =>
                 mostrarEditor(campoMotivo, ruta.viaje.idViaje, p));
@@ -425,7 +483,7 @@
         try {
             const ruta = await api(`${API}/viajes/${id}/ruta`);
             const v = ruta.viaje;
-            const [unidad, placa, conductor] = (v.conductorUnidad || "").split(" | ");
+            const [unidad, placa, conductor] = partesUnidad(v.conductorUnidad);
 
             if (!mantenerMensaje) $("mensajeEdicionMotivo").textContent = "";
 
@@ -436,7 +494,7 @@
                 document.createTextNode(" " + v.estado));
 
             $("detalleUnidad").textContent =
-                `${unidad || "—"}${placa ? " · " + placa : ""} / ${conductor || "—"}`;
+                `${unidad}${placa ? " · " + placa : ""} / ${conductor}`;
             $("detalleFecha").textContent = fmt(v.fechaInicio);
             $("detalleOrigen").textContent = v.origen || "—";
             $("detalleDestino").textContent = v.destino || "—";
@@ -446,6 +504,96 @@
             bootstrap.Modal.getOrCreateInstance($("modalDetalleViaje")).show();
         } catch (error) {
             window.alert(error.message);
+        }
+    }
+
+    // -----------------------------------------------------
+    // Eliminar viaje (advertencia + confirmación escribiendo el ID)
+    // -----------------------------------------------------
+
+    let viajeAEliminar = null;
+
+    async function pedirEliminarViaje(id) {
+        try {
+            const ruta = await api(`${API}/viajes/${id}/ruta`);
+            const v = ruta.viaje;
+            const [unidad, placa, conductor] = partesUnidad(v.conductorUnidad);
+
+            viajeAEliminar = v;
+
+            const lineas = [
+                `Viaje #${v.idViaje} · ${v.estado}`,
+                `${unidad}${placa ? " · " + placa : ""} · ${conductor}`,
+                `${v.origen || "—"} → ${v.destino || "—"}`,
+                `Inicio: ${fmt(v.fechaInicio)}`,
+                `Se borrarán ${ruta.paradas.length} parada(s) y ` +
+                `${ruta.recorrido.length} punto(s) de recorrido.`
+            ];
+
+            $("eliminarResumen").replaceChildren(
+                ...lineas.map(t => el("div", "", t)));
+            $("eliminarEnCurso").hidden = v.estado !== "En curso";
+            $("eliminarIdEsperado").textContent = String(v.idViaje);
+            $("eliminarConfirmacion").value = "";
+            $("btnConfirmarEliminar").disabled = true;
+            $("mensajeEliminar").textContent = "";
+
+            bootstrap.Modal.getOrCreateInstance($("modalEliminarViaje")).show();
+        } catch (error) {
+            window.alert(error.message);
+        }
+    }
+
+    /** El botón de borrar se activa solo si se escribe el ID correcto. */
+    function validarConfirmacionEliminar() {
+        const escrito = $("eliminarConfirmacion").value.trim();
+        $("btnConfirmarEliminar").disabled =
+            !viajeAEliminar || escrito !== String(viajeAEliminar.idViaje);
+    }
+
+    function limpiarRutaMostrada() {
+        estado.rutaId = null;
+        estado.ruta = null;
+        estado.capa?.clearLayers();
+
+        const u = $("timelineUnidad");
+        const vi = $("timelineViaje");
+        const es = $("timelineEstado");
+        const cont = $("timelineEventos");
+        const btn = $("btnImprimirTimeline");
+
+        if (u) u.textContent = "Sin unidad seleccionada";
+        if (vi) vi.textContent = "";
+        if (es) es.textContent = "Sin datos";
+        if (btn) btn.disabled = true;
+        if (cont) {
+            cont.replaceChildren(el("p", "text-muted small",
+                'Selecciona un viaje y pulsa "Ruta" para consultar su información.'));
+        }
+    }
+
+    async function confirmarEliminarViaje() {
+        if (!viajeAEliminar) return;
+
+        const id = viajeAEliminar.idViaje;
+        const boton = $("btnConfirmarEliminar");
+        const mensaje = $("mensajeEliminar");
+
+        boton.disabled = true;
+        mensaje.textContent = "Eliminando viaje...";
+
+        try {
+            await api(`${API}/viajes/${id}`, { method: "DELETE" });
+
+            bootstrap.Modal.getOrCreateInstance($("modalEliminarViaje")).hide();
+            viajeAEliminar = null;
+
+            if (estado.rutaId === id) limpiarRutaMostrada();
+
+            await cargarViajes();
+        } catch (error) {
+            mensaje.textContent = error.message;
+            boton.disabled = false;
         }
     }
 
@@ -459,6 +607,230 @@
         } catch (error) {
             window.alert(error.message);
         }
+    }
+
+    // -----------------------------------------------------
+    // Impresión: línea de tiempo de un viaje y reporte por fechas
+    // -----------------------------------------------------
+
+    const CSS_IMPRESION = `
+        @page { margin: 14mm; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #111; font-size: 12px; }
+        h1 { font-size: 20px; margin: 0 0 4px; }
+        h2 { font-size: 14px; margin: 0 0 6px; }
+        .sub { color: #555; margin: 0 0 14px; }
+        .resumen { display: flex; gap: 28px; margin: 0 0 18px; padding: 10px 12px;
+                   border: 1px solid #bbb; border-radius: 6px; }
+        .resumen strong { display: block; font-size: 16px; }
+        .viaje { margin: 0 0 22px; }
+        .cab { background: #eee; padding: 8px 10px; border: 1px solid #bbb;
+               border-radius: 6px 6px 0 0; break-after: avoid; }
+        .cab div { margin-top: 2px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #bbb; padding: 5px 7px; text-align: left; vertical-align: top; }
+        th { background: #f5f5f5; }
+        tr { break-inside: avoid; }
+        .vacio { padding: 8px 10px; border: 1px solid #bbb; border-top: 0; color: #555; }
+        .tl { border-left: 3px solid #555; margin: 16px 0 0 8px; padding-left: 20px; }
+        .tl-item { position: relative; margin: 0 0 14px; break-inside: avoid; }
+        .tl-item::before { content: ""; position: absolute; left: -29px; top: 2px;
+                           width: 10px; height: 10px; border-radius: 50%;
+                           background: #fff; border: 3px solid #555; }
+        .tl-item small { display: block; color: #444; margin-top: 2px; }
+    `;
+
+    /** Imprime HTML en un iframe oculto (no depende del tema oscuro de la página). */
+    function imprimirDocumento(titulo, cuerpo) {
+        const iframe = document.createElement("iframe");
+        iframe.setAttribute("aria-hidden", "true");
+        iframe.style.cssText =
+            "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentDocument;
+        doc.open();
+        doc.write(
+            `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">` +
+            `<title>${esc(titulo)}</title><style>${CSS_IMPRESION}</style></head>` +
+            `<body>${cuerpo}</body></html>`);
+        doc.close();
+
+        const ventana = iframe.contentWindow;
+        ventana.onafterprint = () => iframe.remove();
+        window.setTimeout(() => iframe.remove(), 5 * 60_000); // respaldo
+
+        ventana.focus();
+        ventana.print();
+    }
+
+    function htmlCabeceraViaje(v) {
+        const [unidad, placa, conductor] = partesUnidad(v.conductorUnidad);
+
+        return `
+            <div class="cab">
+                <h2>Viaje #${esc(v.idViaje)} · ${esc(v.estado)}</h2>
+                <div>${esc(unidad)}${placa ? " · " + esc(placa) : ""} · Conductor: ${esc(conductor)}</div>
+                <div>${esc(v.origen || "—")} → ${esc(v.destino || "—")}</div>
+                <div>Inicio: ${esc(fmt(v.fechaInicio))} ·
+                     Fin: ${esc(v.fechaFin ? fmt(v.fechaFin) : "—")} ·
+                     Paradas: ${esc(v.totalParadas)}</div>
+            </div>`;
+    }
+
+    function htmlTablaParadas(paradas) {
+        if (!paradas.length) {
+            return `<div class="vacio">Sin paradas registradas.</div>`;
+        }
+
+        const filas = paradas.map(p => `
+            <tr>
+                <td>${esc(p.numeroParada)}</td>
+                <td>${esc(fmt(p.inicio))}</td>
+                <td>${esc(p.fin ? fmt(p.fin) : "Sigue detenido")}</td>
+                <td>${esc(fmtDuracion(p.duracionMinutos))}</td>
+                <td>${esc(p.observaciones || "—")}</td>
+                <td>${esc(p.motivo || "Sin registrar")}</td>
+            </tr>`).join("");
+
+        return `
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th><th>Inicio</th><th>Fin</th>
+                        <th>Duración</th><th>Lugar</th><th>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>${filas}</tbody>
+            </table>`;
+    }
+
+    // --- Línea de tiempo de UN viaje ---
+
+    function htmlLineaTiempo(ruta) {
+        const items = eventosTimeline(ruta).map(e => `
+            <div class="tl-item">
+                <strong>${esc(e.titulo)}</strong>
+                <small>${esc(e.detalle)}</small>
+                ${e.lugar ? `<small>Lugar: ${esc(e.lugar)}</small>` : ""}
+            </div>`).join("");
+
+        return `
+            <h1>Línea de tiempo del viaje #${esc(ruta.viaje.idViaje)}</h1>
+            <p class="sub">Generado: ${esc(fmt(new Date()))}</p>
+            ${htmlCabeceraViaje(ruta.viaje)}
+            <div class="tl">${items}</div>`;
+    }
+
+    function imprimirTimeline() {
+        if (!estado.ruta) {
+            window.alert('Selecciona un viaje y pulsa "Ruta" primero.');
+            return;
+        }
+
+        imprimirDocumento(
+            `Línea de tiempo - viaje ${estado.ruta.viaje.idViaje}`,
+            htmlLineaTiempo(estado.ruta));
+    }
+
+    // --- Reporte por rango de fechas (tabla por viaje) ---
+
+    function htmlReporte({ desde, hasta, datos }) {
+        const totalParadas = datos.reduce((s, d) => s + d.paradas.length, 0);
+        const totalMin = datos.reduce((s, d) =>
+            s + d.paradas.reduce((a, p) => a + (p.duracionMinutos || 0), 0), 0);
+
+        const bloques = datos.map(d => `
+            <section class="viaje">
+                ${htmlCabeceraViaje(d.viaje)}
+                ${htmlTablaParadas(d.paradas)}
+            </section>`).join("");
+
+        return `
+            <h1>Reporte de viajes</h1>
+            <p class="sub">Del ${esc(fechaCorta(desde))} al ${esc(fechaCorta(hasta))}
+                · Generado: ${esc(fmt(new Date()))}</p>
+
+            <div class="resumen">
+                <div><strong>${datos.length}</strong>Viajes</div>
+                <div><strong>${totalParadas}</strong>Paradas</div>
+                <div><strong>${esc(fmtDuracion(totalMin))}</strong>Tiempo total detenido</div>
+            </div>
+
+            ${bloques}`;
+    }
+
+    async function generarReporte() {
+        const desde = $("reporteDesde").value;
+        const hasta = $("reporteHasta").value;
+        const resumen = $("reporteResumen");
+        const btnImprimir = $("btnImprimirReporte");
+
+        estado.reporte = null;
+        btnImprimir.disabled = true;
+
+        if (!desde || !hasta) {
+            resumen.textContent = "Selecciona la fecha inicial y la final.";
+            return;
+        }
+
+        if (hasta < desde) {
+            resumen.textContent = "La fecha final no puede ser anterior a la inicial.";
+            return;
+        }
+
+        resumen.textContent = "Consultando viajes...";
+
+        try {
+            const url = `${API}/viajes/reporte` +
+                `?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`;
+
+            const datos = await api(url) || [];
+
+            if (!datos.length) {
+                resumen.textContent = "No hay viajes en ese rango de fechas.";
+                return;
+            }
+
+            const paradas = datos.reduce((s, d) => s + d.paradas.length, 0);
+
+            estado.reporte = { desde, hasta, datos };
+            resumen.textContent =
+                `${datos.length} viaje(s) y ${paradas} parada(s) listos para imprimir.`;
+            btnImprimir.disabled = false;
+        } catch (error) {
+            resumen.textContent = error.message;
+        }
+    }
+
+    function imprimirReporte() {
+        if (!estado.reporte) return;
+
+        imprimirDocumento("Reporte de viajes", htmlReporte(estado.reporte));
+    }
+
+    function iniciarReporte() {
+        const desde = $("reporteDesde");
+        const hasta = $("reporteHasta");
+
+        if (!desde || !hasta) return;
+
+        const hoy = ahoraLocalISO().slice(0, 10);
+
+        if (!desde.value) desde.value = hoy.slice(0, 8) + "01"; // primer día del mes
+        if (!hasta.value) hasta.value = hoy;
+
+        const invalidar = () => {
+            estado.reporte = null;
+            $("btnImprimirReporte").disabled = true;
+            $("reporteResumen").textContent = "";
+        };
+
+        desde.addEventListener("change", invalidar);
+        hasta.addEventListener("change", invalidar);
+
+        $("btnGenerarReporte")?.addEventListener("click", generarReporte);
+        $("btnImprimirReporte")?.addEventListener("click", imprimirReporte);
     }
 
     // -----------------------------------------------------
@@ -478,13 +850,13 @@
             const mensaje = $("mensajeCrearViaje");
             const boton = $("btnGuardarViaje");
 
-			const cuerpo = {
-			    idViaje: Number($("idViaje").value) || null,
-			    idVehiculoGps: $("conductorUnidad").value,
-			    origenId: Number($("origen").value) || null,
-			    destinoId: Number($("destino").value) || null,
-			    fechaSalida: $("fechaSalida").value || null
-			};
+            const cuerpo = {
+                idViaje: Number($("idViaje").value) || null,
+                idVehiculoGps: $("conductorUnidad").value,
+                origenId: Number($("origen").value) || null,
+                destinoId: Number($("destino").value) || null,
+                fechaSalida: $("fechaSalida").value || null
+            };
 
             boton.disabled = true;
             mensaje.textContent = "Creando viaje...";
@@ -517,6 +889,11 @@
 
     function iniciar() {
         iniciarFormulario();
+        iniciarReporte();
+
+        $("btnImprimirTimeline")?.addEventListener("click", imprimirTimeline);
+        $("eliminarConfirmacion")?.addEventListener("input", validarConfirmacionEliminar);
+        $("btnConfirmarEliminar")?.addEventListener("click", confirmarEliminarViaje);
 
         $("eventosTable")?.addEventListener("click", evento => {
             const boton = evento.target.closest("[data-accion]");
@@ -527,8 +904,16 @@
             if (boton.dataset.accion === "ruta") mostrarRuta(id).catch(e => window.alert(e.message));
             if (boton.dataset.accion === "detalle") abrirDetalle(id);
             if (boton.dataset.accion === "finalizar") finalizarViaje(id);
+            if (boton.dataset.accion === "eliminar") pedirEliminarViaje(id);
         });
 
+		document.addEventListener("chc:actualizar", async () => {
+		    await cargarViajes();
+		    if (estado.rutaId !== null) {
+		        mostrarRuta(estado.rutaId, { ajustar: false }).catch(console.error);
+		    }
+		});
+		
         cargarViajes();
 
         window.setInterval(async () => {

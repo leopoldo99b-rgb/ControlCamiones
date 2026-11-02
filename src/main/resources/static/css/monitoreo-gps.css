@@ -992,7 +992,6 @@ a:hover {
 .status.stopped,
 .status.detained,
 .status.detenido,
-.status.detained,
 .status.espera,
 .status.pendiente,
 .estado.stopped,
@@ -1015,7 +1014,6 @@ a:hover {
 .status.offline,
 .status.inactive,
 .status.inactivo,
-.status.sin-senal,
 .status.sin-senal,
 .status.cancelado,
 .status.error,
@@ -1052,7 +1050,6 @@ a:hover {
 
 /* ==========================================================
    BOTONES DE ACCIÓN DE TABLAS
-   Incluye botones para ver el detalle de un viaje.
    ========================================================== */
 
 .vehicle-table button,
@@ -1062,8 +1059,6 @@ a:hover {
 	font-family: inherit;
 	vertical-align: middle;
 }
-
-/* Botón Ver: selectores habituales */
 
 .btn-ver,
 .btn-detalle,
@@ -1409,7 +1404,7 @@ a[data-bs-target="#modalDetalleViaje"]:hover,
 }
 
 /* ==========================================================
-   MODAL CREAR VIAJE
+   MODAL CREAR VIAJE (modal propio con :target)
    ========================================================== */
 
 .modal-anchor {
@@ -1574,6 +1569,7 @@ a[data-bs-target="#modalDetalleViaje"]:hover,
 	border-radius: 9px;
 	outline: none;
 	font-size: 11px;
+	color-scheme: dark;
 }
 
 .form-control-dark:focus,
@@ -2080,10 +2076,12 @@ textarea:focus-visible {
 }
 
 /* ==========================================================
-   MODAL VER DETALLE DEL VIAJE — TRANSPORTES CHC
+   MODALES BOOTSTRAP — TRANSPORTES CHC
+   Aplica a: #modalDetalleViaje, #modalEliminarViaje, #modalReporte
+   (todos llevan la clase .detalle-viaje-modal)
    ========================================================== */
 
-#modalDetalleViaje {
+.detalle-viaje-modal {
 	--detalle-cyan: #22d3ee;
 	--detalle-panel: #131e30;
 	--detalle-panel-soft: #182439;
@@ -2091,29 +2089,45 @@ textarea:focus-visible {
 	--detalle-text: #e8eef8;
 	--detalle-muted: #a0aec2;
 
-	padding: 16px;
-	background: rgba(3, 7, 18, .80);
-	backdrop-filter: blur(6px);
+	/* Variables de Bootstrap para que no aparezca el fondo blanco */
+	--bs-modal-bg: var(--detalle-panel);
+	--bs-modal-color: var(--detalle-text);
+	--bs-modal-border-color: var(--detalle-border);
+	--bs-modal-header-border-color: var(--detalle-border);
+	--bs-modal-footer-border-color: var(--detalle-border);
+	--bs-modal-border-radius: 18px;
+	--bs-modal-width: 520px;
+}
+
+/* El oscurecido y el blur los pone el backdrop de Bootstrap */
+.modal-backdrop {
+	--bs-backdrop-bg: #030712;
+	--bs-backdrop-opacity: .72;
+	backdrop-filter: blur(5px);
+}
+
+/* Ancho: eliminar y reporte compactos, detalle más ancho */
+.detalle-viaje-modal .modal-dialog {
+	width: 100%;
 }
 
 #modalDetalleViaje .modal-dialog {
-	width: 100%;
-	max-width: 850px;
-	margin: auto;
+	--bs-modal-width: 850px;
 }
 
-#modalDetalleViaje .modal-content {
+.detalle-viaje-modal .modal-content {
 	color: var(--detalle-text);
 	background: var(--detalle-panel);
 	border: 1px solid var(--detalle-border);
 	border-radius: 18px;
 	box-shadow: 0 25px 80px rgba(0, 0, 0, .55);
 	overflow: hidden;
+	animation: detalleViajeEntrada .2s ease-out;
 }
 
 /* Encabezado */
 
-#modalDetalleViaje .modal-header {
+.detalle-viaje-modal .modal-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -2127,15 +2141,20 @@ textarea:focus-visible {
 	border-bottom: 1px solid var(--detalle-border);
 }
 
-#modalDetalleViaje .modal-title {
-	margin: 0 0 10px;
+.detalle-viaje-modal .modal-title {
+	margin: 0;
 	color: var(--detalle-text);
 	font-size: 20px;
 	font-weight: 800;
 	letter-spacing: -.4px;
 }
 
-#modalDetalleViaje .btn-close {
+/* Cuando el título lleva el estado debajo */
+.detalle-viaje-modal .modal-header > div > .modal-title {
+	margin-bottom: 10px;
+}
+
+.detalle-viaje-modal .btn-close {
 	flex-shrink: 0;
 	padding: 10px;
 	opacity: .8;
@@ -2144,9 +2163,13 @@ textarea:focus-visible {
 	transition: background .2s, opacity .2s;
 }
 
-#modalDetalleViaje .btn-close:hover {
+.detalle-viaje-modal .btn-close:hover {
 	opacity: 1;
 	background: rgba(255, 255, 255, .1);
+}
+
+.detalle-viaje-modal .btn-close:focus {
+	box-shadow: 0 0 0 3px rgba(34, 211, 238, .25);
 }
 
 /* Estado del viaje */
@@ -2184,12 +2207,13 @@ textarea:focus-visible {
 
 /* Cuerpo del modal */
 
-#modalDetalleViaje .modal-body {
+.detalle-viaje-modal .modal-body {
 	padding: 24px;
 	background: var(--detalle-panel);
+	color: var(--detalle-text);
 }
 
-#modalDetalleViaje .detalle-seccion-titulo {
+.detalle-viaje-modal .detalle-seccion-titulo {
 	display: flex;
 	align-items: center;
 	gap: 9px;
@@ -2199,11 +2223,11 @@ textarea:focus-visible {
 	font-weight: 800;
 }
 
-#modalDetalleViaje .detalle-seccion-titulo:first-child {
+.detalle-viaje-modal .detalle-seccion-titulo:first-child {
 	margin-top: 0;
 }
 
-#modalDetalleViaje .detalle-seccion-titulo::before {
+.detalle-viaje-modal .detalle-seccion-titulo::before {
 	display: inline-block;
 	width: 4px;
 	height: 17px;
@@ -2214,13 +2238,13 @@ textarea:focus-visible {
 
 /* Información general */
 
-#modalDetalleViaje .detalle-grid {
+.detalle-viaje-modal .detalle-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 12px;
 }
 
-#modalDetalleViaje .detalle-campo {
+.detalle-viaje-modal .detalle-campo {
 	min-width: 0;
 	padding: 15px;
 	background: var(--detalle-panel-soft);
@@ -2229,12 +2253,12 @@ textarea:focus-visible {
 	transition: border-color .2s, background .2s;
 }
 
-#modalDetalleViaje .detalle-campo:hover {
+.detalle-viaje-modal .detalle-campo:hover {
 	background: #1b2a40;
 	border-color: #3b536e;
 }
 
-#modalDetalleViaje .detalle-etiqueta {
+.detalle-viaje-modal .detalle-etiqueta {
 	display: block;
 	margin-bottom: 7px;
 	color: var(--detalle-muted);
@@ -2244,7 +2268,7 @@ textarea:focus-visible {
 	letter-spacing: .55px;
 }
 
-#modalDetalleViaje .detalle-valor {
+.detalle-viaje-modal .detalle-valor {
 	min-width: 0;
 	color: var(--detalle-text);
 	font-size: 12px;
@@ -2252,9 +2276,9 @@ textarea:focus-visible {
 	overflow-wrap: anywhere;
 }
 
-/* Descripción de paradas */
+/* Descripción */
 
-#modalDetalleViaje .detalle-descripcion {
+.detalle-viaje-modal .detalle-descripcion {
 	margin: -5px 0 15px;
 	color: var(--detalle-muted);
 	font-size: 11px;
@@ -2427,72 +2451,228 @@ textarea:focus-visible {
 	background: #26364d;
 }
 
-/* Mensajes de edición */
+/* Mensajes dentro de los modals */
 
-#modalDetalleViaje .detalle-mensaje {
+.detalle-viaje-modal .detalle-mensaje {
 	margin-top: 14px;
 	color: #86efac;
 	font-size: 11px;
 	line-height: 1.6;
 }
 
+.detalle-viaje-modal .detalle-mensaje.error,
+.detalle-viaje-modal .detalle-mensaje.text-danger {
+	color: #fca5a5 !important;
+}
+
+.detalle-viaje-modal .detalle-mensaje:empty {
+	display: none;
+}
+
+/* Inputs dentro de los modals (reporte, eliminar) */
+
+.detalle-viaje-modal .form-control-dark {
+	margin-top: 2px;
+}
+
+.detalle-viaje-modal .detalle-campo .form-control-dark {
+	background: #0b1422;
+}
+
+.detalle-viaje-modal .detalle-campo label.detalle-etiqueta {
+	cursor: pointer;
+}
+
+/* Alertas (modal eliminar) */
+
+.detalle-viaje-modal .alert {
+	margin: 0 0 14px;
+	padding: 13px 15px;
+	border-radius: 11px;
+	font-size: 11px;
+	line-height: 1.6;
+}
+
+.detalle-viaje-modal .alert strong {
+	font-weight: 800;
+}
+
+.detalle-viaje-modal .alert-danger {
+	color: #fca5a5;
+	background: rgba(239, 68, 68, .10);
+	border: 1px solid rgba(239, 68, 68, .30);
+}
+
+.detalle-viaje-modal .alert-warning {
+	color: #fcd34d;
+	background: rgba(245, 158, 11, .10);
+	border: 1px solid rgba(245, 158, 11, .30);
+}
+
+.detalle-viaje-modal .alert[hidden] {
+	display: none !important;
+}
+
+/* Modal eliminar */
+
+#modalEliminarViaje .modal-title i {
+	margin-right: 8px;
+	color: var(--red);
+}
+
+#modalEliminarViaje #eliminarResumen {
+	padding: 12px 14px;
+	background: var(--detalle-panel-soft);
+	border: 1px solid var(--detalle-border);
+	border-radius: 10px;
+}
+
+#modalEliminarViaje #eliminarResumen:empty {
+	display: none;
+}
+
+#modalEliminarViaje label.detalle-etiqueta {
+	margin-bottom: 9px;
+	text-transform: none;
+	letter-spacing: 0;
+	font-size: 11px;
+}
+
+#modalEliminarViaje #eliminarIdEsperado {
+	margin-left: 4px;
+	padding: 2px 8px;
+	color: var(--detalle-cyan);
+	background: rgba(34, 211, 238, .10);
+	border-radius: 6px;
+	font-size: 12px;
+	font-weight: 800;
+}
+
+#modalEliminarViaje #eliminarConfirmacion:focus {
+	border-color: var(--red);
+	box-shadow: 0 0 0 3px rgba(239, 68, 68, .12);
+}
+
 /* Pie del modal */
 
-#modalDetalleViaje .modal-footer {
+.detalle-viaje-modal .modal-footer {
 	display: flex;
+	align-items: center;
 	justify-content: flex-end;
+	flex-wrap: wrap;
+	gap: 8px;
 	padding: 15px 24px;
 	background: #101827;
 	border-top: 1px solid var(--detalle-border);
 }
 
-#modalDetalleViaje .modal-footer .btn-secondary {
+.detalle-viaje-modal .modal-footer > * {
+	margin: 0;
+}
+
+.detalle-viaje-modal .modal-footer .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
 	min-width: 100px;
+	min-height: 38px;
 	padding: 9px 16px;
-	color: var(--detalle-text);
-	background: var(--detalle-panel-soft);
-	border: 1px solid #34445b;
 	border-radius: 9px;
 	font-size: 11px;
 	font-weight: 700;
+	transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
 }
 
-#modalDetalleViaje .modal-footer .btn-secondary:hover {
+.detalle-viaje-modal .modal-footer .btn:focus-visible {
+	outline: 2px solid var(--detalle-cyan);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+/* Cerrar / Cancelar */
+.detalle-viaje-modal .modal-footer .btn-secondary {
+	color: var(--detalle-text);
+	background: var(--detalle-panel-soft);
+	border: 1px solid #34445b;
+}
+
+.detalle-viaje-modal .modal-footer .btn-secondary:hover {
 	color: var(--detalle-cyan);
 	background: #223149;
 	border-color: var(--detalle-cyan);
 }
 
-/* Scroll interno */
-
-#modalDetalleViaje .modal-dialog-scrollable .modal-content {
-	max-height: calc(100vh - 32px);
+/* Generar */
+.detalle-viaje-modal .modal-footer .btn-primary {
+	color: #071521;
+	background: var(--detalle-cyan);
+	border: 1px solid var(--detalle-cyan);
 }
 
-#modalDetalleViaje .modal-dialog-scrollable .modal-body {
+.detalle-viaje-modal .modal-footer .btn-primary:hover {
+	color: #071521;
+	background: #67e8f9;
+	border-color: #67e8f9;
+}
+
+/* Imprimir */
+.detalle-viaje-modal .modal-footer .btn-success {
+	color: #86efac;
+	background: rgba(34, 197, 94, .12);
+	border: 1px solid rgba(34, 197, 94, .35);
+}
+
+.detalle-viaje-modal .modal-footer .btn-success:hover {
+	color: #052e16;
+	background: var(--green);
+	border-color: var(--green);
+}
+
+/* Eliminar definitivamente */
+.detalle-viaje-modal .modal-footer .btn-danger {
+	color: #fff;
+	background: #dc2626;
+	border: 1px solid #dc2626;
+}
+
+.detalle-viaje-modal .modal-footer .btn-danger:hover {
+	background: #ef4444;
+	border-color: #ef4444;
+	box-shadow: 0 4px 14px rgba(239, 68, 68, .25);
+}
+
+/* Botones deshabilitados */
+.detalle-viaje-modal .modal-footer .btn:disabled,
+.detalle-viaje-modal .modal-footer .btn.disabled {
+	opacity: .4;
+	cursor: not-allowed;
+	box-shadow: none;
+	pointer-events: none;
+}
+
+/* Scroll interno */
+
+.detalle-viaje-modal .modal-dialog-scrollable .modal-body {
 	overflow-y: auto;
 	scrollbar-width: thin;
 	scrollbar-color: #40516a #111a29;
 }
 
-#modalDetalleViaje .modal-dialog-scrollable .modal-body::-webkit-scrollbar {
+.detalle-viaje-modal .modal-dialog-scrollable .modal-body::-webkit-scrollbar {
 	width: 7px;
 }
 
-#modalDetalleViaje .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track {
+.detalle-viaje-modal .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track {
 	background: #111a29;
 }
 
-#modalDetalleViaje .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb {
+.detalle-viaje-modal .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb {
 	background: #40516a;
 	border-radius: 10px;
 }
 
 /* Animación sutil */
-
-#modalDetalleViaje .modal-content {
-	animation: detalleViajeEntrada .2s ease-out;
-}
 
 @keyframes detalleViajeEntrada {
 	from {
@@ -2509,32 +2689,29 @@ textarea:focus-visible {
 /* Adaptación a móviles */
 
 @media (max-width: 600px) {
-	#modalDetalleViaje {
-		padding: 8px;
+	.detalle-viaje-modal .modal-dialog {
+		margin: 8px auto;
+		padding: 0 8px;
 	}
 
-	#modalDetalleViaje .modal-dialog {
-		margin: auto;
-	}
-
-	#modalDetalleViaje .modal-header {
+	.detalle-viaje-modal .modal-header {
 		padding: 17px;
 	}
 
-	#modalDetalleViaje .modal-title {
+	.detalle-viaje-modal .modal-title {
 		font-size: 17px;
 	}
 
-	#modalDetalleViaje .modal-body {
+	.detalle-viaje-modal .modal-body {
 		padding: 16px;
 	}
 
-	#modalDetalleViaje .detalle-grid,
+	.detalle-viaje-modal .detalle-grid,
 	#modalDetalleViaje .parada-campos {
 		grid-template-columns: minmax(0, 1fr);
 	}
 
-	#modalDetalleViaje .detalle-campo {
+	.detalle-viaje-modal .detalle-campo {
 		padding: 12px;
 	}
 
@@ -2555,170 +2732,208 @@ textarea:focus-visible {
 		flex: 1;
 	}
 
-	#modalDetalleViaje .modal-footer {
+	.detalle-viaje-modal .modal-footer {
 		padding: 12px 16px;
 	}
-}
 
+	.detalle-viaje-modal .modal-footer .btn {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+}
 
 /* ==========================================
    ESTILO DEL ESTADO EN LA TABLA DE VIAJES
    ========================================== */
 
 .events-table td:nth-child(7) {
-    vertical-align: middle;
-    white-space: nowrap;
+	vertical-align: middle;
+	white-space: nowrap;
 }
 
 .estado-viaje {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-width: 105px;
-    padding: 7px 12px;
-    border: 1px solid transparent;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
-    text-transform: uppercase;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+	min-width: 105px;
+	padding: 7px 12px;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 800;
+	line-height: 1.2;
+	letter-spacing: 0.3px;
+	white-space: nowrap;
+	text-transform: uppercase;
 }
 
 /* Punto indicador del estado */
 .estado-viaje::before {
-    content: "";
-    width: 7px;
-    height: 7px;
-    flex: 0 0 7px;
-    border-radius: 50%;
+	content: "";
+	width: 7px;
+	height: 7px;
+	flex: 0 0 7px;
+	border-radius: 50%;
 }
 
 /* En curso */
 .estado-en-ruta {
-    color: #34d399;
-    background: rgba(16, 185, 129, 0.12);
-    border-color: rgba(52, 211, 153, 0.25);
+	color: #34d399;
+	background: rgba(16, 185, 129, 0.12);
+	border-color: rgba(52, 211, 153, 0.25);
 }
 
 .estado-en-ruta::before {
-    background: #34d399;
-    box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+	background: #34d399;
+	box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
 }
 
 /* Detenido */
 .estado-detenido {
-    color: #fbbf24;
-    background: rgba(245, 158, 11, 0.12);
-    border-color: rgba(251, 191, 36, 0.25);
+	color: #fbbf24;
+	background: rgba(245, 158, 11, 0.12);
+	border-color: rgba(251, 191, 36, 0.25);
 }
 
 .estado-detenido::before {
-    background: #fbbf24;
+	background: #fbbf24;
 }
 
 /* En espera */
 .estado-espera {
-    color: #67e8f9;
-    background: rgba(6, 182, 212, 0.12);
-    border-color: rgba(103, 232, 249, 0.25);
+	color: #67e8f9;
+	background: rgba(6, 182, 212, 0.12);
+	border-color: rgba(103, 232, 249, 0.25);
 }
 
 .estado-espera::before {
-    background: #67e8f9;
+	background: #67e8f9;
 }
 
 /* Finalizado */
 .estado-finalizado {
-    color: #a5b4fc;
-    background: rgba(99, 102, 241, 0.13);
-    border-color: rgba(165, 180, 252, 0.25);
+	color: #a5b4fc;
+	background: rgba(99, 102, 241, 0.13);
+	border-color: rgba(165, 180, 252, 0.25);
 }
 
 .estado-finalizado::before {
-    background: #a5b4fc;
+	background: #a5b4fc;
 }
 
 /* ==========================================
-   BOTÓN VER DETALLE DEL VIAJE
+   BOTONES DE ACCIÓN DE VIAJES (Ver / Eliminar / Reporte / Imprimir)
    ========================================== */
 
 .acciones-viaje {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .btn-accion-viaje {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-width: 82px;
-    padding: 8px 14px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+	min-width: 82px;
+	padding: 8px 14px;
 
-    color: #67e8f9;
-    background: rgba(6, 182, 212, 0.10);
-    border: 1px solid rgba(103, 232, 249, 0.30);
-    border-radius: 9px;
+	color: #67e8f9;
+	background: rgba(6, 182, 212, 0.10);
+	border: 1px solid rgba(103, 232, 249, 0.30);
+	border-radius: 9px;
 
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.2;
+	font-family: inherit;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.2;
 
-    cursor: pointer;
-    white-space: nowrap;
+	cursor: pointer;
+	white-space: nowrap;
 
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease,
-        color 0.2s ease,
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+	transition:
+		background 0.2s ease,
+		border-color 0.2s ease,
+		color 0.2s ease,
+		transform 0.2s ease,
+		box-shadow 0.2s ease;
 }
 
 .btn-accion-viaje i {
-    font-size: 14px;
-    line-height: 1;
+	font-size: 14px;
+	line-height: 1;
 }
 
 .btn-accion-viaje:hover {
-    color: #ffffff;
-    background: #0891b2;
-    border-color: #22d3ee;
-    box-shadow: 0 4px 14px rgba(6, 182, 212, 0.22);
-    transform: translateY(-1px);
+	color: #ffffff;
+	background: #0891b2;
+	border-color: #22d3ee;
+	box-shadow: 0 4px 14px rgba(6, 182, 212, 0.22);
+	transform: translateY(-1px);
 }
 
 .btn-accion-viaje:active {
-    transform: translateY(0);
-    box-shadow: none;
+	transform: translateY(0);
+	box-shadow: none;
 }
 
 .btn-accion-viaje:focus-visible {
-    outline: 2px solid #67e8f9;
-    outline-offset: 3px;
+	outline: 2px solid #67e8f9;
+	outline-offset: 3px;
+}
+
+.btn-accion-viaje:disabled {
+	opacity: .45;
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: none;
+}
+
+/* Botón "Eliminar" de la tabla de viajes */
+.btn-accion-viaje.btn-eliminar-viaje {
+	color: #f87171;
+	background: rgba(239, 68, 68, 0.10);
+	border-color: rgba(248, 113, 113, 0.40);
+}
+
+.btn-accion-viaje.btn-eliminar-viaje:hover {
+	color: #fff;
+	background: #dc2626;
+	border-color: #ef4444;
+	box-shadow: 0 4px 14px rgba(239, 68, 68, 0.22);
 }
 
 /* Alineación de la columna Acciones */
 .events-table td:last-child {
-    text-align: center;
-    vertical-align: middle;
+	text-align: center;
+	vertical-align: middle;
 }
 
 /* Ajustes para pantallas pequeñas */
 @media (max-width: 768px) {
-    .estado-viaje {
-        min-width: 95px;
-        padding: 6px 9px;
-        font-size: 10px;
-    }
+	.estado-viaje {
+		min-width: 95px;
+		padding: 6px 9px;
+		font-size: 10px;
+	}
 
-    .btn-accion-viaje {
-        min-width: 72px;
-        padding: 7px 10px;
-    }
+	.btn-accion-viaje {
+		min-width: 72px;
+		padding: 7px 10px;
+	}
 }
+
+button.last-update {
+    background: transparent; border: 0; padding: 0;
+    color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+button.last-update:disabled { cursor: progress; }
+.last-update.is-loading .refresh i {
+    display: inline-block;
+    animation: chc-giro 1s linear infinite;
+}
+@keyframes chc-giro { to { transform: rotate(360deg); } }
+
+.filter-button.activo { outline: 2px solid #22d3ee; }

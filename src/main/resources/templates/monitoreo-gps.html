@@ -1,440 +1,560 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Centro de Monitoreo | Transportes CHC</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Monitoreo | Transportes CHC</title>
 
-<link
-	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-	rel="stylesheet">
-<link rel="stylesheet"
-	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-<link rel="stylesheet"
-	href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="/css/monitoreo-gps.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/css/monitoreo-gps.css">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-	href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-	rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Botón "Eliminar" de la tabla de viajes */
+        .btn-accion-viaje.btn-eliminar-viaje {
+            color: #f87171;
+            border-color: #f87171;
+        }
+    </style>
 </head>
 
 <body>
 
-	<div class="dashboard">
+<div class="dashboard">
 
-		<!-- ENCABEZADO -->
-		<header class="topbar">
-			<div class="brand">
-				<div class="brand-icon">
-					<i class="bi bi-truck-front-fill"></i>
-				</div>
-				<div>
-					<h1>Centro de monitoreo</h1>
-					<p>Flota y viajes en tiempo real</p>
-				</div>
-			</div>
+    <!-- ENCABEZADO -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="bi bi-truck-front-fill"></i>
+            </div>
+            <div>
+                <h1>Centro de monitoreo</h1>
+                <p>Flota y viajes en tiempo real</p>
+            </div>
+        </div>
 
-			<div class="metric metric-green">
-				<span class="metric-icon"><i class="bi bi-truck"></i></span>
-				<div>
-					<small>Vehículos activos</small> <strong id="vehiculosActivos">--
-						<em>/ --</em>
-					</strong>
-				</div>
-			</div>
+        <div class="metric metric-green">
+            <span class="metric-icon"><i class="bi bi-truck"></i></span>
+            <div>
+                <small>Vehículos activos</small>
+                <strong id="vehiculosActivos">-- <em>/ --</em></strong>
+            </div>
+        </div>
 
-			<div class="metric metric-cyan">
-				<span class="metric-icon"><i class="bi bi-geo-alt"></i></span>
-				<div>
-					<small>Viajes en curso</small> <strong id="viajesEnCurso">--</strong>
-				</div>
-			</div>
+        <div class="metric metric-cyan">
+            <span class="metric-icon"><i class="bi bi-geo-alt"></i></span>
+            <div>
+                <small>Viajes en curso</small>
+                <strong id="viajesEnCurso">--</strong>
+            </div>
+        </div>
 
-			<div class="metric metric-amber">
-				<span class="metric-icon"><i
-					class="bi bi-exclamation-triangle"></i></span>
-				<div>
-					<small>Alertas</small> <strong id="totalAlertas">--</strong>
-				</div>
-			</div>
 
-			<div class="top-actions">
-				<div class="filter-box">
-					<span><i class="bi bi-calendar3"></i></span>
-					<div>
-						<small>Rango de fechas</small> <strong id="rangoFechas">Hoy</strong>
-					</div>
-					<b>⌄</b>
-				</div>
+        <div class="top-actions">
 
-				<div class="filter-box">
-					<span><i class="bi bi-funnel"></i></span>
-					<div>
-						<small>Estado</small> <strong>Todos</strong>
-					</div>
-					<b>⌄</b>
-				</div>
+            <button type="button" class="last-update" id="refreshButton"
+        title="Actualizar ahora" aria-label="Actualizar datos ahora">
+    <span class="refresh"><i class="bi bi-arrow-clockwise"></i></span>
+    <div>
+        <small>Última actualización</small>
+        <strong id="ultimaActualizacion">Pendiente</strong>
+    </div>
+</button>
 
-				<div class="last-update">
-					<span class="refresh"><i class="bi bi-arrow-clockwise"></i></span>
-					<div>
-						<small>Última actualización</small> <strong
-							id="ultimaActualizacion">Pendiente</strong>
-					</div>
-				</div>
+            <a href="#modalCrearViaje" class="primary-btn">
+                <i class="bi bi-plus-lg"></i>
+                Crear viaje
+            </a>
+        </div>
+    </header>
 
-				<a href="#modalCrearViaje" class="primary-btn"> <i
-					class="bi bi-plus-lg"></i> Crear viaje
-				</a>
-			</div>
-		</header>
+    <!-- MAPA Y VEHÍCULOS -->
+    <section class="main-grid">
 
-		<!-- MAPA Y VEHÍCULOS -->
-		<section class="main-grid">
+        <!-- MAPA -->
+        <div class="map-panel panel">
+            <div class="map-header">
+                <div>
+                    <h2><i class="bi bi-map"></i> Mapa de monitoreo</h2>
+                    <p>Ubicación geográfica de las unidades</p>
+                </div>
+                <span class="map-live"><span></span> Mapa activo</span>
+            </div>
 
-			<!-- MAPA -->
-			<div class="map-panel panel">
-				<div class="map-header">
-					<div>
-						<h2>
-							<i class="bi bi-map"></i> Mapa de monitoreo
-						</h2>
-						<p>Ubicación geográfica de las unidades</p>
-					</div>
-					<span class="map-live"><span></span> Mapa activo</span>
-				</div>
+            <div id="mapaMonitoreo"
+                 role="application"
+                 aria-label="Mapa interactivo de monitoreo de vehículos"></div>
 
-				<div id="mapaMonitoreo" role="application"
-					aria-label="Mapa interactivo de monitoreo de vehículos"></div>
+            <div class="map-legend">
+                <span class="legend-item"><i class="legend-dot"></i> En línea</span>
+                <span class="legend-item"><i class="legend-dot cyan"></i> En ruta</span>
+                <span class="legend-item"><i class="legend-dot yellow"></i> Detenido</span>
+            </div>
 
-				<div class="map-legend">
-					<span class="legend-item"><i class="legend-dot"></i> En
-						línea</span> <span class="legend-item"><i class="legend-dot cyan"></i>
-						En ruta</span> <span class="legend-item"><i
-						class="legend-dot yellow"></i> Detenido</span> <span class="legend-item"><i
-						class="legend-dot red"></i> Alerta</span>
-				</div>
+            <div class="map-tools">
+                <button type="button" id="btnCrearPunto">
+                    <i class="bi bi-geo-alt-fill me-1"></i>
+                    Crear origen / destino
+                </button>
+                <button type="button" id="btnCentrarMapa">
+                    <i class="bi bi-crosshair me-1"></i>
+                    Centrar unidades
+                </button>
+                <button type="button" id="btnVistaMapa">
+                    <i class="bi bi-layers me-1"></i>
+                    Vista oscura
+                </button>
+            </div>
 
-				<div class="map-tools">
-					<button type="button" id="btnCrearPunto">
-						<i class="bi bi-geo-alt-fill me-1"></i> Crear origen / destino
-					</button>
-					<button type="button" id="btnCentrarMapa">
-						<i class="bi bi-crosshair me-1"></i> Centrar unidades
-					</button>
-					<button type="button" id="btnVistaMapa">
-						<i class="bi bi-layers me-1"></i> Vista oscura
-					</button>
-				</div>
+            <div id="panelCrearPunto" class="panel-crear-punto" hidden>
+                <div class="campo-punto">
+                    <label for="tipoPunto">Tipo de punto</label>
+                    <select id="tipoPunto" class="form-select-dark">
+                        <option value="ORIGEN">🔴 Origen</option>
+                        <option value="DESTINO">🟣 Destino</option>
+                    </select>
+                </div>
 
-				<div id="panelCrearPunto" class="panel-crear-punto" hidden>
-					<div class="campo-punto">
-						<label for="tipoPunto">Tipo de punto</label> <select
-							id="tipoPunto" class="form-select-dark">
-							<option value="ORIGEN">🔴 Origen</option>
-							<option value="DESTINO">🟣 Destino</option>
-						</select>
-					</div>
+                <div class="campo-punto">
+                    <label for="nombrePunto">Nombre del punto</label>
+                    <input id="nombrePunto"
+                           class="form-control-dark"
+                           type="text"
+                           maxlength="150"
+                           placeholder="Ej. Planta principal">
+                </div>
 
-					<div class="campo-punto">
-						<label for="nombrePunto">Nombre del punto</label> <input
-							id="nombrePunto" class="form-control-dark" type="text"
-							maxlength="150" placeholder="Ej. Planta principal">
-					</div>
+                <div class="acciones-punto">
+                    <button type="button" id="btnSeleccionarUbicacion">
+                        <i class="bi bi-crosshair"></i> Elegir en el mapa
+                    </button>
+                    <button type="button" id="btnCancelarPunto">Cancelar</button>
+                </div>
 
-					<div class="acciones-punto">
-						<button type="button" id="btnSeleccionarUbicacion">
-							<i class="bi bi-crosshair"></i> Elegir en el mapa
-						</button>
-						<button type="button" id="btnCancelarPunto">Cancelar</button>
-					</div>
+                <small id="mensajePunto" role="status" aria-live="polite">
+                    Escribe el nombre y elige la ubicación en el mapa.
+                </small>
+            </div>
+        </div>
 
-					<small id="mensajePunto" role="status" aria-live="polite">
-						Escribí el nombre y elegí la ubicación en el mapa. </small>
-				</div>
-			</div>
+        <!-- LISTADO DE VEHÍCULOS -->
+        <aside class="vehicle-panel panel">
+            <div class="search-row">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="search"
+                           id="buscarVehiculo"
+                           placeholder="Buscar por placa, conductor o unidad..."
+                           aria-label="Buscar vehículos">
+                </div>
+                <div class="dropdown">
+    <button class="filter-button" type="button" id="btnFiltroEstado"
+            data-bs-toggle="dropdown" aria-expanded="false"
+            title="Filtrar por estado" aria-label="Filtrar por estado">
+        <i class="bi bi-sliders"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+        <li><button type="button" class="dropdown-item active" data-filtro-estado="all">Todos</button></li>
+        <li><button type="button" class="dropdown-item" data-filtro-estado="moving">En movimiento</button></li>
+        <li><button type="button" class="dropdown-item" data-filtro-estado="stopped">Detenidos</button></li>
+    </ul>
+</div>
+            </div>
 
-			<!-- LISTADO DE VEHÍCULOS -->
-			<aside class="vehicle-panel panel">
-				<div class="search-row">
-					<div class="search-box">
-						<i class="bi bi-search"></i> <input type="search"
-							id="buscarVehiculo"
-							placeholder="Buscar por placa, conductor o unidad..."
-							aria-label="Buscar vehículos">
-					</div>
-					<button class="filter-button" type="button" title="Filtrar">
-						<i class="bi bi-sliders"></i>
-					</button>
-				</div>
+            <div class="table-responsive">
+                <table class="vehicle-table">
+                    <thead>
+                        <tr>
+                            <th>Unidad/Conductor</th>
+                            <th>Estado</th>
+                            <th>Velocidad</th>
+                            <th>Ubicación</th>
+                            <th>Últ. act.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vehicleTable">
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <span class="spinner-border spinner-border-sm me-2"
+                                      role="status" aria-hidden="true"></span>
+                                Cargando vehículos...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-				<div class="table-responsive">
-					<table class="vehicle-table">
-						<thead>
-							<tr>
-								<th>Unidad/Conductor</th>
-								<th>Estado</th>
-								<th>Velocidad</th>
-								<th>Ubicación</th>
-								<th>Últ. act.</th>
-							</tr>
-						</thead>
-						<tbody id="vehicleTable">
-							<tr>
-								<td colspan="5" class="text-center py-4"><span
-									class="spinner-border spinner-border-sm me-2" role="status"
-									aria-hidden="true"></span> Cargando vehículos...</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
+            <div id="mensajeVehiculos"
+                 class="px-3 py-2 small text-muted"
+                 role="status"
+                 aria-live="polite"></div>
+        </aside>
+    </section>
 
-				<div id="mensajeVehiculos" class="px-3 py-2 small text-muted"
-					role="status" aria-live="polite"></div>
-			</aside>
-		</section>
+    <!-- VIAJES Y LÍNEA DE TIEMPO -->
+    <section class="bottom-grid">
 
-		<!-- VIAJES Y LÍNEA DE TIEMPO -->
-		<section class="bottom-grid">
+        <div class="events-panel panel">
+            <div class="section-heading">
+                <h2><i class="bi bi-list-check"></i> Eventos y paradas de viajes</h2>
+                <button type="button" class="btn-accion-viaje"
+                        data-bs-toggle="modal" data-bs-target="#modalReporte">
+                    <i class="bi bi-file-earmark-text"></i> Reporte por fechas
+                </button>
+            </div>
 
-			<div class="events-panel panel">
-				<div class="section-heading">
-					<h2>
-						<i class="bi bi-list-check"></i> Eventos y paradas de viajes
-					</h2>
-					<a class="text-link" href="#" onclick="return false;"> Ver
-						historial <i class="bi bi-arrow-right"></i>
-					</a>
-				</div>
+            <div class="table-responsive">
+                <table class="events-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ID viaje</th>
+                            <th>Fecha</th>
+                            <th>Unidad/Conductor</th>
+                            <th>Origen</th>
+                            <th>Destino</th>
+                            <th>Estado</th>
+                            <th>Paradas</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
 
-				<div class="table-responsive">
-					<table class="events-table">
-						<thead>
-							<tr>
-								<th>#</th>
-								<th>ID viaje</th>
-								<th>Fecha</th>
-								<th>Unidad/Conductor</th>
-								<th>Origen</th>
-								<th>Destino</th>
-								<th>Estado</th>
-								<th>Paradas</th>
-								<th>Acciones</th>
-							</tr>
-						</thead>
+                    <!-- Lo llena monitoreo-viajes.js con GET /api/viajes -->
+                    <tbody id="eventosTable">
+                        <tr>
+                            <td colspan="9" class="text-center py-3">
+                                <span class="spinner-border spinner-border-sm me-2"
+                                      role="status" aria-hidden="true"></span>
+                                Cargando viajes...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-						<!-- Lo llena monitoreo-viajes.js con GET /api/viajes -->
-						<tbody id="eventosTable">
-							<tr>
-								<td colspan="9" class="text-center py-3"><span
-									class="spinner-border spinner-border-sm me-2" role="status"
-									aria-hidden="true"></span> Cargando viajes...</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
+        <!-- LÍNEA DE TIEMPO -->
+        <aside class="timeline-panel panel">
+            <div class="section-heading">
+                <h2><i class="bi bi-clock-history"></i> Línea de tiempo del viaje</h2>
+                <button type="button" class="btn-accion-viaje" id="btnImprimirTimeline" disabled>
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+            </div>
 
-			<!-- LÍNEA DE TIEMPO -->
-			<aside class="timeline-panel panel">
-				<div class="section-heading">
-					<h2>
-						<i class="bi bi-clock-history"></i> Línea de tiempo del viaje
-					</h2>
-				</div>
+            <div class="timeline-subtitle">
+                <div class="timeline-truck">
+                    <i class="bi bi-truck-front-fill"></i>
+                </div>
+                <strong id="timelineUnidad">Sin unidad seleccionada</strong>
+                <span id="timelineViaje"></span>
+                <span id="timelineEstado" class="status route ms-auto">Sin datos</span>
+            </div>
 
-				<div class="timeline-subtitle">
-					<div class="timeline-truck">
-						<i class="bi bi-truck-front-fill"></i>
-					</div>
-					<strong id="timelineUnidad">Sin unidad seleccionada</strong> <span
-						id="timelineViaje"></span> <span id="timelineEstado"
-						class="status route ms-auto">Sin datos</span>
-				</div>
+            <div class="timeline" id="timelineEventos">
+                <p class="text-muted small">
+                    Selecciona un viaje y pulsa "Ruta" para consultar su información.
+                </p>
+            </div>
+        </aside>
+    </section>
+</div>
 
-				<div class="timeline" id="timelineEventos">
-					<p class="text-muted small">Selecciona un viaje y pulsa "Ruta"
-						para consultar su información.</p>
-				</div>
-			</aside>
-		</section>
-	</div>
+<!-- MODAL: CREAR VIAJE -->
+<div id="modalCrearViaje" class="modal-anchor">
+    <div class="modal-card">
 
-	<!-- MODAL: CREAR VIAJE -->
-	<div id="modalCrearViaje" class="modal-anchor">
-		<div class="modal-card">
+        <div class="modal-header-custom">
+            <div class="modal-title-wrap">
+                <div class="modal-icon"><i class="bi bi-truck-front"></i></div>
+                <div>
+                    <h2>Crear nuevo viaje</h2>
+                    <p>Selecciona una unidad GPS y registra la ruta.</p>
+                </div>
+            </div>
 
-			<div class="modal-header-custom">
-				<div class="modal-title-wrap">
-					<div class="modal-icon">
-						<i class="bi bi-truck-front"></i>
-					</div>
-					<div>
-						<h2>Crear nuevo viaje</h2>
-						<p>Selecciona una unidad GPS y registra la ruta.</p>
-					</div>
-				</div>
+            <a href="#" class="close-modal" aria-label="Cerrar modal">&times;</a>
+        </div>
 
-				<a href="#" class="close-modal" aria-label="Cerrar modal">&times;</a>
-			</div>
+        <!-- CAMBIO: se quitaron action="#" y method="post" para que el envío
+             lo maneje solo JavaScript (fetch POST /api/viajes) y la página
+             no se recargue ni cambie la URL al enviar. -->
+        <form id="formCrearViaje" autocomplete="off">
+            <div class="modal-body-custom">
 
-			<form id="formCrearViaje" action="#" method="post">
-				<div class="modal-body-custom">
+                <h3 class="form-section-title">
+                    <i class="bi bi-card-list me-2"></i> Información del viaje
+                </h3>
 
-					<h3 class="form-section-title">
-						<i class="bi bi-card-list me-2"></i> Información del viaje
-					</h3>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="idViaje">ID del viaje <span class="required">*</span></label>
+                        <input class="form-control-dark"
+                               id="idViaje" name="idViaje"
+                               type="number" min="1" step="1"
+                               placeholder="Ej. 1001" required>
+                        <div class="form-help">Código único del viaje. No puede repetirse.</div>
+                    </div>
 
-					<div class="form-grid">
-						<div class="form-field">
-							<label for="idViaje">ID del viaje <span class="required">*</span></label>
-							<input class="form-control-dark" id="idViaje" name="idViaje"
-								type="number" min="1" step="1" placeholder="Ej. 1001" required>
-							<div class="form-help">Código único del viaje. No puede
-								repetirse.</div>
-						</div>
+                    <div class="form-field">
+                        <label for="fechaSalida">Fecha de salida <span class="required">*</span></label>
+                        <input class="form-control-dark"
+                               id="fechaSalida" name="fechaSalida"
+                               type="datetime-local" step="60" required>
+                    </div>
 
-						<div class="form-field">
-							<label for="fechaSalida">Fecha de salida <span
-								class="required">*</span></label> <input class="form-control-dark"
-								id="fechaSalida" name="fechaSalida" type="datetime-local"
-								required>
-						</div>
+                    <div class="form-field full">
+                        <label for="conductorUnidad">Conductor / Unidad GPS <span class="required">*</span></label>
+                        <select class="form-select-dark"
+                                id="conductorUnidad" name="conductorUnidad" required>
+                            <option value="">Cargando conductores y unidades GPS...</option>
+                        </select>
+                        <div class="form-help">
+                            Selecciona la combinación de conductor y vehículo que aparece en tu sistema GPS.
+                        </div>
+                    </div>
 
-						<div class="form-field full">
-							<label for="conductorUnidad">Conductor / Unidad GPS <span
-								class="required">*</span></label> <select class="form-select-dark"
-								id="conductorUnidad" name="conductorUnidad" required>
-								<option value="">Cargando conductores y unidades GPS...</option>
-							</select>
-							<div class="form-help">Selecciona la combinación de
-								conductor y vehículo que aparece en tu sistema GPS.</div>
-						</div>
+                    <div class="form-field">
+                        <label for="origen">Origen <span class="required">*</span></label>
+                        <select class="form-select-dark" id="origen" name="origen" required>
+                            <option value="">Cargando orígenes guardados...</option>
+                        </select>
+                        <div class="form-help">Selecciona un origen guardado en el mapa.</div>
+                    </div>
 
-						<div class="form-field">
-							<label for="origen">Origen <span class="required">*</span></label>
-							<select class="form-select-dark" id="origen" name="origen"
-								required>
-								<option value="">Cargando orígenes guardados...</option>
-							</select>
-							<div class="form-help">Selecciona un origen guardado en el
-								mapa.</div>
-						</div>
+                    <div class="form-field">
+                        <label for="destino">Destino <span class="required">*</span></label>
+                        <select class="form-select-dark" id="destino" name="destino" required>
+                            <option value="">Cargando destinos guardados...</option>
+                        </select>
+                        <div class="form-help">Selecciona un destino guardado en el mapa.</div>
+                    </div>
+                </div>
 
-						<div class="form-field">
-							<label for="destino">Destino <span class="required">*</span></label>
-							<select class="form-select-dark" id="destino" name="destino"
-								required>
-								<option value="">Cargando destinos guardados...</option>
-							</select>
-							<div class="form-help">Selecciona un destino guardado en el
-								mapa.</div>
-						</div>
-					</div>
+                <h3 class="form-section-title">
+                    <i class="bi bi-broadcast me-2"></i> Seguimiento GPS
+                </h3>
 
-					<h3 class="form-section-title">
-						<i class="bi bi-broadcast me-2"></i> Seguimiento GPS
-					</h3>
+                <div class="monitor-note">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <div>
+                        <strong>Monitoreo automático</strong><br>
+                        Al crear el viaje, el sistema registra el recorrido de la unidad, detecta cada parada
+                        (dónde y cuánto tiempo) y finaliza el viaje al llegar al destino. Después podrás
+                        escribir el motivo de cada parada.
+                    </div>
+                </div>
 
-					<div class="monitor-note">
-						<i class="bi bi-info-circle-fill"></i>
-						<div>
-							<strong>Monitoreo automático</strong><br> Al crear el viaje,
-							el sistema registra el recorrido de la unidad, detecta cada
-							parada (dónde y cuánto tiempo) y finaliza el viaje al llegar al
-							destino. Después podrás escribir el motivo de cada parada.
-						</div>
-					</div>
+                <div id="mensajeCrearViaje" class="form-help mt-3" role="status" aria-live="polite"></div>
+            </div>
 
-					<div id="mensajeCrearViaje" class="form-help mt-3" role="status"
-						aria-live="polite"></div>
-				</div>
+            <div class="modal-footer-custom">
+                <a href="#" class="secondary-btn">Cancelar</a>
+                <button type="submit" class="primary-btn" id="btnGuardarViaje">
+                    <i class="bi bi-check2-circle"></i> Crear y comenzar monitoreo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
-				<div class="modal-footer-custom">
-					<a href="#" class="secondary-btn">Cancelar</a>
-					<button type="submit" class="primary-btn" id="btnGuardarViaje">
-						<i class="bi bi-check2-circle"></i> Crear y comenzar monitoreo
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
+<!-- MODAL: DETALLE DEL VIAJE Y SUS PARADAS -->
+<div class="modal fade detalle-viaje-modal"
+     id="modalDetalleViaje"
+     tabindex="-1"
+     aria-labelledby="detalleTitulo"
+     aria-hidden="true">
 
-	<!-- MODAL: DETALLE DEL VIAJE Y SUS PARADAS -->
-	<div class="modal fade detalle-viaje-modal" id="modalDetalleViaje"
-		tabindex="-1" aria-labelledby="detalleTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
 
-		<div
-			class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-			<div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="detalleTitulo">Detalle del viaje</h2>
+                    <div id="detalleEstado" class="detalle-estado">
+                        <i class="bi bi-circle-fill"></i> —
+                    </div>
+                </div>
 
-				<div class="modal-header">
-					<div>
-						<h2 class="modal-title" id="detalleTitulo">Detalle del viaje</h2>
-						<div id="detalleEstado" class="detalle-estado">
-							<i class="bi bi-circle-fill"></i> —
-						</div>
-					</div>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+            </div>
 
-					<button type="button" class="btn-close" data-bs-dismiss="modal"
-						aria-label="Cerrar"></button>
-				</div>
+            <div class="modal-body">
 
-				<div class="modal-body">
+                <h3 class="detalle-seccion-titulo mt-0">Información del viaje</h3>
 
-					<h3 class="detalle-seccion-titulo mt-0">Información del viaje</h3>
+                <div class="detalle-grid">
+                    <div class="detalle-campo">
+                        <span class="detalle-etiqueta">Unidad / Conductor</span>
+                        <div class="detalle-valor" id="detalleUnidad">—</div>
+                    </div>
 
-					<div class="detalle-grid">
-						<div class="detalle-campo">
-							<span class="detalle-etiqueta">Unidad / Conductor</span>
-							<div class="detalle-valor" id="detalleUnidad">—</div>
-						</div>
+                    <div class="detalle-campo">
+                        <span class="detalle-etiqueta">Fecha del viaje</span>
+                        <div class="detalle-valor" id="detalleFecha">—</div>
+                    </div>
 
-						<div class="detalle-campo">
-							<span class="detalle-etiqueta">Fecha del viaje</span>
-							<div class="detalle-valor" id="detalleFecha">—</div>
-						</div>
+                    <div class="detalle-campo">
+                        <span class="detalle-etiqueta">Origen</span>
+                        <div class="detalle-valor" id="detalleOrigen">—</div>
+                    </div>
 
-						<div class="detalle-campo">
-							<span class="detalle-etiqueta">Origen</span>
-							<div class="detalle-valor" id="detalleOrigen">—</div>
-						</div>
+                    <div class="detalle-campo">
+                        <span class="detalle-etiqueta">Destino</span>
+                        <div class="detalle-valor" id="detalleDestino">—</div>
+                    </div>
+                </div>
 
-						<div class="detalle-campo">
-							<span class="detalle-etiqueta">Destino</span>
-							<div class="detalle-valor" id="detalleDestino">—</div>
-						</div>
-					</div>
+                <h3 class="detalle-seccion-titulo">Paradas del viaje</h3>
 
-					<h3 class="detalle-seccion-titulo">Paradas del viaje</h3>
+                <p class="detalle-descripcion">
+                    El sistema detecta las paradas automáticamente.
+                    El lápiz permite introducir o modificar el motivo de cada una.
+                </p>
 
-					<p class="detalle-descripcion">El sistema detecta las paradas
-						automáticamente. El lápiz permite introducir o modificar el motivo
-						de cada una.</p>
+                <div id="detalleParadas"></div>
 
-					<div id="detalleParadas"></div>
+                <div id="mensajeEdicionMotivo"
+                     class="detalle-mensaje"
+                     role="status"
+                     aria-live="polite"></div>
+            </div>
 
-					<div id="mensajeEdicionMotivo" class="detalle-mensaje"
-						role="status" aria-live="polite"></div>
-				</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
 
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary"
-						data-bs-dismiss="modal">Cerrar</button>
-				</div>
+        </div>
+    </div>
+</div>
 
-			</div>
-		</div>
-	</div>
+<!-- MODAL: ELIMINAR VIAJE (advertencia + confirmación) -->
+<div class="modal fade detalle-viaje-modal"
+     id="modalEliminarViaje"
+     tabindex="-1"
+     aria-labelledby="eliminarTitulo"
+     aria-hidden="true">
 
-	<script
-		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-	<script src="/js/monitoreo-gps.js"></script>
-	<script src="/js/monitoreo-viajes.js"></script>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h2 class="modal-title" id="eliminarTitulo">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Eliminar viaje
+                </h2>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    <strong>Esta acción es permanente y no se puede deshacer.</strong>
+                    Se borrará el viaje con todo su recorrido y todas sus paradas.
+                </div>
+
+                <div id="eliminarEnCurso" class="alert alert-warning" role="alert" hidden>
+                    Este viaje está <strong>EN CURSO</strong>: el monitoreo
+                    automático dejará de registrarlo.
+                </div>
+
+                <div id="eliminarResumen" class="detalle-valor mb-3"></div>
+
+                <label class="detalle-etiqueta" for="eliminarConfirmacion">
+                    Para confirmar, escribe el ID del viaje:
+                    <strong id="eliminarIdEsperado"></strong>
+                </label>
+                <input class="form-control-dark"
+                       type="text"
+                       inputmode="numeric"
+                       autocomplete="off"
+                       id="eliminarConfirmacion">
+
+                <div id="mensajeEliminar"
+                     class="detalle-mensaje"
+                     role="status"
+                     aria-live="polite"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-danger"
+                        id="btnConfirmarEliminar" disabled>
+                    <i class="bi bi-trash"></i> Eliminar definitivamente
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: REPORTE POR RANGO DE FECHAS -->
+<div class="modal fade detalle-viaje-modal"
+     id="modalReporte"
+     tabindex="-1"
+     aria-labelledby="reporteTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h2 class="modal-title" id="reporteTitulo">Reporte de viajes</h2>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="detalle-descripcion">
+                    Incluye cada viaje con sus paradas, el lugar donde se detuvo
+                    y el motivo. Se filtra por la fecha de inicio del viaje.
+                </p>
+
+                <div class="detalle-grid">
+                    <div class="detalle-campo">
+                        <label class="detalle-etiqueta" for="reporteDesde">Desde</label>
+                        <input class="form-control-dark" type="date" id="reporteDesde">
+                    </div>
+
+                    <div class="detalle-campo">
+                        <label class="detalle-etiqueta" for="reporteHasta">Hasta</label>
+                        <input class="form-control-dark" type="date" id="reporteHasta">
+                    </div>
+                </div>
+
+                <div id="reporteResumen"
+                     class="detalle-mensaje"
+                     role="status"
+                     aria-live="polite"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnGenerarReporte">Generar</button>
+                <button type="button" class="btn btn-success" id="btnImprimirReporte" disabled>
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/monitoreo-gps.js"></script>
+<script src="/js/monitoreo-viajes.js"></script>
 
 </body>
 </html>

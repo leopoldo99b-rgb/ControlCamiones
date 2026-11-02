@@ -1,4 +1,3 @@
-
 "use strict";
 
 /**
@@ -70,7 +69,8 @@
         destroyed: false,
         refreshTimer: null,
         lastUpdated: null,
-        lastError: null
+        lastError: null,
+        statusFilter: "all"
     };
 
     // Función pública opcional para actualizar el monitoreo
@@ -79,6 +79,7 @@
         refresh: () => loadVehicles(),
         fitFleet: () => fitFleet(),
         selectVehicle: id => selectVehicle(id),
+        getMap: () => state.map,
         getVehicles: () => state.vehicles.map(vehicle => ({ ...vehicle })),
         getLastUpdated: () => state.lastUpdated
     };
@@ -807,7 +808,7 @@
             ""
         ).trim().toLocaleLowerCase("es");
 
-        const selectedStatus = $("statusFilter")?.value || "all";
+        const selectedStatus = $("statusFilter")?.value || state.statusFilter;
 
         return state.vehicles.filter(vehicle => {
             const text = [
@@ -834,7 +835,8 @@
         const to = $("dateTo")?.value || "";
         const vehicleId = $("vehicleFilter")?.value || "all";
 
-        return state.vehicles.filter(vehicle => {
+        // Parte de la lista ya filtrada por búsqueda y estado.
+        return getFilteredVehicles().filter(vehicle => {
             if (vehicleId !== "all" && vehicle.id !== vehicleId) {
                 return false;
             }
@@ -864,22 +866,33 @@
     // =========================================================
 
     function renderMetrics() {
-        setText("totalVehicles", state.vehicles.length);
-        setText("fleetCount", state.vehicles.length);
+        const total = state.vehicles.length;
+        const moving = state.vehicles.filter(v => v.status === STATUS.MOVING).length;
+        const stopped = state.vehicles.filter(v => v.status === STATUS.STOPPED).length;
+        const unknown = total - moving - stopped;
+
+        setText("totalVehicles", total);
+        setText("fleetCount", total);
+        setText("movingVehicles", moving);
+        setText("stoppedVehicles", stopped);
+        setText("unknownVehicles", unknown);
+
+        // Vehículos activos = en movimiento + detenidos (con GPS reportando).
+        const contenedor = $("vehiculosActivos");
+
+        if (contenedor) {
+            const em = document.createElement("em");
+            em.textContent = `/ ${total}`;
+
+            contenedor.replaceChildren(
+                document.createTextNode(`${moving + stopped} `),
+                em
+            );
+        }
 
         setText(
-            "movingVehicles",
-            state.vehicles.filter(v => v.status === STATUS.MOVING).length
-        );
-
-        setText(
-            "stoppedVehicles",
-            state.vehicles.filter(v => v.status === STATUS.STOPPED).length
-        );
-
-        setText(
-            "unknownVehicles",
-            state.vehicles.filter(v => v.status === STATUS.UNKNOWN).length
+            "vehiculosDesglose",
+            `${moving} en movimiento · ${stopped} detenidos`
         );
     }
 
@@ -1100,6 +1113,13 @@
                 "tableSummary",
                 `${vehicles.length} unidad(es) en este resumen`
             );
+
+            setText(
+                "mensajeVehiculos",
+                vehicles.length === state.vehicles.length
+                    ? `${state.vehicles.length} unidad(es)`
+                    : `Mostrando ${vehicles.length} de ${state.vehicles.length} unidad(es)`
+            );
         }
 
         // Compatibilidad con la tabla del diseño anterior.
@@ -1146,9 +1166,16 @@
 
     function renderAll() {
         renderMetrics();
-        renderMap(state.vehicles);
+        renderMap(getFilteredVehicles());
         renderFleet();
         renderSelectedVehicle();
+        renderTable();
+    }
+
+    // Se usa cuando cambia el buscador o el filtro de estado.
+    function applyFilters() {
+        renderMap(getFilteredVehicles());
+        renderFleet();
         renderTable();
     }
 
@@ -1162,6 +1189,8 @@
         }
 
         state.loading = true;
+
+        setText("ultimaActualizacion", "Actualizando...");
 
         const refreshButton = $("refreshButton");
 
@@ -1197,7 +1226,7 @@
             state.vehicles = vehicles;
             state.lastUpdated = new Date();
             state.lastError = null;
-			cargarSelectUnidadesGPS();
+            cargarSelectUnidadesGPS();
 
             if (!state.vehicles.some(v => v.id === state.selectedId)) {
                 state.selectedId = state.vehicles[0]?.id ?? null;
@@ -1206,6 +1235,7 @@
             setConnectionStatus("API conectada");
 
             setText("lastUpdate", formatTime(state.lastUpdated));
+            setText("ultimaActualizacion", formatTime(state.lastUpdated));
 
             renderVehicleFilter();
             renderAll();
@@ -1224,6 +1254,13 @@
             console.error("Error consultando /gps/vehiculos:", error);
 
             setConnectionStatus("Error de conexión con la API", true);
+
+            setText(
+                "ultimaActualizacion",
+                state.lastUpdated
+                    ? formatTime(state.lastUpdated)
+                    : "Error de conexión"
+            );
 
             // Mantener los últimos datos válidos en pantalla.
             if (state.vehicles.length === 0) {
@@ -1261,50 +1298,50 @@
         }
     }
 
-	
-	function cargarSelectUnidadesGPS() {
-	    const select = document.getElementById("conductorUnidad");
+    function cargarSelectUnidadesGPS() {
+        const select = document.getElementById("conductorUnidad");
 
-	    if (!select) {
-	        console.warn("No se encontró el campo conductorUnidad.");
-	        return;
-	    }
+        if (!select) {
+            console.warn("No se encontró el campo conductorUnidad.");
+            return;
+        }
 
-	    const valorAnterior = select.value;
+        const valorAnterior = select.value;
 
-	    select.replaceChildren();
+        select.replaceChildren();
 
-	    const opcionInicial = document.createElement("option");
-	    opcionInicial.value = "";
-	    opcionInicial.textContent = state.vehicles.length
-	        ? "Selecciona una unidad GPS"
-	        : "No hay unidades GPS disponibles";
+        const opcionInicial = document.createElement("option");
+        opcionInicial.value = "";
+        opcionInicial.textContent = state.vehicles.length
+            ? "Selecciona una unidad GPS"
+            : "No hay unidades GPS disponibles";
 
-	    select.appendChild(opcionInicial);
+        select.appendChild(opcionInicial);
 
-	    state.vehicles.forEach(vehicle => {
-	        const opcion = document.createElement("option");
+        state.vehicles.forEach(vehicle => {
+            const opcion = document.createElement("option");
 
-	        // Identificador real del vehículo en la API GPS.
-	        opcion.value = String(vehicle.id);
+            // Identificador real del vehículo en la API GPS.
+            opcion.value = String(vehicle.id);
 
-	        // Mostrar vehículo, placa y conductor.
-	        opcion.textContent =
-	            `${vehicle.name} | ${vehicle.plate} | ${vehicle.driver}`;
+            // Mostrar vehículo, placa y conductor.
+            opcion.textContent =
+                `${vehicle.name} | ${vehicle.plate} | ${vehicle.driver}`;
 
-	        select.appendChild(opcion);
-	    });
+            select.appendChild(opcion);
+        });
 
-	    // Conservar la selección si la unidad todavía existe.
-	    if (
-	        valorAnterior &&
-	        [...select.options].some(
-	            opcion => opcion.value === valorAnterior
-	        )
-	    ) {
-	        select.value = valorAnterior;
-	    }
-	}
+        // Conservar la selección si la unidad todavía existe.
+        if (
+            valorAnterior &&
+            [...select.options].some(
+                opcion => opcion.value === valorAnterior
+            )
+        ) {
+            select.value = valorAnterior;
+        }
+    }
+
     // =========================================================
     // 14. EXPORTACIÓN CSV
     // =========================================================
@@ -1373,756 +1410,772 @@
         window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-	
-
-	// =========================================================
-	// 14-B. ORÍGENES Y DESTINOS DEL MAPA
-	// Utiliza el panel y los botones existentes en el HTML.
-	// =========================================================
-
-
-	// =========================================================
-	// 14-B. ORÍGENES Y DESTINOS DEL MAPA
-	// Integración real con PuntoPlantaController
-	// =========================================================
-
-	const PUNTOS_CONFIG = Object.freeze({
-	    apiUrl: "/api/puntos-planta"
-	});
-
-	const puntosState = {
-	    puntos: [],
-	    marcadores: [],
-	    marcadorTemporal: null,
-	    seleccionando: false,
-	    guardando: false
-	};
-
-	
-	
-	// ---------------------------------------------------------
-	// MENSAJES
-	// ---------------------------------------------------------
-
-	function puntosMensaje(texto) {
-	    const elemento = $("mensajePunto");
-
-	    if (elemento) {
-	        elemento.textContent = texto;
-	    } else {
-	        console.info("[Puntos GPS]", texto);
-	    }
-	}
-
-	// ---------------------------------------------------------
-	// TOKEN CSRF
-	// Compatible con Spring Security cuando el HTML publica
-	// los metadatos csrfParameterName / csrfHeaderName.
-	// ---------------------------------------------------------
-
-	function obtenerHeadersCSRF() {
-	    const headers = {};
-
-	    const tokenMeta = document.querySelector(
-	        'meta[name="_csrf"]'
-	    );
-
-	    const headerMeta = document.querySelector(
-	        'meta[name="_csrf_header"]'
-	    );
-
-	    if (tokenMeta && headerMeta) {
-	        headers[headerMeta.content] = tokenMeta.content;
-	    }
-
-	    return headers;
-	}
-
-	// ---------------------------------------------------------
-	// PETICIONES HTTP
-	// ---------------------------------------------------------
-
-	async function peticionPuntos(url, opciones = {}) {
-	    const headers = {
-	        Accept: "application/json",
-	        ...obtenerHeadersCSRF(),
-	        ...(opciones.headers || {})
-	    };
-
-	    const respuesta = await fetch(url, {
-	        ...opciones,
-	        headers,
-	        cache: "no-store"
-	    });
-
-	    if (!respuesta.ok) {
-	        let detalle = "";
-
-	        try {
-	            const texto = await respuesta.text();
-
-	            if (texto) {
-	                try {
-	                    const json = JSON.parse(texto);
-	                    detalle =
-	                        json.message ||
-	                        json.mensaje ||
-	                        json.error ||
-	                        texto;
-	                } catch {
-	                    detalle = texto;
-	                }
-	            }
-	        } catch {
-	            // La respuesta puede no contener un cuerpo legible.
-	        }
-
-	        throw new Error(
-	            `Error HTTP ${respuesta.status}` +
-	            (detalle ? `: ${detalle}` : "")
-	        );
-	    }
-
-	    // DELETE puede responder correctamente con HTTP 204.
-	    if (respuesta.status === 204) {
-	        return null;
-	    }
-
-	    const texto = await respuesta.text();
-
-	    if (!texto.trim()) {
-	        return null;
-	    }
-
-	    try {
-	        return JSON.parse(texto);
-	    } catch {
-	        return texto;
-	    }
-	}
-
-	// ---------------------------------------------------------
-		// CARGAR COMBOS
-		// ---------------------------------------------------------
-	
-	function cargarSelectsOrigenDestino() {
-	    const selectOrigen = document.getElementById("origen");
-	    const selectDestino = document.getElementById("destino");
-
-	    if (!selectOrigen || !selectDestino) {
-	        console.warn("No se encontraron los campos de origen y destino.");
-	        return;
-	    }
-
-	    // Separar los puntos según su tipo.
-	    const origenes = puntosState.puntos.filter(
-	        punto => punto.tipo === "ORIGEN"
-	    );
-
-	    const destinos = puntosState.puntos.filter(
-	        punto => punto.tipo === "DESTINO"
-	    );
-
-	    // Función para llenar cada select.
-	    function llenarSelect(select, puntos, textoInicial) {
-	        const valorAnterior = select.value;
-
-	        select.replaceChildren();
-
-	        const opcionInicial = document.createElement("option");
-	        opcionInicial.value = "";
-	        opcionInicial.textContent = textoInicial;
-	        select.appendChild(opcionInicial);
-
-	        puntos.forEach(punto => {
-	            const opcion = document.createElement("option");
-
-	            // Se envía el ID real del punto guardado en la BD.
-	            opcion.value = String(punto.id);
-	            opcion.textContent = punto.nombre;
-
-	            select.appendChild(opcion);
-	        });
-
-	        // Mantener la selección anterior si todavía existe.
-	        if (
-	            valorAnterior &&
-	            [...select.options].some(
-	                opcion => opcion.value === valorAnterior
-	            )
-	        ) {
-	            select.value = valorAnterior;
-	        }
-	    }
-
-	    llenarSelect(
-	        selectOrigen,
-	        origenes,
-	        origenes.length
-	            ? "Selecciona un origen"
-	            : "No hay orígenes registrados"
-	    );
-
-	    llenarSelect(
-	        selectDestino,
-	        destinos,
-	        destinos.length
-	            ? "Selecciona un destino"
-	            : "No hay destinos registrados"
-	    );
-	}
-	
-	// ---------------------------------------------------------
-	// NORMALIZAR RESPUESTAS DEL CONTROLADOR
-	// ---------------------------------------------------------
-
-	function normalizarPuntoGPS(p) {
-	    if (!p || typeof p !== "object") {
-	        throw new Error("El servidor devolvió un punto inválido.");
-	    }
-
-	    const latitud = Number(
-	        p.latitud ?? p.latitude ?? p.Latitud
-	    );
-
-	    const longitud = Number(
-	        p.longitud ?? p.longitude ?? p.Longitud
-	    );
-
-	    return {
-	        id: p.id ??
-	            p.ID ??
-	            p.puntoId ??
-	            p.puntoPlantaId ??
-	            p.idPunto ??
-	            null,
-
-	        nombre: String(
-	            p.nombre ??
-	            p.nombrePunto ??
-	            p.Nombre ??
-	            "Punto sin nombre"
-	        ),
-
-	        tipo: String(
-	            p.tipo ??
-	            p.tipoPunto ??
-	            p.Tipo ??
-	            "ORIGEN"
-	        ).toUpperCase(),
-
-	        latitud,
-	        longitud,
-
-	        activo: p.activo ?? p.Activo ?? true
-	    };
-	}
-
-	function coordenadasValidasPunto(p) {
-	    return Number.isFinite(p.latitud) &&
-	        Number.isFinite(p.longitud) &&
-	        p.latitud >= -90 &&
-	        p.latitud <= 90 &&
-	        p.longitud >= -180 &&
-	        p.longitud <= 180 &&
-	        (p.tipo === "ORIGEN" || p.tipo === "DESTINO");
-	}
-
-	// ---------------------------------------------------------
-	// ICONOS
-	// ---------------------------------------------------------
-
-	function iconoPuntoGPS(tipo) {
-	    const esDestino = tipo === "DESTINO";
-	    const color = esDestino ? "#a855f7" : "#ef4444";
-	    const letra = esDestino ? "D" : "O";
-
-	    return L.divIcon({
-	        className: "chc-punto-marcador",
-
-	        html: `
-	            <div style="
-	                width:32px;
-	                height:32px;
-	                border-radius:50% 50% 50% 0;
-	                transform:rotate(-45deg);
-	                background:${color};
-	                border:3px solid #fff;
-	                box-shadow:0 2px 8px #0006;
-	                display:flex;
-	                align-items:center;
-	                justify-content:center;
-	            ">
-	                <span style="
-	                    transform:rotate(45deg);
-	                    color:#fff;
-	                    font-weight:800;
-	                    font-size:13px;
-	                ">${letra}</span>
-	            </div>
-	        `,
-
-	        iconSize: [32, 32],
-	        iconAnchor: [16, 32],
-	        popupAnchor: [0, -30]
-	    });
-	}
-
-	// ---------------------------------------------------------
-	// DIBUJAR PUNTOS EN EL MAPA
-	// ---------------------------------------------------------
-
-	function dibujarPuntosGPS() {
-	    if (!state.map) {
-	        return;
-	    }
-
-	    puntosState.marcadores.forEach(marcador => {
-	        state.map.removeLayer(marcador);
-	    });
-
-	    puntosState.marcadores = [];
-
-	    puntosState.puntos.forEach(punto => {
-	        if (!coordenadasValidasPunto(punto)) {
-	            return;
-	        }
-
-	        const marcador = L.marker(
-	            [punto.latitud, punto.longitud],
-	            {
-	                icon: iconoPuntoGPS(punto.tipo),
-	                title: punto.nombre,
-	                alt: punto.tipo
-	            }
-	        );
-
-	        const etiquetaTipo = punto.tipo === "DESTINO"
-	            ? "Destino"
-	            : "Origen";
-
-	        const botonDesactivar = punto.id !== null
-	            ? `
-	                <button
-	                    type="button"
-	                    class="btn-desactivar-punto"
-	                    data-desactivar-punto="${escapeHtml(punto.id)}"
-	                    style="
-	                        margin-top:10px;
-	                        padding:6px 10px;
-	                        border:0;
-	                        border-radius:6px;
-	                        background:#dc2626;
-	                        color:#fff;
-	                        cursor:pointer;
-	                    "
-	                >
-	                    Desactivar punto
-	                </button>
-	            `
-	            : "";
-
-	        marcador.bindPopup(`
-	            <div class="gps-popup">
-	                <strong>${escapeHtml(punto.nombre)}</strong>
-	                <br>
-	                <span>${etiquetaTipo}</span>
-	                <br>
-	                <small>
-	                    ${punto.latitud.toFixed(6)},
-	                    ${punto.longitud.toFixed(6)}
-	                </small>
-	                ${botonDesactivar}
-	            </div>
-	        `);
-
-	        // Conectar el botón del popup con el DELETE del controlador.
-	        marcador.on("popupopen", evento => {
-	            const popupElement = evento.popup.getElement();
-
-	            if (!popupElement) {
-	                return;
-	            }
-
-	            const boton = popupElement.querySelector(
-	                "[data-desactivar-punto]"
-	            );
-
-	            if (!boton) {
-	                return;
-	            }
-
-	            boton.addEventListener("click", async () => {
-	                await desactivarPuntoGPS(punto.id);
-	            }, { once: true });
-	        });
-
-	        marcador.addTo(state.map);
-
-	        puntosState.marcadores.push(marcador);
-	    });
-	}
-
-	// ---------------------------------------------------------
-	// CARGAR PUNTOS DESDE LA BASE DE DATOS
-	// GET /api/puntos-planta
-	// ---------------------------------------------------------
-
-	async function cargarPuntosGPS() {
-	    try {
-	        puntosMensaje("Consultando puntos en la base de datos...");
-
-	        const datos = await peticionPuntos(
-	            PUNTOS_CONFIG.apiUrl
-	        );
-
-	        if (!Array.isArray(datos)) {
-	            throw new Error(
-	                "La API no devolvió una lista de puntos."
-	            );
-	        }
-
-			puntosState.puntos = datos
-			    .map(normalizarPuntoGPS)
-			    .filter(punto =>
-			        punto.activo !== false &&
-			        coordenadasValidasPunto(punto)
-			    );
-
-			// Dibujar los puntos en el mapa.
-			dibujarPuntosGPS();
-
-			// Llenar los campos del formulario.
-			cargarSelectsOrigenDestino();
-
-	        puntosMensaje(
-	            `${puntosState.puntos.length} punto(s) cargado(s) desde el servidor.`
-	        );
-
-	    } catch (error) {
-	        console.error(
-	            "Error cargando puntos de planta:",
-	            error
-	        );
-
-	        puntosMensaje(
-	            "No se pudieron cargar los puntos desde la base de datos. " +
-	            error.message
-	        );
-	    }
-	}
-
-	// ---------------------------------------------------------
-	// INICIAR SELECCIÓN DE COORDENADAS
-	// ---------------------------------------------------------
-
-	function iniciarSeleccionPuntoGPS() {
-	    const nombre = $("nombrePunto");
-	    const tipo = $("tipoPunto");
-
-	    if (!state.map) {
-	        puntosMensaje("El mapa todavía no está disponible.");
-	        return;
-	    }
-
-	    if (!nombre || !nombre.value.trim()) {
-	        puntosMensaje("Escribí el nombre del origen o destino.");
-	        nombre?.focus();
-	        return;
-	    }
-
-	    const tipoSeleccionado = tipo?.value || "ORIGEN";
-
-	    if (!["ORIGEN", "DESTINO"].includes(tipoSeleccionado)) {
-	        puntosMensaje("Seleccioná un tipo válido: ORIGEN o DESTINO.");
-	        return;
-	    }
-
-	    puntosState.seleccionando = true;
-
-	    state.map.getContainer().style.cursor = "crosshair";
-
-	    puntosMensaje(
-	        `Hacé clic en el mapa para colocar el ${tipoSeleccionado.toLowerCase()}.`
-	    );
-	}
-
-	// ---------------------------------------------------------
-	// GUARDAR PUNTO
-	// POST /api/puntos-planta
-	// ---------------------------------------------------------
-
-	async function guardarPuntoGPS(punto) {
-	    if (puntosState.guardando) {
-	        return;
-	    }
-
-	    puntosState.guardando = true;
-
-	    try {
-	        puntosMensaje("Guardando punto en la base de datos...");
-
-	        const datos = await peticionPuntos(
-	            PUNTOS_CONFIG.apiUrl,
-	            {
-	                method: "POST",
-
-	                headers: {
-	                    "Content-Type": "application/json"
-	                },
-
-	                body: JSON.stringify({
-	                    nombre: punto.nombre,
-	                    tipo: punto.tipo,
-	                    latitud: punto.latitud,
-	                    longitud: punto.longitud
-	                })
-	            }
-	        );
-
-	        // Si el POST devuelve el registro creado, verificamos
-	        // que tenga identificador y coordenadas válidas.
-	        if (datos && typeof datos === "object") {
-	            const objeto = datos.punto ?? datos;
-
-	            if (
-	                objeto.id !== undefined ||
-	                objeto.puntoId !== undefined ||
-	                objeto.puntoPlantaId !== undefined
-	            ) {
-	                normalizarPuntoGPS(objeto);
-	            }
-	        }
-
-	        // Volvemos a consultar el servidor para usar el registro
-	        // persistido y su ID real, no un objeto local inventado.
-	        await cargarPuntosGPS();
-
-	        if (puntosState.puntos.some(p =>
-	            p.nombre === punto.nombre &&
-	            p.tipo === punto.tipo &&
-	            Math.abs(p.latitud - punto.latitud) < 0.00001 &&
-	            Math.abs(p.longitud - punto.longitud) < 0.00001
-	        )) {
-	            puntosMensaje("Punto guardado correctamente en el servidor.");
-	        }
-
-	        if (
-	            puntosState.marcadorTemporal &&
-	            state.map
-	        ) {
-	            state.map.removeLayer(puntosState.marcadorTemporal);
-	            puntosState.marcadorTemporal = null;
-	        }
-
-	        const panel = $("panelCrearPunto");
-	        const nombre = $("nombrePunto");
-
-	        if (nombre) {
-	            nombre.value = "";
-	        }
-
-	        if (panel) {
-	            panel.hidden = true;
-	        }
-
-	    } catch (error) {
-	        console.error("Error guardando punto:", error);
-
-	        puntosMensaje(
-	            "No se pudo guardar el punto. " +
-	            "La base de datos no ha sido confirmada. " +
-	            error.message
-	        );
-
-	        if (puntosState.marcadorTemporal && state.map) {
-	            state.map.removeLayer(puntosState.marcadorTemporal);
-	            puntosState.marcadorTemporal = null;
-	        }
-
-	    } finally {
-	        puntosState.guardando = false;
-	    }
-	}
-
-	// ---------------------------------------------------------
-	// DESACTIVAR PUNTO
-	// DELETE /api/puntos-planta/{id}
-	// ---------------------------------------------------------
-
-	async function desactivarPuntoGPS(id) {
-	    if (id === null || id === undefined || id === "") {
-	        puntosMensaje(
-	            "Este punto no tiene un ID válido del servidor."
-	        );
-	        return;
-	    }
-
-	    const confirmado = window.confirm(
-	        "¿Deseás desactivar este origen o destino?"
-	    );
-
-	    if (!confirmado) {
-	        return;
-	    }
-
-	    try {
-	        puntosMensaje("Desactivando punto en el servidor...");
-
-	        await peticionPuntos(
-	            `${PUNTOS_CONFIG.apiUrl}/${encodeURIComponent(id)}`,
-	            {
-	                method: "DELETE"
-	            }
-	        );
-
-	        // El controlador desactiva el registro.
-	        // Consultamos nuevamente para actualizar el mapa.
-	        await cargarPuntosGPS();
-
-	        puntosMensaje("Solicitud de desactivación completada.");
-
-	    } catch (error) {
-	        console.error("Error desactivando punto:", error);
-
-	        puntosMensaje(
-	            "No se pudo desactivar el punto. " +
-	            error.message
-	        );
-	    }
-	}
-
-	// ---------------------------------------------------------
-	// CLIC EN EL MAPA PARA DEFINIR UN PUNTO
-	// ---------------------------------------------------------
-
-	function manejarClicMapaPunto(evento) {
-	    if (!puntosState.seleccionando) {
-	        return;
-	    }
-
-	    puntosState.seleccionando = false;
-
-	    state.map.getContainer().style.cursor = "";
-
-	    const nombre = $("nombrePunto")?.value.trim();
-	    const tipo = $("tipoPunto")?.value || "ORIGEN";
-
-	    if (!nombre) {
-	        puntosMensaje("Escribí el nombre del punto.");
-	        return;
-	    }
-
-	    if (!["ORIGEN", "DESTINO"].includes(tipo)) {
-	        puntosMensaje("El tipo de punto no es válido.");
-	        return;
-	    }
-
-	    const punto = {
-	        id: null,
-	        nombre,
-	        tipo,
-	        latitud: Number(evento.latlng.lat.toFixed(6)),
-	        longitud: Number(evento.latlng.lng.toFixed(6))
-	    };
-
-	    if (!coordenadasValidasPunto(punto)) {
-	        puntosMensaje("Las coordenadas seleccionadas no son válidas.");
-	        return;
-	    }
-
-	    if (puntosState.marcadorTemporal) {
-	        state.map.removeLayer(puntosState.marcadorTemporal);
-	    }
-
-	    puntosState.marcadorTemporal = L.marker(
-	        [punto.latitud, punto.longitud],
-	        { icon: iconoPuntoGPS(punto.tipo) }
-	    ).addTo(state.map);
-
-	    puntosState.marcadorTemporal.bindPopup(`
-	        <strong>${escapeHtml(punto.nombre)}</strong>
-	        <br>
-	        ${punto.tipo === "DESTINO" ? "Destino" : "Origen"}
-	        <br>
-	        <small>Esperando confirmación del servidor...</small>
-	    `).openPopup();
-
-	    guardarPuntoGPS(punto);
-	}
-
-	// ---------------------------------------------------------
-	// INICIALIZAR CONTROLES DE ORÍGENES Y DESTINOS
-	// ---------------------------------------------------------
-
-	function inicializarPuntosGPS() {
-	    const btnCrear = $("btnCrearPunto");
-	    const btnElegir = $("btnSeleccionarUbicacion");
-	    const btnCancelar = $("btnCancelarPunto");
-	    const panel = $("panelCrearPunto");
-
-	    if (!btnCrear || !btnElegir || !btnCancelar || !panel) {
-	        console.warn(
-	            "No se encontraron los controles de puntos del HTML."
-	        );
-	        return;
-	    }
-
-	    btnCrear.addEventListener("click", () => {
-	        panel.hidden = !panel.hidden;
-
-	        if (!panel.hidden) {
-	            puntosMensaje(
-	                "Elegí el tipo, escribí el nombre y seleccioná el mapa."
-	            );
-
-	            $("nombrePunto")?.focus();
-
-	        } else {
-	            puntosState.seleccionando = false;
-
-	            if (state.map) {
-	                state.map.getContainer().style.cursor = "";
-	            }
-
-	            if (puntosState.marcadorTemporal && state.map) {
-	                state.map.removeLayer(puntosState.marcadorTemporal);
-	                puntosState.marcadorTemporal = null;
-	            }
-	        }
-	    });
-
-	    btnElegir.addEventListener(
-	        "click",
-	        iniciarSeleccionPuntoGPS
-	    );
-
-	    btnCancelar.addEventListener("click", () => {
-	        puntosState.seleccionando = false;
-
-	        if (state.map) {
-	            state.map.getContainer().style.cursor = "";
-	        }
-
-	        if (puntosState.marcadorTemporal && state.map) {
-	            state.map.removeLayer(puntosState.marcadorTemporal);
-	            puntosState.marcadorTemporal = null;
-	        }
-
-	        panel.hidden = true;
-
-	        puntosMensaje("Creación de punto cancelada.");
-	    });
-
-	    state.map.on("click", manejarClicMapaPunto);
-
-	    cargarPuntosGPS();
-	}
-
+    // =========================================================
+    // 14-B. ORÍGENES Y DESTINOS DEL MAPA
+    // Integración real con PuntoPlantaController
+    // =========================================================
+
+    const PUNTOS_CONFIG = Object.freeze({
+        apiUrl: "/api/puntos-planta"
+    });
+
+    const puntosState = {
+        puntos: [],
+        marcadores: [],
+        marcadorTemporal: null,
+        seleccionando: false,
+        guardando: false
+    };
+
+    // ---------------------------------------------------------
+    // MENSAJES
+    // ---------------------------------------------------------
+
+    function puntosMensaje(texto) {
+        const elemento = $("mensajePunto");
+
+        if (elemento) {
+            elemento.textContent = texto;
+        } else {
+            console.info("[Puntos GPS]", texto);
+        }
+    }
+
+    // ---------------------------------------------------------
+    // TOKEN CSRF
+    // Compatible con Spring Security cuando el HTML publica
+    // los metadatos csrfParameterName / csrfHeaderName.
+    // ---------------------------------------------------------
+
+    function obtenerHeadersCSRF() {
+        const headers = {};
+
+        const tokenMeta = document.querySelector(
+            'meta[name="_csrf"]'
+        );
+
+        const headerMeta = document.querySelector(
+            'meta[name="_csrf_header"]'
+        );
+
+        if (tokenMeta && headerMeta) {
+            headers[headerMeta.content] = tokenMeta.content;
+        }
+
+        return headers;
+    }
+
+    // ---------------------------------------------------------
+    // PETICIONES HTTP
+    // ---------------------------------------------------------
+
+    async function peticionPuntos(url, opciones = {}) {
+        const headers = {
+            Accept: "application/json",
+            ...obtenerHeadersCSRF(),
+            ...(opciones.headers || {})
+        };
+
+        const respuesta = await fetch(url, {
+            ...opciones,
+            headers,
+            cache: "no-store"
+        });
+
+        if (!respuesta.ok) {
+            let detalle = "";
+
+            try {
+                const texto = await respuesta.text();
+
+                if (texto) {
+                    try {
+                        const json = JSON.parse(texto);
+                        detalle =
+                            json.message ||
+                            json.mensaje ||
+                            json.error ||
+                            texto;
+                    } catch {
+                        detalle = texto;
+                    }
+                }
+            } catch {
+                // La respuesta puede no contener un cuerpo legible.
+            }
+
+            throw new Error(
+                `Error HTTP ${respuesta.status}` +
+                (detalle ? `: ${detalle}` : "")
+            );
+        }
+
+        // DELETE puede responder correctamente con HTTP 204.
+        if (respuesta.status === 204) {
+            return null;
+        }
+
+        const texto = await respuesta.text();
+
+        if (!texto.trim()) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(texto);
+        } catch {
+            return texto;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // CARGAR COMBOS
+    // ---------------------------------------------------------
+
+    function cargarSelectsOrigenDestino() {
+        const selectOrigen = document.getElementById("origen");
+        const selectDestino = document.getElementById("destino");
+
+        if (!selectOrigen || !selectDestino) {
+            console.warn("No se encontraron los campos de origen y destino.");
+            return;
+        }
+
+        // Separar los puntos según su tipo.
+        const origenes = puntosState.puntos.filter(
+            punto => punto.tipo === "ORIGEN"
+        );
+
+        const destinos = puntosState.puntos.filter(
+            punto => punto.tipo === "DESTINO"
+        );
+
+        // Función para llenar cada select.
+        function llenarSelect(select, puntos, textoInicial) {
+            const valorAnterior = select.value;
+
+            select.replaceChildren();
+
+            const opcionInicial = document.createElement("option");
+            opcionInicial.value = "";
+            opcionInicial.textContent = textoInicial;
+            select.appendChild(opcionInicial);
+
+            puntos.forEach(punto => {
+                const opcion = document.createElement("option");
+
+                // Se envía el ID real del punto guardado en la BD.
+                opcion.value = String(punto.id);
+                opcion.textContent = punto.nombre;
+
+                select.appendChild(opcion);
+            });
+
+            // Mantener la selección anterior si todavía existe.
+            if (
+                valorAnterior &&
+                [...select.options].some(
+                    opcion => opcion.value === valorAnterior
+                )
+            ) {
+                select.value = valorAnterior;
+            }
+        }
+
+        llenarSelect(
+            selectOrigen,
+            origenes,
+            origenes.length
+                ? "Selecciona un origen"
+                : "No hay orígenes registrados"
+        );
+
+        llenarSelect(
+            selectDestino,
+            destinos,
+            destinos.length
+                ? "Selecciona un destino"
+                : "No hay destinos registrados"
+        );
+    }
+
+    // ---------------------------------------------------------
+    // NORMALIZAR RESPUESTAS DEL CONTROLADOR
+    // ---------------------------------------------------------
+
+    function normalizarPuntoGPS(p) {
+        if (!p || typeof p !== "object") {
+            throw new Error("El servidor devolvió un punto inválido.");
+        }
+
+        const latitud = Number(
+            p.latitud ?? p.latitude ?? p.Latitud
+        );
+
+        const longitud = Number(
+            p.longitud ?? p.longitude ?? p.Longitud
+        );
+
+        return {
+            id: p.id ??
+                p.ID ??
+                p.puntoId ??
+                p.puntoPlantaId ??
+                p.idPunto ??
+                null,
+
+            nombre: String(
+                p.nombre ??
+                p.nombrePunto ??
+                p.Nombre ??
+                "Punto sin nombre"
+            ),
+
+            tipo: String(
+                p.tipo ??
+                p.tipoPunto ??
+                p.Tipo ??
+                "ORIGEN"
+            ).toUpperCase(),
+
+            latitud,
+            longitud,
+
+            activo: p.activo ?? p.Activo ?? true
+        };
+    }
+
+    function coordenadasValidasPunto(p) {
+        return Number.isFinite(p.latitud) &&
+            Number.isFinite(p.longitud) &&
+            p.latitud >= -90 &&
+            p.latitud <= 90 &&
+            p.longitud >= -180 &&
+            p.longitud <= 180 &&
+            (p.tipo === "ORIGEN" || p.tipo === "DESTINO");
+    }
+
+    // ---------------------------------------------------------
+    // ICONOS
+    // ---------------------------------------------------------
+
+    function iconoPuntoGPS(tipo) {
+        const esDestino = tipo === "DESTINO";
+        const color = esDestino ? "#a855f7" : "#ef4444";
+        const letra = esDestino ? "D" : "O";
+
+        return L.divIcon({
+            className: "chc-punto-marcador",
+
+            html: `
+                <div style="
+                    width:32px;
+                    height:32px;
+                    border-radius:50% 50% 50% 0;
+                    transform:rotate(-45deg);
+                    background:${color};
+                    border:3px solid #fff;
+                    box-shadow:0 2px 8px #0006;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                ">
+                    <span style="
+                        transform:rotate(45deg);
+                        color:#fff;
+                        font-weight:800;
+                        font-size:13px;
+                    ">${letra}</span>
+                </div>
+            `,
+
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -30]
+        });
+    }
+
+    // ---------------------------------------------------------
+    // DIBUJAR PUNTOS EN EL MAPA
+    // ---------------------------------------------------------
+
+    function dibujarPuntosGPS() {
+        if (!state.map) {
+            return;
+        }
+
+        puntosState.marcadores.forEach(marcador => {
+            state.map.removeLayer(marcador);
+        });
+
+        puntosState.marcadores = [];
+
+        puntosState.puntos.forEach(punto => {
+            if (!coordenadasValidasPunto(punto)) {
+                return;
+            }
+
+            const marcador = L.marker(
+                [punto.latitud, punto.longitud],
+                {
+                    icon: iconoPuntoGPS(punto.tipo),
+                    title: punto.nombre,
+                    alt: punto.tipo
+                }
+            );
+
+            const etiquetaTipo = punto.tipo === "DESTINO"
+                ? "Destino"
+                : "Origen";
+
+            const botonDesactivar = punto.id !== null
+                ? `
+                    <button
+                        type="button"
+                        class="btn-desactivar-punto"
+                        data-desactivar-punto="${escapeHtml(punto.id)}"
+                        style="
+                            margin-top:10px;
+                            padding:6px 10px;
+                            border:0;
+                            border-radius:6px;
+                            background:#dc2626;
+                            color:#fff;
+                            cursor:pointer;
+                        "
+                    >
+                        Desactivar punto
+                    </button>
+                `
+                : "";
+
+            marcador.bindPopup(`
+                <div class="gps-popup">
+                    <strong>${escapeHtml(punto.nombre)}</strong>
+                    <br>
+                    <span>${etiquetaTipo}</span>
+                    <br>
+                    <small>
+                        ${punto.latitud.toFixed(6)},
+                        ${punto.longitud.toFixed(6)}
+                    </small>
+                    ${botonDesactivar}
+                </div>
+            `);
+
+            // Conectar el botón del popup con el DELETE del controlador.
+            marcador.on("popupopen", evento => {
+                const popupElement = evento.popup.getElement();
+
+                if (!popupElement) {
+                    return;
+                }
+
+                const boton = popupElement.querySelector(
+                    "[data-desactivar-punto]"
+                );
+
+                if (!boton) {
+                    return;
+                }
+
+                boton.addEventListener("click", async () => {
+                    await desactivarPuntoGPS(punto.id);
+                }, { once: true });
+            });
+
+            marcador.addTo(state.map);
+
+            puntosState.marcadores.push(marcador);
+        });
+    }
+
+    // ---------------------------------------------------------
+    // CARGAR PUNTOS DESDE LA BASE DE DATOS
+    // GET /api/puntos-planta
+    // ---------------------------------------------------------
+
+    async function cargarPuntosGPS() {
+        try {
+            puntosMensaje("Consultando puntos en la base de datos...");
+
+            const datos = await peticionPuntos(
+                PUNTOS_CONFIG.apiUrl
+            );
+
+            if (!Array.isArray(datos)) {
+                throw new Error(
+                    "La API no devolvió una lista de puntos."
+                );
+            }
+
+            puntosState.puntos = datos
+                .map(normalizarPuntoGPS)
+                .filter(punto =>
+                    punto.activo !== false &&
+                    coordenadasValidasPunto(punto)
+                );
+
+            // Dibujar los puntos en el mapa.
+            dibujarPuntosGPS();
+
+            // Llenar los campos del formulario.
+            cargarSelectsOrigenDestino();
+
+            puntosMensaje(
+                `${puntosState.puntos.length} punto(s) cargado(s) desde el servidor.`
+            );
+
+        } catch (error) {
+            console.error(
+                "Error cargando puntos de planta:",
+                error
+            );
+
+            puntosMensaje(
+                "No se pudieron cargar los puntos desde la base de datos. " +
+                error.message
+            );
+        }
+    }
+
+    // ---------------------------------------------------------
+    // INICIAR SELECCIÓN DE COORDENADAS
+    // ---------------------------------------------------------
+
+    function iniciarSeleccionPuntoGPS() {
+        const nombre = $("nombrePunto");
+        const tipo = $("tipoPunto");
+
+        if (!state.map) {
+            puntosMensaje("El mapa todavía no está disponible.");
+            return;
+        }
+
+        if (!nombre || !nombre.value.trim()) {
+            puntosMensaje("Escribí el nombre del origen o destino.");
+            nombre?.focus();
+            return;
+        }
+
+        const tipoSeleccionado = tipo?.value || "ORIGEN";
+
+        if (!["ORIGEN", "DESTINO"].includes(tipoSeleccionado)) {
+            puntosMensaje("Seleccioná un tipo válido: ORIGEN o DESTINO.");
+            return;
+        }
+
+        puntosState.seleccionando = true;
+
+        state.map.getContainer().style.cursor = "crosshair";
+
+        puntosMensaje(
+            `Hacé clic en el mapa para colocar el ${tipoSeleccionado.toLowerCase()}.`
+        );
+    }
+
+    // ---------------------------------------------------------
+    // GUARDAR PUNTO
+    // POST /api/puntos-planta
+    // ---------------------------------------------------------
+
+    async function guardarPuntoGPS(punto) {
+        if (puntosState.guardando) {
+            return;
+        }
+
+        puntosState.guardando = true;
+
+        try {
+            puntosMensaje("Guardando punto en la base de datos...");
+
+            const datos = await peticionPuntos(
+                PUNTOS_CONFIG.apiUrl,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        nombre: punto.nombre,
+                        tipo: punto.tipo,
+                        latitud: punto.latitud,
+                        longitud: punto.longitud
+                    })
+                }
+            );
+
+            // Si el POST devuelve el registro creado, verificamos
+            // que tenga identificador y coordenadas válidas.
+            if (datos && typeof datos === "object") {
+                const objeto = datos.punto ?? datos;
+
+                if (
+                    objeto.id !== undefined ||
+                    objeto.puntoId !== undefined ||
+                    objeto.puntoPlantaId !== undefined
+                ) {
+                    normalizarPuntoGPS(objeto);
+                }
+            }
+
+            // Volvemos a consultar el servidor para usar el registro
+            // persistido y su ID real, no un objeto local inventado.
+            await cargarPuntosGPS();
+
+            if (puntosState.puntos.some(p =>
+                p.nombre === punto.nombre &&
+                p.tipo === punto.tipo &&
+                Math.abs(p.latitud - punto.latitud) < 0.00001 &&
+                Math.abs(p.longitud - punto.longitud) < 0.00001
+            )) {
+                puntosMensaje("Punto guardado correctamente en el servidor.");
+            }
+
+            if (
+                puntosState.marcadorTemporal &&
+                state.map
+            ) {
+                state.map.removeLayer(puntosState.marcadorTemporal);
+                puntosState.marcadorTemporal = null;
+            }
+
+            const panel = $("panelCrearPunto");
+            const nombre = $("nombrePunto");
+
+            if (nombre) {
+                nombre.value = "";
+            }
+
+            if (panel) {
+                panel.hidden = true;
+            }
+
+        } catch (error) {
+            console.error("Error guardando punto:", error);
+
+            puntosMensaje(
+                "No se pudo guardar el punto. " +
+                "La base de datos no ha sido confirmada. " +
+                error.message
+            );
+
+            if (puntosState.marcadorTemporal && state.map) {
+                state.map.removeLayer(puntosState.marcadorTemporal);
+                puntosState.marcadorTemporal = null;
+            }
+
+        } finally {
+            puntosState.guardando = false;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // DESACTIVAR PUNTO
+    // DELETE /api/puntos-planta/{id}
+    // ---------------------------------------------------------
+
+    async function desactivarPuntoGPS(id) {
+        if (id === null || id === undefined || id === "") {
+            puntosMensaje(
+                "Este punto no tiene un ID válido del servidor."
+            );
+            return;
+        }
+
+        const confirmado = window.confirm(
+            "¿Deseás desactivar este origen o destino?"
+        );
+
+        if (!confirmado) {
+            return;
+        }
+
+        try {
+            puntosMensaje("Desactivando punto en el servidor...");
+
+            await peticionPuntos(
+                `${PUNTOS_CONFIG.apiUrl}/${encodeURIComponent(id)}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+            // El controlador desactiva el registro.
+            // Consultamos nuevamente para actualizar el mapa.
+            await cargarPuntosGPS();
+
+            puntosMensaje("Solicitud de desactivación completada.");
+
+        } catch (error) {
+            console.error("Error desactivando punto:", error);
+
+            puntosMensaje(
+                "No se pudo desactivar el punto. " +
+                error.message
+            );
+        }
+    }
+
+    // ---------------------------------------------------------
+    // CLIC EN EL MAPA PARA DEFINIR UN PUNTO
+    // ---------------------------------------------------------
+
+    function manejarClicMapaPunto(evento) {
+        if (!puntosState.seleccionando) {
+            return;
+        }
+
+        puntosState.seleccionando = false;
+
+        state.map.getContainer().style.cursor = "";
+
+        const nombre = $("nombrePunto")?.value.trim();
+        const tipo = $("tipoPunto")?.value || "ORIGEN";
+
+        if (!nombre) {
+            puntosMensaje("Escribí el nombre del punto.");
+            return;
+        }
+
+        if (!["ORIGEN", "DESTINO"].includes(tipo)) {
+            puntosMensaje("El tipo de punto no es válido.");
+            return;
+        }
+
+        const punto = {
+            id: null,
+            nombre,
+            tipo,
+            latitud: Number(evento.latlng.lat.toFixed(6)),
+            longitud: Number(evento.latlng.lng.toFixed(6))
+        };
+
+        if (!coordenadasValidasPunto(punto)) {
+            puntosMensaje("Las coordenadas seleccionadas no son válidas.");
+            return;
+        }
+
+        if (puntosState.marcadorTemporal) {
+            state.map.removeLayer(puntosState.marcadorTemporal);
+        }
+
+        puntosState.marcadorTemporal = L.marker(
+            [punto.latitud, punto.longitud],
+            { icon: iconoPuntoGPS(punto.tipo) }
+        ).addTo(state.map);
+
+        puntosState.marcadorTemporal.bindPopup(`
+            <strong>${escapeHtml(punto.nombre)}</strong>
+            <br>
+            ${punto.tipo === "DESTINO" ? "Destino" : "Origen"}
+            <br>
+            <small>Esperando confirmación del servidor...</small>
+        `).openPopup();
+
+        guardarPuntoGPS(punto);
+    }
+
+    // ---------------------------------------------------------
+    // INICIALIZAR CONTROLES DE ORÍGENES Y DESTINOS
+    // ---------------------------------------------------------
+
+    function inicializarPuntosGPS() {
+        const btnCrear = $("btnCrearPunto");
+        const btnElegir = $("btnSeleccionarUbicacion");
+        const btnCancelar = $("btnCancelarPunto");
+        const panel = $("panelCrearPunto");
+
+        if (!btnCrear || !btnElegir || !btnCancelar || !panel) {
+            console.warn(
+                "No se encontraron los controles de puntos del HTML."
+            );
+            return;
+        }
+
+        btnCrear.addEventListener("click", () => {
+            panel.hidden = !panel.hidden;
+
+            if (!panel.hidden) {
+                puntosMensaje(
+                    "Elegí el tipo, escribí el nombre y seleccioná el mapa."
+                );
+
+                $("nombrePunto")?.focus();
+
+            } else {
+                puntosState.seleccionando = false;
+
+                if (state.map) {
+                    state.map.getContainer().style.cursor = "";
+                }
+
+                if (puntosState.marcadorTemporal && state.map) {
+                    state.map.removeLayer(puntosState.marcadorTemporal);
+                    puntosState.marcadorTemporal = null;
+                }
+            }
+        });
+
+        btnElegir.addEventListener(
+            "click",
+            iniciarSeleccionPuntoGPS
+        );
+
+        btnCancelar.addEventListener("click", () => {
+            puntosState.seleccionando = false;
+
+            if (state.map) {
+                state.map.getContainer().style.cursor = "";
+            }
+
+            if (puntosState.marcadorTemporal && state.map) {
+                state.map.removeLayer(puntosState.marcadorTemporal);
+                puntosState.marcadorTemporal = null;
+            }
+
+            panel.hidden = true;
+
+            puntosMensaje("Creación de punto cancelada.");
+        });
+
+        state.map.on("click", manejarClicMapaPunto);
+
+        cargarPuntosGPS();
+    }
 
     // =========================================================
     // 15. EVENTOS DE LA INTERFAZ
     // =========================================================
+
+    // Menú del botón de filtro: Todos / En movimiento / Detenidos.
+    function initializeStatusFilter() {
+        const boton = $("btnFiltroEstado");
+        const opciones = document.querySelectorAll("[data-filtro-estado]");
+
+        // strategy "fixed": el menú no se recorta por el overflow del panel.
+        if (boton && window.bootstrap) {
+            bootstrap.Dropdown.getOrCreateInstance(boton, {
+                popperConfig: config => ({ ...config, strategy: "fixed" })
+            });
+        }
+
+        opciones.forEach(opcion => {
+            opcion.addEventListener("click", () => {
+                state.statusFilter = opcion.dataset.filtroEstado;
+
+                opciones.forEach(item =>
+                    item.classList.toggle("active", item === opcion)
+                );
+
+                boton?.classList.toggle("activo", state.statusFilter !== "all");
+
+                applyFilters();
+            });
+        });
+    }
 
     function initializeEvents() {
         const on = (id, eventName, callback) => {
@@ -2133,7 +2186,13 @@
             }
         };
 
-        on("refreshButton", "click", loadVehicles);
+        // El botón "Última actualización" refresca vehículos y,
+        // mediante el evento, también los viajes (monitoreo-viajes.js).
+        on("refreshButton", "click", () => {
+            loadVehicles();
+            document.dispatchEvent(new CustomEvent("chc:actualizar"));
+        });
+
         on("fitMapButton", "click", fitFleet);
         on("locateFleetButton", "click", fitFleet);
         on("btnCentrarMapa", "click", fitFleet);
@@ -2145,9 +2204,9 @@
             renderSelectedVehicle();
         });
 
-        on("fleetSearch", "input", renderFleet);
-        on("mapSearch", "input", renderFleet);
-        on("statusFilter", "change", renderFleet);
+        on("fleetSearch", "input", applyFilters);
+        on("mapSearch", "input", applyFilters);
+        on("statusFilter", "change", applyFilters);
 
         on("applyFiltersButton", "click", renderTable);
         on("dateFrom", "change", renderTable);
@@ -2160,16 +2219,16 @@
             window.print();
         });
 
+        // Buscador de la tabla de vehículos.
         const legacySearch = document.querySelector(
             '.search-box input[type="search"]'
         );
 
         if (legacySearch) {
-            legacySearch.addEventListener("input", () => {
-                renderFleet();
-                renderTable();
-            });
+            legacySearch.addEventListener("input", applyFilters);
         }
+
+        initializeStatusFilter();
 
         document.querySelectorAll(".activity-tab").forEach(tab => {
             tab.addEventListener("click", () => {
@@ -2205,10 +2264,10 @@
             return;
         }
 
-		initializeEvents();
-		inicializarPuntosGPS();
+        initializeEvents();
+        inicializarPuntosGPS();
 
-		loadVehicles();
+        loadVehicles();
 
         state.refreshTimer = window.setInterval(
             loadVehicles,

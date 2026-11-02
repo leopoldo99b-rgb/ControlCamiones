@@ -46,6 +46,11 @@ public final class MonitoreoDtos {
             double longitud,
             Double velocidad) {}
 
+    /** Un viaje con sus paradas (para el reporte por rango de fechas). */
+    public record ReporteViajeResponse(
+            ViajeResponse viaje,
+            List<ParadaResponse> paradas) {}
+
     public record RutaResponse(
             ViajeResponse viaje,
             List<PuntoRecorridoResponse> recorrido,

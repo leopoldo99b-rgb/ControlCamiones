@@ -2,6 +2,7 @@ package com.proyecto.camiones.services;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,6 +26,7 @@ import com.proyecto.camiones.repository.PuntoPlantaRepository;
 
 import dto.MonitoreoDtos.ParadaResponse;
 import dto.MonitoreoDtos.PuntoRecorridoResponse;
+import dto.MonitoreoDtos.ReporteViajeResponse;
 import dto.MonitoreoDtos.RutaResponse;
 import dto.MonitoreoDtos.ViajeRequest;
 import dto.MonitoreoDtos.ViajeResponse;
@@ -38,6 +40,7 @@ public class MonitoreoViajeService {
 
     private static final String EN_CURSO = "En curso";
     private static final String FINALIZADO = "Finalizado";
+    private static final int MAX_VIAJES_REPORTE = 500;
 
     private final MonitoreoViajeRepository viajeRepo;
     private final MonitoreoParadaRepository paradaRepo;
@@ -176,6 +179,38 @@ public class MonitoreoViajeService {
         return new RutaResponse(aViaje(viaje), recorrido, paradas);
     }
 
+    /** Viajes cuya fecha de inicio cae en el rango, cada uno con sus paradas. */
+    @Transactional(readOnly = true)
+    public List<ReporteViajeResponse> reporte(LocalDate desde, LocalDate hasta) {
+        if (desde == null || hasta == null) {
+            throw new IllegalArgumentException(
+                    "Debes indicar la fecha inicial y la final.");
+        }
+        if (hasta.isBefore(desde)) {
+            throw new IllegalArgumentException(
+                    "La fecha final no puede ser anterior a la inicial.");
+        }
+
+        List<MonitoreoViaje> viajes = viajeRepo
+                .findByFechaInicioGreaterThanEqualAndFechaInicioLessThanOrderByFechaInicioAsc(
+                        desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay());
+
+        if (viajes.size() > MAX_VIAJES_REPORTE) {
+            throw new IllegalArgumentException(
+                    "Ese rango tiene " + viajes.size() + " viajes (máximo "
+                    + MAX_VIAJES_REPORTE + "). Acorta las fechas.");
+        }
+
+        return viajes.stream()
+                .map(v -> new ReporteViajeResponse(
+                        aViaje(v),
+                        paradaRepo.findByViaje_IdViajeOrderByNumeroParadaAsc(v.getIdViaje())
+                                .stream()
+                                .map(this::aParada)
+                                .toList()))
+                .toList();
+    }
+
     @Transactional
     public ParadaResponse actualizarMotivo(Integer idParada, String motivo) {
         if (motivo == null || motivo.isBlank() || motivo.trim().length() > 300) {
@@ -211,6 +246,34 @@ public class MonitoreoViajeService {
         viaje.setEstado(FINALIZADO);
         viaje.setFechaFin(ahora);
         return aViaje(viajeRepo.save(viaje));
+    }
+
+    /**
+     * Elimina el viaje junto con todo su recorrido y todas sus paradas.
+     * Todo ocurre en una sola transacción: o se borra todo o no se borra nada.
+     */
+    @Transactional
+    public void eliminar(Integer idViaje) {
+        MonitoreoViaje viaje = obtener(idViaje);
+
+        // Primero los hijos (recorrido y paradas) y al final el viaje.
+        recorridoRepo.deleteAll(
+                recorridoRepo.findByViaje_IdViajeOrderByFechaHoraAsc(idViaje));
+        paradaRepo.deleteAll(
+                paradaRepo.findByViaje_IdViajeOrderByNumeroParadaAsc(idViaje));
+
+        try {
+            viajeRepo.delete(viaje);
+            viajeRepo.flush(); // fuerza el DELETE aquí para poder capturar el error
+        } catch (DataIntegrityViolationException e) {
+            log.warn("No se pudo eliminar el viaje {}: {}",
+                    idViaje, e.getMostSpecificCause().getMessage());
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No se pudo eliminar el viaje porque otro registro depende de él "
+                    + "o el monitoreo automático lo estaba actualizando. Inténtalo de nuevo.");
+        }
+
+        log.info("Viaje {} eliminado con su recorrido y sus paradas.", idViaje);
     }
 
     // ---------------------------------------------------------
