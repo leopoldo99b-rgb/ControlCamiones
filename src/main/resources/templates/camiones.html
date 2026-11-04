@@ -2,407 +2,147 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Módulo de Camiones</title>
+<title>Módulo de Camiones | Transportes CHC</title>
 
 <!-- CSS -->
-
 <link rel="stylesheet" href="/css/camiones-menu.css">
 
 <!-- ICONOS -->
-
 <link rel="stylesheet"
 	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-<!-- GOOGLE FONT -->
-
+<!-- FUENTE -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
 <link
-	href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+	href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
 	rel="stylesheet">
-
 </head>
 
 <body>
 
-
-
-
-
-
 	<!-- ============================= -->
-
-	<!-- HEADER -->
-
+	<!-- BARRA SUPERIOR -->
 	<!-- ============================= -->
-
-
-
 	<header class="topbar">
+		<div class="topbar-inner">
 
-		<div class="logo">
-
-			<div class="logo-icon">
-
-				<i class="fa-solid fa-truck"></i>
-
+			<div class="marca">
+				<span class="marca-icono"><i class="fa-solid fa-truck"></i></span>
+				<span class="marca-texto">Transportes CHC</span>
 			</div>
 
-			<span>Módulo de Camiones</span>
-
-		</div>
-
-
-
-
-		<div class="usuario">
-
-			<a href="/dashboard" class="btn-back"> <i
-				class="fa-solid fa-arrow-left"></i> <span>Dashboard</span>
-
+			<a href="/dashboard" class="btn-volver">
+				<i class="fa-solid fa-arrow-left"></i>
+				<span>Volver al dashboard</span>
 			</a>
 
 		</div>
-
 	</header>
 
 
-
-
-
-
-
-
-
-
-
-
-
 	<!-- ============================= -->
-
-	<!-- HERO -->
-
+	<!-- ENCABEZADO DEL MÓDULO -->
 	<!-- ============================= -->
+	<section class="encabezado">
+		<div class="encabezado-inner">
 
+			<nav class="migas" aria-label="Ruta de navegación">
+				<a href="/dashboard">Dashboard</a>
+				<i class="fa-solid fa-chevron-right"></i>
+				<span aria-current="page">Camiones</span>
+			</nav>
 
-
-	<section class="hero">
-
-
-
-
-
-		<!-- Decoración izquierda -->
-
-		<div class="hero-left">
-
-			<img class="icon-trailer"
-				src="https://cdn-icons-png.flaticon.com/512/1995/1995470.png">
+			<h1>Gestión de flota</h1>
+			<p>Administra los camiones, sus conductores, el mantenimiento y los
+				viajes de la empresa.</p>
 
 		</div>
 
-
-
-
-
-
-		<!-- CONTENIDO -->
-
-		<div class="hero-center">
-
-			<span class="badge"><i class="fa-solid fa-truck-front"></i>
-				Gestión de Flota </span>
-
-			<h1>
-
-				Gestión de <span>Flota</span>
-
-			</h1>
-
-			<p>Administra todos los procesos relacionados con los camiones</p>
-
-			<div class="linea"></div>
-
-		</div>
-
-
-
-
-
-
-		<!-- Decoración derecha -->
-
-		<div class="hero-right">
-
-			<div class="gps">
-
-				<i class="fa-solid fa-location-dot"></i>
-
-			</div>
-
-		</div>
-
-
-
-
+		<i class="fa-solid fa-truck-front encabezado-marca" aria-hidden="true"></i>
+		<span class="carretera" aria-hidden="true"></span>
 	</section>
 
 
+	<!-- ============================= -->
+	<!-- MÓDULOS -->
+	<!-- ============================= -->
+	<main class="modulos">
 
+		<a href="/gestioncamiones" class="modulo azul">
+			<span class="modulo-icono"><i class="fa-solid fa-truck"></i></span>
+			<span class="modulo-cuerpo">
+				<h2>Gestionar camiones</h2>
+				<p>Registra, edita y consulta los vehículos de la flota.</p>
+			</span>
+			<span class="modulo-pie">
+				Ingresar <i class="fa-solid fa-chevron-right"></i>
+			</span>
+		</a>
 
+		<a href="/asignaciones" class="modulo verde">
+			<span class="modulo-icono"><i class="fa-solid fa-link"></i></span>
+			<span class="modulo-cuerpo">
+				<h2>Asignar camiones</h2>
+				<p>Asigna conductores a los vehículos disponibles.</p>
+			</span>
+			<span class="modulo-pie">
+				Ingresar <i class="fa-solid fa-chevron-right"></i>
+			</span>
+		</a>
 
+		<a href="/mantenimiento" class="modulo naranja">
+			<span class="modulo-icono"><i class="fa-solid fa-screwdriver-wrench"></i></span>
+			<span class="modulo-cuerpo">
+				<h2>Mantenimientos</h2>
+				<p>Controla servicios, reparaciones y revisiones.</p>
+			</span>
+			<span class="modulo-pie">
+				Ingresar <i class="fa-solid fa-chevron-right"></i>
+			</span>
+		</a>
 
+		<a href="/viajes" class="modulo morado">
+			<span class="modulo-icono"><i class="fa-solid fa-route"></i></span>
+			<span class="modulo-cuerpo">
+				<h2>Gestión de viajes</h2>
+				<p>Administra viajes, destinos, itinerarios y asignaciones.</p>
+			</span>
+			<span class="modulo-pie">
+				Ingresar <i class="fa-solid fa-chevron-right"></i>
+			</span>
+		</a>
 
-
-
-
-
-
-
-
+	</main>
 
 	<!-- ============================= -->
-
-	<!-- TARJETAS -->
-
+	<!-- PIE -->
 	<!-- ============================= -->
-
-
-
-	<section class="cards">
-
-
-
-
-
-
-
-		<!-- CARD 1 -->
-
-
-
-		<div class="card azul">
-
-			<div class="icon-circle">
-				<i class="fa-solid fa-truck"></i>
-			</div>
-
-			<h2>Gestionar Camiones</h2>
-
-			<p>Registrar, editar y consultar vehículos de la flota.</p>
-
-			<div class="imagen">
-				<img src="https://cdn-icons-png.flaticon.com/512/1995/1995502.png">
-			</div>
-
-			<a href="/gestioncamiones" class="card-btn"> Ingresar al módulo <span><i
-					class="fa-solid fa-arrow-right"></i></span>
-			</a>
-
-		</div>
-
-
-
-
-
-
-
-
-
-		<!-- CARD 2 -->
-
-
-		<div class="card verde">
-
-			<div class="icon-circle">
-
-				<i class="fa-solid fa-link"></i>
-
-			</div>
-
-
-			<h2>Asignar Camiones</h2>
-
-
-			<p>Asignar conductores a los vehículos disponibles.</p>
-
-
-			<div class="imagen">
-
-				<img src="https://cdn-icons-png.flaticon.com/512/3050/3050525.png">
-
-			</div>
-
-
-			<a href="/asignaciones" class="card-btn"> Ingresar al módulo <span>
-
-					<i class="fa-solid fa-arrow-right"></i>
-
-			</span>
-
-			</a>
-
-
-		</div>
-
-
-
-
-
-
-
-
-
-
-		<!-- CARD 3 -->
-
-		<div class="card naranja">
-
-			<div class="icon-circle">
-
-				<i class="fa-solid fa-screwdriver-wrench"></i>
-
-			</div>
-
-
-			<h2>Mantenimientos</h2>
-
-
-			<p>Controlar servicios, reparaciones y mantenimientos.</p>
-
-
-			<div class="imagen">
-
-				<img src="https://cdn-icons-png.flaticon.com/512/2942/2942813.png">
-
-			</div>
-
-
-			<a href="/mantenimiento" class="card-btn"> Ingresar al módulo <span>
-
-					<i class="fa-solid fa-arrow-right"></i>
-
-			</span>
-
-			</a>
-
-
-		</div>
-
-
-
-
-
-
-
-
-
-
-
-<!-- CARD 4 -->
-
-<div class="card morado">
-
-    <div class="icon-circle">
-        <i class="fa-solid fa-suitcase"></i>
-    </div>
-
-    <h2>Gestión de Viajes</h2>
-
-    <p>Administrar viajes, destinos, itinerarios y asignaciones</p>
-
-    <div class="imagen">
-        <img src="https://cdn-icons-png.flaticon.com/512/854/854878.png"
-             alt="Gestión de Viajes">
-    </div>
-
-    <a href="/viajes" class="card-btn">
-        Ingresar al módulo
-        <span>
-            <i class="fa-solid fa-arrow-right"></i>
-        </span>
-    </a>
-
-</div>
-
-
-
-
-
-
-
-
-</section>
-
-
-
-
-
-
-
-
-
-		<!-- PANEL INFERIOR -->
-
-
-
-		<section class="panel-info">
-
-			<div class="info-icon">
-
-				<i class="fa-solid fa-chart-line"></i>
-
-			</div>
-
-			<div>
-
+	<footer class="pie">
+		<div class="pie-inner">
+			<span class="pie-icono"><i class="fa-solid fa-chart-line"></i></span>
+			<div class="pie-texto">
 				<h3>Control total de tu flota</h3>
-
-				<p>Optimiza, administra y lleva el control de todos los procesos
-					de operación.</p>
-
+				<p>Optimiza, administra y lleva el control de todos los procesos de
+					operación.</p>
 			</div>
+		</div>
 
-			<i class="fa-solid fa-chart-column grafico"></i>
+		<i class="fa-solid fa-truck-front pie-camion" aria-hidden="true"></i>
 
-		</section>
-
-
-
-
+		<p class="pie-legal">Transportes CHC · Módulo de camiones</p>
+	</footer>
 
 
+	<!-- BOTÓN FLOTANTE -->
+	<button class="btn-top" aria-label="Volver arriba">
+		<i class="fa-solid fa-arrow-up"></i>
+	</button>
 
-
-
-
-
-
-
-		<!-- BOTON FLOTANTE -->
-
-
-
-		<button class="btn-top">
-
-			<i class="fa-solid fa-arrow-up"></i>
-
-		</button>
-
-
-
-
-
-
-
-
-		<script src="/js/camiones-menu.js"></script>
+	<script src="/js/camiones-menu.js"></script>
 </body>
 
 </html>

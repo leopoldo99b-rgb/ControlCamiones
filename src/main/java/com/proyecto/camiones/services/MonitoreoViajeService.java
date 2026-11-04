@@ -130,7 +130,7 @@ public class MonitoreoViajeService {
         viaje.setOrigen(origen.getNombre());
         viaje.setDestino(destino.getNombre());
         viaje.setFechaInicio(
-                r.fechaSalida() != null ? r.fechaSalida() : LocalDateTime.now());
+                r.fechaSalida() != null ? r.fechaSalida() : ZonaHoraria.ahora());
         viaje.setFechaFin(null);
         viaje.setEstado(EN_CURSO);
 
@@ -234,7 +234,7 @@ public class MonitoreoViajeService {
             return aViaje(viaje);
         }
 
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = ZonaHoraria.ahora();
 
         paradaRepo.findFirstByViaje_IdViajeAndFechaHoraFinIsNullOrderByNumeroParadaDesc(idViaje)
                 .ifPresent(p -> {
@@ -303,7 +303,7 @@ public class MonitoreoViajeService {
 
     private ParadaResponse aParada(MonitoreoParada p) {
         LocalDateTime fin = p.getFechaHoraFin() != null
-                ? p.getFechaHoraFin() : LocalDateTime.now();
+                ? p.getFechaHoraFin() : ZonaHoraria.ahora();
 
         return new ParadaResponse(
                 p.getIdParada(), p.getNumeroParada(),

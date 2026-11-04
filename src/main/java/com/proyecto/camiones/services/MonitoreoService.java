@@ -52,7 +52,7 @@ public class MonitoreoService {
         viaje.setEstado("En curso");
 
         if (viaje.getFechaInicio() == null) {
-            viaje.setFechaInicio(LocalDateTime.now());
+            viaje.setFechaInicio(ZonaHoraria.ahora());
         }
 
         viaje.setFechaFin(null);
@@ -77,7 +77,7 @@ public class MonitoreoService {
 
         if ("Finalizado".equals(nuevoEstado)) {
             if (viaje.getFechaFin() == null) {
-                viaje.setFechaFin(LocalDateTime.now());
+                viaje.setFechaFin(ZonaHoraria.ahora());
             }
         } else {
             viaje.setFechaFin(null);

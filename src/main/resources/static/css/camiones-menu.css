@@ -1,595 +1,420 @@
-/* =========================================
-   RESET
-========================================= */
+/* =========================================================
+   MÓDULO DE CAMIONES - Transportes CHC
+   Paleta tomada del dashboard: azul marino + ámbar
+   ========================================================= */
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+:root {
+    --marino-900: #0e1a2e;   /* barra lateral del dashboard */
+    --marino-800: #15243d;
+    --marino-700: #1f3253;
+    --ambar:      #d97706;   /* línea de la gráfica / ítem activo */
+    --ambar-vivo: #f59e0b;
+    --ambar-suave:#fdf0dc;
+
+    --fondo:  #f4f6fa;
+    --tarjeta:#ffffff;
+    --tinta:  #14203a;
+    --suave:  #64748b;
+    --borde:  #e5e9f0;
+
+    --azul:        #2563eb;  --azul-fondo:   #e7efff;
+    --verde:       #16a34a;  --verde-fondo:  #e3f6ea;
+    --naranja:     #ea580c;  --naranja-fondo:#ffeadb;
+    --morado:      #7c3aed;  --morado-fondo: #f0e8ff;
+
+    --radio: 14px;
+    --ancho: 1180px;
 }
 
-body{
-    font-family:'Poppins',sans-serif;
-    background:#f4f8ff;
-    overflow-x:hidden;
-    color:#102042;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--fondo);
+    color: var(--tinta);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* ==================================================
-   FONDO SUAVE
-================================================== */
+a { color: inherit; text-decoration: none; }
 
-body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    background:
-        radial-gradient(circle at top left,#d9e8ff 0%,transparent 30%),
-        radial-gradient(circle at bottom right,#edf5ff 0%,transparent 35%),
-        linear-gradient(180deg,#ffffff,#eef5ff);
-    z-index:-2;
+:focus-visible {
+    outline: 3px solid var(--ambar-vivo);
+    outline-offset: 3px;
 }
 
-/* ==================================================
-   TOPBAR
-================================================== */
+/* =========================================================
+   BARRA SUPERIOR
+   ========================================================= */
 
-.topbar{
-    height:80px;
-    background:white;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:0 40px;
-    position:sticky;
-    top:0;
-    z-index:1000;
-    box-shadow:0 10px 30px rgba(0,0,0,.06);
+.topbar {
+    background: var(--marino-900);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
 }
 
-.logo{
-    display:flex;
-    align-items:center;
-    gap:12px;
+.topbar-inner {
+    width: min(var(--ancho), 92%);
+    height: 68px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
 }
 
-.logo-icon{
-    width:48px;
-    height:48px;
-    border-radius:50%;
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    color:white;
+.marca {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-/* ================================
-   BOTÓN VOLVER DASHBOARD
-================================ */
-
-.usuario{
-    display:flex;
-    align-items:center;
+.marca-icono {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--ambar);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 17px;
 }
 
-/* botón */
-.btn-back{
-    display:flex;
-    align-items:center;
-    gap:10px;
-
-    padding:10px 18px;
-    border-radius:50px;
-
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
-    color:white;
-
-    text-decoration:none;
-    font-weight:600;
-
-    box-shadow:0 10px 25px rgba(37,99,235,.25);
-
-    transition:.3s ease;
+.marca-texto {
+    color: #fff;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: .01em;
 }
 
-/* hover */
-.btn-back:hover{
-    transform:translateY(-2px);
-    box-shadow:0 15px 35px rgba(37,99,235,.35);
+.btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    border-radius: 10px;
+    color: #dbe4f3;
+    font-weight: 600;
+    font-size: 14px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    transition: background .2s, color .2s, border-color .2s;
 }
 
-/* icono */
-.btn-back i{
-    font-size:14px;
+.btn-volver:hover {
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, .3);
 }
 
-/* ==================================================
-   HERO
-================================================== */
+/* =========================================================
+   ENCABEZADO
+   ========================================================= */
 
-.hero{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:60px 20px;
-    text-align:center;
+.encabezado {
+    background: linear-gradient(180deg, var(--marino-900) 0%, var(--marino-800) 100%);
+    position: relative;
+    overflow: hidden;
+    padding: clamp(40px, 7vh, 88px) 0 clamp(108px, 14vh, 150px);
 }
 
-.hero-center{
-    max-width:800px;
+.encabezado-inner {
+    width: min(var(--ancho), 92%);
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
-.badge{
-    display:inline-flex;
-    gap:8px;
-    align-items:center;
-    background:#e8f0ff;
-    color:#2563eb;
-    padding:10px 20px;
-    border-radius:50px;
-    font-weight:600;
-    margin-bottom:20px;
+.migas {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #93a4c0;
+    margin-bottom: 18px;
 }
 
-.hero h1{
-    font-size:52px;
-    font-weight:800;
+.migas a:hover { color: #fff; }
+.migas i { font-size: 10px; opacity: .6; }
+.migas span { color: var(--ambar-vivo); font-weight: 600; }
+
+.encabezado h1 {
+    color: #fff;
+    font-size: clamp(30px, 4.2vw, 42px);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -.01em;
 }
 
-.hero h1 span{
-    color:#2563eb;
+.encabezado p {
+    margin-top: 12px;
+    max-width: 52ch;
+    color: #b6c3d9;
+    font-size: 16px;
 }
 
-.hero p{
-    color:#64748b;
-} 
-
-.linea{
-    width:100px;
-    height:6px;
-    background:#2563eb;
-    border-radius:10px;
-    margin:20px auto 0;
+/* camión grande y tenue, a la derecha */
+.encabezado-marca {
+    position: absolute;
+    right: max(4%, calc((100% - var(--ancho)) / 2));
+    bottom: 34px;
+    font-size: clamp(120px, 16vw, 210px);
+    color: #fff;
+    opacity: .05;
+    pointer-events: none;
 }
 
-.hero-left img{
-    width:clamp(120px, 14vw, 180px); /* 👈 clave */
-    height:auto;
-    max-width:100%;
-    filter:drop-shadow(0 20px 25px rgba(0,0,0,.15));
+/* línea de carretera (ámbar punteada) */
+.carretera {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 26px;
+    height: 3px;
+    background-image: repeating-linear-gradient(
+        90deg,
+        var(--ambar) 0 30px,
+        transparent 30px 56px);
+    opacity: .85;
 }
 
+/* =========================================================
+   MÓDULOS
+   ========================================================= */
 
-/* ==================================================
-   GRID CARDS
-================================================== */
-
-.cards{
-    width:min(1200px,92%);
-    margin:auto;
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-    gap:28px;
-    padding-bottom:80px;
+.modulos {
+    width: min(var(--ancho), 92%);
+    margin: -72px auto 0;
+    padding-bottom: 56px;
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 22px;
 }
 
-
-/* =========================================
-   CARD BASE
-========================================= */
-
-.card{
-    background:white;
-    border-radius:28px;
-    padding:25px;
-    text-align:center;
-    position:relative;
-    overflow:hidden;
-    box-shadow:0 20px 50px rgba(0,0,0,.08);
-    transition:.35s;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    min-height:260px;
+.modulo {
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 26px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: clamp(250px, 32vh, 340px);
+    box-shadow: 0 1px 2px rgba(15, 26, 45, .04), 0 10px 28px rgba(15, 26, 45, .07);
+    transition: border-color .2s, box-shadow .2s, transform .2s;
 }
 
-.card:hover{
-    transform:translateY(-10px);
+.modulo:hover {
+    border-color: var(--ambar);
+    transform: translateY(-4px);
+    box-shadow: 0 1px 2px rgba(15, 26, 45, .04), 0 18px 36px rgba(15, 26, 45, .12);
 }
 
-/* icono */
-.icon-circle{
-    width:65px;
-    height:65px;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:26px;
-    margin:0 auto 10px;
-    color:white;
+.modulo-icono {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-size: 22px;
 }
 
-/* texto */
-.card h2{
-    font-size:18px;
-    font-weight:700;
+.modulo-cuerpo { flex: 1; }
+
+.modulo h2 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -.005em;
+    margin-bottom: 6px;
 }
 
-.card p{
-    font-size:14px;
-    color:#64748b;
+.modulo p {
+    font-size: 14px;
+    color: var(--suave);
 }
 
-/* imagen (CONTROLADA MEJOR) */
-.imagen{
-    position:absolute;
-    bottom:-15px;
-    right:-15px;
-    opacity:0.12;
+.modulo-pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid var(--borde);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tinta);
 }
 
-.imagen img{
-    width:110px;
-    height:auto;
+.modulo-pie i {
+    font-size: 11px;
+    color: var(--suave);
+    transition: transform .2s, color .2s;
 }
 
-/* BOTÓN REAL (A) */
-.card-btn{
-    margin-top:auto;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:8px;
+.modulo:hover .modulo-pie { color: var(--ambar); }
+.modulo:hover .modulo-pie i { color: var(--ambar); transform: translateX(4px); }
 
-    padding:10px 14px;
-    border-radius:12px;
+/* colores de cada módulo (mismos tonos de los iconos del dashboard) */
+.azul    .modulo-icono { background: var(--azul-fondo);    color: var(--azul); }
+.verde   .modulo-icono { background: var(--verde-fondo);   color: var(--verde); }
+.naranja .modulo-icono { background: var(--naranja-fondo); color: var(--naranja); }
+.morado  .modulo-icono { background: var(--morado-fondo);  color: var(--morado); }
 
-    background:#2563eb;
-    color:white;
-    font-weight:600;
-    text-decoration:none;
+/* =========================================================
+   PIE (cierra la página igual que el encabezado la abre)
+   ========================================================= */
 
-    transition:.3s;
+.pie {
+    margin-top: auto;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--marino-800) 0%, var(--marino-900) 100%);
+    padding: 48px 0 22px;
+    color: #b6c3d9;
 }
 
-.card-btn:hover{
-    background:#1d4ed8;
-    transform:scale(1.03);
+/* línea de carretera en el borde superior */
+.pie::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    background-image: repeating-linear-gradient(
+        90deg,
+        var(--ambar) 0 30px,
+        transparent 30px 56px);
+    opacity: .85;
 }
 
-/* COLORES */
-.azul .icon-circle,
-.azul .card-btn{
-    background:#2563eb;
+.pie-inner {
+    width: min(var(--ancho), 92%);
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 18px;
 }
 
-.verde .icon-circle,
-.verde .card-btn{
-    background:#10b981;
+.pie-icono {
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: 12px;
+    background: rgba(217, 119, 6, .16);
+    color: var(--ambar-vivo);
+    display: grid;
+    place-items: center;
+    font-size: 19px;
 }
 
-.naranja .icon-circle,
-.naranja .card-btn{
-    background:#f59e0b;
+.pie-texto h3 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 2px;
 }
 
-.morado .icon-circle,
-.morado .card-btn{
-    background:#8b5cf6;
+.pie-texto p {
+    font-size: 14px;
+    max-width: 56ch;
 }
 
-/* ==================================================
-   COLORES
-================================================== */
-
-.azul .icon-circle,
-.azul button{
-    background:#2563eb;
+/* camión grande y tenue, como en el encabezado */
+.pie-camion {
+    position: absolute;
+    right: max(4%, calc((100% - var(--ancho)) / 2));
+    top: 50%;
+    transform: translateY(-62%);
+    font-size: clamp(96px, 12vw, 150px);
+    color: #fff;
+    opacity: .05;
+    pointer-events: none;
 }
 
-.verde .icon-circle,
-.verde button{
-    background:#10b981;
+.pie-legal {
+    width: min(var(--ancho), 92%);
+    margin: 34px auto 0;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, .08);
+    font-size: 13px;
+    color: #7f90ad;
+    position: relative;
+    z-index: 1;
 }
 
-.naranja .icon-circle,
-.naranja button{
-    background:#f59e0b;
+/* =========================================================
+   PANTALLAS GRANDES
+   ========================================================= */
+
+@media (min-width: 1600px) {
+    :root { --ancho: 1320px; }
+
+    .modulo { padding: 32px 30px 24px; }
+    .modulo h2 { font-size: 20px; }
+    .modulo p { font-size: 15px; }
+    .modulo-icono { width: 60px; height: 60px; font-size: 24px; }
+    .encabezado h1 { font-size: 48px; }
+    .encabezado p { font-size: 17px; }
 }
 
-.morado .icon-circle,
-.morado button{
-    background:#8b5cf6;
+/* =========================================================
+   BOTÓN VOLVER ARRIBA (lo muestra camiones-menu.js)
+   ========================================================= */
+
+.btn-top {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    width: 46px;
+    height: 46px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--ambar);
+    color: #fff;
+    cursor: pointer;
+    display: none;
+    box-shadow: 0 10px 24px rgba(14, 26, 46, .28);
+    transition: background .2s, transform .2s;
 }
 
-/* ==================================================
-   PANEL INFERIOR
-================================================== */
+.btn-top:hover { background: #b45f04; transform: translateY(-2px); }
 
-.panel-info{
-    width:min(1100px,92%);
-    margin:50px auto;
-    background:white;
-    padding:25px;
-    border-radius:20px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    box-shadow:0 15px 40px rgba(0,0,0,.08);
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+    .topbar-inner { height: 62px; }
+
+    .btn-volver span { display: none; }
+    .btn-volver { padding: 10px 12px; }
+
+    .encabezado { padding: 32px 0 96px; }
+    .encabezado p { font-size: 15px; }
+
+    .modulos { margin-top: -60px; gap: 16px; }
+    .modulo { min-height: 0; }
+
+    .pie { padding-top: 40px; }
+    .pie-inner { align-items: flex-start; }
 }
 
-.info-icon{
-    width:55px;
-    height:55px;
-    border-radius:50%;
-    background:#e8f0ff;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    color:#2563eb;
+@media (max-width: 480px) {
+    .marca-texto { font-size: 15px; }
+    .marca-icono { width: 36px; height: 36px; font-size: 15px; }
 }
 
-.grafico{
-    font-size:40px;
-    color:#2563eb;
-    opacity:.3;
-}
-
-/* ==================================================
-   BOTON TOP
-================================================== */
-
-.btn-top{
-    position:fixed;
-    bottom:25px;
-    right:25px;
-    width:50px;
-    height:50px;
-    border-radius:50%;
-    border:none;
-    background:#2563eb;
-    color:white;
-    cursor:pointer;
-    display:none;
-    box-shadow:0 10px 25px rgba(0,0,0,.2);
-}
-
-
-/*==================================================
-            RESPONSIVE TOPBAR + HERO
-==================================================*/
-
-/* ---------- Tablets ---------- */
-@media (max-width:992px){
-
-    .topbar{
-        padding:0 25px;
-        height:75px;
-    }
-
-    .logo span{
-        font-size:22px;
-    }
-
-    .logo-icon{
-        width:44px;
-        height:44px;
-        font-size:18px;
-    }
-
-    .btn-back{
-        padding:10px 16px;
-        font-size:15px;
-    }
-
-    .hero{
-        flex-direction:column;
-        padding:45px 20px;
-    }
-
-    .hero h1{
-        font-size:42px;
-    }
-
-    .hero p{
-        font-size:18px;
-    }
-
-    .badge{
-        font-size:15px;
-    }
-
-    .hero-left img{
-        width:150px;
-        margin-bottom:20px;
-    }
-
-}
-
-/* ---------- Celulares ---------- */
-@media (max-width:768px){
-
-    .topbar{
-
-        height:72px;
-
-        padding:0 15px;
-
-        gap:10px;
-
-    }
-
-    .logo{
-
-        gap:10px;
-
-    }
-
-    .logo-icon{
-
-        width:42px;
-        height:42px;
-        min-width:42px;
-
-    }
-
-    .logo span{
-
-        font-size:18px;
-        font-weight:700;
-
-    }
-
-    .btn-back{
-
-        padding:9px 14px;
-        font-size:14px;
-
-    }
-
-    .btn-back span{
-
-        display:none;
-
-    }
-
-    .btn-back i{
-
-        font-size:16px;
-
-    }
-
-    .hero{
-
-        padding:35px 18px;
-
-    }
-
-    .hero-left{
-
-        margin-bottom:15px;
-
-    }
-
-    .hero-left img{
-
-        width:130px;
-
-    }
-
-    .badge{
-
-        font-size:14px;
-        padding:8px 16px;
-
-    }
-
-    .hero h1{
-
-        font-size:34px;
-        line-height:1.2;
-
-    }
-
-    .hero p{
-
-        font-size:16px;
-        padding:0 15px;
-
-    }
-
-    .linea{
-
-        width:80px;
-
-    }
-
-}
-
-/* ---------- Celulares pequeños ---------- */
-@media (max-width:480px){
-
-    .topbar{
-
-        padding:0 12px;
-        height:68px;
-
-    }
-
-    .logo{
-
-        gap:8px;
-
-    }
-
-    .logo-icon{
-
-        width:38px;
-        height:38px;
-        font-size:15px;
-
-    }
-
-    .logo span{
-
-        font-size:16px;
-
-    }
-
-    .btn-back{
-
-        width:42px;
-        height:42px;
-        padding:0;
-        justify-content:center;
-        border-radius:50%;
-    }
-
-    .btn-back span{
-
-        display:none;
-
-    }
-
-    .hero{
-
-        padding:30px 15px;
-
-    }
-
-    .hero-left img{
-
-        width:105px;
-
-    }
-
-    .badge{
-
-        font-size:13px;
-        padding:7px 14px;
-
-    }
-
-    .hero h1{
-
-        font-size:28px;
-
-    }
-
-    .hero p{
-
-        font-size:15px;
-        line-height:1.6;
-
-    }
-
-    .linea{
-
-        width:65px;
-        height:5px;
-
-    }
-
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
 }

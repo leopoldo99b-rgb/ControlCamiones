@@ -8,6 +8,9 @@
     const API = "/api";
     const REFRESH_MS = 30_000;
 
+    // Zona horaria en la que se muestran TODAS las horas.
+    const ZONA_HORARIA = "America/Tegucigalpa";
+
     const $ = id => document.getElementById(id);
 
     const CLASE_ESTADO = {
@@ -43,14 +46,35 @@
         })[c]);
     }
 
+    /**
+     * Convierte lo que llega del backend en un Date correcto.
+     * El backend manda las fechas SIN zona (ej. "2026-11-04T15:23:00") y ya
+     * están en hora de Honduras (UTC-6, sin horario de verano), así que se
+     * les agrega -06:00. Si alguna llegara con zona (Z o +hh:mm), se respeta.
+     */
+    function aFecha(valor) {
+        if (valor instanceof Date) return valor;
+
+        let s = String(valor).trim();
+        const tieneHora = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(s);
+        const tieneZona = /(Z|[+-]\d{2}:?\d{2})$/i.test(s);
+
+        if (tieneHora && !tieneZona) {
+            s = s.replace(" ", "T") + "-06:00";
+        }
+        return new Date(s);
+    }
+
+    /** Formatea fecha y hora siempre en hora de Honduras. */
     function fmt(valor) {
         if (!valor) return "—";
-        const d = new Date(valor);
+        const d = aFecha(valor);
         return Number.isNaN(d.getTime())
             ? "—"
             : d.toLocaleString("es-HN", {
+                timeZone: ZONA_HORARIA,
                 day: "2-digit", month: "2-digit", year: "numeric",
-                hour: "2-digit", minute: "2-digit", hour12: false
+                hour: "2-digit", minute: "2-digit", hourCycle: "h23"
             });
     }
 
@@ -324,7 +348,7 @@
             eventos.push({
                 titulo: `Parada ${p.numeroParada}: ${p.motivo || "motivo pendiente"}`,
                 detalle: `${fmt(p.inicio)} → ${p.fin ? fmt(p.fin) : "en curso"} ` +
-                         `(${fmtDuracion(p.duracionMinutos)})`,
+                    `(${fmtDuracion(p.duracionMinutos)})`,
                 lugar: p.observaciones || ""
             });
         });
@@ -887,6 +911,13 @@
     // Inicio
     // -----------------------------------------------------
 
+    async function refrescar() {
+        await cargarViajes();
+        if (estado.rutaId !== null) {
+            mostrarRuta(estado.rutaId, { ajustar: false }).catch(console.error);
+        }
+    }
+
     function iniciar() {
         iniciarFormulario();
         iniciarReporte();
@@ -907,21 +938,13 @@
             if (boton.dataset.accion === "eliminar") pedirEliminarViaje(id);
         });
 
-		document.addEventListener("chc:actualizar", async () => {
-		    await cargarViajes();
-		    if (estado.rutaId !== null) {
-		        mostrarRuta(estado.rutaId, { ajustar: false }).catch(console.error);
-		    }
-		});
-		
+        document.addEventListener("chc:actualizar", refrescar);
+
         cargarViajes();
 
-        window.setInterval(async () => {
+        window.setInterval(() => {
             if (document.hidden) return;
-            await cargarViajes();
-            if (estado.rutaId !== null) {
-                mostrarRuta(estado.rutaId, { ajustar: false }).catch(console.error);
-            }
+            refrescar();
         }, REFRESH_MS);
     }
 
@@ -931,3 +954,8 @@
         iniciar();
     }
 })();
+
+
+
+
+
