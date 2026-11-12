@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import java.time.LocalDate;
 
@@ -14,27 +15,11 @@ import java.time.LocalDate;
 @Table(name = "programaciones")
 public class Programacion {
 
-    // =========================================================
-    // ID
-    // =========================================================
-
     @Id
-    @GeneratedValue(
-        strategy = GenerationType.SEQUENCE,
-        generator = "programaciones_seq"
-    )
-    @SequenceGenerator(
-        name = "programaciones_seq",
-        sequenceName = "programaciones_id_seq",
-        allocationSize = 1
-    )
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "programaciones_seq")
+    @SequenceGenerator(name = "programaciones_seq", sequenceName = "programaciones_id_seq", allocationSize = 1)
     @Column(name = "ID", nullable = false)
     private Integer id;
-
-
-    // =========================================================
-    // DATOS DEL VIAJE
-    // =========================================================
 
     @Column(name = "fecha")
     private LocalDate fecha;
@@ -57,29 +42,26 @@ public class Programacion {
     @Column(name = "estado", length = 30)
     private String estado;
 
+    // NUEVO: vínculo con el abastecimiento generado para este viaje
+    @Column(name = "abastecimiento_id")
+    private Long abastecimientoId;
 
-    // =========================================================
-    // CONSTRUCTOR VACÍO
-    // =========================================================
+    // NUEVO: datos que llegan del formulario (no se guardan en esta tabla)
+    @Transient
+    private Long combustibleId;
+
+    @Transient
+    private String gasolinera;
+
+    // NUEVO: mensaje de respuesta para la pantalla
+    @Transient
+    private String avisoCombustible;
 
     public Programacion() {
     }
 
-
-    // =========================================================
-    // CONSTRUCTOR COMPLETO
-    // =========================================================
-
-    public Programacion(
-            Integer id,
-            LocalDate fecha,
-            String destinoInicial,
-            String destinoFinal,
-            String placa,
-            String motorista,
-            String telefono,
-            String estado) {
-
+    public Programacion(Integer id, LocalDate fecha, String destinoInicial, String destinoFinal,
+                        String placa, String motorista, String telefono, String estado) {
         this.id = id;
         this.fecha = fecha;
         this.destinoInicial = destinoInicial;
@@ -90,79 +72,39 @@ public class Programacion {
         this.estado = estado;
     }
 
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    // =========================================================
-    // GETTERS Y SETTERS
-    // =========================================================
+    public LocalDate getFecha() { return fecha; }
+    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
 
-    public Integer getId() {
-        return id;
-    }
+    public String getDestinoInicial() { return destinoInicial; }
+    public void setDestinoInicial(String destinoInicial) { this.destinoInicial = destinoInicial; }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+    public String getDestinoFinal() { return destinoFinal; }
+    public void setDestinoFinal(String destinoFinal) { this.destinoFinal = destinoFinal; }
 
+    public String getPlaca() { return placa; }
+    public void setPlaca(String placa) { this.placa = placa; }
 
-    public LocalDate getFecha() {
-        return fecha;
-    }
+    public String getMotorista() { return motorista; }
+    public void setMotorista(String motorista) { this.motorista = motorista; }
 
-    public void setFecha(LocalDate fecha) {
-        this.fecha = fecha;
-    }
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
 
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
-    public String getDestinoInicial() {
-        return destinoInicial;
-    }
+    public Long getAbastecimientoId() { return abastecimientoId; }
+    public void setAbastecimientoId(Long abastecimientoId) { this.abastecimientoId = abastecimientoId; }
 
-    public void setDestinoInicial(String destinoInicial) {
-        this.destinoInicial = destinoInicial;
-    }
+    public Long getCombustibleId() { return combustibleId; }
+    public void setCombustibleId(Long combustibleId) { this.combustibleId = combustibleId; }
 
+    public String getGasolinera() { return gasolinera; }
+    public void setGasolinera(String gasolinera) { this.gasolinera = gasolinera; }
 
-    public String getDestinoFinal() {
-        return destinoFinal;
-    }
-
-    public void setDestinoFinal(String destinoFinal) {
-        this.destinoFinal = destinoFinal;
-    }
-
-
-    public String getPlaca() {
-        return placa;
-    }
-
-    public void setPlaca(String placa) {
-        this.placa = placa;
-    }
-
-
-    public String getMotorista() {
-        return motorista;
-    }
-
-    public void setMotorista(String motorista) {
-        this.motorista = motorista;
-    }
-
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
+    public String getAvisoCombustible() { return avisoCombustible; }
+    public void setAvisoCombustible(String avisoCombustible) { this.avisoCombustible = avisoCombustible; }
 }

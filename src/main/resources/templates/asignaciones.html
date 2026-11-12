@@ -1,618 +1,179 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Asignación de Camiones</title>
 
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="/css/asignaciones.css">
-
-
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-
 </head>
-
 
 <body>
 
-
-	<div class="container">
-
-
-
-		<!-- =====================================================
-                    HEADER
-===================================================== -->
-
-
-		<header class="page-header">
-
-
-			<div class="header-title">
-
-
-				<h1>
-
-					<i class="fa-solid fa-link"></i> Asignación de Camiones
-
-				</h1>
-
-
-				<p>Administra la relación entre conductores y vehículos.</p>
-
-
+<header class="topbar">
+	<div class="wrap topbar-inner">
+		<div class="title">
+			<span class="title-icon"><i class="fa-solid fa-truck-fast"></i></span>
+			<div>
+				<h1>Asignación de camiones</h1>
+				<p>Qué conductor lleva cada unidad y desde cuándo.</p>
 			</div>
-
-
-
-
-
-			<div class="header-actions">
-
-
-				<a href="/camiones" class="btn-back"> <i
-					class="fa-solid fa-arrow-left"></i> Volver al menú
-
-
-				</a>
-
-
-
-
-
-				<button id="btnNuevaAsignacion" class="btn-primary">
-
-
-					<i class="fa-solid fa-plus"></i> Nueva Asignación
-
-
-				</button>
-
-
-
-			</div>
-
-
-
-		</header>
-
-
-
-
-
-
-
-		<!-- =====================================================
-                    TARJETAS
-===================================================== -->
-
-
-		<section class="cards">
-
-
-
-			<div class="card">
-
-
-				<div class="card-icon green">
-
-					<i class="fa-solid fa-truck"></i>
-
-				</div>
-
-
-				<div>
-
-					<h3 id="totalDisponibles">0</h3>
-
-
-					<p>Camiones Disponibles</p>
-
-
-				</div>
-
-
-			</div>
-
-
-
-
-
-			<div class="card">
-
-
-				<div class="card-icon blue">
-
-					<i class="fa-solid fa-link"></i>
-
-				</div>
-
-
-
-				<div>
-
-					<h3 id="totalAsignados">0</h3>
-
-
-					<p>Asignaciones Activas</p>
-
-
-				</div>
-
-
-			</div>
-
-
-
-
-
-			<div class="card">
-
-
-				<div class="card-icon orange">
-
-					<i class="fa-solid fa-user"></i>
-
-				</div>
-
-
-
-
-				<div>
-
-					<h3 id="totalConductores">0</h3>
-
-
-					<p>Conductores sin Asignar</p>
-
-
-				</div>
-
-
-
-			</div>
-
-
-
-		</section>
-
-
-
-
-
-
-
-
-		<!-- =====================================================
-                    BUSCADOR
-===================================================== -->
-
-
-		<section class="toolbar">
-
-
-			<div class="search-box">
-
-
-				<i class="fa-solid fa-magnifying-glass"></i> <input
-					id="buscarAsignacion" type="text"
-					placeholder="Buscar conductor o camión...">
-
-
-
-			</div>
-
-
-
-		</section>
-
-
-
-
-
-
-
-
-		<!-- =====================================================
-                    TABLA
-===================================================== -->
-
-
-		<section class="table-card">
-
-
-
-			<div class="table-header">
-
-
-				<div>
-
-
-					<h2>
-
-						<i class="fa-solid fa-list"></i> Asignaciones Registradas
-
-					</h2>
-
-
-
-					<p>Consulta historial y asignaciones activas.</p>
-
-
-
-				</div>
-
-
-
-			</div>
-
-
-
-
-
-			<div class="table-responsive">
-
-
-				<table id="tablaAsignaciones">
-
-
-					<thead>
-
-
-						<tr>
-
-
-							<th>Conductor</th>
-
-
-							<th>Camión</th>
-
-
-							<th>Fecha Asignación</th>
-							
-							
-							<th>Fecha Finalización</th>
-
-
-							<th>Estado</th>
-
-
-							<th>Acciones</th>
-
-
-						</tr>
-
-
-					</thead>
-
-
-
-					<tbody id="tbodyAsignaciones">
-
-
-					</tbody>
-
-
-
-				</table>
-
-
-			</div>
-
-
-		</section>
-
-
-
-
-
-	</div>
-
-
-
-
-
-
-
-
-	<!-- =====================================================
-                MODAL NUEVA ASIGNACION
-===================================================== -->
-
-
-	<div id="modalAsignacion" class="modal">
-
-
-		<div class="modal-content">
-
-
-
-			<div class="modal-header">
-
-
-				<h2>
-
-					<i class="fa-solid fa-link"></i> Nueva Asignación
-
-				</h2>
-
-
-
-				<button class="close-modal">
-
-
-					<i class="fa-solid fa-xmark"></i>
-
-
-				</button>
-
-
-
-			</div>
-
-
-
-
-
-
-			<div class="modal-body">
-
-
-				<div class="form-grid">
-
-
-
-					<div class="form-group">
-
-
-						<label> Conductor </label> <select id="selectConductores">
-
-
-							<option value="">Seleccione conductor</option>
-
-
-						</select>
-
-
-					</div>
-
-
-
-
-
-
-					<div class="form-group">
-
-
-						<label> Camión Disponible </label> <select id="selectCamiones">
-
-
-							<option value="">Seleccione camión</option>
-
-
-						</select>
-
-
-					</div>
-
-
-
-
-
-
-					<div class="form-group">
-
-
-						<label> Fecha asignación </label> <input id="fechaAsignacion"
-							type="date">
-
-
-
-					</div>
-
-
-
-
-
-
-					<div class="form-group full">
-
-
-						<label> Observaciones </label>
-
-
-						<textarea id="observacion" rows="4"
-							placeholder="Ingrese observaciones..."></textarea>
-
-
-
-					</div>
-
-
-
-
-				</div>
-
-
-			</div>
-
-
-
-
-
-
-			<div class="modal-footer">
-
-
-				<button class="btn-secondary">Cancelar</button>
-
-
-
-
-				<button id="btnGuardarAsignacion" class="btn-primary">
-
-
-					<i class="fa-solid fa-floppy-disk"></i> Asignar Camión
-
-
-				</button>
-
-
-
-			</div>
-
-
-
-
 		</div>
-
-
-	</div>
-
-
-
-
-
-
-
-
-
-	<!-- =====================================================
-                MODAL DETALLE
-===================================================== -->
-
-
-	<div id="modalDetalle" class="modal">
-
-
-		<div class="modal-content modal-detail">
-
-
-			<div class="modal-header">
-
-
-				<h2>
-
-					<i class="fa-solid fa-circle-info"></i> Información de Asignación
-
-				</h2>
-
-
-
-
-				<button class="close-modal">
-
-
-					<i class="fa-solid fa-xmark"></i>
-
-
-
-
-
-			</div>
-
-
-
-
-
-
-			<div class="modal-body">
-
-
-				<div class="detail-grid">
-
-
-
-					<div>
-
-						<strong> Conductor </strong>
-
-						<p id="detalleConductor"></p>
-
-					</div>
-
-
-
-
-
-					<div>
-
-						<strong> Camión </strong>
-
-						<p id="detalleCamion"></p>
-
-					</div>
-
-
-
-
-
-
-					<div>
-
-						<strong> Fecha </strong>
-
-						<p id="detalleFecha"></p>
-
-					</div>
-
-
-
-
-
-
-					<div>
-
-						<strong> Estado </strong>
-
-						<p id="detalleEstado"></p>
-
-					</div>
-
-
-
-
-
-
-					<div class="full">
-
-						<strong> Observaciones </strong>
-
-
-						<p id="detalleObservacion"></p>
-
-
-					</div>
-
-
-
-				</div>
-
-
-			</div>
-
-
+		<div class="actions">
+			<a href="/camiones" class="btn btn-ghost-dark"><i class="fa-solid fa-arrow-left"></i> Volver al menú</a>
+			<button id="btnNuevaAsignacion" class="btn btn-lane" type="button"><i class="fa-solid fa-plus"></i> Nueva asignación</button>
 		</div>
-
-
 	</div>
+	<div class="road-line" aria-hidden="true"></div>
+</header>
 
+<main class="wrap">
 
+	<!-- RESUMEN DE FLOTA -->
+	<section class="panel summary" aria-label="Resumen de flota">
+		<div class="metrics">
+			<div class="metric">
+				<i class="fa-solid fa-truck m-ok"></i>
+				<div><strong id="totalDisponibles">0</strong><span>Camiones disponibles</span></div>
+			</div>
+			<div class="metric">
+				<i class="fa-solid fa-route m-blue"></i>
+				<div><strong id="totalAsignados">0</strong><span>Asignaciones activas</span></div>
+			</div>
+			<div class="metric">
+				<i class="fa-solid fa-id-card m-warn"></i>
+				<div><strong id="totalConductores">0</strong><span>Conductores sin asignar</span></div>
+			</div>
+			<div class="metric">
+				<i class="fa-solid fa-clock-rotate-left m-gray"></i>
+				<div><strong id="totalFinalizadas">0</strong><span>Asignaciones finalizadas</span></div>
+			</div>
+		</div>
+		<div class="fleet">
+			<div class="fleet-head">
+				<span>Uso de flota</span>
+				<strong id="fleetTexto">0 de 0 camiones asignados</strong>
+			</div>
+			<div class="fleet-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="fleetBar">
+				<span id="fleetFill"></span>
+			</div>
+		</div>
+	</section>
 
+	<!-- FILTROS -->
+	<section class="toolbar">
+		<div class="search">
+			<i class="fa-solid fa-magnifying-glass"></i>
+			<input id="buscarAsignacion" type="search" placeholder="Buscar por conductor, licencia, placa o marca" autocomplete="off" aria-label="Buscar asignación">
+		</div>
+		<div class="chips" id="chipsEstado" role="group" aria-label="Filtrar por estado">
+			<button type="button" class="chip active" data-estado="TODAS">Todas <b id="cntTodas">0</b></button>
+			<button type="button" class="chip" data-estado="ACTIVA">Activas <b id="cntActivas">0</b></button>
+			<button type="button" class="chip" data-estado="FINALIZADA">Finalizadas <b id="cntFinalizadas">0</b></button>
+		</div>
+	</section>
 
+	<!-- TABLA -->
+	<section class="panel table-panel">
+		<div class="table-wrap">
+			<table id="tablaAsignaciones">
+				<thead>
+					<tr>
+						<th>Conductor</th>
+						<th>Camión</th>
+						<th>Fecha asignación</th>
+						<th>Fecha finalización</th>
+						<th>Duración</th>
+						<th>Estado</th>
+						<th class="col-actions">Acciones</th>
+					</tr>
+				</thead>
+				<tbody id="tbodyAsignaciones"></tbody>
+			</table>
+		</div>
+		<div class="pager" id="paginacion"></div>
+	</section>
 
+</main>
 
+<!-- MODAL NUEVA ASIGNACIÓN -->
+<div id="modalAsignacion" class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloNueva" aria-hidden="true">
+	<div class="sheet">
+		<div class="sheet-head">
+			<h2 id="tituloNueva"><i class="fa-solid fa-link"></i> Nueva asignación</h2>
+			<button class="icon-btn" type="button" data-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+		</div>
+		<div class="sheet-body">
+			<div class="form-grid">
+				<div class="field">
+					<label for="selectConductores">Conductor</label>
+					<select id="selectConductores"><option value="">Seleccione conductor</option></select>
+					<div class="preview" id="previewConductor" hidden></div>
+				</div>
+				<div class="field">
+					<label for="selectCamiones">Camión disponible</label>
+					<select id="selectCamiones"><option value="">Seleccione camión</option></select>
+					<div class="preview" id="previewCamion" hidden></div>
+				</div>
+				<div class="field">
+					<label for="fechaAsignacion">Fecha de asignación</label>
+					<input id="fechaAsignacion" type="date">
+				</div>
+				<div class="field full">
+					<label for="observacion">Observaciones <small>(opcional)</small></label>
+					<textarea id="observacion" rows="3" placeholder="Ej. Ruta San Pedro Sula – Tegucigalpa, carga refrigerada"></textarea>
+				</div>
+			</div>
+		</div>
+		<div class="sheet-foot">
+			<button class="btn btn-soft" type="button" data-close>Cancelar</button>
+			<button id="btnGuardarAsignacion" class="btn btn-primary" type="button"><i class="fa-solid fa-floppy-disk"></i> Asignar camión</button>
+		</div>
+	</div>
+</div>
 
+<!-- MODAL DETALLE -->
+<div id="modalDetalle" class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloDetalle" aria-hidden="true">
+	<div class="sheet sheet-sm">
+		<div class="sheet-head">
+			<h2 id="tituloDetalle"><i class="fa-solid fa-circle-info"></i> Detalle de la asignación</h2>
+			<button class="icon-btn" type="button" data-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+		</div>
+		<div class="sheet-body">
+			<dl class="detail">
+				<div><dt>Conductor</dt><dd id="detalleConductor"></dd></div>
+				<div><dt>Camión</dt><dd id="detalleCamion"></dd></div>
+				<div><dt>Fecha de asignación</dt><dd id="detalleFecha"></dd></div>
+				<div><dt>Fecha de finalización</dt><dd id="detalleFin"></dd></div>
+				<div><dt>Duración</dt><dd id="detalleDuracion"></dd></div>
+				<div><dt>Estado</dt><dd id="detalleEstado"></dd></div>
+				<div class="full"><dt>Observaciones</dt><dd id="detalleObservacion"></dd></div>
+			</dl>
+		</div>
+	</div>
+</div>
 
-	<script src="/js/asignaciones.js"></script>
+<!-- MODAL CONFIRMACIÓN -->
+<div id="modalConfirmar" class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confTitulo" aria-hidden="true">
+	<div class="sheet sheet-xs">
+		<div class="sheet-body confirm">
+			<span class="confirm-icon" id="confIcono"><i class="fa-solid fa-triangle-exclamation"></i></span>
+			<h2 id="confTitulo"></h2>
+			<p id="confTexto"></p>
+		</div>
+		<div class="sheet-foot">
+			<button class="btn btn-soft" type="button" id="confNo">Cancelar</button>
+			<button class="btn btn-primary" type="button" id="confSi">Confirmar</button>
+		</div>
+	</div>
+</div>
 
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
+<script src="/js/asignaciones.js"></script>
 </body>
-
 </html>

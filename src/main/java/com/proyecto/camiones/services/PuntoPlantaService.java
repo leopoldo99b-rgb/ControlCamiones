@@ -92,12 +92,14 @@ public class PuntoPlantaService {
                     "El cuerpo de la solicitud es obligatorio");
         }
 
-        // Antes nunca se llamaba: ahora valida nombre, tipo y coordenadas.
+        // Valida nombre, tipo, coordenadas y radio.
         request.validar();
 
         punto.setNombre(request.getNombre());
         punto.setTipo(request.getTipo());
         punto.setLatitud(request.getLatitud());
         punto.setLongitud(request.getLongitud());
+        // null = usar el radio general de application.properties
+        punto.setRadioMetros(request.getRadioMetros());
     }
 }

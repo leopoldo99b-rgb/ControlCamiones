@@ -12,6 +12,7 @@ public class PuntoPlantaResponse {
     private TipoPunto tipo;
     private Double latitud;
     private Double longitud;
+    private Double radioMetros;
     private Boolean activo;
     private OffsetDateTime creadoEn;
     private OffsetDateTime actualizadoEn;
@@ -26,6 +27,7 @@ public class PuntoPlantaResponse {
         dto.setTipo(punto.getTipo());
         dto.setLatitud(punto.getLatitud());
         dto.setLongitud(punto.getLongitud());
+        dto.setRadioMetros(punto.getRadioMetros());
         dto.setActivo(punto.getActivo());
         dto.setCreadoEn(punto.getCreadoEn());
         dto.setActualizadoEn(punto.getActualizadoEn());
@@ -70,6 +72,14 @@ public class PuntoPlantaResponse {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public Double getRadioMetros() {
+        return radioMetros;
+    }
+
+    public void setRadioMetros(Double radioMetros) {
+        this.radioMetros = radioMetros;
     }
 
     public Boolean getActivo() {

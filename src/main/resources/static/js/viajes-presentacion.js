@@ -1,72 +1,55 @@
 /* ============================================================
-   PRESENTACIÓN EJECUTIVA DE VIAJES
-   VERSIÓN COMPLETA CORREGIDA Y MEJORADA
+   PRESENTACIÓN EJECUTIVA DE VIAJES  ·  v2
+   Transportes CHC
+
+   Cambios principales respecto a la v1:
+   - Lee los datos REALES (cacheViajes de viajes.js) y no las celdas
+     de la tabla, así se corrigen ODT / tiempo máximo / excedido.
+     Si cacheViajes no existe, usa la tabla como respaldo.
+   - Enfocada en lo que preguntan: ¿hubo incumplimiento?, ¿por qué?,
+     ¿quién fue?, ¿cuántas rutas hizo cada conductor?
+   - TODOS los incumplimientos se muestran (paginados, 4 por slide),
+     cada uno con su justificación o la alerta "sin justificación".
+   - Clic en conductor / ruta / furgón / fecha => desglose de sus viajes.
+   - Agenda, menú lateral, pestañas de sección, ir a slide (G),
+     guion del presentador (N), tema claro/oscuro (T), swipe táctil.
+   - Gráficos con colores semánticos (verde / rojo).
+
+   Atajos:  ← → espacio  ·  Home / End  ·  M menú  ·  N guion
+            G ir a slide ·  T tema       ·  F pantalla completa
+            ?  ayuda     ·  Esc cierra (desglose → menú → presentación)
    ============================================================ */
 
-(function () {
+(function() {
 
     "use strict";
 
-
     /* ============================================================
-       VARIABLES GLOBALES
+       ESTADO
        ============================================================ */
 
-    let presentacion = null;
-
-    let slideActual = 0;
-
+    let root = null;
     let slides = [];
-
-    let datosViajes = [];
-
+    let actual = 0;
+    let viajes = [];
     let charts = [];
+    let tecladoOk = false;
+    let temaClaro = false;
+    let idleTimer = null;
 
-    let tecladoRegistrado = false;
+    const POR_PAGINA_INCIDENCIAS = 4;
+    const POR_PAGINA_TABLAS = 9;
+    const POR_PAGINA_DETALLE = 9;
 
-
-    /* ============================================================
-       CONFIGURACIÓN DE COLUMNAS
-       ============================================================ */
-
-    /*
-        Estructura esperada de la tabla:
-
-        0  -> Acción / checkbox / ID
-        1  -> Fecha
-        2  -> Conductor
-        3  -> Placa
-        4  -> Furgón
-        5  -> Origen
-        6  -> Destino
-        7  -> Salida
-        8  -> Llegada
-        9  -> ODT
-        10 -> Tiempo máximo
-        11 -> Tiempo excedido
-        12 -> Estado ODT
-        13 -> Estado Furgón
-        14 -> Notas / Observaciones
-    */
-
-    const COLUMNAS = {
-
-        fecha: 1,
-        conductor: 2,
-        placa: 3,
-        furgon: 4,
-        origen: 5,
-        destino: 6,
-        salida: 7,
-        llegada: 8,
-        odt: 9,
-        tiempoMaximo: 10,
-        tiempoExcedido: 11,
-        estadoODT: 12,
-        estadoFurgon: 13,
-        notas: 14
-
-    };
+    const SECCIONES = [
+        { id: "Resumen", icono: "bi-speedometer2", desc: "Panorama general del período" },
+        { id: "Cumplimiento", icono: "bi-pie-chart-fill", desc: "ODT, furgón y evolución por fecha" },
+        { id: "Rutas", icono: "bi-signpost-split", desc: "Qué rutas se hicieron y cómo cumplieron" },
+        { id: "Conductores", icono: "bi-person-badge-fill", desc: "Quién hizo cuántas rutas y quién incumplió" },
+        { id: "Incumplimientos", icono: "bi-exclamation-triangle-fill", desc: "Cada caso con su justificación" },
+        { id: "Detalle", icono: "bi-list-columns-reverse", desc: "Registro completo de viajes" },
+        { id: "Cierre", icono: "bi-clipboard2-check-fill", desc: "Hallazgos y recomendaciones" }
+    ];
 
 
     /* ============================================================
@@ -74,2978 +57,925 @@
        ============================================================ */
 
     if (document.readyState === "loading") {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            inicializar
-        );
-
+        document.addEventListener("DOMContentLoaded", inicializar);
     } else {
-
         inicializar();
-
     }
-
 
     function inicializar() {
-
         agregarEstilos();
 
-
-        const btn =
-            document.getElementById(
-                "btnPresentacion"
-            );
-
-
-        if (!btn) {
-
-            console.warn(
-                "No se encontró #btnPresentacion"
-            );
-
-            return;
-
-        }
-
-
-        /*
-            Evita registrar dos veces el evento
-            si este script se carga más de una vez.
-        */
-
-        if (
-            btn.dataset.presentacionRegistrada === "true"
-        ) {
-
-            return;
-
-        }
-
+        const btn = document.getElementById("btnPresentacion");
+        if (!btn || btn.dataset.presentacionRegistrada === "true") return;
 
         btn.dataset.presentacionRegistrada = "true";
-
-
-        btn.addEventListener(
-            "click",
-            abrirPresentacion
-        );
-
+        btn.addEventListener("click", abrirPresentacion);
     }
-
-
-    /* ============================================================
-       ABRIR PRESENTACIÓN
-       ============================================================ */
 
     function abrirPresentacion() {
 
-        datosViajes =
-            obtenerViajesFiltrados();
+        viajes = obtenerViajes();
 
-
-        if (!Array.isArray(datosViajes)) {
-
-            datosViajes = [];
-
-        }
-
-
-        if (!datosViajes.length) {
-
-            alert(
-                "No existen viajes que coincidan con los filtros seleccionados."
-            );
-
+        if (!viajes.length) {
+            alert("No existen viajes que coincidan con los filtros seleccionados.");
             return;
-
         }
 
+        crearContenedor();
+        slides = construirSlides();
 
-        crearPresentacion();
+        document.getElementById("pvSlides").innerHTML =
+            slides.map(function(s, i) {
+                return '<section class="pv-slide ' + (s.clase || "") + '" data-i="' + i + '">' + s.html + "</section>";
+            }).join("");
 
-        construirSlides();
-
-        mostrarSlide(0);
-
-        intentarPantallaCompleta();
-
+        renderMenu();
+        irA(0);
+        pantallaCompleta();
     }
 
 
     /* ============================================================
-       OBTENER VIAJES FILTRADOS DESDE DATATABLES
+       DATOS  (cacheViajes → respaldo tabla)
        ============================================================ */
 
-    function obtenerViajesFiltrados() {
-
+    function obtenerFilasTabla() {
         try {
-
-            /*
-                Primera opción:
-                variable global tablaViajes.
-            */
-
-            if (
-                typeof window.tablaViajes !== "undefined" &&
-                window.tablaViajes &&
-                typeof window.tablaViajes.rows === "function"
-            ) {
-
-                return window.tablaViajes
-                    .rows({
-                        search: "applied"
-                    })
-                    .data()
-                    .toArray();
-
+            if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable("#tblViajes")) {
+                return $("#tblViajes").DataTable().rows({ search: "applied" }).data().toArray();
             }
+        } catch (e) {
+            console.error("Presentación: error leyendo DataTables", e);
+        }
+        return [];
+    }
 
+    function obtenerViajes() {
 
-            /*
-                Segunda opción:
-                DataTable asociado a #tblViajes.
-            */
+        const filas = obtenerFilasTabla();
+        const cache = (typeof cacheViajes !== "undefined" && cacheViajes instanceof Map) ? cacheViajes : null;
 
-            if (
-                typeof $ !== "undefined" &&
-                $.fn &&
-                $.fn.DataTable &&
-                $.fn.DataTable.isDataTable("#tblViajes")
-            ) {
+        return filas.map(function(fila) {
 
-                const tabla =
-                    $("#tblViajes").DataTable();
+            const celdaAcciones = String(fila[15] || "");
+            const m = celdaAcciones.match(/data-id="([^"]*)"/);
+            const crudo = (m && cache) ? cache.get(String(decodificar(m[1]))) : null;
 
+            return crudo ? desdeCrudo(crudo) : desdeFila(fila);
+        });
+    }
 
-                return tabla
-                    .rows({
-                        search: "applied"
-                    })
-                    .data()
-                    .toArray();
+    function decodificar(t) {
+        const d = document.createElement("textarea");
+        d.innerHTML = t;
+        return d.value;
+    }
 
-            }
+    function texto(v) {
+        if (v === null || v === undefined) return "";
+        const d = document.createElement("div");
+        d.innerHTML = String(v);
+        return (d.textContent || "").replace(/\s+/g, " ").trim();
+    }
 
-        } catch (error) {
+    function horaAMin(h) {
+        if (!h) return 0;
+        const p = String(h).split(":");
+        return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0);
+    }
 
-            console.error(
-                "Error obteniendo viajes filtrados desde DataTables:",
-                error
-            );
+    function durAMin(t) {   // "2h 30 min" | "45 min" | "+45 min"
+        const s = String(t || "");
+        const h = s.match(/(\d+)\s*h/);
+        const m = s.match(/(\d+)\s*min/);
+        if (!h && !m) return parseInt(s.replace(/\D/g, ""), 10) || 0;
+        return (h ? parseInt(h[1], 10) * 60 : 0) + (m ? parseInt(m[1], 10) : 0);
+    }
 
+    function horaDe(v) {
+        if (!v) return "";
+        const t = String(v);
+        if (t.includes("T")) return (t.split("T")[1] || "").substring(0, 5);
+        return t.includes(":") ? t.substring(0, 5) : t;
+    }
+
+    function fechaISO(f) {
+        if (!f) return "";
+        const t = String(f).trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.substring(0, 10);
+        const m = t.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+        if (m) return m[3] + "-" + m[2].padStart(2, "0") + "-" + m[1].padStart(2, "0");
+        return t;
+    }
+
+    function fechaBonita(iso) {
+        const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        return m ? m[3] + "/" + m[2] + "/" + m[1] : (iso || "");
+    }
+
+    function fmtMin(min) {
+        min = Math.max(0, Math.round(Number(min) || 0));
+        const h = Math.floor(min / 60), m = min % 60;
+        return h ? h + "h " + m + " min" : m + " min";
+    }
+
+    function estado(v) {
+        return String(v || "").trim().toUpperCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function desdeCrudo(v) {
+
+        const salida = horaDe(v.salida);
+        const llegada = horaDe(v.llegada);
+
+        let real = horaAMin(llegada) - horaAMin(salida);
+        if (real < 0) real += 1440;
+
+        let max = Number(v.tiempoMaximo);
+        if (!isFinite(max) || v.tiempoMaximo === null || v.tiempoMaximo === "" || v.tiempoMaximo === undefined) {
+            max = horaAMin(v.odt);
         }
 
+        const exceso = (v.tiempoExcedido !== null && v.tiempoExcedido !== undefined && v.tiempoExcedido !== "")
+            ? (parseInt(v.tiempoExcedido, 10) || 0)
+            : Math.max(0, real - max);
 
-        /*
-            Si DataTables no está disponible,
-            usamos la tabla HTML.
-        */
+        const estadoODT = estado(v.estado) || (exceso > 0 ? "INCUMPLIDO" : "CUMPLIDO");
+        const furgon = String(v.furgon || "").trim();
+        const estadoFurgon = estado(v.estadoFurgon) ||
+            (["CHC", "CMI"].indexOf(furgon.toUpperCase()) !== -1 ? "CUMPLIDO" : "INCUMPLIDO");
 
-        return obtenerViajesDesdeTablaHTML();
-
+        return {
+            fecha: fechaISO(v.fecha),
+            conductor: String(v.conductor || "").trim() || "Sin conductor",
+            placa: String(v.placa || "").trim(),
+            furgon: furgon,
+            origen: String(v.origen || "").trim(),
+            destino: String(v.destino || "").trim(),
+            salida: salida,
+            llegada: llegada,
+            real: real,
+            max: max,
+            exceso: exceso,
+            estadoODT: estadoODT,
+            estadoFurgon: estadoFurgon,
+            notas: String(v.notas || "").trim()
+        };
     }
+
+    function desdeFila(f) {   // respaldo: columnas de viajes.js
+        const exceso = durAMin(texto(f[11]));
+        return {
+            fecha: fechaISO(texto(f[1])),
+            conductor: texto(f[2]) || "Sin conductor",
+            placa: texto(f[3]),
+            furgon: texto(f[4]),
+            origen: texto(f[5]),
+            destino: texto(f[6]),
+            salida: texto(f[7]),
+            llegada: texto(f[8]),
+            real: durAMin(texto(f[9])),
+            max: durAMin(texto(f[10])),
+            exceso: exceso,
+            estadoODT: estado(texto(f[12])) || (exceso > 0 ? "INCUMPLIDO" : "CUMPLIDO"),
+            estadoFurgon: estado(texto(f[13])),
+            notas: texto(f[14])
+        };
+    }
+
+    function esMalo(v) { return v.estadoODT === "INCUMPLIDO"; }
+    function rutaDe(v) { return (v.origen || "Sin origen") + " → " + (v.destino || "Sin destino"); }
 
 
     /* ============================================================
-       FALLBACK: LEER TABLA HTML
+       RESUMEN / AGRUPACIONES
        ============================================================ */
 
-    function obtenerViajesDesdeTablaHTML() {
+    function agrupar(lista, fnClave) {
+        const mapa = {};
+        lista.forEach(function(v) {
+            const k = fnClave(v) || "Sin información";
+            (mapa[k] = mapa[k] || []).push(v);
+        });
+        return mapa;
+    }
 
-        const filas = [];
+    function pct(a, b) { return b > 0 ? (a / b) * 100 : 0; }
 
+    function calcular() {
 
-        const filasHTML =
-            document.querySelectorAll(
-                "#tblViajes tbody tr"
-            );
+        const total = viajes.length;
+        const malos = viajes.filter(esMalo);
+        const odtOk = total - malos.length;
+        const furgOk = viajes.filter(function(v) { return v.estadoFurgon === "CUMPLIDO"; }).length;
+        const furgBad = viajes.filter(function(v) { return v.estadoFurgon === "INCUMPLIDO"; }).length;
+        const conExceso = viajes.filter(function(v) { return v.exceso > 0; });
 
+        const promExceso = conExceso.length
+            ? conExceso.reduce(function(s, v) { return s + v.exceso; }, 0) / conExceso.length : 0;
 
-        filasHTML.forEach(
-            function (tr) {
+        const conNota = malos.filter(function(v) { return v.notas; }).length;
 
-                /*
-                    Ignorar filas que DataTables utiliza
-                    para mensajes como "No data available".
-                */
+        const fechas = viajes.map(function(v) { return v.fecha; }).filter(Boolean).sort();
 
-                if (
-                    tr.classList.contains("child") ||
-                    tr.querySelector("td.dataTables_empty")
-                ) {
+        // Conductores
+        const porConductor = Object.entries(agrupar(viajes, function(v) { return v.conductor; }))
+            .map(function(e) {
+                const l = e[1];
+                const bad = l.filter(esMalo).length;
+                const rutas = {};
+                l.forEach(function(v) { rutas[rutaDe(v)] = 1; });
+                return {
+                    nombre: e[0], lista: l, total: l.length, bad: bad, ok: l.length - bad,
+                    pct: pct(l.length - bad, l.length),
+                    rutasDistintas: Object.keys(rutas).length,
+                    conNota: l.filter(function(v) { return esMalo(v) && v.notas; }).length
+                };
+            })
+            .sort(function(a, b) { return b.total - a.total; });
 
-                    return;
+        // Rutas
+        const porRuta = Object.entries(agrupar(viajes, rutaDe))
+            .map(function(e) {
+                const l = e[1];
+                const bad = l.filter(esMalo).length;
+                const ex = l.filter(function(v) { return v.exceso > 0; });
+                return {
+                    nombre: e[0], lista: l, total: l.length, bad: bad, ok: l.length - bad,
+                    pct: pct(l.length - bad, l.length),
+                    promExceso: ex.length ? ex.reduce(function(s, v) { return s + v.exceso; }, 0) / ex.length : 0
+                };
+            })
+            .sort(function(a, b) { return b.total - a.total; });
 
-                }
+        // Furgones
+        const porFurgon = Object.entries(agrupar(viajes, function(v) { return v.furgon; }))
+            .map(function(e) {
+                const l = e[1];
+                const ok = l.filter(function(v) { return v.estadoFurgon === "CUMPLIDO"; }).length;
+                return { nombre: e[0], lista: l, total: l.length, ok: ok, bad: l.length - ok, pct: pct(ok, l.length) };
+            })
+            .sort(function(a, b) { return b.total - a.total; });
 
+        // Por fecha
+        const porFecha = Object.entries(agrupar(viajes, function(v) { return v.fecha; }))
+            .map(function(e) {
+                const bad = e[1].filter(esMalo).length;
+                return { fecha: e[0], total: e[1].length, bad: bad, ok: e[1].length - bad };
+            })
+            .sort(function(a, b) { return a.fecha < b.fecha ? -1 : 1; });
 
-                const celdas =
-                    tr.querySelectorAll("td");
+        const malosOrdenados = malos.slice().sort(function(a, b) {
+            return a.fecha === b.fecha ? b.exceso - a.exceso : (a.fecha < b.fecha ? -1 : 1);
+        });
 
-
-                if (!celdas.length) {
-
-                    return;
-
-                }
-
-
-                filas.push(
-                    Array.from(celdas).map(
-                        function (td) {
-
-                            return limpiarHTML(
-                                td.innerHTML
-                            );
-
-                        }
-                    )
-                );
-
-            }
-        );
-
-
-        return filas;
-
+        return {
+            total: total, malos: malos, malosOrdenados: malosOrdenados,
+            odtOk: odtOk, odtBad: malos.length, pctODT: pct(odtOk, total),
+            furgOk: furgOk, furgBad: furgBad, pctFurgon: pct(furgOk, furgOk + furgBad),
+            conExceso: conExceso, promExceso: promExceso,
+            conNota: conNota, sinNota: malos.length - conNota,
+            ini: fechas[0] || "", fin: fechas[fechas.length - 1] || "",
+            porConductor: porConductor, porRuta: porRuta, porFurgon: porFurgon, porFecha: porFecha
+        };
     }
 
 
     /* ============================================================
-       LIMPIAR HTML
-       ============================================================ */
-
-    function limpiarHTML(valor) {
-
-        if (
-            valor === null ||
-            valor === undefined
-        ) {
-
-            return "";
-
-        }
-
-
-        /*
-            Si ya es un número,
-            no necesitamos pasar por innerHTML.
-        */
-
-        if (
-            typeof valor === "number"
-        ) {
-
-            return String(valor);
-
-        }
-
-
-        const div =
-            document.createElement("div");
-
-
-        div.innerHTML =
-            String(valor);
-
-
-        return (
-            div.textContent ||
-            div.innerText ||
-            ""
-        )
-            .replace(/\s+/g, " ")
-            .trim();
-
-    }
-
-
-    /* ============================================================
-       CREAR CONTENEDOR
-       ============================================================ */
-
-    function crearPresentacion() {
-
-        const existente =
-            document.getElementById(
-                "presentacionViajes"
-            );
-
-
-        if (existente) {
-
-            existente.remove();
-
-        }
-
-
-        presentacion =
-            document.createElement("div");
-
-
-        presentacion.id =
-            "presentacionViajes";
-
-
-        presentacion.setAttribute(
-            "role",
-            "dialog"
-        );
-
-
-        presentacion.setAttribute(
-            "aria-modal",
-            "true"
-        );
-
-
-        presentacion.innerHTML = `
-
-            <div class="pv-background"></div>
-
-
-            <header class="pv-header">
-
-                <div class="pv-brand">
-
-                    <div class="pv-brand-icon">
-
-                        <i class="bi bi-truck"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <strong>
-                            REPORTE EJECUTIVO
-                        </strong>
-
-                        <small>
-                            Gestión y Control de Viajes
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <div class="pv-header-actions">
-
-                    <button
-                        id="pvFullscreen"
-                        type="button"
-                        title="Pantalla completa"
-                        aria-label="Pantalla completa">
-
-                        <i class="bi bi-fullscreen"></i>
-
-                    </button>
-
-
-                    <button
-                        id="pvCerrar"
-                        type="button"
-                        title="Cerrar presentación"
-                        aria-label="Cerrar presentación">
-
-                        <i class="bi bi-x-lg"></i>
-
-                    </button>
-
-                </div>
-
-            </header>
-
-
-            <main
-                id="pvSlides"
-                class="pv-slides">
-            </main>
-
-
-            <button
-                id="pvAnterior"
-                type="button"
-                class="pv-navigation pv-prev"
-                title="Diapositiva anterior"
-                aria-label="Diapositiva anterior">
-
-                <i class="bi bi-chevron-left"></i>
-
-            </button>
-
-
-            <button
-                id="pvSiguiente"
-                type="button"
-                class="pv-navigation pv-next"
-                title="Siguiente diapositiva"
-                aria-label="Siguiente diapositiva">
-
-                <i class="bi bi-chevron-right"></i>
-
-            </button>
-
-
-            <footer class="pv-footer">
-
-                <div
-                    id="pvProgress"
-                    class="pv-progress">
-                </div>
-
-
-                <div
-                    id="pvCounter"
-                    class="pv-counter">
-                </div>
-
-            </footer>
-
-        `;
-
-
-        document.body.appendChild(
-            presentacion
-        );
-
-
-        const btnCerrar =
-            document.getElementById(
-                "pvCerrar"
-            );
-
-
-        const btnAnterior =
-            document.getElementById(
-                "pvAnterior"
-            );
-
-
-        const btnSiguiente =
-            document.getElementById(
-                "pvSiguiente"
-            );
-
-
-        const btnFullscreen =
-            document.getElementById(
-                "pvFullscreen"
-            );
-
-
-        if (btnCerrar) {
-
-            btnCerrar.addEventListener(
-                "click",
-                cerrarPresentacion
-            );
-
-        }
-
-
-        if (btnAnterior) {
-
-            btnAnterior.addEventListener(
-                "click",
-                function () {
-
-                    cambiarSlide(-1);
-
-                }
-            );
-
-        }
-
-
-        if (btnSiguiente) {
-
-            btnSiguiente.addEventListener(
-                "click",
-                function () {
-
-                    cambiarSlide(1);
-
-                }
-            );
-
-        }
-
-
-        if (btnFullscreen) {
-
-            btnFullscreen.addEventListener(
-                "click",
-                alternarPantallaCompleta
-            );
-
-        }
-
-
-        /*
-            El listener de teclado solamente se registra
-            una vez para toda la vida del script.
-        */
-
-        if (!tecladoRegistrado) {
-
-            document.addEventListener(
-                "keydown",
-                controlarTeclado
-            );
-
-            tecladoRegistrado = true;
-
-        }
-
-
-        document.body.style.overflow =
-            "hidden";
-
-    }
-
-
-    /* ============================================================
-       CONSTRUIR SLIDES
+       CONSTRUCCIÓN DE SLIDES
        ============================================================ */
 
     function construirSlides() {
 
-        slides = [];
+        const r = calcular();
+        const lista = [];
 
+        lista.push(slidePortada(r));
+        lista.push(null);                       // agenda (se completa abajo)
 
-        const resumen =
-            calcularResumen();
+        lista.push(slideResumen(r));
+        lista.push(slideCumplimiento(r));
+        lista.push(slideTendencia(r));
+        lista.push(slideFurgones(r));
 
+        slideRutas(r).forEach(function(s) { lista.push(s); });
+        slideConductores(r).forEach(function(s) { lista.push(s); });
 
-        slides.push(
-            crearSlidePortada(resumen)
-        );
+        lista.push(slideQuienIncumplio(r));
+        lista.push(slideJustificacion(r));
+        slideIncidencias(r).forEach(function(s) { lista.push(s); });
+        if (r.malos.length) lista.push(slideTopExcesos(r));
 
+        slideDetalle(r).forEach(function(s) { lista.push(s); });
+        lista.push(slideConclusiones(r));
 
-        slides.push(
-            crearSlideResumen(resumen)
-        );
+        // Agenda: primer slide de cada sección
+        const primero = {};
+        lista.forEach(function(s, i) {
+            if (s && s.sec && primero[s.sec] === undefined) primero[s.sec] = i;
+        });
+        lista[1] = slideAgenda(primero);
 
-
-        slides.push(
-            crearSlideCumplimiento(resumen)
-        );
-
-
-        slides.push(
-            crearSlideRutas(resumen)
-        );
-
-
-        slides.push(
-            crearSlideConductores(resumen)
-        );
-
-
-        slides.push(
-            crearSlideTiempos(resumen)
-        );
-
-
-        slides.push(
-            crearSlideIncidencias(resumen)
-        );
-
-
-        slides.push(
-            crearSlideDetalle(resumen)
-        );
-
-
-        slides.push(
-            crearSlideConclusiones(resumen)
-        );
-
-
-        const contenedor =
-            document.getElementById(
-                "pvSlides"
-            );
-
-
-        if (contenedor) {
-
-            contenedor.innerHTML =
-                slides.join("");
-
-        }
-
+        return lista;
     }
 
+    /* ---- Helpers de HTML ---- */
 
-    /* ============================================================
-       OBTENER NOTA / OBSERVACIÓN
-       ============================================================ */
-
-    function obtenerNotaViaje(row) {
-
-        /*
-            ========================================================
-            CASO 1: DATA DESDE OBJETO
-            ========================================================
-        */
-
-        if (
-            row &&
-            !Array.isArray(row) &&
-            typeof row === "object"
-        ) {
-
-            /*
-                Se prueban varios nombres posibles porque
-                dependiendo de cómo se haya construido DataTables
-                el campo puede llamarse diferente.
-            */
-
-            const posiblesCampos = [
-
-                "notas",
-                "nota",
-                "observaciones",
-                "observacion",
-                "comentarios",
-                "comentario",
-                "Notas",
-                "Nota",
-                "Observaciones",
-                "Observacion",
-                "Comentarios",
-                "Comentario"
-
-            ];
-
-
-            for (
-                let i = 0;
-                i < posiblesCampos.length;
-                i++
-            ) {
-
-                const campo =
-                    posiblesCampos[i];
-
-
-                if (
-                    Object.prototype.hasOwnProperty.call(
-                        row,
-                        campo
-                    )
-                ) {
-
-                    const valor =
-                        limpiarHTML(
-                            row[campo]
-                        );
-
-
-                    if (valor) {
-
-                        return valor;
-
-                    }
-
-                }
-
-            }
-
-
-            return "";
-
-        }
-
-
-        /*
-            ========================================================
-            CASO 2: DATA DESDE ARRAY
-            ========================================================
-        */
-
-        if (Array.isArray(row)) {
-
-            /*
-                Primero intentamos la posición configurada.
-            */
-
-            if (
-                row.length >
-                COLUMNAS.notas
-            ) {
-
-                const nota =
-                    limpiarHTML(
-                        row[COLUMNAS.notas]
-                    );
-
-
-                if (nota) {
-
-                    return nota;
-
-                }
-
-            }
-
-
-            /*
-                Fallback:
-                si la estructura cambió, buscamos una columna
-                cuyo encabezado sea Nota / Observación / Comentario.
-            */
-
-            const indice =
-                buscarIndiceColumnaNotas();
-
-
-            if (
-                indice !== -1 &&
-                row.length > indice
-            ) {
-
-                return limpiarHTML(
-                    row[indice]
-                );
-
-            }
-
-        }
-
-
-        return "";
-
+    function esc(v) {
+        return String(v === null || v === undefined ? "" : v)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-
-    /* ============================================================
-       BUSCAR COLUMNA DE NOTAS POR ENCABEZADO
-       ============================================================ */
-
-    function buscarIndiceColumnaNotas() {
-
-        const encabezados =
-            document.querySelectorAll(
-                "#tblViajes thead th"
-            );
-
-
-        if (!encabezados.length) {
-
-            return -1;
-
-        }
-
-
-        for (
-            let i = 0;
-            i < encabezados.length;
-            i++
-        ) {
-
-            const texto =
-                limpiarHTML(
-                    encabezados[i].innerHTML
-                )
-                    .toUpperCase();
-
-
-            if (
-                texto.includes("NOTA") ||
-                texto.includes("OBSERV") ||
-                texto.includes("COMENT")
-            ) {
-
-                return i;
-
-            }
-
-        }
-
-
-        return -1;
-
+    function titulo(t, sub, icono, extra) {
+        return '<div class="pv-slide-title">' +
+            '<div class="pv-slide-title-icon"><i class="bi ' + icono + '"></i></div>' +
+            '<div><h2>' + esc(t) + '</h2><p>' + esc(sub) + '</p></div>' +
+            (extra ? '<span class="pv-pagina">' + esc(extra) + "</span>" : "") +
+            "</div>";
     }
 
-
-    /* ============================================================
-       NORMALIZAR DATOS
-       ============================================================ */
-
-    function normalizarViaje(row) {
-
-        /*
-            ========================================================
-            DATA COMO ARRAY
-            ========================================================
-        */
-
-        if (Array.isArray(row)) {
-
-            return {
-
-                fecha:
-                    limpiarHTML(
-                        row[COLUMNAS.fecha]
-                    ),
-
-
-                conductor:
-                    limpiarHTML(
-                        row[COLUMNAS.conductor]
-                    ),
-
-
-                placa:
-                    limpiarHTML(
-                        row[COLUMNAS.placa]
-                    ),
-
-
-                furgon:
-                    limpiarHTML(
-                        row[COLUMNAS.furgon]
-                    ),
-
-
-                origen:
-                    limpiarHTML(
-                        row[COLUMNAS.origen]
-                    ),
-
-
-                destino:
-                    limpiarHTML(
-                        row[COLUMNAS.destino]
-                    ),
-
-
-                salida:
-                    limpiarHTML(
-                        row[COLUMNAS.salida]
-                    ),
-
-
-                llegada:
-                    limpiarHTML(
-                        row[COLUMNAS.llegada]
-                    ),
-
-
-                odt:
-                    limpiarHTML(
-                        row[COLUMNAS.odt]
-                    ),
-
-
-                tiempoMaximo:
-                    limpiarHTML(
-                        row[COLUMNAS.tiempoMaximo]
-                    ),
-
-
-                tiempoExcedido:
-                    limpiarHTML(
-                        row[COLUMNAS.tiempoExcedido]
-                    ),
-
-
-                estadoODT:
-                    limpiarHTML(
-                        row[COLUMNAS.estadoODT]
-                    ),
-
-
-                estadoFurgon:
-                    limpiarHTML(
-                        row[COLUMNAS.estadoFurgon]
-                    ),
-
-
-                notas:
-                    obtenerNotaViaje(row)
-
-            };
-
-        }
-
-
-        /*
-            ========================================================
-            DATA COMO OBJETO
-            ========================================================
-        */
-
-        if (
-            row &&
-            typeof row === "object"
-        ) {
-
-            return {
-
-                fecha:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "fecha",
-                                "Fecha"
-                            ]
-                        )
-                    ),
-
-
-                conductor:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "conductor",
-                                "Conductor"
-                            ]
-                        )
-                    ),
-
-
-                placa:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "placa",
-                                "Placa"
-                            ]
-                        )
-                    ),
-
-
-                furgon:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "furgon",
-                                "Furgon",
-                                "furgón",
-                                "Furgón"
-                            ]
-                        )
-                    ),
-
-
-                origen:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "origen",
-                                "Origen"
-                            ]
-                        )
-                    ),
-
-
-                destino:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "destino",
-                                "Destino"
-                            ]
-                        )
-                    ),
-
-
-                salida:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "salida",
-                                "Salida"
-                            ]
-                        )
-                    ),
-
-
-                llegada:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "llegada",
-                                "Llegada"
-                            ]
-                        )
-                    ),
-
-
-                odt:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "odt",
-                                "ODT"
-                            ]
-                        )
-                    ),
-
-
-                tiempoMaximo:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "tiempoMaximo",
-                                "tiempo_maximo",
-                                "TiempoMaximo",
-                                "Tiempo máximo"
-                            ]
-                        )
-                    ),
-
-
-                tiempoExcedido:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "tiempoExcedido",
-                                "tiempo_excedido",
-                                "TiempoExcedido",
-                                "Tiempo excedido"
-                            ]
-                        )
-                    ),
-
-
-                estadoODT:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "estadoODT",
-                                "estadoOdt",
-                                "estado_odt",
-                                "EstadoODT",
-                                "estado"
-                            ]
-                        )
-                    ),
-
-
-                estadoFurgon:
-                    limpiarHTML(
-                        obtenerPropiedad(
-                            row,
-                            [
-                                "estadoFurgon",
-                                "estadoFurgón",
-                                "estado_furgon",
-                                "EstadoFurgon",
-                                "Estado Furgón"
-                            ]
-                        )
-                    ),
-
-
-                notas:
-                    obtenerNotaViaje(row)
-
-            };
-
-        }
-
-
-        /*
-            Estructura desconocida.
-        */
+    function kpi(t, valor, icono, color, sub) {
+        return '<div class="pv-kpi pv-' + color + '">' +
+            '<div class="pv-kpi-icon"><i class="bi ' + icono + '"></i></div>' +
+            '<div><span>' + esc(t) + '</span><strong>' + esc(valor) + "</strong>" +
+            (sub ? "<em>" + esc(sub) + "</em>" : "") + "</div></div>";
+    }
+
+    function clasePct(p) { return p >= 90 ? "pv-good" : (p >= 70 ? "pv-medium" : "pv-bad"); }
+
+    function chip(p) { return '<span class="pv-chip ' + clasePct(p) + '">' + p.toFixed(1) + "%</span>"; }
+
+    function badge(est) {
+        const ok = est === "CUMPLIDO";
+        return '<span class="pv-chip ' + (ok ? "pv-good" : "pv-bad") + '">' + esc(est || "SIN REGISTRO") + "</span>";
+    }
+
+    function drill(tipo, valor, contenido) {
+        return '<a class="pv-drill" href="#" data-drill="' + esc(tipo) + '" data-valor="' + esc(valor) + '">' + contenido + "</a>";
+    }
+
+    function trozos(arr, n) {
+        const out = [];
+        for (let i = 0;i < arr.length;i += n) out.push(arr.slice(i, i + n));
+        return out.length ? out : [[]];
+    }
+
+    function periodo(r) {
+        if (!r.ini) return "Período seleccionado";
+        return r.ini === r.fin ? fechaBonita(r.ini) : fechaBonita(r.ini) + " — " + fechaBonita(r.fin);
+    }
+
+    /* ---- Portada ---- */
+
+    function slidePortada(r) {
+        return {
+            sec: "Inicio", titulo: "Portada", clase: "pv-cover",
+            notas: "Presenta el informe: período " + periodo(r) + " con " + r.total + " viajes analizados. Menciona que el informe responde cuatro preguntas: ¿hubo incumplimientos?, ¿por qué?, ¿quién fue? y ¿cuántas rutas hizo cada conductor?",
+            html:
+                '<div class="pv-cover-content">' +
+                '<div class="pv-cover-icon"><i class="bi bi-truck-front-fill"></i></div>' +
+                '<span class="pv-eyebrow">INFORME EJECUTIVO</span>' +
+                "<h1>Gestión de Viajes</h1>" +
+                '<p class="pv-cover-subtitle">Cumplimiento de tiempos, responsables y justificaciones</p>' +
+                '<div class="pv-period"><i class="bi bi-calendar3"></i><span>' + esc(periodo(r)) + "</span></div>" +
+                '<div class="pv-cover-stat"><strong>' + r.total + "</strong><span>viajes analizados</span></div>" +
+                "</div>"
+        };
+    }
+
+    /* ---- Agenda ---- */
+
+    function slideAgenda(primero) {
+        const items = SECCIONES.map(function(s, i) {
+            if (primero[s.id] === undefined) return "";
+            return '<button type="button" class="pv-agenda-item" data-go="' + primero[s.id] + '">' +
+                '<span class="pv-agenda-n">' + (i + 1) + "</span>" +
+                '<span class="pv-agenda-ico"><i class="bi ' + s.icono + '"></i></span>' +
+                "<span><strong>" + esc(s.id) + "</strong><small>" + esc(s.desc) + "</small></span>" +
+                '<i class="bi bi-chevron-right"></i></button>';
+        }).join("");
 
         return {
-
-            fecha: "",
-            conductor: "",
-            placa: "",
-            furgon: "",
-            origen: "",
-            destino: "",
-            salida: "",
-            llegada: "",
-            odt: "",
-            tiempoMaximo: "",
-            tiempoExcedido: "",
-            estadoODT: "",
-            estadoFurgon: "",
-            notas: ""
-
+            sec: "Inicio", titulo: "Agenda",
+            notas: "Explica el orden de la exposición. Puedes saltar a cualquier sección haciendo clic aquí, con el menú (M) o con G + número de slide.",
+            html: titulo("Agenda", "Haz clic en una sección para ir directo", "bi-list-check") +
+                '<div class="pv-agenda">' + items + "</div>"
         };
-
     }
 
+    /* ---- Resumen ---- */
 
-    /* ============================================================
-       OBTENER PROPIEDAD DE OBJETO
-       ============================================================ */
+    function slideResumen(r) {
+        return {
+            sec: "Resumen", titulo: "Resumen ejecutivo",
+            notas: "De " + r.total + " viajes, " + r.odtBad + " incumplieron el tiempo ODT (" + (100 - r.pctODT).toFixed(1) + "%). De esos, " + r.conNota + " tienen justificación registrada y " + r.sinNota + " no. Si preguntan por qué, ve a la sección Incumplimientos.",
+            html:
+                titulo("Resumen ejecutivo", "Panorama general del período seleccionado", "bi-speedometer2") +
+                '<div class="pv-kpi-grid">' +
+                kpi("Total de viajes", r.total, "bi-truck", "primary") +
+                kpi("ODT cumplidos", r.odtOk, "bi-check-circle", "success") +
+                kpi("ODT incumplidos", r.odtBad, "bi-x-circle", "danger") +
+                kpi("Cumplimiento ODT", r.pctODT.toFixed(1) + "%", "bi-percent", "success") +
+                kpi("Con justificación", r.conNota + " / " + r.odtBad, "bi-chat-left-text", "info", "incumplimientos") +
+                kpi("Sin justificación", r.sinNota, "bi-exclamation-circle", "warning", "incumplimientos") +
+                "</div>" +
+                '<div class="pv-message"><i class="bi bi-bar-chart-line-fill"></i><div>' +
+                "<strong>Resultado del período</strong>" +
+                "<p>Se analizaron <b>" + r.total + "</b> viajes. El cumplimiento ODT fue de <b>" + r.pctODT.toFixed(1) +
+                "%</b> con <b>" + r.odtBad + "</b> incumplimientos. De ellos, <b>" + r.conNota +
+                "</b> tienen justificación registrada y <b>" + r.sinNota + "</b> no.</p></div></div>"
+        };
+    }
 
-    function obtenerPropiedad(
-        objeto,
-        propiedades
-    ) {
+    /* ---- Cumplimiento (gráficos) ---- */
 
-        if (
-            !objeto ||
-            typeof objeto !== "object"
-        ) {
-
-            return "";
-
-        }
-
-
-        for (
-            let i = 0;
-            i < propiedades.length;
-            i++
-        ) {
-
-            const propiedad =
-                propiedades[i];
-
-
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    objeto,
-                    propiedad
-                )
-            ) {
-
-                const valor =
-                    objeto[propiedad];
-
-
-                if (
-                    valor !== null &&
-                    valor !== undefined
-                ) {
-
-                    return valor;
-
-                }
-
+    function slideCumplimiento(r) {
+        return {
+            sec: "Cumplimiento", titulo: "Cumplimiento operativo",
+            notas: "ODT: " + r.pctODT.toFixed(1) + "% cumplido. Furgón: " + r.pctFurgon.toFixed(1) + "% cumplido (el estado del furgón depende de la empresa del furgón).",
+            html:
+                titulo("Cumplimiento operativo", "Viajes cumplidos vs. incumplidos", "bi-pie-chart-fill") +
+                '<div class="pv-chart-layout">' +
+                '<div class="pv-card"><h3>Cumplimiento ODT</h3><div class="pv-chart-box"><canvas id="chartODT"></canvas></div></div>' +
+                '<div class="pv-card"><h3>Cumplimiento de Furgón</h3><div class="pv-chart-box"><canvas id="chartFurgon"></canvas></div></div>' +
+                "</div>",
+            init: function() {
+                dona("chartODT", r.odtOk, r.odtBad);
+                dona("chartFurgon", r.furgOk, r.furgBad);
             }
-
-        }
-
-
-        return "";
-
+        };
     }
 
+    function slideTendencia(r) {
+        const peor = r.porFecha.slice().sort(function(a, b) { return b.bad - a.bad; })[0];
+        return {
+            sec: "Cumplimiento", titulo: "Evolución por fecha",
+            notas: peor && peor.bad > 0
+                ? "El día con más incumplimientos fue " + fechaBonita(peor.fecha) + " con " + peor.bad + ". Haz clic en la barra para ver los viajes de ese día."
+                : "No hubo días con incumplimientos en el período.",
+            html:
+                titulo("Evolución por fecha", "Viajes diarios cumplidos e incumplidos (clic en una barra para ver el día)", "bi-graph-up-arrow") +
+                '<div class="pv-card pv-card-grande"><div class="pv-chart-box"><canvas id="chartFechas"></canvas></div></div>',
+            init: function() {
 
-    /* ============================================================
-       RESUMEN
-       ============================================================ */
+                const c = colores();
 
-    function calcularResumen() {
-
-        const viajes =
-            datosViajes
-                .map(normalizarViaje)
-                .filter(
-                    v =>
-                        v &&
-                        typeof v === "object"
-                );
-
-
-        const total =
-            viajes.length;
-
-
-        const odtCumplidos =
-            viajes.filter(
-                v =>
-                    normalizarEstado(
-                        v.estadoODT
-                    ) === "CUMPLIDO"
-            ).length;
-
-
-        const odtIncumplidos =
-            viajes.filter(
-                v =>
-                    normalizarEstado(
-                        v.estadoODT
-                    ) === "INCUMPLIDO"
-            ).length;
-
-
-        const furgonCumplidos =
-            viajes.filter(
-                v =>
-                    normalizarEstado(
-                        v.estadoFurgon
-                    ) === "CUMPLIDO"
-            ).length;
-
-
-        const furgonIncumplidos =
-            viajes.filter(
-                v =>
-                    normalizarEstado(
-                        v.estadoFurgon
-                    ) === "INCUMPLIDO"
-            ).length;
-
-
-        const porcentajeODT =
-            total
-                ? (odtCumplidos / total) * 100
-                : 0;
-
-
-        const porcentajeFurgon =
-            total
-                ? (furgonCumplidos / total) * 100
-                : 0;
-
-
-        const excedidos =
-            viajes.filter(
-                v =>
-                    parseNumero(
-                        v.tiempoExcedido
-                    ) > 0
-            );
-
-
-        const promedioExcedido =
-            excedidos.length
-
-                ? excedidos.reduce(
-                    function (
-                        sum,
-                        v
-                    ) {
-
-                        return (
-                            sum +
-                            parseNumero(
-                                v.tiempoExcedido
-                            )
-                        );
-
+                charts.push(new Chart(document.getElementById("chartFechas"), {
+                    type: "bar",
+                    data: {
+                        labels: r.porFecha.map(function(d) { return fechaBonita(d.fecha); }),
+                        datasets: [
+                            { label: "Cumplidos", data: r.porFecha.map(function(d) { return d.ok; }), backgroundColor: c.ok, borderRadius: 4 },
+                            { label: "Incumplidos", data: r.porFecha.map(function(d) { return d.bad; }), backgroundColor: c.bad, borderRadius: 4 }
+                        ]
                     },
-                    0
-                ) / excedidos.length
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        onClick: function(e, els) {
+                            if (els.length) abrirDrill("fecha", r.porFecha[els[0].index].fecha);
+                        },
+                        scales: {
+                            x: { stacked: true, ticks: { color: c.txt }, grid: { display: false } },
+                            y: { stacked: true, beginAtZero: true, ticks: { color: c.txt, precision: 0 }, grid: { color: c.grid } }
+                        },
+                        plugins: { legend: { position: "bottom", labels: { color: c.txt, font: { size: 14 } } } }
+                    }
+                }));
+            }
+        };
+    }
 
-                : 0;
-
-
-        const incumplimientosConNota =
-            viajes.filter(
-                v =>
-
-                    normalizarEstado(
-                        v.estadoODT
-                    ) === "INCUMPLIDO"
-
-                    &&
-
-                    String(
-                        v.notas ?? ""
-                    ).trim() !== ""
-
-            ).length;
-
-
-        const incumplimientosConExcedencia =
-            viajes.filter(
-                v =>
-
-                    normalizarEstado(
-                        v.estadoODT
-                    ) === "INCUMPLIDO"
-
-                    &&
-
-                    parseNumero(
-                        v.tiempoExcedido
-                    ) > 0
-
-            ).length;
-
-
-        const incumplimientosFurgon =
-            viajes.filter(
-                v =>
-                    normalizarEstado(
-                        v.estadoFurgon
-                    ) === "INCUMPLIDO"
-            ).length;
-
+    function slideFurgones(r) {
+        const filas = r.porFurgon.map(function(f) {
+            return "<tr><td>" + drill("furgon", f.nombre, "<strong>" + esc(f.nombre || "Sin furgón") + "</strong>") + "</td>" +
+                "<td>" + f.total + "</td><td>" + f.ok + "</td><td>" + f.bad + "</td><td>" + chip(f.pct) + "</td></tr>";
+        }).join("");
 
         return {
-
-            viajes,
-
-            total,
-
-            odtCumplidos,
-
-            odtIncumplidos,
-
-            furgonCumplidos,
-
-            furgonIncumplidos,
-
-            porcentajeODT,
-
-            porcentajeFurgon,
-
-            excedidos,
-
-            promedioExcedido,
-
-            incumplimientosConNota,
-
-            incumplimientosConExcedencia,
-
-            incumplimientosFurgon,
-
-            fechaInicio:
-                obtenerFechaMin(viajes),
-
-            fechaFin:
-                obtenerFechaMax(viajes)
-
+            sec: "Cumplimiento", titulo: "Cumplimiento por furgón",
+            notas: "Si preguntan por furgones: el estado de furgón se marca como cumplido para CHC y CMI. Haz clic en un furgón para ver sus viajes.",
+            html:
+                titulo("Cumplimiento por furgón", "Viajes por empresa de furgón", "bi-box-seam") +
+                '<div class="pv-table-wrap"><table class="pv-table"><thead><tr><th>Furgón</th><th>Viajes</th><th>Cumplidos</th><th>Incumplidos</th><th>Cumplimiento</th></tr></thead><tbody>' +
+                (filas || '<tr><td colspan="5" class="pv-vacio">Sin datos</td></tr>') + "</tbody></table></div>"
         };
-
     }
 
+    /* ---- Rutas ---- */
 
-    /* ============================================================
-       PORTADA
-       ============================================================ */
+    function slideRutas(r) {
+        const paginas = trozos(r.porRuta, POR_PAGINA_TABLAS);
 
-    function crearSlidePortada(r) {
+        return paginas.map(function(pag, p) {
+            const filas = pag.map(function(x, i) {
+                return "<tr><td>" + (p * POR_PAGINA_TABLAS + i + 1) + "</td>" +
+                    "<td>" + drill("ruta", x.nombre, "<strong>" + esc(x.nombre) + "</strong>") + "</td>" +
+                    "<td>" + x.total + "</td><td>" + x.ok + "</td><td>" + x.bad + "</td>" +
+                    "<td>" + (x.promExceso ? "+" + Math.round(x.promExceso) + " min" : "—") + "</td>" +
+                    "<td>" + chip(x.pct) + "</td></tr>";
+            }).join("");
 
-        return `
-
-        <section class="pv-slide pv-cover">
-
-            <div class="pv-cover-content">
-
-                <div class="pv-cover-icon">
-
-                    <i class="bi bi-truck-front-fill"></i>
-
-                </div>
-
-
-                <span class="pv-eyebrow">
-                    INFORME EJECUTIVO
-                </span>
-
-
-                <h1>
-                    Gestión de Viajes
-                </h1>
-
-
-                <p class="pv-cover-subtitle">
-
-                    Análisis operativo y cumplimiento
-                    de viajes realizados
-
-                </p>
-
-
-                <div class="pv-period">
-
-                    <i class="bi bi-calendar3"></i>
-
-                    <span>
-                        ${escapeHTML(
-                            formatearPeriodo(
-                                r.fechaInicio,
-                                r.fechaFin
-                            )
-                        )}
-                    </span>
-
-                </div>
-
-
-                <div class="pv-cover-stat">
-
-                    <strong>
-                        ${r.total}
-                    </strong>
-
-                    <span>
-                        viajes analizados
-                    </span>
-
-                </div>
-
-            </div>
-
-        </section>
-
-        `;
-
+            return {
+                sec: "Rutas", titulo: "Rutas (" + (p + 1) + "/" + paginas.length + ")",
+                notas: "Hay " + r.porRuta.length + " rutas distintas. La más realizada fue " + (r.porRuta[0] ? r.porRuta[0].nombre + " con " + r.porRuta[0].total + " viajes" : "—") + ". Haz clic en una ruta para ver sus viajes.",
+                html:
+                    titulo("Análisis de rutas", r.porRuta.length + " rutas · clic en una ruta para ver sus viajes", "bi-signpost-split",
+                        paginas.length > 1 ? (p + 1) + " / " + paginas.length : "") +
+                    '<div class="pv-table-wrap"><table class="pv-table"><thead><tr><th>#</th><th>Ruta</th><th>Viajes</th><th>Cumplidos</th><th>Incumplidos</th><th>Exceso prom.</th><th>Cumplimiento</th></tr></thead><tbody>' +
+                    (filas || '<tr><td colspan="7" class="pv-vacio">Sin rutas</td></tr>') + "</tbody></table></div>"
+            };
+        });
     }
 
+    /* ---- Conductores ---- */
 
-    /* ============================================================
-       RESUMEN EJECUTIVO
-       ============================================================ */
+    function slideConductores(r) {
+        const paginas = trozos(r.porConductor, POR_PAGINA_TABLAS);
 
-    function crearSlideResumen(r) {
+        return paginas.map(function(pag, p) {
+            const filas = pag.map(function(c, i) {
+                return "<tr><td>" + (p * POR_PAGINA_TABLAS + i + 1) + "</td>" +
+                    "<td>" + drill("conductor", c.nombre, "<strong>" + esc(c.nombre) + "</strong>") + "</td>" +
+                    "<td><b>" + c.total + "</b></td><td>" + c.rutasDistintas + "</td>" +
+                    "<td>" + c.ok + "</td>" +
+                    '<td class="' + (c.bad ? "pv-text-danger" : "") + '"><b>' + c.bad + "</b></td>" +
+                    "<td>" + chip(c.pct) + "</td></tr>";
+            }).join("");
 
-        return `
-
-        <section class="pv-slide">
-
-            ${tituloSlide(
-                "Resumen ejecutivo",
-                "Panorama general del período seleccionado",
-                "bi-speedometer2"
-            )}
-
-
-            <div class="pv-kpi-grid">
-
-                ${kpi(
-                    "Total de viajes",
-                    r.total,
-                    "bi-truck",
-                    "primary"
-                )}
-
-
-                ${kpi(
-                    "ODT cumplidos",
-                    r.odtCumplidos,
-                    "bi-check-circle",
-                    "success"
-                )}
-
-
-                ${kpi(
-                    "ODT incumplidos",
-                    r.odtIncumplidos,
-                    "bi-x-circle",
-                    "danger"
-                )}
-
-
-                ${kpi(
-                    "Cumplimiento ODT",
-                    r.porcentajeODT.toFixed(1) + "%",
-                    "bi-percent",
-                    "success"
-                )}
-
-
-                ${kpi(
-                    "Furgón cumplido",
-                    r.furgonCumplidos,
-                    "bi-box-seam",
-                    "info"
-                )}
-
-
-                ${kpi(
-                    "Furgón incumplido",
-                    r.furgonIncumplidos,
-                    "bi-exclamation-circle",
-                    "warning"
-                )}
-
-            </div>
-
-
-            <div class="pv-summary-message">
-
-                <div class="pv-summary-icon">
-
-                    <i class="bi bi-bar-chart-line-fill"></i>
-
-                </div>
-
-
-                <div>
-
-                    <strong>
-                        Resultado del período
-                    </strong>
-
-
-                    <p>
-
-                        Se analizaron
-                        <b>${r.total}</b>
-                        viajes durante el período seleccionado.
-
-                        El cumplimiento ODT alcanzó
-                        <b>${r.porcentajeODT.toFixed(1)}%</b>,
-
-                        registrándose
-                        <b>${r.odtIncumplidos}</b>
-                        incumplimientos.
-
-                        De estos,
-                        <b>${r.incumplimientosConExcedencia}</b>
-                        presentaron excedencia de tiempo y
-                        <b>${r.incumplimientosConNota}</b>
-                        cuentan con observaciones registradas.
-
-                    </p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-        `;
-
+            return {
+                sec: "Conductores", titulo: "Conductores (" + (p + 1) + "/" + paginas.length + ")",
+                notas: "Responde \"¿cuántas rutas hizo cada uno?\": la columna Viajes es el total realizado y Rutas distintas cuántos recorridos diferentes hizo. Clic en el nombre para ver todos sus viajes.",
+                html:
+                    titulo("Viajes por conductor", r.porConductor.length + " conductores · clic en un nombre para ver su detalle", "bi-person-badge-fill",
+                        paginas.length > 1 ? (p + 1) + " / " + paginas.length : "") +
+                    '<div class="pv-table-wrap"><table class="pv-table"><thead><tr><th>#</th><th>Conductor</th><th>Viajes realizados</th><th>Rutas distintas</th><th>Cumplidos</th><th>Incumplidos</th><th>Cumplimiento</th></tr></thead><tbody>' +
+                    (filas || '<tr><td colspan="7" class="pv-vacio">Sin conductores</td></tr>') + "</tbody></table></div>"
+            };
+        });
     }
 
+    /* ---- ¿Quién incumplió? ---- */
 
-    /* ============================================================
-       CUMPLIMIENTO
-       ============================================================ */
+    function slideQuienIncumplio(r) {
 
-    function crearSlideCumplimiento(r) {
+        const ranking = r.porConductor.filter(function(c) { return c.bad > 0; })
+            .sort(function(a, b) { return b.bad - a.bad; }).slice(0, 8);
 
-        return `
+        const max = ranking.length ? ranking[0].bad : 1;
 
-        <section class="pv-slide">
+        const html = ranking.length
+            ? ranking.map(function(c, i) {
+                return '<div class="pv-rank-row"><div class="pv-rank-n">' + (i + 1) + "</div>" +
+                    '<div class="pv-rank-info">' + drill("conductor", c.nombre, "<strong>" + esc(c.nombre) + "</strong>") +
+                    '<small>' + c.total + " viajes · " + c.conNota + " con justificación · " + (c.bad - c.conNota) + ' sin justificación</small>' +
+                    '<div class="pv-bar"><span style="width:' + pct(c.bad, max) + '%"></span></div></div>' +
+                    '<div class="pv-rank-val">' + c.bad + "<small>incumpl.</small></div></div>";
+            }).join("")
+            : '<div class="pv-empty"><i class="bi bi-check-circle-fill"></i><h2>Sin incumplimientos</h2><p>Ningún conductor incumplió en el período seleccionado.</p></div>';
 
-            ${tituloSlide(
-                "Cumplimiento operativo",
-                "Comparación entre viajes cumplidos e incumplidos",
-                "bi-pie-chart-fill"
-            )}
-
-
-            <div class="pv-chart-layout">
-
-                <div class="pv-chart-card">
-
-                    <h3>
-                        Cumplimiento ODT
-                    </h3>
-
-
-                    <div class="pv-chart-container">
-
-                        <canvas id="chartODT"></canvas>
-
-                    </div>
-
-                </div>
-
-
-                <div class="pv-chart-card">
-
-                    <h3>
-                        Cumplimiento de Furgón
-                    </h3>
-
-
-                    <div class="pv-chart-container">
-
-                        <canvas id="chartFurgon"></canvas>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-        `;
-
+        return {
+            sec: "Incumplimientos", titulo: "¿Quién incumplió?",
+            notas: ranking.length
+                ? "El conductor con más incumplimientos es " + ranking[0].nombre + " con " + ranking[0].bad + " de " + ranking[0].total + " viajes. Haz clic en su nombre para ver cada caso."
+                : "No hay incumplimientos que comentar.",
+            html: titulo("¿Quién incumplió?", "Conductores con más incumplimientos ODT", "bi-person-exclamation") +
+                '<div class="pv-ranking">' + html + "</div>"
+        };
     }
 
+    /* ---- Justificación ---- */
 
-    /* ============================================================
-       RUTAS
-       ============================================================ */
+    function slideJustificacion(r) {
 
-    function crearSlideRutas(r) {
+        const sin = r.malosOrdenados.filter(function(v) { return !v.notas; });
 
-        const rutas =
-            agrupar(
-                r.viajes,
-                function (v) {
+        const filas = sin.slice(0, 8).map(function(v) {
+            return "<tr><td>" + fechaBonita(v.fecha) + "</td>" +
+                "<td>" + drill("conductor", v.conductor, esc(v.conductor)) + "</td>" +
+                "<td>" + esc(rutaDe(v)) + "</td>" +
+                '<td class="pv-text-danger"><b>+' + v.exceso + " min</b></td></tr>";
+        }).join("");
 
-                    return (
-                        `${v.origen || "Sin origen"} → ` +
-                        `${v.destino || "Sin destino"}`
-                    );
-
-                }
-            );
-
-
-        const ranking =
-            Object.entries(rutas)
-                .sort(
-                    function (a, b) {
-
-                        return (
-                            b[1].total -
-                            a[1].total
-                        );
-
-                    }
-                )
-                .slice(0, 8);
-
-
-        return `
-
-        <section class="pv-slide">
-
-            ${tituloSlide(
-                "Análisis de rutas",
-                "Distribución de viajes por origen y destino",
-                "bi-signpost-split"
-            )}
-
-
-            <div class="pv-ranking">
-
-                ${
-                    ranking.length
-
-                        ? ranking.map(
-                            function (
-                                [ruta, info],
-                                index
-                            ) {
-
-                                return `
-
-                                <div class="pv-ranking-row">
-
-                                    <div class="pv-ranking-number">
-                                        ${index + 1}
-                                    </div>
-
-
-                                    <div class="pv-ranking-info">
-
-                                        <strong>
-                                            ${escapeHTML(ruta)}
-                                        </strong>
-
-
-                                        <div class="pv-ranking-bar">
-
-                                            <span
-                                                style="
-                                                    width:${porcentaje(
-                                                        info.total,
-                                                        r.total
-                                                    )}%
-                                                "
-                                            ></span>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div class="pv-ranking-value">
-
-                                        ${info.total}
-
-                                        <small>
-                                            viajes
-                                        </small>
-
-                                    </div>
-
-                                </div>
-
-                                `;
-
-                            }
-                        ).join("")
-
-                        : `
-
-                            <div class="pv-empty-small">
-
-                                <i class="bi bi-signpost-split"></i>
-
-                                <p>
-                                    No hay información de rutas disponible.
-                                </p>
-
-                            </div>
-
-                        `
-                }
-
-            </div>
-
-        </section>
-
-        `;
-
+        return {
+            sec: "Incumplimientos", titulo: "Justificación de incumplimientos",
+            notas: "De " + r.odtBad + " incumplimientos, " + r.conNota + " tienen nota (" + pct(r.conNota, r.odtBad).toFixed(0) + "%). Los " + r.sinNota + " restantes no tienen justificación: es lo que hay que completar en el sistema.",
+            html:
+                titulo("Justificación de incumplimientos", "¿Los incumplimientos están explicados?", "bi-chat-left-text-fill") +
+                '<div class="pv-kpi-grid pv-kpi-3">' +
+                kpi("Incumplimientos", r.odtBad, "bi-x-circle", "danger") +
+                kpi("Con justificación", r.conNota, "bi-check-circle", "success", pct(r.conNota, r.odtBad).toFixed(0) + "% documentado") +
+                kpi("Sin justificación", r.sinNota, "bi-exclamation-triangle", "warning", "pendientes de explicar") +
+                "</div>" +
+                (sin.length
+                    ? '<h3 class="pv-subtitulo">Casos sin justificación' + (sin.length > 8 ? " (primeros 8 de " + sin.length + ")" : "") + "</h3>" +
+                    '<div class="pv-table-wrap"><table class="pv-table"><thead><tr><th>Fecha</th><th>Conductor</th><th>Ruta</th><th>Exceso</th></tr></thead><tbody>' + filas + "</tbody></table></div>"
+                    : '<div class="pv-message"><i class="bi bi-patch-check-fill"></i><div><strong>Todo documentado</strong><p>Todos los incumplimientos tienen una justificación registrada.</p></div></div>')
+        };
     }
 
-
-    /* ============================================================
-       CONDUCTORES
-       ============================================================ */
-
-    function crearSlideConductores(r) {
-
-        const conductores =
-            agrupar(
-                r.viajes,
-                function (v) {
-
-                    return v.conductor ||
-                        "Sin conductor";
-
-                }
-            );
-
-
-        const ranking =
-            Object.entries(conductores)
-                .map(
-                    function (
-                        [nombre, info]
-                    ) {
-
-                        const cumplidos =
-                            info.viajes.filter(
-                                function (v) {
-
-                                    return (
-                                        normalizarEstado(
-                                            v.estadoODT
-                                        ) === "CUMPLIDO"
-                                    );
-
-                                }
-                            ).length;
-
-
-                        return {
-
-                            nombre,
-
-                            total:
-                                info.total,
-
-                            cumplidos,
-
-                            porcentaje:
-                                info.total
-                                    ? (
-                                        cumplidos /
-                                        info.total
-                                    ) * 100
-                                    : 0
-
-                        };
-
-                    }
-                )
-                .sort(
-                    function (a, b) {
-
-                        return (
-                            b.total -
-                            a.total
-                        );
-
-                    }
-                )
-                .slice(0, 8);
-
-
-        return `
-
-        <section class="pv-slide">
-
-            ${tituloSlide(
-                "Desempeño por conductor",
-                "Viajes y cumplimiento ODT",
-                "bi-person-badge-fill"
-            )}
-
-
-            <div class="pv-table-wrapper">
-
-                <table class="pv-table">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>#</th>
-
-                            <th>Conductor</th>
-
-                            <th>Viajes</th>
-
-                            <th>Cumplidos</th>
-
-                            <th>Cumplimiento</th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-                        ${
-                            ranking.length
-
-                                ? ranking.map(
-                                    function (
-                                        c,
-                                        i
-                                    ) {
-
-                                        return `
-
-                                        <tr>
-
-                                            <td>
-                                                ${i + 1}
-                                            </td>
-
-
-                                            <td>
-
-                                                <strong>
-                                                    ${escapeHTML(
-                                                        c.nombre
-                                                    )}
-                                                </strong>
-
-                                            </td>
-
-
-                                            <td>
-                                                ${c.total}
-                                            </td>
-
-
-                                            <td>
-                                                ${c.cumplidos}
-                                            </td>
-
-
-                                            <td>
-
-                                                <span
-                                                    class="
-                                                        pv-percentage
-                                                        ${clasePorcentaje(
-                                                            c.porcentaje
-                                                        )}
-                                                    "
-                                                >
-
-                                                    ${c.porcentaje.toFixed(1)}%
-
-                                                </span>
-
-                                            </td>
-
-                                        </tr>
-
-                                        `;
-
-                                    }
-                                ).join("")
-
-                                : `
-
-                                    <tr>
-
-                                        <td
-                                            colspan="5"
-                                            class="pv-no-data"
-                                        >
-                                            No hay conductores disponibles.
-                                        </td>
-
-                                    </tr>
-
-                                `
-                        }
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </section>
-
-        `;
-
-    }
-
-
-    /* ============================================================
-       TIEMPOS
-       ============================================================ */
-
-    function crearSlideTiempos(r) {
-
-        const tiemposMaximos =
-            r.viajes.map(
-                function (v) {
-
-                    return parseNumero(
-                        v.tiempoMaximo
-                    );
-
-                }
-            );
-
-
-        const maximo =
-            tiemposMaximos.length
-                ? Math.max(
-                    ...tiemposMaximos,
-                    0
-                )
-                : 0;
-
-
-        const excedido =
-            r.promedioExcedido;
-
-
-        return `
-
-        <section class="pv-slide">
-
-            ${tituloSlide(
-                "Control de tiempos",
-                "Análisis de cumplimiento de tiempos establecidos",
-                "bi-stopwatch-fill"
-            )}
-
-
-            <div class="pv-time-grid">
-
-                ${kpi(
-                    "Viajes con excedencia",
-                    r.excedidos.length,
-                    "bi-clock-history",
-                    "danger"
-                )}
-
-
-                ${kpi(
-                    "Excedencia promedio",
-                    excedido.toFixed(1) + " min",
-                    "bi-hourglass-split",
-                    "warning"
-                )}
-
-
-                ${kpi(
-                    "Mayor tiempo máximo",
-                    maximo + " min",
-                    "bi-clock",
-                    "info"
-                )}
-
-            </div>
-
-
-            <div class="pv-time-message">
-
-                <i class="bi bi-info-circle-fill"></i>
-
-
-                <div>
-
-                    <strong>
-                        Control de tiempos
-                    </strong>
-
-
-                    <p>
-
-                        De los
-                        <b>${r.total}</b>
-                        viajes analizados,
-                        <b>${r.excedidos.length}</b>
-                        presentaron algún tiempo
-                        excedido respecto al tiempo
-                        establecido.
-
-                    </p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-        `;
-
-    }
-
-
-    /* ============================================================
-       INCIDENCIAS / INCUMPLIMIENTOS
-       ============================================================ */
-
-    function crearSlideIncidencias(r) {
-
-        const incidencias =
-            r.viajes.filter(
-                function (v) {
-
-                    return (
-                        normalizarEstado(
-                            v.estadoODT
-                        ) === "INCUMPLIDO"
-                    );
-
-                }
-            );
-
-
-        if (!incidencias.length) {
-
-            return `
-
-            <section class="pv-slide">
-
-                ${tituloSlide(
-                    "Incidencias y observaciones",
-                    "Viajes que requieren atención o seguimiento",
-                    "bi-shield-check"
-                )}
-
-
-                <div class="pv-empty">
-
-                    <i class="bi bi-check-circle-fill"></i>
-
-
-                    <h2>
-                        Sin incumplimientos registrados
-                    </h2>
-
-
-                    <p>
-
-                        No se registraron viajes con
-                        incumplimiento ODT durante
-                        el período seleccionado.
-
-                    </p>
-
-                </div>
-
-            </section>
-
-            `;
-
+    /* ---- Incumplimientos (tarjetas) ---- */
+
+    function slideIncidencias(r) {
+
+        if (!r.malos.length) {
+            return [{
+                sec: "Incumplimientos", titulo: "Incumplimientos",
+                notas: "No hubo incumplimientos ODT en el período.",
+                html: titulo("Incumplimientos", "Viajes que requieren atención", "bi-shield-check") +
+                    '<div class="pv-empty"><i class="bi bi-check-circle-fill"></i><h2>Sin incumplimientos registrados</h2><p>Todos los viajes cumplieron el tiempo ODT.</p></div>'
+            }];
         }
 
-
-        const conExcedencia =
-            incidencias.filter(
-                function (v) {
-
-                    return (
-                        parseNumero(
-                            v.tiempoExcedido
-                        ) > 0
-                    );
-
-                }
-            ).length;
-
-
-        const conNota =
-            incidencias.filter(
-                function (v) {
-
-                    return (
-                        String(
-                            v.notas ?? ""
-                        ).trim() !== ""
-                    );
-
-                }
-            ).length;
-
-
-        return `
-
-        <section class="pv-slide">
-
-            ${tituloSlide(
-                "Incidencias y observaciones",
-                `${incidencias.length} viaje${incidencias.length !== 1 ? "s" : ""} con incumplimiento ODT`,
-                "bi-exclamation-triangle-fill"
-            )}
-
-
-            <div class="pv-incidencias-resumen">
-
-                <div class="pv-incidencia-total">
-
-                    <span>
-                        Incumplimientos detectados
-                    </span>
-
-                    <strong>
-                        ${incidencias.length}
-                    </strong>
-
-                </div>
-
-
-                <div class="pv-incidencia-total">
-
-                    <span>
-                        Con excedencia de tiempo
-                    </span>
-
-                    <strong>
-                        ${conExcedencia}
-                    </strong>
-
-                </div>
-
-
-                <div class="pv-incidencia-total">
-
-                    <span>
-                        Con observación registrada
-                    </span>
-
-                    <strong>
-                        ${conNota}
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <div class="pv-incidencias">
-
-                ${
-                    incidencias
-                        .slice(0, 8)
-                        .map(
-                            function (
-                                v,
-                                index
-                            ) {
-
-                                const nota =
-                                    String(
-                                        v.notas ?? ""
-                                    ).trim();
-
-
-                                const excedido =
-                                    parseNumero(
-                                        v.tiempoExcedido
-                                    );
-
-
-                                const estadoFurgon =
-                                    normalizarEstado(
-                                        v.estadoFurgon
-                                    );
-
-
-                                return `
-
-                                <div
-                                    class="
-                                        pv-incidencia
-                                        pv-incidencia-destacada
-                                    "
-                                >
-
-                                    <div class="pv-incidencia-number">
-
-                                        ${index + 1}
-
-                                    </div>
-
-
-                                    <div class="pv-incidencia-content">
-
-                                        <div class="pv-incidencia-top">
-
-                                            <div>
-
-                                                <strong
-                                                    class="
-                                                        pv-incidencia-conductor
-                                                    "
-                                                >
-
-                                                    ${escapeHTML(
-                                                        v.conductor ||
-                                                        "Sin conductor"
-                                                    )}
-
-                                                </strong>
-
-
-                                                <span
-                                                    class="
-                                                        pv-incidencia-fecha
-                                                    "
-                                                >
-
-                                                    ${escapeHTML(
-                                                        v.fecha ||
-                                                        "Sin fecha"
-                                                    )}
-
-                                                </span>
-
-                                            </div>
-
-
-                                            <span
-                                                class="
-                                                    pv-incidencia-badge
-                                                "
-                                            >
-
-                                                <i
-                                                    class="
-                                                        bi
-                                                        bi-x-circle-fill
-                                                    "
-                                                ></i>
-
-                                                INCUMPLIDO
-
-                                            </span>
-
-                                        </div>
-
-
-                                        <div
-                                            class="
-                                                pv-incidencia-ruta
-                                            "
-                                        >
-
-                                            <span>
-                                                ${escapeHTML(
-                                                    v.origen ||
-                                                    "Origen"
-                                                )}
-                                            </span>
-
-
-                                            <i
-                                                class="
-                                                    bi
-                                                    bi-arrow-right
-                                                "
-                                            ></i>
-
-
-                                            <span>
-                                                ${escapeHTML(
-                                                    v.destino ||
-                                                    "Destino"
-                                                )}
-                                            </span>
-
-                                        </div>
-
-
-                                        <div
-                                            class="
-                                                pv-incidencia-datos
-                                            "
-                                        >
-
-                                            <div>
-
-                                                <small>
-                                                    PLACA
-                                                </small>
-
-
-                                                <strong>
-                                                    ${escapeHTML(
-                                                        v.placa ||
-                                                        "—"
-                                                    )}
-                                                </strong>
-
-                                            </div>
-
-
-                                            <div>
-
-                                                <small>
-                                                    FURGÓN
-                                                </small>
-
-
-                                                <strong
-                                                    class="
-                                                        ${
-                                                            estadoFurgon ===
-                                                            "INCUMPLIDO"
-
-                                                                ? "pv-text-danger"
-
-                                                                : "pv-text-success"
-                                                        }
-                                                    "
-                                                >
-
-                                                    ${escapeHTML(
-                                                        v.estadoFurgon ||
-                                                        "SIN REGISTRO"
-                                                    )}
-
-                                                </strong>
-
-                                            </div>
-
-
-                                            <div>
-
-                                                <small>
-                                                    EXCEDENCIA
-                                                </small>
-
-
-                                                <strong
-                                                    class="
-                                                        ${
-                                                            excedido > 0
-
-                                                                ? "pv-text-danger"
-
-                                                                : "pv-text-success"
-                                                        }
-                                                    "
-                                                >
-
-                                                    ${
-                                                        excedido > 0
-
-                                                            ? excedido + " min"
-
-                                                            : "Sin excedencia"
-                                                    }
-
-                                                </strong>
-
-                                            </div>
-
-
-                                            <div>
-
-                                                <small>
-                                                    ODT
-                                                </small>
-
-
-                                                <strong>
-                                                    ${escapeHTML(
-                                                        v.odt ||
-                                                        "—"
-                                                    )}
-                                                </strong>
-
-                                            </div>
-
-                                        </div>
-
-
-                                        <div
-                                            class="
-                                                pv-incidencia-nota
-                                            "
-                                        >
-
-                                            <div
-                                                class="
-                                                    pv-nota-icon
-                                                "
-                                            >
-
-                                                <i
-                                                    class="
-                                                        bi
-                                                        bi-chat-left-text-fill
-                                                    "
-                                                ></i>
-
-                                            </div>
-
-
-                                            <div>
-
-                                                <small>
-                                                    NOTA / OBSERVACIÓN
-                                                </small>
-
-
-                                                <p>
-
-                                                    ${
-                                                        escapeHTML(
-                                                            nota ||
-                                                            "Sin observación registrada."
-                                                        )
-                                                    }
-
-                                                </p>
-
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                                `;
-
-                            }
-                        )
-                        .join("")
-                }
-
-            </div>
-
-
-            ${
-                incidencias.length > 8
-
-                    ? `
-
-                    <div class="pv-incidencias-mas">
-
-                        <i class="bi bi-info-circle"></i>
-
-                        Se muestran los primeros
-                        8 incumplimientos.
-                        El detalle completo permanece
-                        disponible en el registro de viajes.
-
-                    </div>
-
-                    `
-
-                    : ""
+        const paginas = trozos(r.malosOrdenados, POR_PAGINA_INCIDENCIAS);
+
+        return paginas.map(function(pag, p) {
+
+            const tarjetas = pag.map(function(v, i) {
+
+                const n = p * POR_PAGINA_INCIDENCIAS + i + 1;
+
+                return '<article class="pv-inc">' +
+                    '<div class="pv-inc-top"><div class="pv-inc-n">' + n + "</div>" +
+                    "<div>" + drill("conductor", v.conductor, "<strong>" + esc(v.conductor) + "</strong>") +
+                    "<small>" + esc(fechaBonita(v.fecha)) + " · Placa " + esc(v.placa || "—") + "</small></div>" +
+                    '<span class="pv-chip pv-bad">+' + v.exceso + " min</span></div>" +
+                    '<div class="pv-inc-ruta">' + esc(v.origen || "Origen") + ' <i class="bi bi-arrow-right"></i> ' + esc(v.destino || "Destino") + "</div>" +
+                    '<div class="pv-inc-datos">' +
+                    "<div><small>SALIDA – LLEGADA</small><b>" + esc(v.salida || "—") + " – " + esc(v.llegada || "—") + "</b></div>" +
+                    "<div><small>TIEMPO MÁXIMO</small><b>" + fmtMin(v.max) + "</b></div>" +
+                    "<div><small>TIEMPO REAL</small><b class=\"pv-text-danger\">" + fmtMin(v.real) + "</b></div>" +
+                    "<div><small>FURGÓN</small><b>" + esc(v.furgon || "—") + "</b></div>" +
+                    "</div>" +
+                    '<div class="pv-inc-nota ' + (v.notas ? "" : "pv-sin") + '">' +
+                    '<i class="bi ' + (v.notas ? "bi-chat-left-text-fill" : "bi-exclamation-triangle-fill") + '"></i>' +
+                    "<div><small>" + (v.notas ? "¿POR QUÉ OCURRIÓ? · JUSTIFICACIÓN" : "SIN JUSTIFICACIÓN") + "</small>" +
+                    "<p>" + esc(v.notas || "No hay una justificación registrada para este incumplimiento.") + "</p></div></div>" +
+                    "</article>";
+            }).join("");
+
+            return {
+                sec: "Incumplimientos", titulo: "Incumplimientos (" + (p + 1) + "/" + paginas.length + ")",
+                notas: "Casos " + (p * POR_PAGINA_INCIDENCIAS + 1) + " al " + (p * POR_PAGINA_INCIDENCIAS + pag.length) + " de " + r.malos.length + ". Para cada uno: quién fue, cuánto se excedió y la justificación registrada. Los marcados en ámbar no tienen justificación.",
+                html: titulo("Incumplimientos ODT", r.malos.length + " casos · ordenados por fecha", "bi-exclamation-triangle-fill", (p + 1) + " / " + paginas.length) +
+                    '<div class="pv-inc-grid">' + tarjetas + "</div>"
+            };
+        });
+    }
+
+    function slideTopExcesos(r) {
+
+        const top = r.malos.slice().sort(function(a, b) { return b.exceso - a.exceso; }).slice(0, 8);
+
+        const filas = top.map(function(v, i) {
+            return "<tr><td>" + (i + 1) + "</td><td>" + fechaBonita(v.fecha) + "</td>" +
+                "<td>" + drill("conductor", v.conductor, esc(v.conductor)) + "</td>" +
+                "<td>" + esc(rutaDe(v)) + "</td>" +
+                '<td class="pv-text-danger"><b>+' + v.exceso + " min</b></td>" +
+                "<td>" + (v.notas ? '<span class="pv-chip pv-good">Sí</span>' : '<span class="pv-chip pv-medium">No</span>') + "</td></tr>";
+        }).join("");
+
+        return {
+            sec: "Incumplimientos", titulo: "Mayores excesos de tiempo",
+            notas: "El mayor exceso fue de " + top[0].exceso + " min (" + top[0].conductor + ", " + fechaBonita(top[0].fecha) + "). Si te preguntan por los casos más graves, empieza por aquí.",
+            html: titulo("Mayores excesos de tiempo", "Los 8 incumplimientos más graves", "bi-hourglass-split") +
+                '<div class="pv-table-wrap"><table class="pv-table"><thead><tr><th>#</th><th>Fecha</th><th>Conductor</th><th>Ruta</th><th>Exceso</th><th>Justificado</th></tr></thead><tbody>' + filas + "</tbody></table></div>"
+        };
+    }
+
+    /* ---- Detalle ---- */
+
+    function slideDetalle(r) {
+
+        const ordenados = viajes.slice().sort(function(a, b) {
+            return a.fecha === b.fecha ? 0 : (a.fecha < b.fecha ? -1 : 1);
+        });
+        const paginas = trozos(ordenados, POR_PAGINA_DETALLE);
+
+        return paginas.map(function(pag, p) {
+
+            const filas = pag.map(function(v) {
+                return "<tr><td>" + fechaBonita(v.fecha) + "</td>" +
+                    "<td>" + esc(v.conductor) + "</td>" +
+                    "<td>" + esc(rutaDe(v)) + "</td>" +
+                    "<td>" + esc(v.furgon) + "</td>" +
+                    "<td>" + fmtMin(v.real) + " / " + fmtMin(v.max) + "</td>" +
+                    "<td>" + badge(v.estadoODT) + "</td>" +
+                    '<td class="pv-nota-celda">' + (v.notas ? esc(v.notas) : '<span class="pv-sin-nota">—</span>') + "</td></tr>";
+            }).join("");
+
+            return {
+                sec: "Detalle", titulo: "Detalle (" + (p + 1) + "/" + paginas.length + ")",
+                notas: "Registro completo, " + POR_PAGINA_DETALLE + " viajes por slide. Úsalo solo si piden revisar un viaje en específico.",
+                html: titulo("Detalle del período", r.total + " viajes · tiempo real / máximo", "bi-list-columns-reverse", (p + 1) + " / " + paginas.length) +
+                    '<div class="pv-table-wrap"><table class="pv-table pv-compacta"><thead><tr><th>Fecha</th><th>Conductor</th><th>Ruta</th><th>Furgón</th><th>Real / Máx.</th><th>Estado ODT</th><th>Justificación</th></tr></thead><tbody>' + filas + "</tbody></table></div>"
+            };
+        });
+    }
+
+    /* ---- Conclusiones ---- */
+
+    function slideConclusiones(r) {
+
+        const hallazgos = [];
+
+        const peorCond = r.porConductor.slice().sort(function(a, b) { return b.bad - a.bad; })[0];
+        if (peorCond && peorCond.bad > 0) {
+            hallazgos.push("<b>" + esc(peorCond.nombre) + "</b> concentra más incumplimientos (" + peorCond.bad + " de " + peorCond.total + " viajes).");
+        }
+
+        const peorRuta = r.porRuta.slice().sort(function(a, b) { return b.bad - a.bad; })[0];
+        if (peorRuta && peorRuta.bad > 0) {
+            hallazgos.push("La ruta con más incumplimientos es <b>" + esc(peorRuta.nombre) + "</b> (" + peorRuta.bad + " de " + peorRuta.total + ").");
+        }
+
+        if (r.malos.length) {
+            const mayor = r.malos.slice().sort(function(a, b) { return b.exceso - a.exceso; })[0];
+            hallazgos.push("El mayor exceso fue de <b>" + mayor.exceso + " min</b> (" + esc(mayor.conductor) + ", " + esc(fechaBonita(mayor.fecha)) + ").");
+            hallazgos.push("<b>" + r.conNota + "</b> de " + r.odtBad + " incumplimientos tienen justificación; <b>" + r.sinNota + "</b> aún no.");
+        }
+
+        const peorFurg = r.porFurgon.slice().sort(function(a, b) { return b.bad - a.bad; })[0];
+        if (peorFurg && peorFurg.bad > 0) {
+            hallazgos.push("En furgones, <b>" + esc(peorFurg.nombre || "Sin furgón") + "</b> acumula " + peorFurg.bad + " viajes incumplidos.");
+        }
+
+        if (!hallazgos.length) hallazgos.push("Todos los viajes del período cumplieron los tiempos establecidos.");
+
+        const nivel = r.pctODT >= 95 ? "Nivel de cumplimiento excelente"
+            : r.pctODT >= 85 ? "Nivel de cumplimiento satisfactorio"
+                : r.pctODT >= 70 ? "Nivel de cumplimiento moderado"
+                    : "Nivel de cumplimiento que requiere atención";
+
+        return {
+            sec: "Cierre", titulo: "Conclusiones", clase: "pv-conclusion",
+            notas: "Cierra con los hallazgos y la recomendación: registrar justificación en todos los incumplimientos y dar seguimiento a los casos recurrentes.",
+            html:
+                titulo("Conclusiones ejecutivas", "Resultado general del período evaluado", "bi-clipboard2-check-fill") +
+                '<div class="pv-score"><span>Cumplimiento ODT</span><strong>' + r.pctODT.toFixed(1) + "%</strong>" +
+                '<div class="pv-score-bar"><span style="width:' + Math.min(100, Math.max(0, r.pctODT)) + '%"></span></div>' +
+                "<small>" + nivel + "</small></div>" +
+                '<div class="pv-hallazgos"><h3><i class="bi bi-search"></i> Hallazgos clave</h3><ul>' +
+                hallazgos.map(function(h) { return "<li>" + h + "</li>"; }).join("") + "</ul></div>" +
+                '<div class="pv-message"><i class="bi bi-lightbulb-fill"></i><div><strong>Recomendación</strong>' +
+                "<p>Registrar la justificación de todos los incumplimientos, dar seguimiento a los casos recurrentes por conductor y por ruta, y usar las observaciones para identificar causas y acciones de mejora.</p></div></div>" +
+                '<div class="pv-final"><strong>FIN DEL INFORME</strong><span>Gestión y Control de Viajes · Transportes CHC</span></div>'
+        };
+    }
+
+
+    /* ============================================================
+       CONTENEDOR / CONTROLES
+       ============================================================ */
+
+    function crearContenedor() {
+
+        const previo = document.getElementById("presentacionViajes");
+        if (previo) previo.remove();
+
+        root = document.createElement("div");
+        root.id = "presentacionViajes";
+        root.className = temaClaro ? "pv-light" : "";
+        root.setAttribute("role", "dialog");
+        root.setAttribute("aria-modal", "true");
+
+        root.innerHTML =
+            '<div class="pv-background"></div>' +
+
+            '<header class="pv-header">' +
+            '<div class="pv-brand"><div class="pv-brand-icon"><i class="bi bi-truck"></i></div>' +
+            "<div><strong>REPORTE EJECUTIVO</strong><small>Transportes CHC</small></div></div>" +
+            '<nav id="pvTabs" class="pv-tabs" aria-label="Secciones"></nav>' +
+            '<div class="pv-header-actions">' +
+            '<button id="pvBtnMenu" type="button" title="Menú (M)"><i class="bi bi-list"></i></button>' +
+            '<button id="pvBtnNotas" type="button" title="Guion del presentador (N)"><i class="bi bi-journal-text"></i></button>' +
+            '<button id="pvBtnTema" type="button" title="Tema claro / oscuro (T)"><i class="bi bi-circle-half"></i></button>' +
+            '<button id="pvBtnFull" type="button" title="Pantalla completa (F)"><i class="bi bi-fullscreen"></i></button>' +
+            '<button id="pvBtnCerrar" type="button" title="Cerrar (Esc)"><i class="bi bi-x-lg"></i></button>' +
+            "</div></header>" +
+
+            '<aside id="pvMenu" class="pv-menu"><div class="pv-menu-head"><strong>Diapositivas</strong>' +
+            '<button type="button" id="pvMenuCerrar"><i class="bi bi-x-lg"></i></button></div>' +
+            '<div id="pvMenuLista" class="pv-menu-lista"></div></aside>' +
+
+            '<main id="pvSlides" class="pv-slides"></main>' +
+
+            '<div id="pvNotas" class="pv-notas"><div class="pv-notas-head"><i class="bi bi-journal-text"></i> Guion del presentador</div>' +
+            '<p id="pvNotasTexto"></p></div>' +
+
+            '<button id="pvPrev" type="button" class="pv-navigation pv-prev" title="Anterior"><i class="bi bi-chevron-left"></i></button>' +
+            '<button id="pvNext" type="button" class="pv-navigation pv-next" title="Siguiente"><i class="bi bi-chevron-right"></i></button>' +
+
+            '<footer class="pv-footer"><div id="pvProgress" class="pv-progress"></div>' +
+            '<div id="pvCounter" class="pv-counter"></div></footer>' +
+
+            '<div id="pvAyuda" class="pv-ayuda"><div class="pv-ayuda-box"><h3>Atajos de teclado</h3>' +
+            "<ul><li><kbd>←</kbd> <kbd>→</kbd> <kbd>Espacio</kbd> navegar</li><li><kbd>Home</kbd> <kbd>End</kbd> primer / último</li>" +
+            "<li><kbd>M</kbd> menú de slides</li><li><kbd>G</kbd> ir al slide número…</li><li><kbd>N</kbd> guion del presentador</li>" +
+            "<li><kbd>T</kbd> tema claro / oscuro</li><li><kbd>F</kbd> pantalla completa</li><li><kbd>Esc</kbd> cerrar desglose / menú / presentación</li></ul>" +
+            '<button type="button" id="pvAyudaCerrar">Entendido</button></div></div>' +
+
+            '<div id="pvDrill" class="pv-drill-overlay"></div>';
+
+        document.body.appendChild(root);
+        document.body.style.overflow = "hidden";
+
+        // Tabs de sección
+        document.getElementById("pvTabs").innerHTML = SECCIONES.map(function(s) {
+            return '<button type="button" data-sec="' + s.id + '">' + s.id + "</button>";
+        }).join("");
+
+        root.addEventListener("click", clicEnRaiz);
+        root.addEventListener("mousemove", despertar);
+        root.addEventListener("touchstart", despertar, { passive: true });
+
+        // Swipe
+        let x0 = null;
+        const cont = document.getElementById("pvSlides");
+        cont.addEventListener("touchstart", function(e) { x0 = e.touches[0].clientX; }, { passive: true });
+        cont.addEventListener("touchend", function(e) {
+            if (x0 === null) return;
+            const dx = e.changedTouches[0].clientX - x0;
+            if (Math.abs(dx) > 60) cambiar(dx < 0 ? 1 : -1);
+            x0 = null;
+        });
+
+        if (!tecladoOk) {
+            document.addEventListener("keydown", teclado);
+            tecladoOk = true;
+        }
+
+        despertar();
+    }
+
+    function despertar() {
+        if (!root) return;
+        root.classList.remove("pv-idle");
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() { if (root) root.classList.add("pv-idle"); }, 3500);
+    }
+
+    function clicEnRaiz(e) {
+
+        const t = e.target;
+
+        const drillEl = t.closest("[data-drill]");
+        if (drillEl) {
+            e.preventDefault();
+            abrirDrill(drillEl.dataset.drill, drillEl.dataset.valor);
+            return;
+        }
+
+        const go = t.closest("[data-go]");
+        if (go) {
+            cerrarMenu();
+            irA(Number(go.dataset.go));
+            return;
+        }
+
+        const tab = t.closest("[data-sec]");
+        if (tab) {
+            const i = slides.findIndex(function(s) { return s.sec === tab.dataset.sec; });
+            if (i !== -1) irA(i);
+            return;
+        }
+
+        const id = t.closest("button") ? t.closest("button").id : "";
+
+        if (id === "pvBtnCerrar") cerrar();
+        else if (id === "pvBtnFull") alternarPantalla();
+        else if (id === "pvBtnMenu") alternarMenu();
+        else if (id === "pvMenuCerrar") cerrarMenu();
+        else if (id === "pvBtnNotas") alternarNotas();
+        else if (id === "pvBtnTema") alternarTema();
+        else if (id === "pvPrev") cambiar(-1);
+        else if (id === "pvNext") cambiar(1);
+        else if (id === "pvAyudaCerrar") document.getElementById("pvAyuda").classList.remove("show");
+        else if (id === "pvDrillCerrar") cerrarDrill();
+        else if (t.id === "pvDrill") cerrarDrill();
+    }
+
+    function renderMenu() {
+        let secActual = "";
+        document.getElementById("pvMenuLista").innerHTML = slides.map(function(s, i) {
+            let cab = "";
+            if (s.sec !== secActual) {
+                secActual = s.sec;
+                cab = '<div class="pv-menu-sec">' + esc(secActual) + "</div>";
             }
-
-        </section>
-
-        `;
-
+            return cab + '<button type="button" class="pv-menu-item" data-go="' + i + '"><span>' + (i + 1) + "</span>" + esc(s.titulo) + "</button>";
+        }).join("");
     }
 
-
-    /* ============================================================
-       DETALLE DEL PERÍODO
-       ============================================================ */
-
-    function crearSlideDetalle(r) {
-
-        return `
-
-        <section class="pv-slide">
-
-            ${tituloSlide(
-                "Detalle del período",
-                "Registro completo de viajes incluidos en este informe",
-                "bi-list-columns-reverse"
-            )}
-
-
-            <div class="pv-detail-scroll">
-
-                <table
-                    class="
-                        pv-table
-                        pv-detail-table
-                    "
-                >
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                Fecha
-                            </th>
-
-                            <th>
-                                Conductor
-                            </th>
-
-                            <th>
-                                Ruta
-                            </th>
-
-                            <th>
-                                Furgón
-                            </th>
-
-                            <th>
-                                ODT
-                            </th>
-
-                            <th>
-                                Estado
-                            </th>
-
-                            <th>
-                                Observación
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-                        ${
-                            r.viajes.length
-
-                                ? r.viajes.map(
-                                    function (v) {
-
-                                        return `
-
-                                        <tr>
-
-                                            <td>
-                                                ${escapeHTML(
-                                                    v.fecha
-                                                )}
-                                            </td>
-
-
-                                            <td>
-                                                ${escapeHTML(
-                                                    v.conductor
-                                                )}
-                                            </td>
-
-
-                                            <td>
-
-                                                ${escapeHTML(
-                                                    v.origen
-                                                )}
-
-                                                <i
-                                                    class="
-                                                        bi
-                                                        bi-arrow-right
-                                                    "
-                                                ></i>
-
-                                                ${escapeHTML(
-                                                    v.destino
-                                                )}
-
-                                            </td>
-
-
-                                            <td>
-                                                ${escapeHTML(
-                                                    v.furgon
-                                                )}
-                                            </td>
-
-
-                                            <td>
-                                                ${escapeHTML(
-                                                    v.odt
-                                                )}
-                                            </td>
-
-
-                                            <td>
-
-                                                <span
-                                                    class="
-                                                        pv-status
-                                                        ${estadoClase(
-                                                            v.estadoODT
-                                                        )}
-                                                    "
-                                                >
-
-                                                    ${escapeHTML(
-                                                        v.estadoODT ||
-                                                        "SIN REGISTRO"
-                                                    )}
-
-                                                </span>
-
-                                            </td>
-
-
-                                            <td
-                                                class="
-                                                    pv-detail-note
-                                                "
-                                            >
-
-                                                ${
-                                                    v.notas
-
-                                                        ? escapeHTML(
-                                                            v.notas
-                                                        )
-
-                                                        : `<span class="pv-no-note">
-                                                            Sin observación
-                                                          </span>`
-                                                }
-
-                                            </td>
-
-                                        </tr>
-
-                                        `;
-
-                                    }
-                                ).join("")
-
-                                : `
-
-                                    <tr>
-
-                                        <td
-                                            colspan="7"
-                                            class="pv-no-data"
-                                        >
-                                            No hay viajes disponibles.
-                                        </td>
-
-                                    </tr>
-
-                                `
-                        }
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </section>
-
-        `;
-
-    }
-
-
-    /* ============================================================
-       CONCLUSIONES
-       ============================================================ */
-
-    function crearSlideConclusiones(r) {
-
-        const nivel =
-            obtenerNivelCumplimiento(
-                r.porcentajeODT
-            );
-
-
-        return `
-
-        <section class="pv-slide pv-conclusion">
-
-            ${tituloSlide(
-                "Conclusiones ejecutivas",
-                "Resultado general del período evaluado",
-                "bi-clipboard2-check-fill"
-            )}
-
-
-            <div class="pv-conclusion-score">
-
-                <span>
-                    Cumplimiento ODT
-                </span>
-
-
-                <strong>
-                    ${r.porcentajeODT.toFixed(1)}%
-                </strong>
-
-
-                <div class="pv-score-bar">
-
-                    <span
-                        style="
-                            width:${Math.min(
-                                Math.max(
-                                    r.porcentajeODT,
-                                    0
-                                ),
-                                100
-                            )}%
-                        "
-                    ></span>
-
-                </div>
-
-
-                <small>
-                    ${nivel}
-                </small>
-
-            </div>
-
-
-            <div class="pv-conclusion-grid">
-
-                <div>
-
-                    <i class="bi bi-check-circle-fill"></i>
-
-                    <strong>
-                        ${r.odtCumplidos}
-                    </strong>
-
-                    <span>
-                        viajes ODT cumplidos
-                    </span>
-
-                </div>
-
-
-                <div>
-
-                    <i class="bi bi-x-circle-fill"></i>
-
-                    <strong>
-                        ${r.odtIncumplidos}
-                    </strong>
-
-                    <span>
-                        viajes ODT incumplidos
-                    </span>
-
-                </div>
-
-
-                <div>
-
-                    <i class="bi bi-clock-fill"></i>
-
-                    <strong>
-                        ${r.excedidos.length}
-                    </strong>
-
-                    <span>
-                        viajes con excedencia
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="pv-final-message">
-
-                <i class="bi bi-bar-chart-fill"></i>
-
-
-                <p>
-
-                    El período presenta un nivel de
-                    cumplimiento ODT del
-
-                    <strong>
-                        ${r.porcentajeODT.toFixed(1)}%
-                    </strong>,
-
-                    con
-
-                    <strong>
-                        ${r.total}
-                    </strong>
-
-                    viajes analizados.
-
-                    Se identificaron
-
-                    <strong>
-                        ${r.odtIncumplidos}
-                    </strong>
-
-                    incumplimientos ODT.
-
-                    De ellos,
-
-                    <strong>
-                        ${r.incumplimientosConNota}
-                    </strong>
-
-                    cuentan con observaciones registradas
-
-                    y
-
-                    <strong>
-                        ${r.incumplimientosConExcedencia}
-                    </strong>
-
-                    presentaron excedencia de tiempo.
-
-                    Se recomienda mantener el seguimiento
-                    de los casos incumplidos y utilizar las
-                    observaciones registradas como base para
-                    identificar causas recurrentes y acciones
-                    de mejora.
-
-                </p>
-
-            </div>
-
-
-            <div class="pv-final">
-
-                <strong>
-                    FIN DEL INFORME
-                </strong>
-
-                <span>
-                    Gestión y Control de Viajes
-                </span>
-
-            </div>
-
-        </section>
-
-        `;
-
-    }
-
-
-    /* ============================================================
-       TÍTULO DE SLIDE
-       ============================================================ */
-
-    function tituloSlide(
-        titulo,
-        subtitulo,
-        icono
-    ) {
-
-        return `
-
-            <div class="pv-slide-title">
-
-                <div class="pv-slide-title-icon">
-
-                    <i class="bi ${icono}"></i>
-
-                </div>
-
-
-                <div>
-
-                    <h2>
-                        ${escapeHTML(titulo)}
-                    </h2>
-
-
-                    <p>
-                        ${escapeHTML(subtitulo)}
-                    </p>
-
-                </div>
-
-            </div>
-
-        `;
-
-    }
-
-
-    /* ============================================================
-       KPI
-       ============================================================ */
-
-    function kpi(
-        titulo,
-        valor,
-        icono,
-        color
-    ) {
-
-        return `
-
-            <div class="pv-kpi pv-${escapeHTML(color)}">
-
-                <div class="pv-kpi-icon">
-
-                    <i class="bi ${icono}"></i>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        ${escapeHTML(titulo)}
-                    </span>
-
-
-                    <strong>
-                        ${escapeHTML(valor)}
-                    </strong>
-
-                </div>
-
-            </div>
-
-        `;
-
+    function alternarMenu() { document.getElementById("pvMenu").classList.toggle("show"); }
+    function cerrarMenu() { document.getElementById("pvMenu").classList.remove("show"); }
+    function alternarNotas() { document.getElementById("pvNotas").classList.toggle("show"); }
+
+    function alternarTema() {
+        temaClaro = !temaClaro;
+        root.classList.toggle("pv-light", temaClaro);
+        ejecutarInit();    // redibuja gráficos con colores del tema
     }
 
 
@@ -3053,261 +983,153 @@
        NAVEGACIÓN
        ============================================================ */
 
-    function mostrarSlide(indice) {
+    function irA(i) {
 
-        if (!presentacion) {
+        if (!slides.length) return;
 
-            return;
+        actual = Math.max(0, Math.min(Number(i) || 0, slides.length - 1));
 
-        }
+        root.querySelectorAll("#pvSlides .pv-slide").forEach(function(el, idx) {
+            el.classList.toggle("active", idx === actual);
+            if (idx === actual) el.scrollTop = 0;
+        });
 
+        const s = slides[actual];
 
-        if (!slides.length) {
+        // Tabs
+        root.querySelectorAll("#pvTabs button").forEach(function(b) {
+            b.classList.toggle("active", b.dataset.sec === s.sec);
+        });
 
-            return;
+        // Menú
+        root.querySelectorAll(".pv-menu-item").forEach(function(b) {
+            b.classList.toggle("active", Number(b.dataset.go) === actual);
+        });
 
-        }
+        // Guion
+        document.getElementById("pvNotasTexto").textContent = s.notas || "Sin notas para esta diapositiva.";
 
+        // Contador y progreso
+        document.getElementById("pvCounter").textContent = (actual + 1) + " / " + slides.length;
+        document.getElementById("pvProgress").innerHTML = slides.map(function(_, k) {
+            return '<button type="button" class="' + (k === actual ? "active" : "") + '" data-go="' + k + '" title="Slide ' + (k + 1) + '"></button>';
+        }).join("");
 
-        slideActual =
-            Math.max(
-                0,
-                Math.min(
-                    Number(indice) || 0,
-                    slides.length - 1
-                )
-            );
-
-
-        document
-            .querySelectorAll(
-                "#pvSlides .pv-slide"
-            )
-            .forEach(
-                function (
-                    slide,
-                    index
-                ) {
-
-                    slide.classList.toggle(
-                        "active",
-                        index === slideActual
-                    );
-
-                }
-            );
-
-
-        actualizarControles();
-
-
-        /*
-            Slide 2 = Cumplimiento.
-        */
-
-        if (slideActual === 2) {
-
-            setTimeout(
-                crearGraficos,
-                120
-            );
-
-        }
-
+        ejecutarInit();
     }
 
+    function cambiar(d) { irA(actual + d); }
 
-    function cambiarSlide(direccion) {
-
-        if (!slides.length) {
-
-            return;
-
+    function ejecutarInit() {
+        destruirGraficos();
+        const s = slides[actual];
+        if (s && typeof s.init === "function" && typeof Chart !== "undefined") {
+            setTimeout(function() {
+                try { s.init(); } catch (e) { console.error("Presentación: error en gráfico", e); }
+            }, 80);
         }
-
-
-        mostrarSlide(
-            slideActual +
-            direccion
-        );
-
     }
 
+    function teclado(e) {
 
-    function actualizarControles() {
+        if (!root) return;
 
-        const counter =
-            document.getElementById(
-                "pvCounter"
-            );
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
 
+        const k = e.key;
+        const drillAbierto = document.getElementById("pvDrill").classList.contains("show");
 
-        if (counter) {
-
-            counter.textContent =
-                `${slideActual + 1} / ${slides.length}`;
-
+        if (k === "Escape") {
+            if (drillAbierto) return cerrarDrill();
+            if (document.getElementById("pvAyuda").classList.contains("show")) return document.getElementById("pvAyuda").classList.remove("show");
+            if (document.getElementById("pvMenu").classList.contains("show")) return cerrarMenu();
+            return cerrar();
         }
 
+        if (drillAbierto) return;
 
-        const progress =
-            document.getElementById(
-                "pvProgress"
-            );
-
-
-        if (!progress) {
-
-            return;
-
+        if (k === "ArrowRight" || k === "PageDown" || k === " ") { e.preventDefault(); cambiar(1); }
+        else if (k === "ArrowLeft" || k === "PageUp") { e.preventDefault(); cambiar(-1); }
+        else if (k === "Home") { e.preventDefault(); irA(0); }
+        else if (k === "End") { e.preventDefault(); irA(slides.length - 1); }
+        else if (k === "m" || k === "M") alternarMenu();
+        else if (k === "n" || k === "N") alternarNotas();
+        else if (k === "t" || k === "T") alternarTema();
+        else if (k === "f" || k === "F") alternarPantalla();
+        else if (k === "?" || k === "h" || k === "H") document.getElementById("pvAyuda").classList.toggle("show");
+        else if (k === "g" || k === "G") {
+            const n = parseInt(window.prompt("Ir al slide número (1 – " + slides.length + "):"), 10);
+            if (n) irA(n - 1);
         }
-
-
-        progress.innerHTML =
-            slides.map(
-                function (_, i) {
-
-                    return `
-
-                        <button
-                            type="button"
-                            class="
-                                ${i === slideActual
-                                    ? "active"
-                                    : ""}
-                            "
-                            data-slide="${i}"
-                            title="Ir a diapositiva ${i + 1}"
-                            aria-label="Ir a diapositiva ${i + 1}">
-                        </button>
-
-                    `;
-
-                }
-            ).join("");
-
-
-        progress
-            .querySelectorAll("button")
-            .forEach(
-                function (button) {
-
-                    button.addEventListener(
-                        "click",
-                        function () {
-
-                            mostrarSlide(
-                                Number(
-                                    this.dataset.slide
-                                )
-                            );
-
-                        }
-                    );
-
-                }
-            );
-
     }
 
 
     /* ============================================================
-       TECLADO
+       DESGLOSE (clic en conductor / ruta / furgón / fecha)
        ============================================================ */
 
-    function controlarTeclado(e) {
+    function abrirDrill(tipo, valor) {
 
-        if (!presentacion) {
+        const filtro = {
+            conductor: function(v) { return v.conductor === valor; },
+            ruta: function(v) { return rutaDe(v) === valor; },
+            furgon: function(v) { return v.furgon === valor; },
+            fecha: function(v) { return v.fecha === valor; }
+        }[tipo];
 
-            return;
+        if (!filtro) return;
 
-        }
+        const lista = viajes.filter(filtro).sort(function(a, b) {
+            return a.fecha === b.fecha ? 0 : (a.fecha < b.fecha ? -1 : 1);
+        });
 
+        const bad = lista.filter(esMalo).length;
+        const conNota = lista.filter(function(v) { return esMalo(v) && v.notas; }).length;
+        const rutas = {};
+        lista.forEach(function(v) { rutas[rutaDe(v)] = (rutas[rutaDe(v)] || 0) + 1; });
 
-        /*
-            Si el usuario está escribiendo en un input,
-            textarea o elemento editable, no interceptamos
-            las teclas de navegación.
-        */
+        const etiqueta = tipo === "fecha" ? fechaBonita(valor) : valor;
+        const nombreTipo = { conductor: "Conductor", ruta: "Ruta", furgon: "Furgón", fecha: "Fecha" }[tipo];
 
-        const objetivo =
-            e.target;
+        const filas = lista.map(function(v) {
+            return "<tr><td>" + fechaBonita(v.fecha) + "</td>" +
+                "<td>" + esc(tipo === "conductor" ? rutaDe(v) : v.conductor + (tipo === "ruta" ? "" : " · " + rutaDe(v))) + "</td>" +
+                "<td>" + esc(v.salida) + " – " + esc(v.llegada) + "</td>" +
+                "<td>" + fmtMin(v.real) + " / " + fmtMin(v.max) + "</td>" +
+                "<td>" + (v.exceso ? '<b class="pv-text-danger">+' + v.exceso + " min</b>" : "—") + "</td>" +
+                "<td>" + badge(v.estadoODT) + "</td>" +
+                '<td class="pv-nota-celda">' + (v.notas ? esc(v.notas) : (esMalo(v) ? '<span class="pv-text-warn">Sin justificación</span>' : '<span class="pv-sin-nota">—</span>')) + "</td></tr>";
+        }).join("");
 
+        const rutasTxt = Object.entries(rutas).sort(function(a, b) { return b[1] - a[1]; })
+            .map(function(e) { return '<span class="pv-tag">' + esc(e[0]) + " <b>×" + e[1] + "</b></span>"; }).join("");
 
-        if (
-            objetivo &&
-            (
-                objetivo.tagName === "INPUT" ||
-                objetivo.tagName === "TEXTAREA" ||
-                objetivo.tagName === "SELECT" ||
-                objetivo.isContentEditable
-            )
-        ) {
+        const ov = document.getElementById("pvDrill");
 
-            return;
+        ov.innerHTML =
+            '<div class="pv-drill-box">' +
+            '<div class="pv-drill-head"><div><small>' + nombreTipo.toUpperCase() + "</small><h3>" + esc(etiqueta) + "</h3></div>" +
+            '<button type="button" id="pvDrillCerrar"><i class="bi bi-x-lg"></i></button></div>' +
+            '<div class="pv-drill-kpis">' +
+            "<div><span>Viajes</span><b>" + lista.length + "</b></div>" +
+            "<div><span>Incumplidos</span><b class=\"" + (bad ? "pv-text-danger" : "") + '">' + bad + "</b></div>" +
+            "<div><span>Con justificación</span><b>" + conNota + " / " + bad + "</b></div>" +
+            "<div><span>Rutas distintas</span><b>" + Object.keys(rutas).length + "</b></div>" +
+            "<div><span>Cumplimiento</span><b>" + pct(lista.length - bad, lista.length).toFixed(1) + "%</b></div>" +
+            "</div>" +
+            (tipo === "conductor" ? '<div class="pv-drill-tags">' + rutasTxt + "</div>" : "") +
+            '<div class="pv-drill-tabla"><table class="pv-table pv-compacta"><thead><tr><th>Fecha</th><th>' +
+            (tipo === "conductor" ? "Ruta" : "Conductor / Ruta") +
+            "</th><th>Horario</th><th>Real / Máx.</th><th>Exceso</th><th>Estado</th><th>Justificación</th></tr></thead><tbody>" + filas + "</tbody></table></div>" +
+            '<div class="pv-drill-pie">Esc para volver a la presentación</div></div>';
 
-        }
+        ov.classList.add("show");
+    }
 
-
-        if (
-            e.key === "ArrowRight" ||
-            e.key === "PageDown" ||
-            e.key === " "
-        ) {
-
-            e.preventDefault();
-
-            cambiarSlide(1);
-
-            return;
-
-        }
-
-
-        if (
-            e.key === "ArrowLeft" ||
-            e.key === "PageUp"
-        ) {
-
-            e.preventDefault();
-
-            cambiarSlide(-1);
-
-            return;
-
-        }
-
-
-        if (e.key === "Home") {
-
-            e.preventDefault();
-
-            mostrarSlide(0);
-
-            return;
-
-        }
-
-
-        if (e.key === "End") {
-
-            e.preventDefault();
-
-            mostrarSlide(
-                slides.length - 1
-            );
-
-            return;
-
-        }
-
-
-        if (e.key === "Escape") {
-
-            cerrarPresentacion();
-
-        }
-
+    function cerrarDrill() {
+        const ov = document.getElementById("pvDrill");
+        if (ov) ov.classList.remove("show");
     }
 
 
@@ -3315,1042 +1137,86 @@
        GRÁFICOS
        ============================================================ */
 
-    function crearGraficos() {
-
-        if (
-            typeof Chart === "undefined"
-        ) {
-
-            console.warn(
-                "Chart.js no está disponible."
-            );
-
-            return;
-
-        }
-
-
-        destruirGraficos();
-
-
-        const r =
-            calcularResumen();
-
-
-        const canvasODT =
-            document.getElementById(
-                "chartODT"
-            );
-
-
-        const canvasFurgon =
-            document.getElementById(
-                "chartFurgon"
-            );
-
-
-        /*
-            Gráfico ODT.
-        */
-
-        if (canvasODT) {
-
-            try {
-
-                charts.push(
-
-                    new Chart(
-                        canvasODT,
-                        {
-
-                            type: "doughnut",
-
-
-                            data: {
-
-                                labels: [
-                                    "Cumplidos",
-                                    "Incumplidos"
-                                ],
-
-
-                                datasets: [{
-
-                                    data: [
-
-                                        r.odtCumplidos,
-
-                                        r.odtIncumplidos
-
-                                    ]
-
-                                }]
-
-                            },
-
-
-                            options: {
-
-                                responsive: true,
-
-                                maintainAspectRatio: false,
-
-
-                                cutout: "65%",
-
-
-                                plugins: {
-
-                                    legend: {
-
-                                        position:
-                                            "bottom",
-
-                                        labels: {
-
-                                            color:
-                                                "#cbd5e1"
-
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-
-                        }
-                    )
-
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Error creando gráfico ODT:",
-                    error
-                );
-
-            }
-
-        }
-
-
-        /*
-            Gráfico Furgón.
-        */
-
-        if (canvasFurgon) {
-
-            try {
-
-                charts.push(
-
-                    new Chart(
-                        canvasFurgon,
-                        {
-
-                            type: "doughnut",
-
-
-                            data: {
-
-                                labels: [
-                                    "Cumplidos",
-                                    "Incumplidos"
-                                ],
-
-
-                                datasets: [{
-
-                                    data: [
-
-                                        r.furgonCumplidos,
-
-                                        r.furgonIncumplidos
-
-                                    ]
-
-                                }]
-
-                            },
-
-
-                            options: {
-
-                                responsive: true,
-
-                                maintainAspectRatio: false,
-
-
-                                cutout: "65%",
-
-
-                                plugins: {
-
-                                    legend: {
-
-                                        position:
-                                            "bottom",
-
-                                        labels: {
-
-                                            color:
-                                                "#cbd5e1"
-
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-
-                        }
-                    )
-
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Error creando gráfico Furgón:",
-                    error
-                );
-
-            }
-
-        }
-
+    function colores() {
+        return temaClaro
+            ? { ok: "#16a34a", bad: "#dc2626", txt: "#334155", grid: "rgba(15,23,42,.1)" }
+            : { ok: "#22c55e", bad: "#ef4444", txt: "#cbd5e1", grid: "rgba(255,255,255,.08)" };
     }
 
+    function dona(id, ok, bad) {
 
-    /* ============================================================
-       DESTRUIR GRÁFICOS
-       ============================================================ */
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+
+        const c = colores();
+        const total = ok + bad;
+
+        charts.push(new Chart(canvas, {
+            type: "doughnut",
+            data: {
+                labels: ["Cumplidos", "Incumplidos"],
+                datasets: [{ data: [ok, bad], backgroundColor: [c.ok, c.bad], borderWidth: 0 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: "66%",
+                plugins: {
+                    legend: { position: "bottom", labels: { color: c.txt, font: { size: 15 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return " " + ctx.label + ": " + ctx.parsed + " (" + pct(ctx.parsed, total).toFixed(1) + "%)";
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                id: "centro",
+                afterDraw: function(chart) {
+                    const a = chart.chartArea, g = chart.ctx;
+                    g.save();
+                    g.textAlign = "center"; g.textBaseline = "middle";
+                    g.fillStyle = c.txt;
+                    g.font = "700 34px sans-serif";
+                    g.fillText(pct(ok, total).toFixed(1) + "%", (a.left + a.right) / 2, (a.top + a.bottom) / 2);
+                    g.restore();
+                }
+            }]
+        }));
+    }
 
     function destruirGraficos() {
-
-        charts.forEach(
-            function (chart) {
-
-                try {
-
-                    if (chart) {
-
-                        chart.destroy();
-
-                    }
-
-                } catch (error) {
-
-                    console.warn(
-                        "No se pudo destruir un gráfico:",
-                        error
-                    );
-
-                }
-
-            }
-        );
-
-
+        charts.forEach(function(c) { try { c.destroy(); } catch (e) { /* nada */ } });
         charts = [];
-
     }
 
 
     /* ============================================================
-       UTILIDADES
+       CERRAR / PANTALLA COMPLETA
        ============================================================ */
 
-    function agrupar(
-        array,
-        callback
-    ) {
-
-        if (!Array.isArray(array)) {
-
-            return {};
-
-        }
-
-
-        return array.reduce(
-            function (
-                resultado,
-                elemento
-            ) {
-
-                let clave;
-
-
-                try {
-
-                    clave =
-                        callback(elemento);
-
-                } catch (error) {
-
-                    clave =
-                        "Sin información";
-
-                }
-
-
-                clave =
-                    String(
-                        clave ??
-                        "Sin información"
-                    ).trim();
-
-
-                if (!clave) {
-
-                    clave =
-                        "Sin información";
-
-                }
-
-
-                if (!resultado[clave]) {
-
-                    resultado[clave] = {
-
-                        total: 0,
-
-                        viajes: []
-
-                    };
-
-                }
-
-
-                resultado[clave].total++;
-
-
-                resultado[clave]
-                    .viajes
-                    .push(elemento);
-
-
-                return resultado;
-
-            },
-            {}
-        );
-
-    }
-
-
-    /* ============================================================
-       PARSEAR NÚMERO
-       ============================================================ */
-
-    function parseNumero(valor) {
-
-        if (
-            valor === null ||
-            valor === undefined ||
-            valor === ""
-        ) {
-
-            return 0;
-
-        }
-
-
-        let texto =
-            String(valor)
-                .trim();
-
-
-        if (!texto) {
-
-            return 0;
-
-        }
-
-
-        /*
-            Eliminamos espacios.
-        */
-
-        texto =
-            texto.replace(
-                /\s/g,
-                ""
-            );
-
-
-        /*
-            Caso:
-            12,5 -> 12.5
-        */
-
-        if (
-            texto.includes(",") &&
-            !texto.includes(".")
-        ) {
-
-            texto =
-                texto.replace(
-                    ",",
-                    "."
-                );
-
-        }
-
-
-        /*
-            Caso:
-            1.234,5 -> 1234.5
-        */
-
-        else if (
-            texto.includes(",") &&
-            texto.includes(".")
-        ) {
-
-            const ultimaComa =
-                texto.lastIndexOf(",");
-
-
-            const ultimoPunto =
-                texto.lastIndexOf(".");
-
-
-            if (
-                ultimaComa >
-                ultimoPunto
-            ) {
-
-                texto =
-                    texto
-                        .replace(
-                            /\./g,
-                            ""
-                        )
-                        .replace(
-                            ",",
-                            "."
-                        );
-
-            } else {
-
-                texto =
-                    texto.replace(
-                        /,/g,
-                        ""
-                    );
-
-            }
-
-        }
-
-
-        /*
-            Dejamos únicamente números,
-            signo negativo y punto decimal.
-        */
-
-        texto =
-            texto.replace(
-                /[^\d.-]/g,
-                ""
-            );
-
-
-        const numero =
-            parseFloat(
-                texto
-            );
-
-
-        return Number.isFinite(numero)
-            ? numero
-            : 0;
-
-    }
-
-
-    /* ============================================================
-       NORMALIZAR ESTADO
-       ============================================================ */
-
-    function normalizarEstado(valor) {
-
-        return String(
-            valor ?? ""
-        )
-            .trim()
-            .toUpperCase()
-            .normalize("NFD")
-            .replace(
-                /[\u0300-\u036f]/g,
-                ""
-            );
-
-    }
-
-
-    /* ============================================================
-       PORCENTAJE
-       ============================================================ */
-
-    function porcentaje(
-        valor,
-        total
-    ) {
-
-        const numeroValor =
-            Number(valor) || 0;
-
-
-        const numeroTotal =
-            Number(total) || 0;
-
-
-        if (
-            numeroTotal <= 0
-        ) {
-
-            return 0;
-
-        }
-
-
-        return Math.min(
-            100,
-            Math.max(
-                0,
-                (numeroValor /
-                    numeroTotal) *
-                    100
-            )
-        );
-
-    }
-
-
-    /* ============================================================
-       CLASE PORCENTAJE
-       ============================================================ */
-
-    function clasePorcentaje(
-        valor
-    ) {
-
-        const numero =
-            Number(valor) || 0;
-
-
-        if (numero >= 90) {
-
-            return "pv-good";
-
-        }
-
-
-        if (numero >= 70) {
-
-            return "pv-medium";
-
-        }
-
-
-        return "pv-bad";
-
-    }
-
-
-    /* ============================================================
-       ESTADO
-       ============================================================ */
-
-    function estadoClase(
-        valor
-    ) {
-
-        const estado =
-            normalizarEstado(
-                valor
-            );
-
-
-        if (
-            estado === "CUMPLIDO" ||
-            estado === "COMPLETADO" ||
-            estado === "OK"
-        ) {
-
-            return "pv-status-good";
-
-        }
-
-
-        if (!estado) {
-
-            return "pv-status-neutral";
-
-        }
-
-
-        return "pv-status-bad";
-
-    }
-
-
-    /* ============================================================
-       NIVEL DE CUMPLIMIENTO
-       ============================================================ */
-
-    function obtenerNivelCumplimiento(
-        porcentaje
-    ) {
-
-        if (porcentaje >= 95) {
-
-            return "Nivel de cumplimiento excelente";
-
-        }
-
-
-        if (porcentaje >= 85) {
-
-            return "Nivel de cumplimiento satisfactorio";
-
-        }
-
-
-        if (porcentaje >= 70) {
-
-            return "Nivel de cumplimiento moderado";
-
-        }
-
-
-        return "Nivel de cumplimiento que requiere atención";
-
-    }
-
-
-    /* ============================================================
-       FECHAS
-       ============================================================ */
-
-    function obtenerFechaMin(
-        viajes
-    ) {
-
-        const fechas =
-            viajes
-                .map(
-                    function (v) {
-
-                        return v.fecha;
-
-                    }
-                )
-                .filter(Boolean);
-
-
-        if (!fechas.length) {
-
-            return "";
-
-        }
-
-
-        fechas.sort(
-            compararFechas
-        );
-
-
-        return fechas[0] || "";
-
-    }
-
-
-    function obtenerFechaMax(
-        viajes
-    ) {
-
-        const fechas =
-            viajes
-                .map(
-                    function (v) {
-
-                        return v.fecha;
-
-                    }
-                )
-                .filter(Boolean);
-
-
-        if (!fechas.length) {
-
-            return "";
-
-        }
-
-
-        fechas.sort(
-            compararFechas
-        );
-
-
-        return fechas[
-            fechas.length - 1
-        ] || "";
-
-    }
-
-
-    /* ============================================================
-       COMPARAR FECHAS
-       ============================================================ */
-
-    function compararFechas(
-        a,
-        b
-    ) {
-
-        const fechaA =
-            convertirFecha(
-                a
-            );
-
-
-        const fechaB =
-            convertirFecha(
-                b
-            );
-
-
-        /*
-            Si ambas se pueden convertir,
-            comparación cronológica real.
-        */
-
-        if (
-            fechaA !== null &&
-            fechaB !== null
-        ) {
-
-            return (
-                fechaA.getTime() -
-                fechaB.getTime()
-            );
-
-        }
-
-
-        /*
-            Fallback alfabético.
-        */
-
-        return String(a).localeCompare(
-            String(b),
-            undefined,
-            {
-                numeric: true,
-                sensitivity: "base"
-            }
-        );
-
-    }
-
-
-    /* ============================================================
-       CONVERTIR FECHA
-       ============================================================ */
-
-    function convertirFecha(
-        valor
-    ) {
-
-        if (!valor) {
-
-            return null;
-
-        }
-
-
-        const texto =
-            String(valor)
-                .trim();
-
-
-        /*
-            DD/MM/YYYY
-            DD-MM-YYYY
-        */
-
-        let match =
-            texto.match(
-                /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/
-            );
-
-
-        if (match) {
-
-            const dia =
-                Number(match[1]);
-
-
-            const mes =
-                Number(match[2]) - 1;
-
-
-            const anio =
-                Number(match[3]);
-
-
-            const fecha =
-                new Date(
-                    anio,
-                    mes,
-                    dia
-                );
-
-
-            if (
-                fecha.getFullYear() === anio &&
-                fecha.getMonth() === mes &&
-                fecha.getDate() === dia
-            ) {
-
-                return fecha;
-
-            }
-
-        }
-
-
-        /*
-            YYYY-MM-DD
-        */
-
-        match =
-            texto.match(
-                /^(\d{4})-(\d{1,2})-(\d{1,2})/
-            );
-
-
-        if (match) {
-
-            const fecha =
-                new Date(
-                    Number(match[1]),
-                    Number(match[2]) - 1,
-                    Number(match[3])
-                );
-
-
-            if (
-                !isNaN(
-                    fecha.getTime()
-                )
-            ) {
-
-                return fecha;
-
-            }
-
-        }
-
-
-        const fechaNativa =
-            new Date(texto);
-
-
-        if (
-            !isNaN(
-                fechaNativa.getTime()
-            )
-        ) {
-
-            return fechaNativa;
-
-        }
-
-
-        return null;
-
-    }
-
-
-    /* ============================================================
-       FORMATEAR PERÍODO
-       ============================================================ */
-
-    function formatearPeriodo(
-        inicio,
-        fin
-    ) {
-
-        if (
-            !inicio &&
-            !fin
-        ) {
-
-            return "Período seleccionado";
-
-        }
-
-
-        if (
-            inicio === fin
-        ) {
-
-            return inicio;
-
-        }
-
-
-        return `${inicio} — ${fin}`;
-
-    }
-
-
-    /* ============================================================
-       ESCAPAR HTML
-       ============================================================ */
-
-    function escapeHTML(
-        valor
-    ) {
-
-        return String(
-            valor ?? ""
-        )
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
-
-    }
-
-
-    /* ============================================================
-       CERRAR PRESENTACIÓN
-       ============================================================ */
-
-    function cerrarPresentacion() {
+    function cerrar() {
 
         destruirGraficos();
+        clearTimeout(idleTimer);
 
-
-        if (
-            document.fullscreenElement
-        ) {
-
-            document
-                .exitFullscreen()
-                .catch(
-                    function () {}
-                );
-
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(function() {});
         }
 
+        if (root) { root.remove(); root = null; }
 
-        if (presentacion) {
-
-            presentacion.remove();
-
-            presentacion = null;
-
-        }
-
-
-        slides = [];
-
-        slideActual = 0;
-
-        datosViajes = [];
-
-
-        document.body.style.overflow =
-            "";
-
+        slides = []; viajes = []; actual = 0;
+        document.body.style.overflow = "";
     }
 
-
-    /* ============================================================
-       PANTALLA COMPLETA
-       ============================================================ */
-
-    function intentarPantallaCompleta() {
-
-        if (!presentacion) {
-
-            return;
-
-        }
-
-
-        document.body.style.overflow =
-            "hidden";
-
-
-        if (
-            presentacion.requestFullscreen
-        ) {
-
-            presentacion
-                .requestFullscreen()
-                .catch(
-                    function () {}
-                );
-
-        }
-
+    function pantallaCompleta() {
+        if (root && root.requestFullscreen) root.requestFullscreen().catch(function() {});
     }
 
-
-    function alternarPantallaCompleta() {
-
-        if (!presentacion) {
-
-            return;
-
-        }
-
-
-        if (
-            document.fullscreenElement
-        ) {
-
-            document
-                .exitFullscreen()
-                .catch(
-                    function () {}
-                );
-
-            return;
-
-        }
-
-
-        intentarPantallaCompleta();
-
+    function alternarPantalla() {
+        if (document.fullscreenElement) document.exitFullscreen().catch(function() {});
+        else pantallaCompleta();
     }
 
 
@@ -4360,2052 +1226,300 @@
 
     function agregarEstilos() {
 
-        if (
-            document.getElementById(
-                "pv-estilos"
-            )
-        ) {
+        if (document.getElementById("pv-estilos")) return;
 
-            return;
-
-        }
-
-
-        const style =
-            document.createElement(
-                "style"
-            );
-
-
-        style.id =
-            "pv-estilos";
-
+        const style = document.createElement("style");
+        style.id = "pv-estilos";
 
         style.textContent = `
 
-        /* =====================================================
-           CONTENEDOR PRINCIPAL
-           ===================================================== */
-
-        #presentacionViajes {
-
-            position: fixed;
-
-            inset: 0;
-
-            z-index: 999999;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #07111f 0%,
-                    #0d1b2e 55%,
-                    #101d30 100%
-                );
-
-            color: #f8fafc;
-
-            font-family:
-                Inter,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
-
-            overflow: hidden;
-
-        }
-
-
-        #presentacionViajes * {
-
-            box-sizing: border-box;
-
-        }
-
-
-        /* =====================================================
-           FONDO
-           ===================================================== */
-
-        .pv-background {
-
-            position: absolute;
-
-            inset: 0;
-
-            background:
-                radial-gradient(
-                    circle at 20% 20%,
-                    rgba(13,110,253,.16),
-                    transparent 30%
-                ),
-
-                radial-gradient(
-                    circle at 80% 80%,
-                    rgba(13,202,240,.10),
-                    transparent 30%
-                );
-
-            pointer-events: none;
-
-        }
-
-
-        /* =====================================================
-           HEADER
-           ===================================================== */
-
-        .pv-header {
-
-            position: absolute;
-
-            top: 0;
-            left: 0;
-            right: 0;
-
-            height: 74px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            padding: 0 38px;
-
-            border-bottom:
-                1px solid
-                rgba(255,255,255,.08);
-
-            background:
-                rgba(5,15,28,.65);
-
-            backdrop-filter:
-                blur(14px);
-
-            z-index: 10;
-
-        }
-
-
-        .pv-brand {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 13px;
-
-        }
-
-
-        .pv-brand-icon {
-
-            width: 42px;
-            height: 42px;
-
-            border-radius: 12px;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #0d6efd,
-                    #0dcaf0
-                );
-
-            font-size: 20px;
-
-        }
-
-
-        .pv-brand strong {
-
-            display: block;
-
-            font-size: 13px;
-
-            letter-spacing: 1.5px;
-
-        }
-
-
-        .pv-brand small {
-
-            color: #94a3b8;
-
-        }
-
-
-        .pv-header-actions {
-
-            display: flex;
-
-            gap: 8px;
-
-        }
-
-
-        .pv-header-actions button {
-
-            width: 40px;
-            height: 40px;
-
-            border:
-                1px solid
-                rgba(255,255,255,.1);
-
-            background:
-                rgba(255,255,255,.06);
-
-            color: white;
-
-            border-radius: 10px;
-
-            cursor: pointer;
-
-        }
-
-
-        .pv-header-actions button:hover {
-
-            background:
-                rgba(255,255,255,.14);
-
-        }
-
-
-        /* =====================================================
-           SLIDES
-           ===================================================== */
-
-        .pv-slides {
-
-            position: absolute;
-
-            top: 74px;
-            bottom: 70px;
-            left: 0;
-            right: 0;
-
-            overflow: hidden;
-
-        }
-
-
-        .pv-slide {
-
-            position: absolute;
-
-            inset: 0;
-
-            padding:
-                55px 8vw 50px;
-
-            overflow-y: auto;
-
-            opacity: 0;
-
-            visibility: hidden;
-
-            transform:
-                translateX(35px)
-                scale(.98);
-
-            transition:
-                opacity .35s ease,
-                transform .35s ease,
-                visibility .35s ease;
-
-            pointer-events: none;
-
-        }
-
-
-        .pv-slide.active {
-
-            opacity: 1;
-
-            visibility: visible;
-
-            transform:
-                translateX(0)
-                scale(1);
-
-            pointer-events: auto;
-
-        }
-
-
-        /* =====================================================
-           TÍTULOS
-           ===================================================== */
-
-        .pv-slide-title {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 18px;
-
-            margin-bottom: 38px;
-
-        }
-
-
-        .pv-slide-title-icon {
-
-            width: 58px;
-            height: 58px;
-
-            border-radius: 16px;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            background:
-                rgba(13,110,253,.16);
-
-            color: #60a5fa;
-
-            font-size: 25px;
-
-            flex-shrink: 0;
-
-        }
-
-
-        .pv-slide-title h2 {
-
-            margin: 0;
-
-            font-size:
-                clamp(
-                    28px,
-                    3vw,
-                    42px
-                );
-
-            font-weight: 700;
-
-        }
-
-
-        .pv-slide-title p {
-
-            margin: 5px 0 0;
-
-            color: #94a3b8;
-
-        }
-
-
-        /* =====================================================
-           PORTADA
-           ===================================================== */
-
-        .pv-cover {
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            text-align: center;
-
-        }
-
-
-        .pv-cover-content {
-
-            max-width: 900px;
-
-        }
-
-
-        .pv-cover-icon {
-
-            width: 100px;
-            height: 100px;
-
-            margin:
-                0 auto 25px;
-
-            border-radius: 28px;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            font-size: 45px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #0d6efd,
-                    #0dcaf0
-                );
-
-            box-shadow:
-                0 20px 60px
-                rgba(13,110,253,.25);
-
-        }
-
-
-        .pv-eyebrow {
-
-            color: #60a5fa;
-
-            font-weight: 700;
-
-            letter-spacing: 4px;
-
-            font-size: 13px;
-
-        }
-
-
-        .pv-cover h1 {
-
-            font-size:
-                clamp(
-                    48px,
-                    7vw,
-                    90px
-                );
-
-            margin:
-                10px 0;
-
-            font-weight: 800;
-
-        }
-
-
-        .pv-cover-subtitle {
-
-            color: #94a3b8;
-
-            font-size: 20px;
-
-        }
-
-
-        .pv-period {
-
-            display: inline-flex;
-
-            align-items: center;
-
-            gap: 10px;
-
-            margin-top: 20px;
-
-            padding:
-                12px 20px;
-
-            border-radius: 999px;
-
-            background:
-                rgba(255,255,255,.06);
-
-            border:
-                1px solid
-                rgba(255,255,255,.08);
-
-        }
-
-
-        .pv-cover-stat {
-
-            margin-top: 45px;
-
-        }
-
-
-        .pv-cover-stat strong {
-
-            display: block;
-
-            font-size: 70px;
-
-            line-height: 1;
-
-        }
-
-
-        .pv-cover-stat span {
-
-            color: #94a3b8;
-
-        }
-
-
-        /* =====================================================
-           KPIs
-           ===================================================== */
-
-        .pv-kpi-grid {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    auto-fit,
-                    minmax(220px, 1fr)
-                );
-
-            gap: 18px;
-
-        }
-
-
-        .pv-kpi {
-
-            padding: 24px;
-
-            border-radius: 18px;
-
-            display: flex;
-
-            gap: 17px;
-
-            align-items: center;
-
-            background:
-                rgba(255,255,255,.055);
-
-            border:
-                1px solid
-                rgba(255,255,255,.08);
-
-        }
-
-
-        .pv-kpi-icon {
-
-            width: 52px;
-            height: 52px;
-
-            border-radius: 14px;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            font-size: 22px;
-
-            flex-shrink: 0;
-
-        }
-
-
-        .pv-kpi span {
-
-            display: block;
-
-            color: #94a3b8;
-
-            font-size: 13px;
-
-        }
-
-
-        .pv-kpi strong {
-
-            display: block;
-
-            font-size: 30px;
-
-            margin-top: 3px;
-
-        }
-
-
-        .pv-primary .pv-kpi-icon {
-
-            background:
-                rgba(13,110,253,.18);
-
-            color: #60a5fa;
-
-        }
-
-
-        .pv-success .pv-kpi-icon {
-
-            background:
-                rgba(25,135,84,.18);
-
-            color: #4ade80;
-
-        }
-
-
-        .pv-danger .pv-kpi-icon {
-
-            background:
-                rgba(220,53,69,.18);
-
-            color: #fb7185;
-
-        }
-
-
-        .pv-info .pv-kpi-icon {
-
-            background:
-                rgba(13,202,240,.18);
-
-            color: #67e8f9;
-
-        }
-
-
-        .pv-warning .pv-kpi-icon {
-
-            background:
-                rgba(255,193,7,.18);
-
-            color: #facc15;
-
-        }
-
-
-        /* =====================================================
-           MENSAJES
-           ===================================================== */
-
-        .pv-summary-message,
-        .pv-time-message,
-        .pv-final-message {
-
-            margin-top: 30px;
-
-            padding: 25px;
-
-            border-radius: 18px;
-
-            display: flex;
-
-            gap: 18px;
-
-            align-items: flex-start;
-
-            background:
-                rgba(13,110,253,.08);
-
-            border:
-                1px solid
-                rgba(96,165,250,.16);
-
-        }
-
-
-        .pv-summary-icon {
-
-            font-size: 28px;
-
-            color: #60a5fa;
-
-        }
-
-
-        .pv-summary-message p,
-        .pv-time-message p,
-        .pv-final-message p {
-
-            margin: 7px 0 0;
-
-            color: #cbd5e1;
-
-            line-height: 1.7;
-
-        }
-
-
-        /* =====================================================
-           GRÁFICOS
-           ===================================================== */
-
-        .pv-chart-layout {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    2,
-                    minmax(0, 1fr)
-                );
-
-            gap: 25px;
-
-            min-height: 420px;
-
-            height: 65%;
-
-        }
-
-
-        .pv-chart-card {
-
-            padding: 25px;
-
-            border-radius: 20px;
-
-            background:
-                rgba(255,255,255,.05);
-
-            border:
-                1px solid
-                rgba(255,255,255,.08);
-
-            min-width: 0;
-
-        }
-
-
-        .pv-chart-card h3 {
-
-            margin-top: 0;
-
-        }
-
-
-        .pv-chart-container {
-
-            height:
-                calc(100% - 50px);
-
-            min-height: 280px;
-
-            position: relative;
-
-        }
-
-
-        /* =====================================================
-           RANKINGS
-           ===================================================== */
-
-        .pv-ranking {
-
-            max-width: 1000px;
-
-            margin: auto;
-
-        }
-
-
-        .pv-ranking-row {
-
-            display: grid;
-
-            grid-template-columns:
-                50px 1fr 100px;
-
-            gap: 15px;
-
-            align-items: center;
-
-            padding: 16px;
-
-            margin-bottom: 10px;
-
-            border-radius: 13px;
-
-            background:
-                rgba(255,255,255,.045);
-
-        }
-
-
-        .pv-ranking-number {
-
-            width: 36px;
-            height: 36px;
-
-            border-radius: 10px;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            background:
-                rgba(13,110,253,.15);
-
-            color: #60a5fa;
-
-            font-weight: 700;
-
-        }
-
-
-        .pv-ranking-bar {
-
-            height: 7px;
-
-            margin-top: 8px;
-
-            border-radius: 99px;
-
-            background:
-                rgba(255,255,255,.08);
-
-            overflow: hidden;
-
-        }
-
-
-        .pv-ranking-bar span {
-
-            display: block;
-
-            height: 100%;
-
-            border-radius: inherit;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    #0d6efd,
-                    #0dcaf0
-                );
-
-        }
-
-
-        .pv-ranking-value {
-
-            text-align: right;
-
-            font-weight: 700;
-
-        }
-
-
-        .pv-ranking-value small {
-
-            display: block;
-
-            color: #64748b;
-
-            font-weight: 400;
-
-        }
-
-
-        /* =====================================================
-           TABLAS
-           ===================================================== */
-
-        .pv-table-wrapper,
-        .pv-detail-scroll {
-
-            overflow: auto;
-
-            max-height: 68%;
-
-            border-radius: 18px;
-
-            border:
-                1px solid
-                rgba(255,255,255,.08);
-
-        }
-
-
-        .pv-table {
-
-            width: 100%;
-
-            border-collapse: collapse;
-
-        }
-
-
-        .pv-table th {
-
-            position: sticky;
-
-            top: 0;
-
-            background: #122237;
-
-            color: #94a3b8;
-
-            text-transform: uppercase;
-
-            font-size: 11px;
-
-            letter-spacing: .8px;
-
-            z-index: 2;
-
-        }
-
-
-        .pv-table th,
-        .pv-table td {
-
-            padding:
-                14px 16px;
-
-            text-align: left;
-
-            border-bottom:
-                1px solid
-                rgba(255,255,255,.06);
-
-        }
-
-
-        .pv-table td {
-
-            color: #cbd5e1;
-
-        }
-
-
-        .pv-detail-table td {
-
-            vertical-align: top;
-
-        }
-
-
-        .pv-detail-note {
-
-            min-width: 220px;
-
-            max-width: 350px;
-
-            white-space: normal;
-
-            line-height: 1.45;
-
-        }
-
-
-        .pv-no-note {
-
-            color: #64748b;
-
-            font-style: italic;
-
-        }
-
-
-        .pv-no-data {
-
-            text-align: center !important;
-
-            color: #64748b !important;
-
-            padding: 30px !important;
-
-        }
-
-
-        .pv-percentage,
-        .pv-status {
-
-            padding:
-                5px 10px;
-
-            border-radius: 999px;
-
-            font-size: 12px;
-
-            font-weight: 700;
-
-            white-space: nowrap;
-
-        }
-
-
-        .pv-good,
-        .pv-status-good {
-
-            color: #4ade80;
-
-            background:
-                rgba(25,135,84,.14);
-
-        }
-
-
-        .pv-medium {
-
-            color: #facc15;
-
-            background:
-                rgba(255,193,7,.14);
-
-        }
-
-
-        .pv-bad,
-        .pv-status-bad {
-
-            color: #fb7185;
-
-            background:
-                rgba(220,53,69,.14);
-
-        }
-
-
-        .pv-status-neutral {
-
-            color: #cbd5e1;
-
-            background:
-                rgba(148,163,184,.12);
-
-        }
-
-
-        /* =====================================================
-           TIEMPOS
-           ===================================================== */
-
-        .pv-time-grid {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    3,
-                    1fr
-                );
-
-            gap: 20px;
-
-        }
-
-
-        /* =====================================================
-           INCIDENCIAS
-           ===================================================== */
-
-        .pv-incidencias-resumen {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    3,
-                    1fr
-                );
-
-            gap: 15px;
-
-            margin-bottom: 20px;
-
-        }
-
-
-        .pv-incidencia-total {
-
-            padding:
-                16px 20px;
-
-            border-radius: 14px;
-
-            background:
-                rgba(255,255,255,.045);
-
-            border:
-                1px solid
-                rgba(255,255,255,.07);
-
-        }
-
-
-        .pv-incidencia-total span {
-
-            display: block;
-
-            color: #94a3b8;
-
-            font-size: 12px;
-
-        }
-
-
-        .pv-incidencia-total strong {
-
-            display: block;
-
-            margin-top: 4px;
-
-            font-size: 26px;
-
-            color: #f8fafc;
-
-        }
-
-
-        .pv-incidencias {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    2,
-                    1fr
-                );
-
-            gap: 12px;
-
-        }
-
-
-        .pv-incidencia {
-
-            display: flex;
-
-            gap: 15px;
-
-            padding: 18px;
-
-            border-radius: 15px;
-
-            background:
-                rgba(220,53,69,.07);
-
-            border:
-                1px solid
-                rgba(220,53,69,.14);
-
-        }
-
-
-        .pv-incidencia-destacada {
-
-            position: relative;
-
-        }
-
-
-        .pv-incidencia-number {
-
-            min-width: 34px;
-
-            height: 34px;
-
-            border-radius: 10px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            background:
-                rgba(220,53,69,.16);
-
-            color: #fb7185;
-
-            font-weight: 800;
-
-        }
-
-
-        .pv-incidencia-content {
-
-            flex: 1;
-
-            min-width: 0;
-
-        }
-
-
-        .pv-incidencia-top {
-
-            display: flex;
-
-            justify-content: space-between;
-
-            align-items: flex-start;
-
-            gap: 20px;
-
-        }
-
-
-        .pv-incidencia-conductor {
-
-            display: block;
-
-            font-size: 15px;
-
-        }
-
-
-        .pv-incidencia-fecha {
-
-            display: block;
-
-            margin-top: 3px;
-
-            color: #64748b;
-
-            font-size: 11px;
-
-        }
-
-
-        .pv-incidencia-badge {
-
-            display: inline-flex;
-
-            align-items: center;
-
-            gap: 5px;
-
-            padding:
-                5px 9px;
-
-            border-radius: 999px;
-
-            background:
-                rgba(220,53,69,.14);
-
-            color: #fb7185;
-
-            font-size: 10px;
-
-            font-weight: 800;
-
-            white-space: nowrap;
-
-        }
-
-
-        .pv-incidencia-ruta {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 9px;
-
-            margin-top: 14px;
-
-            font-weight: 600;
-
-            color: #e2e8f0;
-
-            flex-wrap: wrap;
-
-        }
-
-
-        .pv-incidencia-ruta i {
-
-            color: #60a5fa;
-
-        }
-
-
-        .pv-incidencia-datos {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    4,
-                    1fr
-                );
-
-            gap: 10px;
-
-            margin-top: 15px;
-
-            padding-top: 14px;
-
-            border-top:
-                1px solid
-                rgba(255,255,255,.06);
-
-        }
-
-
-        .pv-incidencia-datos small {
-
-            display: block;
-
-            color: #64748b;
-
-            font-size: 9px;
-
-            font-weight: 700;
-
-            letter-spacing: .7px;
-
-        }
-
-
-        .pv-incidencia-datos strong {
-
-            display: block;
-
-            margin-top: 3px;
-
-            color: #cbd5e1;
-
-            font-size: 12px;
-
-        }
-
-
-        .pv-text-danger {
-
-            color: #fb7185 !important;
-
-        }
-
-
-        .pv-text-success {
-
-            color: #4ade80 !important;
-
-        }
-
-
-        .pv-incidencia-nota {
-
-            display: flex;
-
-            gap: 12px;
-
-            margin-top: 15px;
-
-            padding:
-                13px 15px;
-
-            border-radius: 11px;
-
-            background:
-                rgba(255,193,7,.055);
-
-            border:
-                1px solid
-                rgba(255,193,7,.12);
-
-        }
-
-
-        .pv-nota-icon {
-
-            color: #facc15;
-
-            font-size: 17px;
-
-            padding-top: 2px;
-
-        }
-
-
-        .pv-incidencia-nota small {
-
-            display: block;
-
-            color: #facc15;
-
-            font-size: 9px;
-
-            font-weight: 800;
-
-            letter-spacing: .8px;
-
-        }
-
-
-        .pv-incidencia-nota p {
-
-            margin: 4px 0 0;
-
-            color: #cbd5e1;
-
-            font-size: 12px;
-
-            line-height: 1.5;
-
-            overflow-wrap: anywhere;
-
-        }
-
-
-        .pv-incidencias-mas {
-
-            margin-top: 15px;
-
-            text-align: center;
-
-            color: #64748b;
-
-            font-size: 11px;
-
-        }
-
-
-        .pv-incidencias-mas i {
-
-            color: #60a5fa;
-
-            margin-right: 5px;
-
-        }
-
-
-        /* =====================================================
-           SIN INCIDENCIAS
-           ===================================================== */
-
-        .pv-empty {
-
-            height: 60%;
-
-            display: flex;
-
-            flex-direction: column;
-
-            align-items: center;
-
-            justify-content: center;
-
-            text-align: center;
-
-        }
-
-
-        .pv-empty i {
-
-            font-size: 80px;
-
-            color: #4ade80;
-
-        }
-
-
-        .pv-empty h2 {
-
-            margin-bottom: 5px;
-
-        }
-
-
-        .pv-empty p {
-
-            color: #94a3b8;
-
-        }
-
-
-        .pv-empty-small {
-
-            text-align: center;
-
-            padding: 50px 20px;
-
-            color: #64748b;
-
-        }
-
-
-        .pv-empty-small i {
-
-            display: block;
-
-            font-size: 45px;
-
-            margin-bottom: 10px;
-
-            color: #60a5fa;
-
-        }
-
-
-        /* =====================================================
-           CONCLUSIONES
-           ===================================================== */
-
-        .pv-conclusion {
-
-            text-align: center;
-
-        }
-
-
-        .pv-conclusion-score {
-
-            max-width: 650px;
-
-            margin:
-                0 auto 35px;
-
-        }
-
-
-        .pv-conclusion-score span {
-
-            color: #94a3b8;
-
-        }
-
-
-        .pv-conclusion-score strong {
-
-            display: block;
-
-            font-size: 75px;
-
-            margin: 5px 0;
-
-        }
-
-
-        .pv-score-bar {
-
-            height: 14px;
-
-            border-radius: 99px;
-
-            background:
-                rgba(255,255,255,.08);
-
-            overflow: hidden;
-
-        }
-
-
-        .pv-score-bar span {
-
-            display: block;
-
-            height: 100%;
-
-            border-radius: inherit;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    #0d6efd,
-                    #20c997
-                );
-
-        }
-
-
-        .pv-conclusion-score small {
-
-            display: block;
-
-            margin-top: 10px;
-
-            color: #4ade80;
-
-        }
-
-
-        .pv-conclusion-grid {
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(
-                    3,
-                    1fr
-                );
-
-            max-width: 900px;
-
-            margin: auto;
-
-            gap: 15px;
-
-        }
-
-
-        .pv-conclusion-grid > div {
-
-            padding: 20px;
-
-            border-radius: 16px;
-
-            background:
-                rgba(255,255,255,.05);
-
-        }
-
-
-        .pv-conclusion-grid i {
-
-            display: block;
-
-            font-size: 25px;
-
-            color: #60a5fa;
-
-        }
-
-
-        .pv-conclusion-grid strong {
-
-            display: block;
-
-            font-size: 30px;
-
-            margin: 5px;
-
-        }
-
-
-        .pv-conclusion-grid span {
-
-            color: #94a3b8;
-
-            font-size: 13px;
-
-        }
-
-
-        .pv-final {
-
-            margin-top: 30px;
-
-            display: flex;
-
-            flex-direction: column;
-
-            gap: 5px;
-
-            color: #64748b;
-
-            font-size: 12px;
-
-            letter-spacing: 1px;
-
-        }
-
-
-        /* =====================================================
-           NAVEGACIÓN
-           ===================================================== */
-
-        .pv-navigation {
-
-            position: absolute;
-
-            top: 50%;
-
-            transform:
-                translateY(-50%);
-
-            width: 48px;
-            height: 48px;
-
-            border-radius: 50%;
-
-            border:
-                1px solid
-                rgba(255,255,255,.1);
-
-            background:
-                rgba(255,255,255,.06);
-
-            color: white;
-
-            z-index: 20;
-
-            cursor: pointer;
-
-        }
-
-
-        .pv-navigation:hover {
-
-            background:
-                rgba(13,110,253,.35);
-
-        }
-
-
-        .pv-prev {
-
-            left: 20px;
-
-        }
-
-
-        .pv-next {
-
-            right: 20px;
-
-        }
-
-
-        /* =====================================================
-           FOOTER
-           ===================================================== */
-
-        .pv-footer {
-
-            position: absolute;
-
-            bottom: 0;
-            left: 0;
-            right: 0;
-
-            min-height: 70px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            gap: 25px;
-
-            border-top:
-                1px solid
-                rgba(255,255,255,.08);
-
-            background:
-                rgba(5,15,28,.65);
-
-            backdrop-filter:
-                blur(14px);
-
-            z-index: 10;
-
-        }
-
-
-        .pv-progress {
-
-            display: flex;
-
-            gap: 6px;
-
-            max-width: 70vw;
-
-            overflow-x: auto;
-
-            padding: 4px;
-
-        }
-
-
-        .pv-progress button {
-
-            width: 24px;
-            height: 4px;
-
-            flex: 0 0 auto;
-
-            border: none;
-
-            border-radius: 99px;
-
-            background:
-                rgba(255,255,255,.15);
-
-            cursor: pointer;
-
-            transition:
-                .2s ease;
-
-        }
-
-
-        .pv-progress button.active {
-
-            width: 45px;
-
-            background: #0d6efd;
-
-        }
-
-
-        .pv-counter {
-
-            color: #64748b;
-
-            font-size: 13px;
-
-            white-space: nowrap;
-
-        }
-
-
-        /* =====================================================
-           SCROLLBAR
-           ===================================================== */
-
-        #presentacionViajes ::-webkit-scrollbar {
-
-            width: 8px;
-
-            height: 8px;
-
-        }
-
-
-        #presentacionViajes ::-webkit-scrollbar-track {
-
-            background:
-                rgba(255,255,255,.03);
-
-        }
-
-
-        #presentacionViajes ::-webkit-scrollbar-thumb {
-
-            background:
-                rgba(148,163,184,.25);
-
-            border-radius: 99px;
-
-        }
-
-
-        #presentacionViajes ::-webkit-scrollbar-thumb:hover {
-
-            background:
-                rgba(148,163,184,.4);
-
-        }
-
-
-        /* =====================================================
-           RESPONSIVE
-           ===================================================== */
-
-        @media(max-width: 1100px) {
-
-            .pv-incidencias {
-
-                grid-template-columns:
-                    1fr;
-
-            }
-
-        }
-
-
-        @media(max-width: 900px) {
-
-            .pv-chart-layout,
-            .pv-time-grid,
-            .pv-conclusion-grid {
-
-                grid-template-columns:
-                    1fr;
-
-            }
-
-
-            .pv-incidencias-resumen {
-
-                grid-template-columns:
-                    1fr 1fr;
-
-            }
-
-
-            .pv-incidencia-datos {
-
-                grid-template-columns:
-                    1fr 1fr;
-
-            }
-
-
-            .pv-slide {
-
-                padding:
-                    35px 55px;
-
-            }
-
-
-            .pv-ranking-row {
-
-                grid-template-columns:
-                    40px 1fr 70px;
-
-            }
-
-
-            .pv-chart-layout {
-
-                height: auto;
-
-            }
-
-
-            .pv-chart-card {
-
-                min-height: 380px;
-
-            }
-
-        }
-
-
-        @media(max-width: 600px) {
-
-            .pv-header {
-
-                padding:
-                    0 15px;
-
-            }
-
-
-            .pv-brand small {
-
-                display: none;
-
-            }
-
-
-            .pv-slide {
-
-                padding:
-                    25px 30px;
-
-            }
-
-
-            .pv-navigation {
-
-                display: none;
-
-            }
-
-
-            .pv-incidencias-resumen {
-
-                grid-template-columns:
-                    1fr;
-
-            }
-
-
-            .pv-incidencia-top {
-
-                flex-direction: column;
-
-                gap: 10px;
-
-            }
-
-
-            .pv-incidencia-datos {
-
-                grid-template-columns:
-                    1fr 1fr;
-
-            }
-
-
-            .pv-slide-title {
-
-                align-items: flex-start;
-
-            }
-
-
-            .pv-slide-title-icon {
-
-                width: 45px;
-                height: 45px;
-
-                font-size: 19px;
-
-            }
-
-
-            .pv-slide-title h2 {
-
-                font-size: 27px;
-
-            }
-
-
-            .pv-cover h1 {
-
-                font-size: 48px;
-
-            }
-
-
-            .pv-cover-subtitle {
-
-                font-size: 16px;
-
-            }
-
-
-            .pv-cover-stat strong {
-
-                font-size: 55px;
-
-            }
-
-
-            .pv-conclusion-score strong {
-
-                font-size: 55px;
-
-            }
-
-
-            .pv-footer {
-
-                gap: 10px;
-
-                padding:
-                    0 15px;
-
-            }
-
-
-            .pv-progress {
-
-                max-width: 60vw;
-
-            }
-
-        }
-
+        #presentacionViajes{
+            --bg1:#07111f;--bg2:#0d1b2e;--card:rgba(255,255,255,.055);--card2:rgba(255,255,255,.035);
+            --line:rgba(255,255,255,.09);--txt:#f8fafc;--txt2:#cbd5e1;--mut:#94a3b8;--mut2:#64748b;
+            --acc:#60a5fa;--ok:#4ade80;--bad:#fb7185;--warn:#facc15;--bar:rgba(5,15,28,.78);--th:#122237;
+            position:fixed;inset:0;z-index:999999;color:var(--txt);overflow:hidden;
+            background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 55%,#101d30 100%);
+            font-family:Inter,"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+            font-size:17px;
+        }
+        #presentacionViajes.pv-light{
+            --bg1:#f1f5fb;--bg2:#e6edf8;--card:#ffffff;--card2:#f7f9fc;--line:rgba(15,23,42,.12);
+            --txt:#0f172a;--txt2:#334155;--mut:#64748b;--mut2:#94a3b8;--acc:#2563eb;--ok:#15803d;--bad:#dc2626;
+            --warn:#b45309;--bar:rgba(255,255,255,.88);--th:#e2e8f0;
+            background:linear-gradient(135deg,var(--bg1),var(--bg2));
+        }
+        #presentacionViajes *{box-sizing:border-box}
+        #presentacionViajes button{font-family:inherit}
+
+        .pv-background{position:absolute;inset:0;pointer-events:none;
+            background:radial-gradient(circle at 20% 20%,rgba(13,110,253,.14),transparent 30%),
+                       radial-gradient(circle at 80% 80%,rgba(13,202,240,.09),transparent 30%)}
+
+        /* ---- Header ---- */
+        .pv-header{position:absolute;top:0;left:0;right:0;height:72px;display:flex;align-items:center;
+            justify-content:space-between;gap:16px;padding:0 28px;border-bottom:1px solid var(--line);
+            background:var(--bar);backdrop-filter:blur(14px);z-index:10}
+        .pv-brand{display:flex;align-items:center;gap:12px;flex:none}
+        .pv-brand-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:20px;color:#fff;
+            background:linear-gradient(135deg,#0d6efd,#0dcaf0)}
+        .pv-brand strong{display:block;font-size:13px;letter-spacing:1.5px}
+        .pv-brand small{color:var(--mut)}
+        .pv-tabs{display:flex;gap:4px;overflow-x:auto;flex:1;justify-content:center}
+        .pv-tabs button{border:0;background:transparent;color:var(--mut);font-size:13px;font-weight:600;
+            padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:.2s}
+        .pv-tabs button:hover{color:var(--txt);background:var(--card)}
+        .pv-tabs button.active{background:var(--acc);color:#fff}
+        .pv-header-actions{display:flex;gap:8px;flex:none}
+        .pv-header-actions button{width:40px;height:40px;border:1px solid var(--line);background:var(--card);
+            color:var(--txt);border-radius:10px;cursor:pointer;font-size:16px}
+        .pv-header-actions button:hover{background:var(--acc);color:#fff}
+
+        /* ---- Slides ---- */
+        .pv-slides{position:absolute;top:72px;bottom:64px;left:0;right:0;overflow:hidden}
+        .pv-slide{position:absolute;inset:0;padding:40px 7vw 36px;overflow-y:auto;opacity:0;visibility:hidden;
+            transform:translateX(30px) scale(.985);pointer-events:none;
+            transition:opacity .3s ease,transform .3s ease,visibility .3s}
+        .pv-slide.active{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+
+        .pv-slide-title{display:flex;align-items:center;gap:18px;margin-bottom:28px}
+        .pv-slide-title-icon{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;
+            background:rgba(96,165,250,.16);color:var(--acc);font-size:25px;flex:none}
+        .pv-slide-title h2{margin:0;font-size:clamp(28px,3vw,40px);font-weight:800}
+        .pv-slide-title p{margin:4px 0 0;color:var(--mut)}
+        .pv-pagina{margin-left:auto;padding:6px 14px;border-radius:999px;background:var(--card);
+            border:1px solid var(--line);color:var(--mut);font-weight:700;font-size:14px}
+        .pv-subtitulo{margin:26px 0 12px;font-size:18px;color:var(--txt2)}
+
+        /* ---- Portada ---- */
+        .pv-cover{display:flex;align-items:center;justify-content:center;text-align:center}
+        .pv-cover-content{max-width:900px}
+        .pv-cover-icon{width:100px;height:100px;margin:0 auto 24px;border-radius:28px;display:grid;place-items:center;
+            font-size:45px;color:#fff;background:linear-gradient(135deg,#0d6efd,#0dcaf0);box-shadow:0 20px 60px rgba(13,110,253,.25)}
+        .pv-eyebrow{color:var(--acc);font-weight:800;letter-spacing:4px;font-size:13px}
+        .pv-cover h1{font-size:clamp(46px,7vw,88px);margin:10px 0;font-weight:800}
+        .pv-cover-subtitle{color:var(--mut);font-size:20px}
+        .pv-period{display:inline-flex;align-items:center;gap:10px;margin-top:18px;padding:12px 20px;
+            border-radius:999px;background:var(--card);border:1px solid var(--line)}
+        .pv-cover-stat{margin-top:40px}
+        .pv-cover-stat strong{display:block;font-size:72px;line-height:1}
+        .pv-cover-stat span{color:var(--mut)}
+
+        /* ---- Agenda ---- */
+        .pv-agenda{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:1100px}
+        .pv-agenda-item{display:flex;align-items:center;gap:14px;padding:18px 20px;text-align:left;cursor:pointer;
+            border-radius:16px;background:var(--card);border:1px solid var(--line);color:var(--txt);transition:.2s}
+        .pv-agenda-item:hover{transform:translateX(5px);border-color:var(--acc);background:var(--card2)}
+        .pv-agenda-n{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;
+            background:rgba(96,165,250,.16);color:var(--acc);flex:none}
+        .pv-agenda-ico{font-size:22px;color:var(--acc)}
+        .pv-agenda-item span:nth-child(3){flex:1;display:flex;flex-direction:column}
+        .pv-agenda-item strong{font-size:18px}
+        .pv-agenda-item small{color:var(--mut);font-size:13px}
+        .pv-agenda-item>i{color:var(--mut)}
+
+        /* ---- KPIs ---- */
+        .pv-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+        .pv-kpi-3{grid-template-columns:repeat(3,1fr)}
+        .pv-kpi{padding:22px;border-radius:18px;display:flex;gap:16px;align-items:center;background:var(--card);border:1px solid var(--line)}
+        .pv-kpi-icon{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;font-size:23px;flex:none}
+        .pv-kpi span{display:block;color:var(--mut);font-size:14px}
+        .pv-kpi strong{display:block;font-size:32px;margin-top:2px;line-height:1.1}
+        .pv-kpi em{display:block;font-style:normal;color:var(--mut2);font-size:12px;margin-top:2px}
+        .pv-primary .pv-kpi-icon{background:rgba(13,110,253,.18);color:#60a5fa}
+        .pv-success .pv-kpi-icon{background:rgba(25,135,84,.18);color:var(--ok)}
+        .pv-danger .pv-kpi-icon{background:rgba(220,53,69,.18);color:var(--bad)}
+        .pv-info .pv-kpi-icon{background:rgba(13,202,240,.18);color:#22b8d8}
+        .pv-warning .pv-kpi-icon{background:rgba(255,193,7,.18);color:var(--warn)}
+
+        .pv-message{margin-top:26px;padding:24px;border-radius:18px;display:flex;gap:18px;align-items:flex-start;
+            background:rgba(13,110,253,.08);border:1px solid rgba(96,165,250,.18)}
+        .pv-message>i{font-size:28px;color:var(--acc)}
+        .pv-message p{margin:6px 0 0;color:var(--txt2);line-height:1.7}
+
+        /* ---- Gráficos ---- */
+        .pv-chart-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;height:calc(100% - 110px);min-height:380px}
+        .pv-card{padding:24px;border-radius:20px;background:var(--card);border:1px solid var(--line);min-width:0}
+        .pv-card h3{margin:0 0 6px}
+        .pv-card-grande{height:calc(100% - 110px);min-height:380px}
+        .pv-chart-box{position:relative;height:calc(100% - 40px);min-height:300px}
+        .pv-card-grande .pv-chart-box{height:100%}
+
+        /* ---- Rankings ---- */
+        .pv-ranking{max-width:1050px}
+        .pv-rank-row{display:grid;grid-template-columns:48px 1fr 110px;gap:16px;align-items:center;padding:14px 18px;
+            margin-bottom:10px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+        .pv-rank-n{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:800;
+            background:rgba(220,53,69,.15);color:var(--bad)}
+        .pv-rank-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+        .pv-rank-info strong{font-size:18px}
+        .pv-rank-info small{color:var(--mut)}
+        .pv-bar{height:8px;margin-top:6px;border-radius:99px;background:var(--line);overflow:hidden}
+        .pv-bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#ef4444)}
+        .pv-rank-val{text-align:right;font-size:28px;font-weight:800}
+        .pv-rank-val small{display:block;font-size:12px;color:var(--mut2);font-weight:500}
+
+        /* ---- Tablas ---- */
+        .pv-table-wrap{overflow:auto;max-height:calc(100% - 100px);border-radius:16px;border:1px solid var(--line);background:var(--card2)}
+        .pv-table{width:100%;border-collapse:collapse}
+        .pv-table th{position:sticky;top:0;background:var(--th);color:var(--mut);text-transform:uppercase;
+            font-size:12px;letter-spacing:.8px;z-index:2;text-align:left;padding:14px 16px}
+        .pv-table td{padding:14px 16px;border-bottom:1px solid var(--line);color:var(--txt2);text-align:left;vertical-align:middle}
+        .pv-table tr:last-child td{border-bottom:0}
+        .pv-table tbody tr:hover td{background:var(--card)}
+        .pv-compacta th,.pv-compacta td{padding:10px 12px;font-size:14px}
+        .pv-nota-celda{max-width:340px;white-space:normal;line-height:1.4}
+        .pv-sin-nota{color:var(--mut2)}
+        .pv-vacio{text-align:center!important;color:var(--mut2)!important;padding:30px!important}
+
+        .pv-chip{display:inline-block;padding:5px 11px;border-radius:999px;font-size:13px;font-weight:800;white-space:nowrap}
+        .pv-good{color:var(--ok);background:rgba(25,135,84,.15)}
+        .pv-medium{color:var(--warn);background:rgba(255,193,7,.15)}
+        .pv-bad{color:var(--bad);background:rgba(220,53,69,.15)}
+        .pv-text-danger{color:var(--bad)!important}
+        .pv-text-warn{color:var(--warn);font-weight:700}
+
+        .pv-drill{color:inherit;text-decoration:none;border-bottom:1px dashed var(--acc);cursor:pointer}
+        .pv-drill:hover{color:var(--acc)}
+
+        /* ---- Incumplimientos ---- */
+        .pv-inc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+        .pv-inc{padding:20px;border-radius:18px;background:rgba(220,53,69,.07);border:1px solid rgba(220,53,69,.2);min-width:0}
+        .pv-inc-top{display:flex;align-items:center;gap:14px}
+        .pv-inc-top>div:nth-child(2){flex:1;min-width:0}
+        .pv-inc-top strong{font-size:18px}
+        .pv-inc-top small{display:block;color:var(--mut);margin-top:2px}
+        .pv-inc-n{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:800;
+            background:rgba(220,53,69,.18);color:var(--bad);flex:none}
+        .pv-inc-ruta{margin:14px 0 4px;font-weight:700;font-size:17px}
+        .pv-inc-ruta i{color:var(--acc);margin:0 4px}
+        .pv-inc-datos{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+        .pv-inc-datos small{display:block;color:var(--mut2);font-size:10px;font-weight:700;letter-spacing:.7px}
+        .pv-inc-datos b{display:block;margin-top:3px;font-size:14px}
+        .pv-inc-nota{display:flex;gap:12px;margin-top:14px;padding:14px 16px;border-radius:12px;
+            background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2)}
+        .pv-inc-nota>i{font-size:18px;color:var(--acc);padding-top:2px}
+        .pv-inc-nota small{display:block;font-size:10px;font-weight:800;letter-spacing:.8px;color:var(--acc)}
+        .pv-inc-nota p{margin:5px 0 0;line-height:1.5;color:var(--txt);font-size:15px;overflow-wrap:anywhere}
+        .pv-inc-nota.pv-sin{background:rgba(255,193,7,.08);border-color:rgba(255,193,7,.3)}
+        .pv-inc-nota.pv-sin>i,.pv-inc-nota.pv-sin small{color:var(--warn)}
+        .pv-inc-nota.pv-sin p{color:var(--mut);font-style:italic}
+
+        /* ---- Vacío ---- */
+        .pv-empty{text-align:center;padding:60px 20px}
+        .pv-empty i{font-size:80px;color:var(--ok)}
+        .pv-empty p{color:var(--mut)}
+
+        /* ---- Conclusiones ---- */
+        .pv-score{max-width:620px;margin:0 0 24px;text-align:center}
+        .pv-score span{color:var(--mut)}
+        .pv-score strong{display:block;font-size:72px;margin:2px 0;line-height:1.1}
+        .pv-score-bar{height:14px;border-radius:99px;background:var(--line);overflow:hidden}
+        .pv-score-bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#0d6efd,#20c997)}
+        .pv-score small{display:block;margin-top:8px;color:var(--ok)}
+        .pv-conclusion .pv-slide-title{margin-bottom:18px}
+        .pv-conclusion{display:block}
+        .pv-hallazgos{padding:22px 26px;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+        .pv-hallazgos h3{margin:0 0 10px;font-size:18px}
+        .pv-hallazgos ul{margin:0;padding-left:22px;line-height:1.9;color:var(--txt2)}
+        .pv-final{margin-top:26px;display:flex;flex-direction:column;gap:4px;color:var(--mut2);font-size:12px;letter-spacing:1px;text-align:center}
+
+        /* ---- Menú lateral ---- */
+        .pv-menu{position:absolute;top:72px;bottom:64px;left:0;width:330px;max-width:85vw;z-index:30;transform:translateX(-102%);
+            transition:transform .25s ease;background:var(--bar);backdrop-filter:blur(16px);border-right:1px solid var(--line);
+            display:flex;flex-direction:column}
+        .pv-menu.show{transform:none}
+        .pv-menu-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+        .pv-menu-head button{border:0;background:transparent;color:var(--mut);cursor:pointer;font-size:16px}
+        .pv-menu-lista{overflow-y:auto;padding:8px 10px 16px}
+        .pv-menu-sec{margin:14px 8px 6px;font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--acc)}
+        .pv-menu-item{display:flex;gap:10px;align-items:center;width:100%;border:0;background:transparent;color:var(--txt2);
+            padding:9px 10px;border-radius:10px;cursor:pointer;text-align:left;font-size:14px}
+        .pv-menu-item span{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:700;
+            background:var(--card);flex:none}
+        .pv-menu-item:hover{background:var(--card)}
+        .pv-menu-item.active{background:var(--acc);color:#fff}
+        .pv-menu-item.active span{background:rgba(255,255,255,.25)}
+
+        /* ---- Guion ---- */
+        .pv-notas{position:absolute;left:50%;bottom:78px;transform:translate(-50%,20px);width:min(900px,92vw);z-index:25;
+            padding:14px 20px;border-radius:16px;background:var(--bar);backdrop-filter:blur(16px);border:1px solid var(--acc);
+            opacity:0;visibility:hidden;transition:.25s}
+        .pv-notas.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+        .pv-notas-head{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--acc);margin-bottom:6px}
+        .pv-notas p{margin:0;line-height:1.6;color:var(--txt);font-size:16px}
+
+        /* ---- Navegación y footer ---- */
+        .pv-navigation{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;
+            border:1px solid var(--line);background:var(--card);color:var(--txt);z-index:20;cursor:pointer;transition:opacity .4s,background .2s}
+        .pv-navigation:hover{background:var(--acc);color:#fff}
+        .pv-prev{left:16px}.pv-next{right:16px}
+        .pv-idle .pv-navigation{opacity:0}
+        .pv-footer{position:absolute;bottom:0;left:0;right:0;min-height:64px;display:flex;align-items:center;justify-content:center;
+            gap:24px;border-top:1px solid var(--line);background:var(--bar);backdrop-filter:blur(14px);z-index:10}
+        .pv-progress{display:flex;gap:5px;max-width:72vw;overflow-x:auto;padding:4px}
+        .pv-progress button{width:16px;height:5px;flex:0 0 auto;border:0;border-radius:99px;background:var(--line);cursor:pointer;transition:.2s}
+        .pv-progress button.active{width:38px;background:var(--acc)}
+        .pv-counter{color:var(--mut);font-size:14px;font-weight:700;white-space:nowrap}
+
+        /* ---- Ayuda ---- */
+        .pv-ayuda{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(2,8,18,.7)}
+        .pv-ayuda.show{display:flex}
+        .pv-ayuda-box{width:min(520px,92vw);padding:28px;border-radius:20px;background:var(--bg2);border:1px solid var(--line)}
+        .pv-ayuda-box h3{margin:0 0 14px}
+        .pv-ayuda-box ul{list-style:none;margin:0 0 18px;padding:0;line-height:2.1;color:var(--txt2)}
+        .pv-ayuda-box kbd{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:13px;color:var(--txt)}
+        .pv-ayuda-box button{border:0;border-radius:10px;padding:10px 20px;background:var(--acc);color:#fff;font-weight:700;cursor:pointer}
+
+        /* ---- Desglose ---- */
+        .pv-drill-overlay{position:absolute;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+            padding:4vh 4vw;background:rgba(2,8,18,.72);backdrop-filter:blur(4px)}
+        .pv-drill-overlay.show{display:flex}
+        .pv-drill-box{width:min(1200px,100%);max-height:100%;display:flex;flex-direction:column;border-radius:20px;
+            background:var(--bg2);border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden}
+        .pv-drill-head{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line)}
+        .pv-drill-head small{color:var(--acc);font-weight:800;letter-spacing:1.2px;font-size:11px}
+        .pv-drill-head h3{margin:2px 0 0;font-size:24px}
+        .pv-drill-head button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--txt);cursor:pointer}
+        .pv-drill-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:16px 24px}
+        .pv-drill-kpis div{padding:10px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+        .pv-drill-kpis span{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+        .pv-drill-kpis b{display:block;font-size:22px;margin-top:2px}
+        .pv-drill-tags{display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 12px}
+        .pv-tag{padding:5px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13px;color:var(--txt2)}
+        .pv-drill-tabla{overflow:auto;margin:0 24px;border-radius:12px;border:1px solid var(--line);flex:1;min-height:0}
+        .pv-drill-pie{padding:12px 24px;font-size:12px;color:var(--mut2);text-align:right}
+
+        /* ---- Scrollbar ---- */
+        #presentacionViajes ::-webkit-scrollbar{width:8px;height:8px}
+        #presentacionViajes ::-webkit-scrollbar-track{background:transparent}
+        #presentacionViajes ::-webkit-scrollbar-thumb{background:rgba(148,163,184,.3);border-radius:99px}
+
+        /* ---- Responsive ---- */
+        @media(max-width:1100px){
+            .pv-inc-grid,.pv-agenda{grid-template-columns:1fr}
+            .pv-tabs{display:none}
+            .pv-drill-kpis{grid-template-columns:repeat(2,1fr)}
+        }
+        @media(max-width:900px){
+            .pv-chart-layout,.pv-kpi-3{grid-template-columns:1fr}
+            .pv-chart-layout{height:auto}
+            .pv-card{min-height:360px}
+            .pv-slide{padding:28px 48px}
+            .pv-inc-datos{grid-template-columns:1fr 1fr}
+        }
+        @media(max-width:600px){
+            .pv-header{padding:0 14px}
+            .pv-brand small{display:none}
+            .pv-slide{padding:22px 18px}
+            .pv-navigation{display:none}
+            .pv-slide-title-icon{width:44px;height:44px;font-size:19px}
+            .pv-slide-title h2{font-size:25px}
+            .pv-rank-row{grid-template-columns:40px 1fr 70px}
+        }
+        @media print{ #presentacionViajes{display:none!important} }
         `;
 
-
-        document.head.appendChild(
-            style
-        );
-
+        document.head.appendChild(style);
     }
-
 
 })();

@@ -18,245 +18,100 @@ public class ProgramacionController {
 
     private final ProgramacionService programacionService;
 
-    // =========================================================
-    // CONSTRUCTOR
-    // =========================================================
-
-    public ProgramacionController(
-            ProgramacionService programacionService) {
-
+    public ProgramacionController(ProgramacionService programacionService) {
         this.programacionService = programacionService;
     }
 
-
-    // =========================================================
-    // MOSTRAR PÁGINA DE PROGRAMACIONES
-    // =========================================================
-
+    // GET /programaciones  -> página
     @GetMapping
     public String mostrarProgramaciones(Model model) {
-
-        List<Programacion> programaciones =
-                programacionService.listarTodas();
-
-        model.addAttribute(
-                "programaciones",
-                programaciones
-        );
-
+        model.addAttribute("programaciones", programacionService.listarTodas());
         return "reporteDiario";
     }
 
-
-    // =========================================================
-    // LISTAR PROGRAMACIONES EN JSON
-    //
-    // ESTE ES EL ENDPOINT QUE NECESITA EL JAVASCRIPT
-    //
-    // GET:
-    // /programaciones/lista
-    // =========================================================
-
+    // GET /programaciones/lista  -> JSON
     @GetMapping("/lista")
     @ResponseBody
     public ResponseEntity<List<Programacion>> listarProgramaciones() {
-
         try {
-
-            List<Programacion> programaciones =
-                    programacionService.listarTodas();
-
-            if (programaciones == null) {
-
-                return ResponseEntity.ok(
-                        List.of()
-                );
-            }
-
-            return ResponseEntity.ok(
-                    programaciones
-            );
-
+            List<Programacion> lista = programacionService.listarTodas();
+            return ResponseEntity.ok(lista == null ? List.of() : lista);
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(List.of());
         }
     }
 
-
-    // =========================================================
-    // OBTENER PROGRAMACIÓN POR ID
-    //
-    // GET:
-    // /programaciones/{id}
-    // =========================================================
-
+    // GET /programaciones/{id}
     @GetMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<Programacion> obtenerPorId(
-            @PathVariable Integer id) {
-
+    public ResponseEntity<Programacion> obtenerPorId(@PathVariable Integer id) {
         try {
-
-            Optional<Programacion> programacion =
-                    programacionService.buscarPorId(id);
-
-            if (programacion.isEmpty()) {
-
-                return ResponseEntity
-                        .notFound()
-                        .build();
-            }
-
-            return ResponseEntity.ok(
-                    programacion.get()
-            );
-
+            Optional<Programacion> p = programacionService.buscarPorId(id);
+            return p.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(p.get());
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-
-    // =========================================================
-    // CREAR PROGRAMACIÓN
-    //
-    // POST:
-    // /programaciones/guardar
-    // =========================================================
-
+    // POST /programaciones/guardar
+    // CAMBIO: ahora devuelve el mensaje de error real (antes devolvía cuerpo vacío)
     @PostMapping("/guardar")
     @ResponseBody
-    public ResponseEntity<Programacion> guardar(
-            @RequestBody Programacion programacion) {
-
+    public ResponseEntity<?> guardar(@RequestBody Programacion programacion) {
         try {
-
-            Programacion nuevaProgramacion =
-                    programacionService.guardar(
-                            programacion
-                    );
-
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(nuevaProgramacion);
-
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(programacionService.guardar(programacion));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("No se pudo guardar el viaje: " + causaRaiz(e));
         }
     }
 
-
-    // =========================================================
-    // EDITAR PROGRAMACIÓN
-    //
-    // PUT:
-    // /programaciones/editar/{id}
-    // =========================================================
-
+    // PUT /programaciones/editar/{id}
     @PutMapping("/editar/{id}")
     @ResponseBody
-    public ResponseEntity<Programacion> editar(
-            @PathVariable Integer id,
-            @RequestBody Programacion programacion) {
-
+    public ResponseEntity<?> editar(@PathVariable Integer id, @RequestBody Programacion programacion) {
         try {
-
-            Optional<Programacion> existente =
-                    programacionService.buscarPorId(id);
-
-            if (existente.isEmpty()) {
-
-                return ResponseEntity
-                        .notFound()
-                        .build();
+            if (!programacionService.existe(id)) {
+                return ResponseEntity.notFound().build();
             }
-
-
-            // =================================================
-            // IMPORTANTE:
-            // EL ID VIENE DE LA URL
-            // =================================================
-
             programacion.setId(id);
-
-
-            Programacion actualizada =
-                    programacionService.actualizar(
-                            programacion
-                    );
-
-
-            return ResponseEntity.ok(
-                    actualizada
-            );
-
+            return ResponseEntity.ok(programacionService.actualizar(programacion));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("No se pudo actualizar el viaje: " + causaRaiz(e));
         }
     }
 
-
-    // =========================================================
-    // ELIMINAR PROGRAMACIÓN
-    //
-    // DELETE:
-    // /programaciones/eliminar/{id}
-    // =========================================================
-
+    // DELETE /programaciones/eliminar/{id}
     @DeleteMapping("/eliminar/{id}")
     @ResponseBody
-    public ResponseEntity<Void> eliminar(
-            @PathVariable Integer id) {
-
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         try {
-
-            boolean existe =
-                    programacionService.existe(id);
-
-
-            if (!existe) {
-
-                return ResponseEntity
-                        .notFound()
-                        .build();
+            if (!programacionService.existe(id)) {
+                return ResponseEntity.notFound().build();
             }
-
-
             programacionService.eliminar(id);
-
-
-            return ResponseEntity
-                    .noContent()
-                    .build();
-
-
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private String causaRaiz(Throwable e) {
+        Throwable t = e;
+        while (t.getCause() != null) {
+            t = t.getCause();
+        }
+        return t.getMessage() == null ? "error desconocido" : t.getMessage();
     }
 }

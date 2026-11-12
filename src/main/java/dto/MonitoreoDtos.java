@@ -26,6 +26,8 @@ public final class MonitoreoDtos {
             LocalDateTime fechaInicio,
             LocalDateTime fechaFin,
             String estado,
+            LocalDateTime fechaLlegadaDestino, 
+            LocalDateTime fechaSalidaDestino,
             long totalParadas) {}
 
     public record ParadaResponse(
@@ -38,13 +40,15 @@ public final class MonitoreoDtos {
             String motivo,
             String observaciones,
             String estado,
-            long duracionMinutos) {}
+            long duracionMinutos,
+            String fase) {}
 
     public record PuntoRecorridoResponse(
             LocalDateTime fechaHora,
             double latitud,
             double longitud,
-            Double velocidad) {}
+            Double velocidad,
+            String fase) {}
 
     /** Un viaje con sus paradas (para el reporte por rango de fechas). */
     public record ReporteViajeResponse(

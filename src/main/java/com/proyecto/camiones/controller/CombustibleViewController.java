@@ -8,6 +8,6 @@ public class CombustibleViewController {
 
     @GetMapping("/combustible")
     public String mostrarCombustible() {
-        return "combustibles";
+        return "combustible";
     }
 }

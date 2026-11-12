@@ -43,6 +43,10 @@ public class MonitoreoParada {
     @Column(name = "estado", length = 20)
     private String estado;
 
+    /** IDA o RETORNO (null en registros anteriores a este cambio). */
+    @Column(name = "fase", length = 10)
+    private String fase;
+
     public MonitoreoParada() {
     }
 
@@ -124,5 +128,13 @@ public class MonitoreoParada {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public String getFase() {
+        return fase;
+    }
+
+    public void setFase(String fase) {
+        this.fase = fase;
     }
 }

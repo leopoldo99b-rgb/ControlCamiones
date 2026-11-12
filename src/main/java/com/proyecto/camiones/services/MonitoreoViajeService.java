@@ -38,7 +38,12 @@ public class MonitoreoViajeService {
     private static final Logger log =
             LoggerFactory.getLogger(MonitoreoViajeService.class);
 
+    private static final String PROGRAMADO = "Programado";
     private static final String EN_CURSO = "En curso";
+    private static final String EN_DESTINO = "En destino";
+    private static final String EN_RETORNO = "En retorno";
+    private static final List<String> ABIERTOS =
+            List.of(PROGRAMADO, EN_CURSO, EN_DESTINO, EN_RETORNO);
     private static final String FINALIZADO = "Finalizado";
     private static final int MAX_VIAJES_REPORTE = 500;
 
@@ -67,17 +72,15 @@ public class MonitoreoViajeService {
             throw new IllegalArgumentException("El cuerpo de la solicitud es obligatorio.");
         }
 
-        // --- ID del viaje ingresado por el usuario ---------------------
-        if (r.idViaje() == null || r.idViaje() <= 0) {
-            throw new IllegalArgumentException(
-                    "El ID del viaje es obligatorio y debe ser un número mayor que cero.");
-        }
+        // --- ID del viaje: opcional. Si no se escribe, se asigna el siguiente libre.
+        Integer idNuevo = r.idViaje();
 
-        // Importante: con un ID asignado a mano, save() ACTUALIZARÍA el viaje
-        // si el ID ya existe. Por eso se valida antes de guardar.
-        if (viajeRepo.existsById(r.idViaje())) {
+        if (idNuevo == null || idNuevo <= 0) {
+            idNuevo = viajeRepo.siguienteId();
+        } else if (viajeRepo.existsById(idNuevo)) {
+            // Con un ID asignado a mano, save() ACTUALIZARÍA el viaje si ya existe.
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Ya existe un viaje con el ID " + r.idViaje() + ".");
+                    "Ya existe un viaje con el ID " + idNuevo + ".");
         }
         // ----------------------------------------------------------------
 
@@ -104,9 +107,11 @@ public class MonitoreoViajeService {
 
         String idVehiculo = r.idVehiculoGps().trim();
 
-        if (viajeRepo.existsByIdVehiculoGpsAndEstado(idVehiculo, EN_CURSO)) {
+        // Una unidad solo puede tener un viaje abierto a la vez.
+        if (viajeRepo.existsByIdVehiculoGpsAndEstadoIn(idVehiculo, ABIERTOS)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Esa unidad ya tiene un viaje en curso.");
+                    "Esa unidad ya tiene un viaje abierto (programado o en curso). "
+                    + "Finalízalo o elimínalo antes de crear otro.");
         }
 
         JsonNode unidad = buscarUnidad(idVehiculo);
@@ -121,7 +126,7 @@ public class MonitoreoViajeService {
                 + " | " + (conductor != null ? conductor : "Sin conductor asignado");
 
         MonitoreoViaje viaje = new MonitoreoViaje();
-        viaje.setIdViaje(r.idViaje());
+        viaje.setIdViaje(idNuevo);
         viaje.setIdVehiculoGps(idVehiculo);
         viaje.setConductorUnidad(
                 etiqueta.length() > 250 ? etiqueta.substring(0, 250) : etiqueta);
@@ -132,7 +137,8 @@ public class MonitoreoViajeService {
         viaje.setFechaInicio(
                 r.fechaSalida() != null ? r.fechaSalida() : ZonaHoraria.ahora());
         viaje.setFechaFin(null);
-        viaje.setEstado(EN_CURSO);
+        // Queda PROGRAMADO: el monitoreo automático lo pasa a "En curso" cuando la unidad sale del origen.
+        viaje.setEstado(PROGRAMADO);
 
         MonitoreoViaje guardado;
 
@@ -142,9 +148,9 @@ public class MonitoreoViajeService {
             // Cubre la carrera de dos usuarios guardando el mismo ID a la vez
             // (la clave primaria de la BD lo rechaza).
             log.warn("No se pudo guardar el viaje {}: {}",
-                    r.idViaje(), e.getMostSpecificCause().getMessage());
+                    viaje.getIdViaje(), e.getMostSpecificCause().getMessage());
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "No se pudo guardar el viaje. El ID " + r.idViaje()
+                    "No se pudo guardar el viaje. El ID " + viaje.getIdViaje()
                             + " ya existe o hay datos no válidos.");
         }
 
@@ -168,7 +174,7 @@ public class MonitoreoViajeService {
                 .findByViaje_IdViajeOrderByFechaHoraAsc(idViaje).stream()
                 .map(p -> new PuntoRecorridoResponse(
                         p.getFechaHora(), p.getLatitud(),
-                        p.getLongitud(), p.getVelocidad()))
+                        p.getLongitud(), p.getVelocidad(), p.getFase()))
                 .toList();
 
         List<ParadaResponse> paradas = paradaRepo
@@ -298,7 +304,9 @@ public class MonitoreoViajeService {
         return new ViajeResponse(
                 v.getIdViaje(), v.getIdVehiculoGps(), v.getConductorUnidad(),
                 v.getOrigen(), v.getDestino(), v.getFechaInicio(), v.getFechaFin(),
-                v.getEstado(), paradaRepo.countByViaje_IdViaje(v.getIdViaje()));
+                v.getEstado(),
+                v.getFechaLlegadaDestino(), v.getFechaSalidaDestino(),
+                paradaRepo.countByViaje_IdViaje(v.getIdViaje()));
     }
 
     private ParadaResponse aParada(MonitoreoParada p) {
@@ -310,7 +318,8 @@ public class MonitoreoViajeService {
                 p.getFechaHoraInicio(), p.getFechaHoraFin(),
                 num(p.getLatitud()), num(p.getLongitud()),
                 p.getMotivo(), p.getObservaciones(), p.getEstado(),
-                Duration.between(p.getFechaHoraInicio(), fin).toMinutes());
+                Duration.between(p.getFechaHoraInicio(), fin).toMinutes(),
+                p.getFase());
     }
 
     private static Double num(BigDecimal valor) {

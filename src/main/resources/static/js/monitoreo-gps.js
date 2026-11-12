@@ -1,2298 +1,365 @@
-"use strict";
+/* ===== CONFIGURACIÓN (debe coincidir con application.properties) ===== */
+const CFG = { intervaloMs: 30000, velParadaKmh: 5, paradaMinMin: 5, radioDefecto: 100, sinSenalMin: 15, sinSenalApagadoMin: 360 };
+/* sinSenalMin: minutos sin reporte para marcar "Sin señal" una unidad con el motor encendido.
+   sinSenalApagadoMin: igual, pero con el motor apagado (reporta poco: se marca "Apagada" y solo pasa a "Sin señal" tras este tiempo). */
+/* Rutas alineadas con MonitoreoViajeController (/api/viajes, /api/paradas) y PuntoPlantaController */
+const RUTAS = { gps: '/gps/vehiculos', puntos: '/api/puntos-planta', viajes: '/api/viajes', paradas: '/api/paradas' };
 
-/**
- * Transportes CHC - Monitoreo GPS
- *
- * Fuente de datos:
- *   GET /gps/vehiculos
- *
- * Respuesta esperada:
- *   { status: "ok", trackers: [...] }
- *
- * Requisitos:
- *   - Leaflet cargado en el HTML.
- *   - Un contenedor con id="mapaMonitoreo" o id="fleetMap".
- *   - No utiliza vehículos ni coordenadas ficticias.
- */
-(() => {
-    // =========================================================
-    // 1. CONFIGURACIÓN
-    // =========================================================
-
-    const CONFIG = Object.freeze({
-        apiUrl: "/gps/vehiculos",
-        refreshIntervalMs: 60_000,
-        locale: "es-HN",
-        timeZone: "America/Tegucigalpa",
-
-        map: Object.freeze({
-            center: [14.6000, -87.8333],
-            zoom: 9,
-            maxFitZoom: 15,
-            maxZoom: 19,
-
-            darkTiles:
-                "https://basemap.queeniemella.cc/tiles/countries/{z}/{x}/{y}.png",
-
-            lightTiles:
-                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-
-            darkAttribution:
-                '&copy; <a href="https://queeniemella.cc" target="_blank" rel="noopener noreferrer">queeniemella.cc</a> | ' +
-                '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
-
-            lightAttribution:
-                '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'
-        })
-    });
-
-    const STATUS = Object.freeze({
-        MOVING: "moving",
-        STOPPED: "stopped",
-        UNKNOWN: "unknown"
-    });
-
-    // =========================================================
-    // 2. ESTADO DE LA APLICACIÓN
-    // =========================================================
-
-    const state = {
-        map: null,
-        tileLayers: {},
-        activeTile: "dark",
-        markerLayer: null,
-        markers: new Map(),
-        vehicles: [],
-        selectedId: null,
-        loading: false,
-        initialized: false,
-        destroyed: false,
-        refreshTimer: null,
-        lastUpdated: null,
-        lastError: null,
-        statusFilter: "all"
-    };
-
-    // Función pública opcional para actualizar el monitoreo
-    // desde otros scripts de la aplicación.
-    window.TransportesCHCGPS = {
-        refresh: () => loadVehicles(),
-        fitFleet: () => fitFleet(),
-        selectVehicle: id => selectVehicle(id),
-        getMap: () => state.map,
-        getVehicles: () => state.vehicles.map(vehicle => ({ ...vehicle })),
-        getLastUpdated: () => state.lastUpdated
-    };
-
-    // =========================================================
-    // 3. UTILIDADES
-    // =========================================================
-
-    const $ = id => document.getElementById(id);
-
-    function setText(id, value) {
-        const element = $(id);
-
-        if (element) {
-            element.textContent = String(value ?? "");
-        }
+/* ===== CAPA DE DATOS: habla con el backend (Spring Boot) ===== */
+/* Spring Security: si CSRF está activo, el token viaja en la cookie XSRF-TOKEN o en <meta name="_csrf"> */
+function csrf() {
+    const m = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
+    if (m) return ['X-XSRF-TOKEN', decodeURIComponent(m[1])];
+    const t = document.querySelector('meta[name="_csrf"]'), hd = document.querySelector('meta[name="_csrf_header"]');
+    return t ? [hd ? hd.content : 'X-CSRF-TOKEN', t.content] : null;
+}
+async function http(url, metodo = 'GET', cuerpo) {
+    const h = { 'Content-Type': 'application/json' };
+    if (metodo !== 'GET') { const c = csrf(); if (c) h[c[0]] = c[1] }
+    const r = await fetch(url, { method: metodo, headers: h, body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo) });
+    const txt = await r.text();
+    let j = null; try { j = txt ? JSON.parse(txt) : null } catch (e) {}
+    if (!r.ok) throw new Error(r.status === 403 && !(j && (j.message || j.detail)) ? 'El servidor rechazó la solicitud (403). Revisa tu sesión o la configuración CSRF.' : (j && (j.message || j.detail)) || (j === null && txt && txt.length < 200 && txt[0] !== '<' ? txt : '') || (j && j.error) || 'Error HTTP ' + r.status);
+    return j;
+}
+/* Adaptadores: convierten los DTO del backend a lo que usa la vista. Si tus records se llaman distinto, se ajusta SOLO aquí. */
+const slug = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, '_');
+/* El backend manda LocalDateTime SIN zona y ya en hora de Honduras (UTC-6, sin horario de verano).
+   Se interpreta siempre así, sin importar la zona del navegador. */
+const ZONA_HN = 'America/Tegucigalpa';
+const ms = t => {
+    if (!t) return null;
+    let n;
+    if (Array.isArray(t)) n = Date.UTC(t[0], t[1] - 1, t[2], (t[3] || 0) + 6, t[4] || 0, t[5] || 0);
+    else {
+        let s = String(t).trim().replace(' ', 'T');
+        if (!/(Z|[+-]\d{2}:?\d{2})$/i.test(s)) s += '-06:00';
+        n = new Date(s).getTime();
     }
-
-    function setConnectionStatus(message, isError = false) {
-        const element = $("connectionLabel");
-
-        if (element) {
-            element.textContent = message;
-            element.classList.toggle("error-text", isError);
-        }
-
-        setText("mapStatus", message);
-    }
-
-    function escapeHtml(value) {
-        return String(value ?? "").replace(/[&<>"']/g, character => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;"
-        })[character]);
-    }
-
-    function toNumber(value) {
-        if (
-            value === null ||
-            value === undefined ||
-            value === "" ||
-            typeof value === "boolean"
-        ) {
-            return null;
-        }
-
-        const number = Number(value);
-
-        return Number.isFinite(number) ? number : null;
-    }
-
-    function firstValue(object, keys) {
-        if (!object || typeof object !== "object") {
-            return null;
-        }
-
-        for (const key of keys) {
-            const value = object[key];
-
-            if (
-                value !== null &&
-                value !== undefined &&
-                String(value).trim() !== ""
-            ) {
-                return value;
-            }
-        }
-
-        return null;
-    }
-
-    function isValidCoordinates(latitude, longitude) {
-        return (
-            latitude !== null &&
-            longitude !== null &&
-            latitude >= -90 &&
-            latitude <= 90 &&
-            longitude >= -180 &&
-            longitude <= 180 &&
-            !(latitude === 0 && longitude === 0)
-        );
-    }
-
-    function normalizeText(value, fallback) {
-        const text = String(value ?? "").trim();
-
-        if (
-            !text ||
-            text.toLowerCase() === "null" ||
-            text.toLowerCase() === "undefined" ||
-            text === "-"
-        ) {
-            return fallback;
-        }
-
-        return text;
-    }
-
-    // =========================================================
-    // 4. FECHAS
-    // =========================================================
-
-    function parseDate(value) {
-        if (value === null || value === undefined || value === "") {
-            return null;
-        }
-
-        // Unix timestamp en segundos o milisegundos.
-        if (
-            typeof value === "number" ||
-            /^\d{10,13}$/.test(String(value).trim())
-        ) {
-            let timestamp = Number(value);
-
-            if (timestamp > 0 && timestamp < 100_000_000_000) {
-                timestamp *= 1000;
-            }
-
-            const date = new Date(timestamp);
-
-            return Number.isNaN(date.getTime()) ? null : date;
-        }
-
-        const text = String(value).trim();
-
-        // La fecha de VTracker suele llegar sin zona horaria:
-        // "2026-10-17 13:18:18".
-        // Se interpretan sus componentes como hora local del navegador.
-        const match = text.match(
-            /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/
-        );
-
-        let date;
-
-        if (match) {
-            date = new Date(
-                Number(match[1]),
-                Number(match[2]) - 1,
-                Number(match[3]),
-                Number(match[4]),
-                Number(match[5]),
-                Number(match[6])
-            );
-        } else {
-            date = new Date(text);
-        }
-
-        return Number.isNaN(date.getTime()) ? null : date;
-    }
-
-    function formatDate(value) {
-        const date = parseDate(value);
-
-        if (!date) {
-            return "No disponible";
-        }
-
-        return new Intl.DateTimeFormat(CONFIG.locale, {
-            timeZone: CONFIG.timeZone,
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false
-        }).format(date);
-    }
-
-    function formatTime(date) {
-        return new Intl.DateTimeFormat(CONFIG.locale, {
-            timeZone: CONFIG.timeZone,
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false
-        }).format(date);
-    }
-
-    function getDateKey(value) {
-        const date = parseDate(value);
-
-        if (!date) {
-            return null;
-        }
-
-        const parts = new Intl.DateTimeFormat("en-CA", {
-            timeZone: CONFIG.timeZone,
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit"
-        }).formatToParts(date);
-
-        const result = {};
-
-        parts.forEach(part => {
-            if (part.type !== "literal") {
-                result[part.type] = part.value;
-            }
-        });
-
-        return `${result.year}-${result.month}-${result.day}`;
-    }
-
-    // =========================================================
-    // 5. INTERPRETACIÓN DE LOS VEHÍCULOS REALES
-    // =========================================================
-
-    function getDriverName(raw) {
-        const value = firstValue(raw, [
-            "Driver_Name",
-            "DriverName",
-            "Driver",
-            "driver_name",
-            "driverName",
-            "driver",
-            "Conductor",
-            "conductor",
-            "Nombre_Conductor",
-            "NombreConductor",
-            "Assigned_Driver",
-            "AssignedDriver",
-            "assigned_driver",
-            "assignedDriver"
-        ]);
-
-        if (value && typeof value === "object") {
-            return normalizeText(
-                firstValue(value, [
-                    "name",
-                    "Name",
-                    "nombre",
-                    "Nombre",
-                    "fullName",
-                    "Full_Name"
-                ]),
-                "Sin conductor asignado"
-            );
-        }
-
-        return normalizeText(value, "Sin conductor asignado");
-    }
-
-    function determineStatus(speed, ignition, motionStop, hasCoordinates) {
-        if (!hasCoordinates) {
-            return STATUS.UNKNOWN;
-        }
-
-        // Una velocidad positiva indica movimiento.
-        if (speed !== null && speed > 0) {
-            return STATUS.MOVING;
-        }
-
-        // Si el GPS informa velocidad cero, se considera detenido.
-        if (speed !== null && speed === 0) {
-            return STATUS.STOPPED;
-        }
-
-        // Si no hay velocidad, se usan datos complementarios.
-        if (ignition === 0 || (motionStop !== null && motionStop > 0)) {
-            return STATUS.STOPPED;
-        }
-
-        if (ignition === 1) {
-            return STATUS.MOVING;
-        }
-
-        return STATUS.UNKNOWN;
-    }
-
-    function normalizeVehicle(raw, index) {
-        if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-            return null;
-        }
-
-        const id = firstValue(raw, [
-            "Vehicle_ID",
-            "vehicle_id",
-            "vehicleId",
-            "id"
-        ]);
-
-        const name = firstValue(raw, [
-            "Vehicle_Name",
-            "vehicle_name",
-            "vehicleName",
-            "name"
-        ]);
-
-        const plate = firstValue(raw, [
-            "Vehicle_Plate",
-            "vehicle_plate",
-            "plate",
-            "registration"
-        ]);
-
-        const latitude = toNumber(firstValue(raw, [
-            "Tracker_Latitude",
-            "latitude",
-            "lat"
-        ]));
-
-        const longitude = toNumber(firstValue(raw, [
-            "Tracker_Longitude",
-            "longitude",
-            "lng",
-            "lon"
-        ]));
-
-        const speed = toNumber(firstValue(raw, [
-            "Tracker_Speed",
-            "speed",
-            "velocity"
-        ]));
-
-        const ignition = toNumber(firstValue(raw, [
-            "Tracker_Ignition",
-            "ignition"
-        ]));
-
-        const motionStop = toNumber(firstValue(raw, [
-            "Tracker_MotionStop",
-            "motionStop"
-        ]));
-
-        const course = toNumber(firstValue(raw, [
-            "Tracker_Course",
-            "course"
-        ]));
-
-        const timestamp = firstValue(raw, [
-            "Tracker_Datetime",
-            "datetime",
-            "timestamp"
-        ]);
-
-        const lastUpdate = firstValue(raw, [
-            "Tracker_LastUpdate",
-            "lastUpdate"
-        ]);
-
-        const address = firstValue(raw, [
-            "Tracker_Location",
-            "address",
-            "location"
-        ]);
-
-        const group = firstValue(raw, [
-            "Group_Name",
-            "group_name",
-            "group"
-        ]);
-
-        const hasCoordinates = isValidCoordinates(latitude, longitude);
-
-        const vehicleId = normalizeText(
-            id,
-            `unidad-${index + 1}`
-        );
-
-        const vehicle = {
-            id: vehicleId,
-            name: normalizeText(name, normalizeText(plate, `Vehículo ${index + 1}`)),
-            plate: normalizeText(plate, "Sin placa"),
-            driver: getDriverName(raw),
-            latitude,
-            longitude,
-            speed,
-            ignition,
-            motionStop,
-            course,
-            timestamp: timestamp ?? lastUpdate,
-            lastUpdate,
-            address: normalizeText(address, "Ubicación no disponible"),
-            group: normalizeText(group, "Sin grupo"),
-            odometer: toNumber(raw.Vehicle_Odometer),
-            engineHours: toNumber(raw.Vehicle_Engine_Hours),
-            hasCoordinates,
-            status: STATUS.UNKNOWN
-        };
-
-        vehicle.status = determineStatus(
-            vehicle.speed,
-            vehicle.ignition,
-            vehicle.motionStop,
-            vehicle.hasCoordinates
-        );
-
-        return vehicle;
-    }
-
-    function extractVehicles(payload) {
-        if (Array.isArray(payload)) {
-            return payload;
-        }
-
-        if (!payload || typeof payload !== "object") {
-            throw new Error("La API no devolvió un objeto JSON válido.");
-        }
-
-        if (
-            payload.status &&
-            String(payload.status).toLowerCase() !== "ok"
-        ) {
-            throw new Error(
-                payload.message ||
-                payload.error ||
-                `VTracker devolvió el estado: ${payload.status}`
-            );
-        }
-
-        // Estructura que compartiste desde VTracker.
-        if (Array.isArray(payload.trackers)) {
-            return payload.trackers;
-        }
-
-        // Compatibilidad con otras estructuras.
-        for (const key of ["vehicles", "vehiculos", "data", "results", "items"]) {
-            if (Array.isArray(payload[key])) {
-                return payload[key];
-            }
-
-            if (payload[key] && typeof payload[key] === "object") {
-                const nested = extractVehicles(payload[key]);
-
-                if (nested.length > 0) {
-                    return nested;
-                }
-            }
-        }
-
-        throw new Error(
-            'No se encontró la lista de vehículos en la respuesta. Se esperaba "trackers".'
-        );
-    }
-
-    // =========================================================
-    // 6. ESTADOS Y FORMATO
-    // =========================================================
-
-    function statusText(status) {
-        const labels = {
-            [STATUS.MOVING]: "En movimiento",
-            [STATUS.STOPPED]: "Detenido",
-            [STATUS.UNKNOWN]: "Sin información"
-        };
-
-        return labels[status] || labels[STATUS.UNKNOWN];
-    }
-
-    function statusClass(status) {
-        return Object.values(STATUS).includes(status)
-            ? status
-            : STATUS.UNKNOWN;
-    }
-
-    function formatSpeed(speed) {
-        return speed === null ? "—" : `${speed} km/h`;
-    }
-
-    function formatNumber(value, decimals = 2) {
-        if (value === null || value === undefined || !Number.isFinite(value)) {
-            return "—";
-        }
-
-        return new Intl.NumberFormat(CONFIG.locale, {
-            maximumFractionDigits: decimals
-        }).format(value);
-    }
-
-    // =========================================================
-    // 7. MAPA LEAFLET: UNA SOLA INSTANCIA
-    // =========================================================
-
-    function getMapElement() {
-        return $("mapaMonitoreo") || $("fleetMap");
-    }
-
-    function initializeMap() {
-        const element = getMapElement();
-
-        if (!element) {
-            console.error(
-                'No se encontró el mapa. Se necesita id="mapaMonitoreo" o id="fleetMap".'
-            );
-            return false;
-        }
-
-        if (typeof L === "undefined") {
-            setConnectionStatus("No se pudo cargar Leaflet", true);
-            console.error("Leaflet no está cargado en el HTML.");
-            return false;
-        }
-
-        // Evita inicializar un segundo mapa si ya existe.
-        if (state.map) {
-            return true;
-        }
-
-        state.map = L.map(element, {
-            zoomControl: false,
-            preferCanvas: true
-        }).setView(CONFIG.map.center, CONFIG.map.zoom);
-
-        state.tileLayers.dark = L.tileLayer(CONFIG.map.darkTiles, {
-            maxZoom: CONFIG.map.maxZoom,
-            attribution: CONFIG.map.darkAttribution
-        });
-
-        state.tileLayers.light = L.tileLayer(CONFIG.map.lightTiles, {
-            subdomains: ["a", "b", "c"],
-            maxZoom: CONFIG.map.maxZoom,
-            attribution: CONFIG.map.lightAttribution
-        });
-
-        state.tileLayers.dark.addTo(state.map);
-        state.activeTile = "dark";
-
-        L.control.zoom({
-            position: "topright"
-        }).addTo(state.map);
-
-        state.markerLayer = L.layerGroup().addTo(state.map);
-
-        window.setTimeout(() => {
-            state.map?.invalidateSize();
-        }, 200);
-
-        return true;
-    }
-
-    function markerIcon(status, course) {
-        const rotation = Number.isFinite(course) ? course : 0;
-
-        return L.divIcon({
-            className: "gps-marker-wrapper",
-            html: `
-                <div
-                    class="gps-truck-icon ${statusClass(status)}"
-                    style="--truck-course: ${rotation}deg"
-                    title="${escapeHtml(statusText(status))}"
-                >
-                    <i class="bi bi-truck-front-fill" aria-hidden="true"></i>
-                </div>
-            `,
-            iconSize: [38, 38],
-            iconAnchor: [19, 19],
-            popupAnchor: [0, -18]
-        });
-    }
-
-    function buildPopup(vehicle) {
-        const ignitionText =
-            vehicle.ignition === 1 ? "Encendido" :
-            vehicle.ignition === 0 ? "Apagado" :
-            "Sin información";
-
-        return `
-            <div class="gps-popup">
-                <div class="gps-popup-title">
-                    <i class="bi bi-truck-front-fill" aria-hidden="true"></i>
-                    ${escapeHtml(vehicle.plate)}
-                </div>
-
-                <div class="gps-popup-line">
-                    <strong>${escapeHtml(vehicle.name)}</strong>
-                </div>
-
-                <div class="gps-popup-line">
-                    <i class="bi bi-person" aria-hidden="true"></i>
-                    Conductor: ${escapeHtml(vehicle.driver)}
-                </div>
-
-                <div class="gps-popup-line">
-                    <i class="bi bi-activity" aria-hidden="true"></i>
-                    Estado: ${escapeHtml(statusText(vehicle.status))}
-                </div>
-
-                <div class="gps-popup-line">
-                    <i class="bi bi-speedometer2" aria-hidden="true"></i>
-                    Velocidad: ${escapeHtml(formatSpeed(vehicle.speed))}
-                </div>
-
-                <div class="gps-popup-line">
-                    <i class="bi bi-power" aria-hidden="true"></i>
-                    Motor: ${escapeHtml(ignitionText)}
-                </div>
-
-                <div class="gps-popup-line">
-                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                    ${escapeHtml(vehicle.address)}
-                </div>
-
-                <div class="gps-popup-line">
-                    <small>Último reporte: ${escapeHtml(formatDate(vehicle.timestamp))}</small>
-                </div>
-            </div>
-        `;
-    }
-
-    function renderMap(vehicles) {
-        if (!state.map || !state.markerLayer) {
-            return;
-        }
-
-        state.markerLayer.clearLayers();
-        state.markers.clear();
-
-        const validVehicles = vehicles.filter(vehicle => vehicle.hasCoordinates);
-
-        validVehicles.forEach(vehicle => {
-            const marker = L.marker(
-                [vehicle.latitude, vehicle.longitude],
-                {
-                    icon: markerIcon(vehicle.status, vehicle.course),
-                    title: vehicle.name,
-                    alt: vehicle.plate
-                }
-            );
-
-            marker.bindPopup(buildPopup(vehicle));
-
-            marker.on("click", () => {
-                state.selectedId = vehicle.id;
-                renderFleet();
-                renderSelectedVehicle();
-            });
-
-            marker.addTo(state.markerLayer);
-            state.markers.set(vehicle.id, marker);
-        });
-
-        setText(
-            "mapStatus",
-            `${validVehicles.length} unidad(es) con coordenadas GPS válidas`
-        );
-    }
-
-    function fitFleet() {
-        if (!state.map) {
-            return;
-        }
-
-        const points = state.vehicles
-            .filter(vehicle => vehicle.hasCoordinates)
-            .map(vehicle => [vehicle.latitude, vehicle.longitude]);
-
-        if (points.length === 1) {
-            state.map.setView(points[0], CONFIG.map.maxFitZoom);
-        } else if (points.length > 1) {
-            state.map.fitBounds(points, {
-                padding: [35, 35],
-                maxZoom: CONFIG.map.maxFitZoom
-            });
-        } else {
-            state.map.setView(CONFIG.map.center, CONFIG.map.zoom);
-        }
-    }
-
-    function selectVehicle(id) {
-        const vehicle = state.vehicles.find(item => item.id === String(id));
-
-        if (!vehicle) {
-            return;
-        }
-
-        state.selectedId = vehicle.id;
-
-        renderFleet();
-        renderSelectedVehicle();
-
-        const marker = state.markers.get(vehicle.id);
-
-        if (marker && state.map) {
-            state.map.setView(
-                marker.getLatLng(),
-                Math.max(state.map.getZoom(), 14)
-            );
-
-            marker.openPopup();
-        }
-    }
-
-    function toggleMapView() {
-        if (!state.map) {
-            return;
-        }
-
-        const button = $("btnVistaMapa");
-
-        if (state.activeTile === "dark") {
-            state.map.removeLayer(state.tileLayers.dark);
-            state.tileLayers.light.addTo(state.map);
-            state.activeTile = "light";
-
-            if (button) {
-                button.innerHTML =
-                    '<i class="bi bi-moon-stars me-1" aria-hidden="true"></i> Vista oscura';
-            }
-        } else {
-            state.map.removeLayer(state.tileLayers.light);
-            state.tileLayers.dark.addTo(state.map);
-            state.activeTile = "dark";
-
-            if (button) {
-                button.innerHTML =
-                    '<i class="bi bi-sun me-1" aria-hidden="true"></i> Vista clara';
-            }
-        }
-
-        window.setTimeout(() => state.map?.invalidateSize(), 100);
-    }
-
-    // =========================================================
-    // 8. FILTROS
-    // =========================================================
-
-    function getFilteredVehicles() {
-        const search = (
-            $("fleetSearch")?.value ||
-            $("mapSearch")?.value ||
-            document.querySelector('.search-box input[type="search"]')?.value ||
-            ""
-        ).trim().toLocaleLowerCase("es");
-
-        const selectedStatus = $("statusFilter")?.value || state.statusFilter;
-
-        return state.vehicles.filter(vehicle => {
-            const text = [
-                vehicle.name,
-                vehicle.id,
-                vehicle.plate,
-                vehicle.driver,
-                vehicle.address,
-                vehicle.group
-            ].join(" ").toLocaleLowerCase("es");
-
-            const matchesSearch = !search || text.includes(search);
-
-            const matchesStatus =
-                selectedStatus === "all" ||
-                vehicle.status === selectedStatus;
-
-            return matchesSearch && matchesStatus;
-        });
-    }
-
-    function getTableVehicles() {
-        const from = $("dateFrom")?.value || "";
-        const to = $("dateTo")?.value || "";
-        const vehicleId = $("vehicleFilter")?.value || "all";
-
-        // Parte de la lista ya filtrada por búsqueda y estado.
-        return getFilteredVehicles().filter(vehicle => {
-            if (vehicleId !== "all" && vehicle.id !== vehicleId) {
-                return false;
-            }
-
-            if (from || to) {
-                const dateKey = getDateKey(vehicle.timestamp);
-
-                if (!dateKey) {
-                    return false;
-                }
-
-                if (from && dateKey < from) {
-                    return false;
-                }
-
-                if (to && dateKey > to) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-    }
-
-    // =========================================================
-    // 9. INDICADORES
-    // =========================================================
-
-    function renderMetrics() {
-        const total = state.vehicles.length;
-        const moving = state.vehicles.filter(v => v.status === STATUS.MOVING).length;
-        const stopped = state.vehicles.filter(v => v.status === STATUS.STOPPED).length;
-        const unknown = total - moving - stopped;
-
-        setText("totalVehicles", total);
-        setText("fleetCount", total);
-        setText("movingVehicles", moving);
-        setText("stoppedVehicles", stopped);
-        setText("unknownVehicles", unknown);
-
-        // Vehículos activos = en movimiento + detenidos (con GPS reportando).
-        const contenedor = $("vehiculosActivos");
-
-        if (contenedor) {
-            const em = document.createElement("em");
-            em.textContent = `/ ${total}`;
-
-            contenedor.replaceChildren(
-                document.createTextNode(`${moving + stopped} `),
-                em
-            );
-        }
-
-        setText(
-            "vehiculosDesglose",
-            `${moving} en movimiento · ${stopped} detenidos`
-        );
-    }
-
-    // =========================================================
-    // 10. LISTA DE VEHÍCULOS
-    // =========================================================
-
-    function renderFleet() {
-        const list = $("fleetList");
-
-        if (!list) {
-            return;
-        }
-
-        const vehicles = getFilteredVehicles();
-
-        if (!vehicles.length) {
-            list.innerHTML = `
-                <div class="empty-state">
-                    <i class="fa-solid fa-truck" aria-hidden="true"></i>
-                    <strong>No hay unidades para mostrar</strong>
-                    <span>Revisa los filtros o la información recibida de la API.</span>
-                </div>
-            `;
-            return;
-        }
-
-        list.innerHTML = vehicles.map(vehicle => {
-            const selected = vehicle.id === state.selectedId;
-            const cls = statusClass(vehicle.status);
-
-            return `
-                <button
-                    type="button"
-                    class="fleet-item ${selected ? "selected" : ""}"
-                    data-vehicle-id="${escapeHtml(vehicle.id)}"
-                    aria-pressed="${selected}"
-                >
-                    <span class="fleet-item-icon ${cls}">
-                        <i class="fa-solid fa-truck" aria-hidden="true"></i>
-                    </span>
-
-                    <span class="fleet-item-info">
-                        <span class="fleet-item-name">
-                            ${escapeHtml(vehicle.name)}
-                        </span>
-
-                        <span class="fleet-item-meta">
-                            ${escapeHtml(vehicle.plate)}
-                            · ${escapeHtml(vehicle.driver)}
-                        </span>
-
-                        <span class="status-label ${cls}">
-                            ${escapeHtml(statusText(vehicle.status))}
-                        </span>
-                    </span>
-
-                    <span class="fleet-item-right">
-                        <span class="fleet-speed">
-                            ${escapeHtml(vehicle.speed ?? "—")}
-                            <small>${vehicle.speed === null ? "" : "km/h"}</small>
-                        </span>
-                    </span>
-                </button>
-            `;
-        }).join("");
-    }
-
-    // =========================================================
-    // 11. DETALLE DE LA UNIDAD SELECCIONADA
-    // =========================================================
-
-    function renderSelectedVehicle() {
-        const container = $("selectedVehicle");
-
-        if (!container) {
-            return;
-        }
-
-        const vehicle = state.vehicles.find(
-            item => item.id === state.selectedId
-        );
-
-        if (!vehicle) {
-            container.innerHTML = `
-                <div class="selected-empty">
-                    <i class="fa-solid fa-location-arrow" aria-hidden="true"></i>
-                    Selecciona una unidad para consultar sus detalles.
-                </div>
-            `;
-            return;
-        }
-
-        const ignitionText =
-            vehicle.ignition === 1 ? "Encendido" :
-            vehicle.ignition === 0 ? "Apagado" :
-            "Sin información";
-
-        container.innerHTML = `
-            <div class="selected-heading">
-                <span class="selected-heading-icon">
-                    <i class="fa-solid fa-truck" aria-hidden="true"></i>
-                </span>
-
-                <div>
-                    <strong>${escapeHtml(vehicle.name)}</strong>
-                    <small>${escapeHtml(statusText(vehicle.status))}</small>
-                </div>
-            </div>
-
-            <div class="vehicle-detail-grid">
-                <div class="detail-cell">
-                    <span>Placa</span>
-                    <strong>${escapeHtml(vehicle.plate)}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Conductor</span>
-                    <strong>${escapeHtml(vehicle.driver)}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Velocidad</span>
-                    <strong>${escapeHtml(formatSpeed(vehicle.speed))}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Motor</span>
-                    <strong>${escapeHtml(ignitionText)}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Odómetro</span>
-                    <strong>${escapeHtml(formatNumber(vehicle.odometer))}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Horas de motor</span>
-                    <strong>${escapeHtml(formatNumber(vehicle.engineHours))}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Último reporte GPS</span>
-                    <strong>${escapeHtml(formatDate(vehicle.timestamp))}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Latitud</span>
-                    <strong>${escapeHtml(vehicle.latitude ?? "—")}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Longitud</span>
-                    <strong>${escapeHtml(vehicle.longitude ?? "—")}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Grupo</span>
-                    <strong>${escapeHtml(vehicle.group)}</strong>
-                </div>
-
-                <div class="detail-cell">
-                    <span>Ubicación</span>
-                    <strong>${escapeHtml(vehicle.address)}</strong>
-                </div>
-            </div>
-        `;
-    }
-
-    // =========================================================
-    // 12. TABLA DE VEHÍCULOS
-    // =========================================================
-
-    function renderTable() {
-        const table = $("vehicleTable");
-
-        if (table) {
-            const vehicles = getTableVehicles();
-
-            if (!vehicles.length) {
-                table.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="table-empty">
-                            No hay unidades que coincidan con los filtros.
-                        </td>
-                    </tr>
-                `;
-            } else {
-                table.innerHTML = vehicles.map(vehicle => {
-                    const cls = statusClass(vehicle.status);
-
-                    return `
-                        <tr data-vehicle-id="${escapeHtml(vehicle.id)}">
-                            <td class="table-vehicle">
-                                ${escapeHtml(vehicle.name)}
-                                <br>
-                                <small>
-                                    Placa: ${escapeHtml(vehicle.plate)}
-                                    · Conductor: ${escapeHtml(vehicle.driver)}
-                                </small>
-                            </td>
-
-                            <td>
-                                <span class="status-label ${cls}">
-                                    ${escapeHtml(statusText(vehicle.status))}
-                                </span>
-                            </td>
-
-                            <td>${escapeHtml(formatSpeed(vehicle.speed))}</td>
-                            <td>${escapeHtml(vehicle.address)}</td>
-                            <td>${escapeHtml(formatDate(vehicle.timestamp))}</td>
-                        </tr>
-                    `;
-                }).join("");
-            }
-
-            setText(
-                "tableSummary",
-                `${vehicles.length} unidad(es) en este resumen`
-            );
-
-            setText(
-                "mensajeVehiculos",
-                vehicles.length === state.vehicles.length
-                    ? `${state.vehicles.length} unidad(es)`
-                    : `Mostrando ${vehicles.length} de ${state.vehicles.length} unidad(es)`
-            );
-        }
-
-        // Compatibilidad con la tabla del diseño anterior.
-        const legacyRows = document.querySelectorAll(
-            ".vehicle-table tbody tr[data-vehicle-id]"
-        );
-
-        legacyRows.forEach(row => {
-            row.style.cursor = "pointer";
-
-            row.onclick = () => {
-                selectVehicle(row.dataset.vehicleId);
-            };
-        });
-    }
-
-    function renderVehicleFilter() {
-        const select = $("vehicleFilter");
-
-        if (!select) {
-            return;
-        }
-
-        const previousValue = select.value;
-
-        select.replaceChildren();
-
-        const allOption = document.createElement("option");
-        allOption.value = "all";
-        allOption.textContent = "Todos los vehículos";
-        select.appendChild(allOption);
-
-        state.vehicles.forEach(vehicle => {
-            const option = document.createElement("option");
-            option.value = vehicle.id;
-            option.textContent = `${vehicle.name} (${vehicle.plate})`;
-            select.appendChild(option);
-        });
-
-        if ([...select.options].some(option => option.value === previousValue)) {
-            select.value = previousValue;
-        }
-    }
-
-    function renderAll() {
-        renderMetrics();
-        renderMap(getFilteredVehicles());
-        renderFleet();
-        renderSelectedVehicle();
-        renderTable();
-    }
-
-    // Se usa cuando cambia el buscador o el filtro de estado.
-    function applyFilters() {
-        renderMap(getFilteredVehicles());
-        renderFleet();
-        renderTable();
-    }
-
-    // =========================================================
-    // 13. CONSULTA A SPRING BOOT
-    // =========================================================
-
-    async function loadVehicles() {
-        if (state.loading || state.destroyed) {
-            return;
-        }
-
-        state.loading = true;
-
-        setText("ultimaActualizacion", "Actualizando...");
-
-        const refreshButton = $("refreshButton");
-
-        if (refreshButton) {
-            refreshButton.disabled = true;
-            refreshButton.classList.add("is-loading");
-        }
-
-        try {
-            const response = await fetch(CONFIG.apiUrl, {
-                method: "GET",
-                headers: {
-                    Accept: "application/json"
-                },
-                cache: "no-store"
-            });
-
-            if (!response.ok) {
-                throw new Error(
-                    `El servidor respondió con HTTP ${response.status}.`
-                );
-            }
-
-            const payload = await response.json();
-            const rawVehicles = extractVehicles(payload);
-
-            const vehicles = rawVehicles
-                .map((raw, index) => normalizeVehicle(raw, index))
-                .filter(Boolean);
-
-            // No reemplazar los datos anteriores hasta terminar
-            // correctamente la lectura de la respuesta.
-            state.vehicles = vehicles;
-            state.lastUpdated = new Date();
-            state.lastError = null;
-            cargarSelectUnidadesGPS();
-
-            if (!state.vehicles.some(v => v.id === state.selectedId)) {
-                state.selectedId = state.vehicles[0]?.id ?? null;
-            }
-
-            setConnectionStatus("API conectada");
-
-            setText("lastUpdate", formatTime(state.lastUpdated));
-            setText("ultimaActualizacion", formatTime(state.lastUpdated));
-
-            renderVehicleFilter();
-            renderAll();
-
-            if (state.vehicles.length === 0) {
-                setConnectionStatus("API conectada; no hay vehículos");
-            } else if (!state.vehicles.some(v => v.hasCoordinates)) {
-                setText(
-                    "mapStatus",
-                    "Hay vehículos, pero no tienen coordenadas GPS válidas."
-                );
-            }
-        } catch (error) {
-            state.lastError = error;
-
-            console.error("Error consultando /gps/vehiculos:", error);
-
-            setConnectionStatus("Error de conexión con la API", true);
-
-            setText(
-                "ultimaActualizacion",
-                state.lastUpdated
-                    ? formatTime(state.lastUpdated)
-                    : "Error de conexión"
-            );
-
-            // Mantener los últimos datos válidos en pantalla.
-            if (state.vehicles.length === 0) {
-                const list = $("fleetList");
-
-                if (list) {
-                    list.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-                            <strong>No fue posible cargar la flota</strong>
-                            <span>Comprueba el endpoint ${escapeHtml(CONFIG.apiUrl)} y la consola del navegador.</span>
-                        </div>
-                    `;
-                }
-
-                const table = $("vehicleTable");
-
-                if (table) {
-                    table.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="table-empty">
-                                Error al consultar los datos GPS.
-                            </td>
-                        </tr>
-                    `;
-                }
-            }
-        } finally {
-            state.loading = false;
-
-            if (refreshButton) {
-                refreshButton.disabled = false;
-                refreshButton.classList.remove("is-loading");
-            }
-        }
-    }
-
-    function cargarSelectUnidadesGPS() {
-        const select = document.getElementById("conductorUnidad");
-
-        if (!select) {
-            console.warn("No se encontró el campo conductorUnidad.");
-            return;
-        }
-
-        const valorAnterior = select.value;
-
-        select.replaceChildren();
-
-        const opcionInicial = document.createElement("option");
-        opcionInicial.value = "";
-        opcionInicial.textContent = state.vehicles.length
-            ? "Selecciona una unidad GPS"
-            : "No hay unidades GPS disponibles";
-
-        select.appendChild(opcionInicial);
-
-        state.vehicles.forEach(vehicle => {
-            const opcion = document.createElement("option");
-
-            // Identificador real del vehículo en la API GPS.
-            opcion.value = String(vehicle.id);
-
-            // Mostrar vehículo, placa y conductor.
-            opcion.textContent =
-                `${vehicle.name} | ${vehicle.plate} | ${vehicle.driver}`;
-
-            select.appendChild(opcion);
-        });
-
-        // Conservar la selección si la unidad todavía existe.
-        if (
-            valorAnterior &&
-            [...select.options].some(
-                opcion => opcion.value === valorAnterior
-            )
-        ) {
-            select.value = valorAnterior;
-        }
-    }
-
-    // =========================================================
-    // 14. EXPORTACIÓN CSV
-    // =========================================================
-
-    function exportCsv() {
-        const vehicles = getTableVehicles();
-
-        if (!vehicles.length) {
-            window.alert("No hay datos para exportar con los filtros actuales.");
-            return;
-        }
-
-        const rows = [
-            [
-                "Vehículo",
-                "Placa",
-                "Conductor",
-                "Identificador",
-                "Estado",
-                "Velocidad km/h",
-                "Latitud",
-                "Longitud",
-                "Ubicación",
-                "Grupo",
-                "Odómetro",
-                "Horas de motor",
-                "Último reporte"
-            ],
-            ...vehicles.map(vehicle => [
-                vehicle.name,
-                vehicle.plate,
-                vehicle.driver,
-                vehicle.id,
-                statusText(vehicle.status),
-                vehicle.speed ?? "",
-                vehicle.latitude ?? "",
-                vehicle.longitude ?? "",
-                vehicle.address,
-                vehicle.group,
-                vehicle.odometer ?? "",
-                vehicle.engineHours ?? "",
-                formatDate(vehicle.timestamp)
-            ])
-        ];
-
-        const csv = "\uFEFF" + rows.map(row =>
-            row.map(value =>
-                `"${String(value ?? "").replace(/"/g, '""')}"`
-            ).join(";")
-        ).join("\r\n");
-
-        const blob = new Blob([csv], {
-            type: "text/csv;charset=utf-8;"
-        });
-
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-
-        link.href = url;
-        link.download = `reporte-gps-${getDateKey(new Date()) || "actual"}.csv`;
-
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-
-    // =========================================================
-    // 14-B. ORÍGENES Y DESTINOS DEL MAPA
-    // Integración real con PuntoPlantaController
-    // =========================================================
-
-    const PUNTOS_CONFIG = Object.freeze({
-        apiUrl: "/api/puntos-planta"
-    });
-
-    const puntosState = {
-        puntos: [],
-        marcadores: [],
-        marcadorTemporal: null,
-        seleccionando: false,
-        guardando: false
-    };
-
-    // ---------------------------------------------------------
-    // MENSAJES
-    // ---------------------------------------------------------
-
-    function puntosMensaje(texto) {
-        const elemento = $("mensajePunto");
-
-        if (elemento) {
-            elemento.textContent = texto;
-        } else {
-            console.info("[Puntos GPS]", texto);
-        }
-    }
-
-    // ---------------------------------------------------------
-    // TOKEN CSRF
-    // Compatible con Spring Security cuando el HTML publica
-    // los metadatos csrfParameterName / csrfHeaderName.
-    // ---------------------------------------------------------
-
-    function obtenerHeadersCSRF() {
-        const headers = {};
-
-        const tokenMeta = document.querySelector(
-            'meta[name="_csrf"]'
-        );
-
-        const headerMeta = document.querySelector(
-            'meta[name="_csrf_header"]'
-        );
-
-        if (tokenMeta && headerMeta) {
-            headers[headerMeta.content] = tokenMeta.content;
-        }
-
-        return headers;
-    }
-
-    // ---------------------------------------------------------
-    // PETICIONES HTTP
-    // ---------------------------------------------------------
-
-    async function peticionPuntos(url, opciones = {}) {
-        const headers = {
-            Accept: "application/json",
-            ...obtenerHeadersCSRF(),
-            ...(opciones.headers || {})
-        };
-
-        const respuesta = await fetch(url, {
-            ...opciones,
-            headers,
-            cache: "no-store"
-        });
-
-        if (!respuesta.ok) {
-            let detalle = "";
-
-            try {
-                const texto = await respuesta.text();
-
-                if (texto) {
-                    try {
-                        const json = JSON.parse(texto);
-                        detalle =
-                            json.message ||
-                            json.mensaje ||
-                            json.error ||
-                            texto;
-                    } catch {
-                        detalle = texto;
-                    }
-                }
-            } catch {
-                // La respuesta puede no contener un cuerpo legible.
-            }
-
-            throw new Error(
-                `Error HTTP ${respuesta.status}` +
-                (detalle ? `: ${detalle}` : "")
-            );
-        }
-
-        // DELETE puede responder correctamente con HTTP 204.
-        if (respuesta.status === 204) {
-            return null;
-        }
-
-        const texto = await respuesta.text();
-
-        if (!texto.trim()) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(texto);
-        } catch {
-            return texto;
-        }
-    }
-
-    // ---------------------------------------------------------
-    // CARGAR COMBOS
-    // ---------------------------------------------------------
-
-    function cargarSelectsOrigenDestino() {
-        const selectOrigen = document.getElementById("origen");
-        const selectDestino = document.getElementById("destino");
-
-        if (!selectOrigen || !selectDestino) {
-            console.warn("No se encontraron los campos de origen y destino.");
-            return;
-        }
-
-        // Separar los puntos según su tipo.
-        const origenes = puntosState.puntos.filter(
-            punto => punto.tipo === "ORIGEN"
-        );
-
-        const destinos = puntosState.puntos.filter(
-            punto => punto.tipo === "DESTINO"
-        );
-
-        // Función para llenar cada select.
-        function llenarSelect(select, puntos, textoInicial) {
-            const valorAnterior = select.value;
-
-            select.replaceChildren();
-
-            const opcionInicial = document.createElement("option");
-            opcionInicial.value = "";
-            opcionInicial.textContent = textoInicial;
-            select.appendChild(opcionInicial);
-
-            puntos.forEach(punto => {
-                const opcion = document.createElement("option");
-
-                // Se envía el ID real del punto guardado en la BD.
-                opcion.value = String(punto.id);
-                opcion.textContent = punto.nombre;
-
-                select.appendChild(opcion);
-            });
-
-            // Mantener la selección anterior si todavía existe.
-            if (
-                valorAnterior &&
-                [...select.options].some(
-                    opcion => opcion.value === valorAnterior
-                )
-            ) {
-                select.value = valorAnterior;
-            }
-        }
-
-        llenarSelect(
-            selectOrigen,
-            origenes,
-            origenes.length
-                ? "Selecciona un origen"
-                : "No hay orígenes registrados"
-        );
-
-        llenarSelect(
-            selectDestino,
-            destinos,
-            destinos.length
-                ? "Selecciona un destino"
-                : "No hay destinos registrados"
-        );
-    }
-
-    // ---------------------------------------------------------
-    // NORMALIZAR RESPUESTAS DEL CONTROLADOR
-    // ---------------------------------------------------------
-
-    function normalizarPuntoGPS(p) {
-        if (!p || typeof p !== "object") {
-            throw new Error("El servidor devolvió un punto inválido.");
-        }
-
-        const latitud = Number(
-            p.latitud ?? p.latitude ?? p.Latitud
-        );
-
-        const longitud = Number(
-            p.longitud ?? p.longitude ?? p.Longitud
-        );
-
+    return isFinite(n) ? n : null;
+};
+/* Hora de VTracker (Tracker_Datetime): llega sin zona. VTracker la envía en hora de Honduras (UTC-6). */
+const GPS_SUFIJO_ZONA = '-06:00';
+const fechaGps = f => {
+    if (f == null || f === '') return NaN;
+    if (typeof f === 'number') return f < 1e12 ? f * 1000 : f;
+    let s = String(f).trim().replace(' ', 'T');
+    if (!/(Z|[+-]\d{2}:?\d{2})$/i.test(s)) s += GPS_SUFIJO_ZONA;
+    return new Date(s).getTime();
+};
+const aPunto = p => ({ id: p.id, nombre: p.nombre, tipo: String(p.tipo).toLowerCase(), lat: +(p.latitud ?? p.lat), lng: +(p.longitud ?? p.lng), radio: +(p.radioMetros ?? p.radio) || CFG.radioDefecto });
+/* ParadaResponse envía "inicio" y "fin" (se aceptan también fechaHoraInicio/fechaHoraFin por compatibilidad) */
+const aParada = p => ({ id: p.idParada, desde: ms(p.inicio ?? p.fechaHoraInicio), hasta: ms(p.fin ?? p.fechaHoraFin), lat: +p.latitud, lng: +p.longitud, motivo: p.motivo || '', lugar: p.observaciones || '', numero: p.numeroParada ?? null, fase: p.fase || null });
+const aViaje = v => ({ id: v.idViaje, vehiculo: String(v.idVehiculoGps), etiqueta: v.conductorUnidad || '', origen: v.origen, destino: v.destino, inicio: ms(v.fechaInicio), fin: ms(v.fechaFin), llegada: ms(v.fechaLlegadaDestino), salidaDest: ms(v.fechaSalidaDestino), estado: slug(v.estado), nParadas: +(v.totalParadas ?? v.numeroParadas ?? v.paradas ?? 0) || 0, ruta: [], paradas: [] });
+const API = {
+    puntos: async () => (await http(RUTAS.puntos)).map(aPunto),
+    crearPunto: p => http(RUTAS.puntos, 'POST', p),
+    borrarPunto: id => http(`${RUTAS.puntos}/${id}`, 'DELETE'),
+    viajes: async () => (await http(RUTAS.viajes)).map(aViaje),
+    detalle: async id => { const r = await http(`${RUTAS.viajes}/${id}/ruta`); return { ...aViaje(r.viaje), ruta: (r.recorrido || r.puntos || []).map(x => [+x.latitud, +x.longitud, ms(x.fechaHora), x.fase || null]), paradas: (r.paradas || []).map(aParada) } },
+    crearViaje: b => http(RUTAS.viajes, 'POST', b),
+    finalizar: id => http(`${RUTAS.viajes}/${id}/finalizar`, 'POST'),
+    borrarViaje: id => http(`${RUTAS.viajes}/${id}`, 'DELETE'),
+    motivo: (id, motivo) => http(`${RUTAS.paradas}/${id}/motivo`, 'PUT', { motivo })
+};
+let db = { puntos: [], viajes: [] }, flota = [], tab = 'mon', selViaje = null, pick = false, filtro = 'todas', busca = '', primera = true;
+
+/* ===== GPS: ajusta aquí los nombres de campo de VTracker ===== */
+const num = x => { const n = typeof x === 'string' ? parseFloat(x.replace(',', '.')) : +x; return isFinite(n) ? n : NaN };
+function normalizar(raw) {
+    const lista = Array.isArray(raw) ? raw : Object.values(raw || {}).find(Array.isArray) || [];
+    if (lista[0] && !window._gpsLog) { window._gpsLog = 1; console.log('Ejemplo de unidad VTracker:', lista[0]) }
+    const out = lista.map(v => {
+        const pos = v.position || v.location || v.ubicacion || v.coords || {};
+        const f = v.Tracker_Datetime ?? v.date ?? v.timestamp ?? v.lastUpdate ?? v.time ?? v.fecha;
+        const t = fechaGps(f);
         return {
-            id: p.id ??
-                p.ID ??
-                p.puntoId ??
-                p.puntoPlantaId ??
-                p.idPunto ??
-                null,
-
-            nombre: String(
-                p.nombre ??
-                p.nombrePunto ??
-                p.Nombre ??
-                "Punto sin nombre"
-            ),
-
-            tipo: String(
-                p.tipo ??
-                p.tipoPunto ??
-                p.Tipo ??
-                "ORIGEN"
-            ).toUpperCase(),
-
-            latitud,
-            longitud,
-
-            activo: p.activo ?? p.Activo ?? true
+            id: String(v.Vehicle_ID ?? v.id ?? v.vehicleId ?? v.vehicle_id ?? v.plate ?? v.name ?? ''),
+            nombre: String(v.Vehicle_Name ?? v.name ?? v.alias ?? v.plate ?? v.label ?? v.id ?? 'Unidad'),
+            placa: String(v.Vehicle_Plate ?? v.plate ?? v.placa ?? ''),
+            lat: num(v.Tracker_Latitude ?? v.lat ?? v.latitude ?? v.latitud ?? v.y ?? pos.lat ?? pos.latitude ?? pos.latitud),
+            lng: num(v.Tracker_Longitude ?? v.lng ?? v.lon ?? v.longitude ?? v.longitud ?? v.x ?? pos.lng ?? pos.lon ?? pos.longitude ?? pos.longitud),
+            vel: num(v.Tracker_Speed ?? v.speed ?? v.velocidad ?? 0) || 0, fecha: isFinite(t) ? t : null,
+            ign: v.Tracker_Ignition == null ? null : +v.Tracker_Ignition > 0 /* true = motor encendido, false = apagado, null = no informa */
         };
+    }).filter(u => u.id && isFinite(u.lat) && isFinite(u.lng) && !(u.lat === 0 && u.lng === 0));
+    normalizar.descartadas = lista.length - out.length;
+    if (lista.length && !out.length) console.warn('El GPS devolvió ' + lista.length + ' unidades pero ninguna con coordenadas legibles. Campos recibidos:', Object.keys(lista[0]));
+    return out;
+}
+function estadoU(u) {
+    const edad = u.fecha ? (Date.now() - u.fecha) / 60000 : null;
+    /* Motor apagado y sin movimiento: el GPS ahorra batería y reporta poco, es normal. */
+    const apagada = u.ign === false && u.vel < CFG.velParadaKmh;
+    if (apagada) return edad != null && edad > CFG.sinSenalApagadoMin ? 'offline' : 'apagada';
+    if (edad != null && edad > CFG.sinSenalMin) return 'offline';
+    return u.vel >= CFG.velParadaKmh ? 'mov' : 'det';
+}
+const ETQ = { mov: 'En movimiento', det: 'Detenida', apagada: 'Apagada', offline: 'Sin señal' };
+/* Clase CSS: "Apagada" reutiliza el estilo de "Detenida" (no hace falta tocar el CSS). */
+const claseU = e => e === 'apagada' ? 'det' : e;
+
+/* ===== UTILIDADES ===== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const hora = t => t ? new Date(t).toLocaleString('es-HN', { timeZone: ZONA_HN, day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+const dur = (a, b) => { const m = Math.round((b - a) / 60000); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min' };
+function dist(a, b, c, d) { const R = 6371000, r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r, h = Math.sin(x / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(y / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)) }
+/* p.id llega como número y dataset.* siempre es texto: se comparan como texto */
+const punto = id => db.puntos.find(p => String(p.id) === String(id));
+const unidad = id => flota.find(u => u.id === id || u.nombre === id);
+const nomU = v => unidad(v.vehiculo)?.nombre || v.vehiculo;
+const pOri = v => db.puntos.find(p => p.nombre === v.origen), pDes = v => db.puntos.find(p => p.nombre === v.destino);
+const paradasDe = v => v.paradaActual ? [...v.paradas, { ...v.paradaActual, hasta: null }] : v.paradas;
+
+/* ===== MAPA ===== */
+const map = L.map('map').setView([15.5, -88.03], 9);
+const base = {
+    'Calles': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }),
+    'Satélite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles © Esri' }),
+    'Oscuro': L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap © CARTO' })
+};
+base['Calles'].addTo(map);
+L.control.layers(base, null, { position: 'topright' }).addTo(map);
+const capaP = L.layerGroup().addTo(map), capaF = L.layerGroup().addTo(map), capaV = L.layerGroup().addTo(map), marks = {};
+const todasPuntos = () => flota.map(u => [u.lat, u.lng]).concat(db.puntos.map(p => [p.lat, p.lng]));
+new (L.Control.extend({
+    onAdd() {
+        const b = L.DomUtil.create('button', 'btn navy sm centrar'); b.type = 'button'; b.textContent = 'Ver todas las unidades';
+        L.DomEvent.disableClickPropagation(b);
+        b.onclick = () => { const p = flota.map(u => [u.lat, u.lng]); if (p.length) map.fitBounds(p, { padding: [60, 60], maxZoom: 15 }); else alert('Aún no hay unidades con ubicación GPS.') };
+        return b;
     }
+}))({ position: 'topleft' }).addTo(map);
 
-    function coordenadasValidasPunto(p) {
-        return Number.isFinite(p.latitud) &&
-            Number.isFinite(p.longitud) &&
-            p.latitud >= -90 &&
-            p.latitud <= 90 &&
-            p.longitud >= -180 &&
-            p.longitud <= 180 &&
-            (p.tipo === "ORIGEN" || p.tipo === "DESTINO");
-    }
+function pintarPuntos() {
+    capaP.clearLayers();
+    db.puntos.forEach(p => {
+        const c = p.tipo === 'origen' ? '#1fa463' : '#e5484d';
+        L.circle([p.lat, p.lng], { radius: p.radio, color: c, weight: 2, fillOpacity: .18 }).addTo(capaP);
+        L.marker([p.lat, p.lng], { icon: L.divIcon({ className: '', html: `<div class="pin" style="background:${c}"></div>`, iconSize: [20, 20], iconAnchor: [10, 10] }) })
+            .bindTooltip(esc(p.nombre), { permanent: true, direction: 'top', offset: [0, -10], className: 'ptip' }).addTo(capaP);
+    });
+}
+const SVG_CAMION = '<svg viewBox="0 0 24 24" width="17" height="17" fill="#fff" aria-hidden="true"><path d="M2 6h12v10H2zM14 9h4.5L22 12.5V16h-8z"/><circle cx="7" cy="17.5" r="2.2" stroke="#0a1633" stroke-width="1"/><circle cx="17.5" cy="17.5" r="2.2" stroke="#0a1633" stroke-width="1"/></svg>';
+function popupU(u) {
+    return `<b>${esc(u.nombre)}</b>${u.placa ? '<br>' + esc(u.placa) : ''}<br>${ETQ[estadoU(u)]} · ${Math.round(u.vel)} km/h<br><span class="mut">${u.fecha ? 'Último dato: ' + hora(u.fecha) : 'Sin hora de reporte'}</span><br><span class="mut">${u.lat.toFixed(5)}, ${u.lng.toFixed(5)}</span>`;
+}
+function pintarFlota() {
+    const vivos = new Set();
+    flota.forEach(u => {
+        vivos.add(u.id);
+        const e = estadoU(u);
+        const ic = L.divIcon({ className: '', iconSize: [0, 0], html: `<div class="unit ${claseU(e)}"><i>${SVG_CAMION}</i><span>${esc(u.nombre)}</span></div>` });
+        const z = e === 'mov' ? 1200 : 1000;
+        if (marks[u.id]) marks[u.id].setLatLng([u.lat, u.lng]).setIcon(ic).setZIndexOffset(z);
+        else marks[u.id] = L.marker([u.lat, u.lng], { icon: ic, zIndexOffset: z }).addTo(capaF).bindPopup(() => popupU(flota.find(x => x.id === u.id)));
+    });
+    Object.keys(marks).forEach(id => { if (!vivos.has(id)) { capaF.removeLayer(marks[id]); delete marks[id] } });
+    if (primera && flota.length) { map.fitBounds(todasPuntos(), { padding: [60, 60], maxZoom: 14 }); primera = false }
+}
+/* Fase de un punto o parada. Los registros viejos no la traen: se deduce con la hora de salida del destino. */
+const COLOR_IDA = '#22d3ee', COLOR_RETORNO = '#a78bfa';
+const faseDe = (x, v, t) => x || (v.salidaDest && t >= v.salidaDest ? 'RETORNO' : 'IDA');
 
-    // ---------------------------------------------------------
-    // ICONOS
-    // ---------------------------------------------------------
+/* Parte la ruta en tramos de una misma fase (ida / retorno). */
+function tramosRuta(v) {
+    const tramos = [];
+    v.ruta.forEach(r => {
+        const f = faseDe(r[3], v, r[2]), u = tramos[tramos.length - 1];
+        if (u && u.fase === f) u.pts.push([r[0], r[1]]); else tramos.push({ fase: f, pts: [[r[0], r[1]]] });
+    });
+    return tramos;
+}
+function pintarViaje(v, ajustar) {
+    capaV.clearLayers(); if (!v) return;
+    const pts = [];
+    tramosRuta(v).forEach(t => {
+        if (t.pts.length < 2) return;
+        const color = t.fase === 'RETORNO' ? COLOR_RETORNO : COLOR_IDA, nombre = t.fase === 'RETORNO' ? 'Retorno' : 'Ida';
+        /* contorno oscuro + línea de color: se ve igual sobre mapa claro, satélite u oscuro */
+        L.polyline(t.pts, { color: '#0a1633', weight: 11, opacity: .9, lineCap: 'round', lineJoin: 'round' }).addTo(capaV);
+        L.polyline(t.pts, { color, weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }).bindTooltip(nombre, { sticky: true }).addTo(capaV);
+        t.pts.forEach(p => pts.push(p));
+    });
+    const flag = (p, cls, txt) => p && L.marker([p.lat, p.lng], { zIndexOffset: 500, icon: L.divIcon({ className: '', iconSize: [0, 0], html: `<div class="flag ${cls}">${txt}</div>` }) }).bindPopup(`<b>${esc(p.nombre)}</b>`).addTo(capaV);
+    flag(pOri(v), 's', 'Salida'); flag(pDes(v), 'l', 'Destino');
+    paradasDe(v).forEach((s, i) => {
+        const n = s.numero ?? i + 1, fase = faseDe(s.fase, v, s.desde) === 'RETORNO' ? 'Retorno' : 'Ida';
+        L.marker([s.lat, s.lng], { zIndexOffset: 700, icon: L.divIcon({ className: '', html: `<div class="n${s.hasta ? '' : ' vivo'}">${n}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] }) })
+            .bindPopup(`<b>Parada ${n}</b> · ${fase}<br>${esc(s.lugar || '')}<br>Paró: ${hora(s.desde)}<br>Continuó: ${s.hasta ? hora(s.hasta) : 'sigue detenido'}<br>Duración: ${dur(s.desde, s.hasta || Date.now())}`).addTo(capaV);
+        pts.push([s.lat, s.lng]);
+    });
+    [pOri(v), pDes(v)].forEach(p => p && pts.push([p.lat, p.lng]));
+    if (ajustar && pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 15 });
+}
 
-    function iconoPuntoGPS(tipo) {
-        const esDestino = tipo === "DESTINO";
-        const color = esDestino ? "#a855f7" : "#ef4444";
-        const letra = esDestino ? "D" : "O";
+/* Línea de tiempo: todos los eventos ordenados por su hora real. */
+function lineaTiempo(v, ps) {
+    const ev = [], fin = v.estado === 'finalizado';
+    const hito = (cls, tit, extra, sub) => `<li><span class="n ext ${cls}"></span><b>${tit}</b>${extra}<div class="mut">${sub}</div></li>`;
+    if (v.estado === 'programado') ev.push({ t: null, o: 0, html: hito('s', 'Salida', ' · ' + esc(v.origen), 'Esperando que la unidad salga') });
+    else ev.push({ t: v.inicio, o: 0, html: hito('s', 'Salida', ' · ' + esc(v.origen), hora(v.inicio)) });
+    if (v.llegada) ev.push({ t: v.llegada, o: 1, html: hito('l', 'Llegada al destino', ' · ' + esc(v.destino), hora(v.llegada)) });
+    else if (!fin) ev.push({ t: null, o: 1, html: hito('l', 'Llegada al destino', ' · ' + esc(v.destino), 'Pendiente') });
+    if (v.salidaDest) ev.push({ t: v.salidaDest, o: 2, html: hito('s', 'Salida del destino', '', hora(v.salidaDest)) });
+    else if (!fin) ev.push({ t: null, o: 2, html: hito('s', 'Salida del destino', '', 'Pendiente') });
+    ps.forEach((s, i) => {
+        const n = s.numero ?? i + 1, fase = faseDe(s.fase, v, s.desde) === 'RETORNO' ? 'Retorno' : 'Ida';
+        ev.push({ t: s.desde, o: 5, html: `<li data-s="${i}" class="clic"><span class="n${s.hasta ? '' : ' vivo'}">${n}</span><div class="st"><b>Parada ${n}</b> <span class="mut">· ${fase}</span><div>${esc(s.lugar || 'Sin ubicación')}</div><div class="mut">Paró ${hora(s.desde)} · ${s.hasta ? 'continuó ' + hora(s.hasta) : 'sigue detenido'}</div><span class="dur">${s.hasta ? 'Duró ' + dur(s.desde, s.hasta) : 'Lleva ' + dur(s.desde, Date.now())}</span>
+      <div class="row" style="margin-top:8px;grid-template-columns:1fr auto"><input data-m="${s.id}" maxlength="300" placeholder="Motivo de la parada" value="${esc(s.motivo)}"><button class="btn sm navy" data-ms="${s.id}">Guardar</button></div></div></li>` });
+    });
+    if (v.fin) ev.push({ t: v.fin, o: 9, html: hito('s', 'Regreso al origen', ' · ' + esc(v.origen), hora(v.fin)) });
+    else ev.push({ t: null, o: 9, html: hito('s', 'Regreso al origen', ' · ' + esc(v.origen), 'Pendiente') });
+    const conHora = ev.filter(e => e.t != null).sort((a, b) => a.t - b.t || a.o - b.o);
+    const pend = ev.filter(e => e.t == null).sort((a, b) => a.o - b.o);
+    const vacio = ps.length ? '' : `<li class="vacio mut">Sin paradas registradas (se guardan las de ${CFG.paradaMinMin} min o más).</li>`;
+    return [...conHora.filter(e => e.o !== 9), ...pend.filter(e => e.o !== 9), vacio, ...conHora.concat(pend).filter(e => e.o === 9)].map(e => e.html ?? e).join('');
+}
 
-        return L.divIcon({
-            className: "chc-punto-marcador",
+/* ===== REFRESCO: el monitoreo lo hace el backend (MonitoreoAutomaticoService); aquí solo se lee ===== */
+async function ciclo() {
+    const est = $('#estado');
+    try {
+        const r = await fetch(RUTAS.gps); if (!r.ok) throw new Error('HTTP ' + r.status);
+        flota = normalizar(await r.json());
+        if (!flota.length && normalizar.descartadas) { est.className = 'estado mal'; est.textContent = 'GPS sin coordenadas legibles'; est.title = 'Abre la consola (F12) para ver los campos que envía el GPS' }
+        else { est.className = 'estado ok'; est.title = ''; est.textContent = 'GPS en línea · ' + flota.length + ' unidades · ' + new Date().toLocaleTimeString('es-HN') }
+    } catch (e) { est.className = 'estado mal'; est.textContent = 'Sin conexión al GPS'; est.title = e.message + ' (' + RUTAS.gps + ')'; console.warn('GPS:', e.message, RUTAS.gps) }
+    pintarFlota();
+    try {
+        db.viajes = await API.viajes();
+        if (selViaje) { const d = await API.detalle(selViaje), i = db.viajes.findIndex(x => x.id === selViaje); if (i >= 0) db.viajes[i] = d }
+    } catch (e) { console.warn('No se pudieron leer los viajes:', e.message) }
+    kpis();
+    if (tab === 'mon') lista();
+    else if (tab === 'viajes' && !$('#panel input:focus')) vViajes(); // no repintar si el usuario está escribiendo un motivo
+    const sv = db.viajes.find(x => x.id === selViaje); if (sv) pintarViaje(sv, false);
+}
 
-            html: `
-                <div style="
-                    width:32px;
-                    height:32px;
-                    border-radius:50% 50% 50% 0;
-                    transform:rotate(-45deg);
-                    background:${color};
-                    border:3px solid #fff;
-                    box-shadow:0 2px 8px #0006;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                ">
-                    <span style="
-                        transform:rotate(45deg);
-                        color:#fff;
-                        font-weight:800;
-                        font-size:13px;
-                    ">${letra}</span>
-                </div>
-            `,
+/* ===== KPIs ===== */
+function kpis() {
+    const c = k => flota.filter(u => estadoU(u) === k).length, vs = e => db.viajes.filter(v => v.estado === e).length;
+    const paradas = db.viajes.reduce((n, v) => n + v.nParadas, 0);
+    const K = [['Unidades', flota.length, ''], ['En movimiento', c('mov'), 'g'], ['Detenidas', c('det'), 'o'], ['Apagadas', c('apagada'), ''], ['Sin señal', c('offline'), 'r'], ['Programados', vs('programado'), ''], ['Viajes activos', vs('en_curso') + vs('en_destino') + vs('en_retorno'), 't'], ['Paradas registradas', paradas, '']];
+    $('#kpis').innerHTML = K.map(k => `<div class="kpi ${k[2]}"><small>${k[0]}</small><b>${k[1]}</b></div>`).join('');
+}
 
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -30]
+/* ===== VISTAS ===== */
+const TIT = { mon: 'Monitoreo', viajes: 'Viajes', puntos: 'Puntos' };
+function vista() { pintarPuntos(); ({ mon: vMon, viajes: vViajes, puntos: vPuntos })[tab](); }
+$('#tabs').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    tab = b.dataset.t; selViaje = null; pintarViaje(null); $('#crumb').textContent = TIT[tab];
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b)); vista()
+};
+
+function vMon() {
+    $('#panel').innerHTML = `<div class="ph"><h2>Unidades</h2><span class="mut" id="cuenta"></span></div>
+  <input id="busca" placeholder="Buscar por nombre o placa" value="${esc(busca)}">
+  <div class="chips">${[['todas', 'Todas'], ['mov', 'En movimiento'], ['det', 'Detenidas'], ['apagada', 'Apagadas'], ['offline', 'Sin señal']].map(f => `<button class="chip ${filtro === f[0] ? 'on' : ''}" data-f="${f[0]}">${f[1]}</button>`).join('')}</div>
+  <div id="lista"></div>`;
+    $('#busca').oninput = e => { busca = e.target.value; lista() };
+    document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filtro = b.dataset.f; vMon() });
+    lista();
+}
+function lista() {
+    const el = $('#lista'); if (!el) return;
+    const q = busca.toLowerCase();
+    const L2 = flota.filter(u => (filtro === 'todas' || estadoU(u) === filtro) && (u.nombre + u.placa).toLowerCase().includes(q));
+    $('#cuenta').textContent = L2.length + ' de ' + flota.length;
+    el.innerHTML = L2.length ? L2.map(u => {
+        const e = estadoU(u); return `<div class="item" data-u="${esc(u.id)}"><div class="top2"><b>${esc(u.nombre)}</b><span class="tag ${claseU(e)}">${ETQ[e]}</span></div>
+    <div class="mut">${u.placa ? esc(u.placa) + ' · ' : ''}${Math.round(u.vel)} km/h · ${u.fecha ? hora(u.fecha) : 'sin hora'}</div></div>`
+    }).join('')
+        : `<div class="empty">${flota.length ? 'Ninguna unidad coincide con el filtro.' : 'Esperando datos del GPS. Revisa que el backend esté activo y que VTRACKER_* estén configuradas.'}</div>`;
+    el.querySelectorAll('[data-u]').forEach(i => i.onclick = () => { const m = marks[i.dataset.u]; if (m) { map.flyTo(m.getLatLng(), 16); m.openPopup() } });
+}
+
+function vPuntos() {
+    $('#panel').innerHTML = `<div class="ph"><h2>Puntos</h2></div>` + (db.puntos.length ? db.puntos.map(p => `<div class="item" data-go="${p.id}"><div class="top2"><div><b>${esc(p.nombre)}</b><div class="mut">${p.tipo} · radio ${p.radio} m</div></div><button class="btn sm del" data-del="${p.id}">Eliminar</button></div></div>`).join('') : '<div class="empty">Crea un origen y un destino con “Nuevo punto”.</div>');
+    document.querySelectorAll('[data-go]').forEach(el => el.onclick = () => { const p = punto(el.dataset.go); if (p) map.flyTo([p.lat, p.lng], 15) });
+    document.querySelectorAll('[data-del]').forEach(b => b.onclick = async e => {
+        e.stopPropagation();
+        const p = punto(b.dataset.del); if (!p) return;
+        if (db.viajes.some(v => v.origen === p.nombre || v.destino === p.nombre) && !confirm('Este punto se usa en viajes. ¿Eliminar de todos modos?')) return;
+        try { await API.borrarPunto(p.id); db.puntos = await API.puntos(); vista() } catch (err) { alert(err.message) }
+    });
+}
+
+const ETQV = { programado: 'Programado', en_curso: 'En ida', en_destino: 'En destino', en_retorno: 'En retorno', finalizado: 'Finalizado' };
+const etq = e => ETQV[e] || String(e).replace(/_/g, ' ');
+async function abrirViaje(id) {
+    selViaje = id;
+    try { const d = await API.detalle(id), i = db.viajes.findIndex(x => x.id === id); if (i >= 0) db.viajes[i] = d } catch (e) { alert(e.message) }
+    vViajes(); pintarViaje(db.viajes.find(x => x.id === id), true);
+}
+function vViajes() {
+    const v = db.viajes.find(x => x.id === selViaje);
+    if (v) {
+        const ps = paradasDe(v);
+        $('#panel').innerHTML = `<div class="top2"><button class="btn sm soft" id="bback">Volver</button><span>${v.estado !== 'finalizado' ? '<button class="btn sm soft" id="bfin">Finalizar</button> ' : ''}<button class="btn sm del" id="bdel">Eliminar viaje</button></span></div>
+    <div class="ph" style="margin-top:12px"><h2>${esc(nomU(v))}</h2><span class="tag ${v.estado}">${etq(v.estado)}</span></div>
+    <div class="mut">Viaje #${v.id}${v.etiqueta ? ' · ' + esc(v.etiqueta.split(' | ').slice(1).join(' · ')) : ''}</div>
+    <ul class="tl">${lineaTiempo(v, ps)}</ul>`;
+        $('#bback').onclick = () => { selViaje = null; pintarViaje(null); vViajes() };
+        const bf = $('#bfin'); if (bf) bf.onclick = async () => { if (!confirm('¿Finalizar este viaje ahora?')) return; try { await API.finalizar(v.id); await ciclo() } catch (e) { alert(e.message) } };
+        $('#bdel').onclick = async () => { if (!confirm('¿Eliminar este viaje y su historial?')) return; try { await API.borrarViaje(v.id); db.viajes = db.viajes.filter(x => x.id !== v.id); selViaje = null; pintarViaje(null); vViajes(); kpis() } catch (e) { alert(e.message) } };
+        document.querySelectorAll('[data-s]').forEach(el => el.onclick = () => { const s = ps[+el.dataset.s]; map.flyTo([s.lat, s.lng], 16) });
+        document.querySelectorAll('[data-m]').forEach(i => i.onclick = e => e.stopPropagation());
+        document.querySelectorAll('[data-ms]').forEach(b => b.onclick = async e => {
+            e.stopPropagation(); const id = +b.dataset.ms, txt = $(`[data-m="${id}"]`).value.trim();
+            if (!txt) return alert('Escribe el motivo de la parada.');
+            try { await API.motivo(id, txt); v.paradas.find(s => s.id === id).motivo = txt; b.textContent = 'Guardado ✓' } catch (err) { alert(err.message) }
         });
+        return;
     }
-
-    // ---------------------------------------------------------
-    // DIBUJAR PUNTOS EN EL MAPA
-    // ---------------------------------------------------------
-
-    function dibujarPuntosGPS() {
-        if (!state.map) {
-            return;
-        }
-
-        puntosState.marcadores.forEach(marcador => {
-            state.map.removeLayer(marcador);
-        });
-
-        puntosState.marcadores = [];
-
-        puntosState.puntos.forEach(punto => {
-            if (!coordenadasValidasPunto(punto)) {
-                return;
-            }
-
-            const marcador = L.marker(
-                [punto.latitud, punto.longitud],
-                {
-                    icon: iconoPuntoGPS(punto.tipo),
-                    title: punto.nombre,
-                    alt: punto.tipo
-                }
-            );
-
-            const etiquetaTipo = punto.tipo === "DESTINO"
-                ? "Destino"
-                : "Origen";
-
-            const botonDesactivar = punto.id !== null
-                ? `
-                    <button
-                        type="button"
-                        class="btn-desactivar-punto"
-                        data-desactivar-punto="${escapeHtml(punto.id)}"
-                        style="
-                            margin-top:10px;
-                            padding:6px 10px;
-                            border:0;
-                            border-radius:6px;
-                            background:#dc2626;
-                            color:#fff;
-                            cursor:pointer;
-                        "
-                    >
-                        Desactivar punto
-                    </button>
-                `
-                : "";
-
-            marcador.bindPopup(`
-                <div class="gps-popup">
-                    <strong>${escapeHtml(punto.nombre)}</strong>
-                    <br>
-                    <span>${etiquetaTipo}</span>
-                    <br>
-                    <small>
-                        ${punto.latitud.toFixed(6)},
-                        ${punto.longitud.toFixed(6)}
-                    </small>
-                    ${botonDesactivar}
-                </div>
-            `);
-
-            // Conectar el botón del popup con el DELETE del controlador.
-            marcador.on("popupopen", evento => {
-                const popupElement = evento.popup.getElement();
-
-                if (!popupElement) {
-                    return;
-                }
-
-                const boton = popupElement.querySelector(
-                    "[data-desactivar-punto]"
-                );
-
-                if (!boton) {
-                    return;
-                }
-
-                boton.addEventListener("click", async () => {
-                    await desactivarPuntoGPS(punto.id);
-                }, { once: true });
-            });
-
-            marcador.addTo(state.map);
-
-            puntosState.marcadores.push(marcador);
-        });
-    }
-
-    // ---------------------------------------------------------
-    // CARGAR PUNTOS DESDE LA BASE DE DATOS
-    // GET /api/puntos-planta
-    // ---------------------------------------------------------
-
-    async function cargarPuntosGPS() {
-        try {
-            puntosMensaje("Consultando puntos en la base de datos...");
-
-            const datos = await peticionPuntos(
-                PUNTOS_CONFIG.apiUrl
-            );
-
-            if (!Array.isArray(datos)) {
-                throw new Error(
-                    "La API no devolvió una lista de puntos."
-                );
-            }
-
-            puntosState.puntos = datos
-                .map(normalizarPuntoGPS)
-                .filter(punto =>
-                    punto.activo !== false &&
-                    coordenadasValidasPunto(punto)
-                );
-
-            // Dibujar los puntos en el mapa.
-            dibujarPuntosGPS();
-
-            // Llenar los campos del formulario.
-            cargarSelectsOrigenDestino();
-
-            puntosMensaje(
-                `${puntosState.puntos.length} punto(s) cargado(s) desde el servidor.`
-            );
-
-        } catch (error) {
-            console.error(
-                "Error cargando puntos de planta:",
-                error
-            );
-
-            puntosMensaje(
-                "No se pudieron cargar los puntos desde la base de datos. " +
-                error.message
-            );
-        }
-    }
-
-    // ---------------------------------------------------------
-    // INICIAR SELECCIÓN DE COORDENADAS
-    // ---------------------------------------------------------
-
-    function iniciarSeleccionPuntoGPS() {
-        const nombre = $("nombrePunto");
-        const tipo = $("tipoPunto");
-
-        if (!state.map) {
-            puntosMensaje("El mapa todavía no está disponible.");
-            return;
-        }
-
-        if (!nombre || !nombre.value.trim()) {
-            puntosMensaje("Escribí el nombre del origen o destino.");
-            nombre?.focus();
-            return;
-        }
-
-        const tipoSeleccionado = tipo?.value || "ORIGEN";
-
-        if (!["ORIGEN", "DESTINO"].includes(tipoSeleccionado)) {
-            puntosMensaje("Seleccioná un tipo válido: ORIGEN o DESTINO.");
-            return;
-        }
-
-        puntosState.seleccionando = true;
-
-        state.map.getContainer().style.cursor = "crosshair";
-
-        puntosMensaje(
-            `Hacé clic en el mapa para colocar el ${tipoSeleccionado.toLowerCase()}.`
-        );
-    }
-
-    // ---------------------------------------------------------
-    // GUARDAR PUNTO
-    // POST /api/puntos-planta
-    // ---------------------------------------------------------
-
-    async function guardarPuntoGPS(punto) {
-        if (puntosState.guardando) {
-            return;
-        }
-
-        puntosState.guardando = true;
-
-        try {
-            puntosMensaje("Guardando punto en la base de datos...");
-
-            const datos = await peticionPuntos(
-                PUNTOS_CONFIG.apiUrl,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        nombre: punto.nombre,
-                        tipo: punto.tipo,
-                        latitud: punto.latitud,
-                        longitud: punto.longitud
-                    })
-                }
-            );
-
-            // Si el POST devuelve el registro creado, verificamos
-            // que tenga identificador y coordenadas válidas.
-            if (datos && typeof datos === "object") {
-                const objeto = datos.punto ?? datos;
-
-                if (
-                    objeto.id !== undefined ||
-                    objeto.puntoId !== undefined ||
-                    objeto.puntoPlantaId !== undefined
-                ) {
-                    normalizarPuntoGPS(objeto);
-                }
-            }
-
-            // Volvemos a consultar el servidor para usar el registro
-            // persistido y su ID real, no un objeto local inventado.
-            await cargarPuntosGPS();
-
-            if (puntosState.puntos.some(p =>
-                p.nombre === punto.nombre &&
-                p.tipo === punto.tipo &&
-                Math.abs(p.latitud - punto.latitud) < 0.00001 &&
-                Math.abs(p.longitud - punto.longitud) < 0.00001
-            )) {
-                puntosMensaje("Punto guardado correctamente en el servidor.");
-            }
-
-            if (
-                puntosState.marcadorTemporal &&
-                state.map
-            ) {
-                state.map.removeLayer(puntosState.marcadorTemporal);
-                puntosState.marcadorTemporal = null;
-            }
-
-            const panel = $("panelCrearPunto");
-            const nombre = $("nombrePunto");
-
-            if (nombre) {
-                nombre.value = "";
-            }
-
-            if (panel) {
-                panel.hidden = true;
-            }
-
-        } catch (error) {
-            console.error("Error guardando punto:", error);
-
-            puntosMensaje(
-                "No se pudo guardar el punto. " +
-                "La base de datos no ha sido confirmada. " +
-                error.message
-            );
-
-            if (puntosState.marcadorTemporal && state.map) {
-                state.map.removeLayer(puntosState.marcadorTemporal);
-                puntosState.marcadorTemporal = null;
-            }
-
-        } finally {
-            puntosState.guardando = false;
-        }
-    }
-
-    // ---------------------------------------------------------
-    // DESACTIVAR PUNTO
-    // DELETE /api/puntos-planta/{id}
-    // ---------------------------------------------------------
-
-    async function desactivarPuntoGPS(id) {
-        if (id === null || id === undefined || id === "") {
-            puntosMensaje(
-                "Este punto no tiene un ID válido del servidor."
-            );
-            return;
-        }
-
-        const confirmado = window.confirm(
-            "¿Deseás desactivar este origen o destino?"
-        );
-
-        if (!confirmado) {
-            return;
-        }
-
-        try {
-            puntosMensaje("Desactivando punto en el servidor...");
-
-            await peticionPuntos(
-                `${PUNTOS_CONFIG.apiUrl}/${encodeURIComponent(id)}`,
-                {
-                    method: "DELETE"
-                }
-            );
-
-            // El controlador desactiva el registro.
-            // Consultamos nuevamente para actualizar el mapa.
-            await cargarPuntosGPS();
-
-            puntosMensaje("Solicitud de desactivación completada.");
-
-        } catch (error) {
-            console.error("Error desactivando punto:", error);
-
-            puntosMensaje(
-                "No se pudo desactivar el punto. " +
-                error.message
-            );
-        }
-    }
-
-    // ---------------------------------------------------------
-    // CLIC EN EL MAPA PARA DEFINIR UN PUNTO
-    // ---------------------------------------------------------
-
-    function manejarClicMapaPunto(evento) {
-        if (!puntosState.seleccionando) {
-            return;
-        }
-
-        puntosState.seleccionando = false;
-
-        state.map.getContainer().style.cursor = "";
-
-        const nombre = $("nombrePunto")?.value.trim();
-        const tipo = $("tipoPunto")?.value || "ORIGEN";
-
-        if (!nombre) {
-            puntosMensaje("Escribí el nombre del punto.");
-            return;
-        }
-
-        if (!["ORIGEN", "DESTINO"].includes(tipo)) {
-            puntosMensaje("El tipo de punto no es válido.");
-            return;
-        }
-
-        const punto = {
-            id: null,
-            nombre,
-            tipo,
-            latitud: Number(evento.latlng.lat.toFixed(6)),
-            longitud: Number(evento.latlng.lng.toFixed(6))
-        };
-
-        if (!coordenadasValidasPunto(punto)) {
-            puntosMensaje("Las coordenadas seleccionadas no son válidas.");
-            return;
-        }
-
-        if (puntosState.marcadorTemporal) {
-            state.map.removeLayer(puntosState.marcadorTemporal);
-        }
-
-        puntosState.marcadorTemporal = L.marker(
-            [punto.latitud, punto.longitud],
-            { icon: iconoPuntoGPS(punto.tipo) }
-        ).addTo(state.map);
-
-        puntosState.marcadorTemporal.bindPopup(`
-            <strong>${escapeHtml(punto.nombre)}</strong>
-            <br>
-            ${punto.tipo === "DESTINO" ? "Destino" : "Origen"}
-            <br>
-            <small>Esperando confirmación del servidor...</small>
-        `).openPopup();
-
-        guardarPuntoGPS(punto);
-    }
-
-    // ---------------------------------------------------------
-    // INICIALIZAR CONTROLES DE ORÍGENES Y DESTINOS
-    // ---------------------------------------------------------
-
-    function inicializarPuntosGPS() {
-        const btnCrear = $("btnCrearPunto");
-        const btnElegir = $("btnSeleccionarUbicacion");
-        const btnCancelar = $("btnCancelarPunto");
-        const panel = $("panelCrearPunto");
-
-        if (!btnCrear || !btnElegir || !btnCancelar || !panel) {
-            console.warn(
-                "No se encontraron los controles de puntos del HTML."
-            );
-            return;
-        }
-
-        btnCrear.addEventListener("click", () => {
-            panel.hidden = !panel.hidden;
-
-            if (!panel.hidden) {
-                puntosMensaje(
-                    "Elegí el tipo, escribí el nombre y seleccioná el mapa."
-                );
-
-                $("nombrePunto")?.focus();
-
-            } else {
-                puntosState.seleccionando = false;
-
-                if (state.map) {
-                    state.map.getContainer().style.cursor = "";
-                }
-
-                if (puntosState.marcadorTemporal && state.map) {
-                    state.map.removeLayer(puntosState.marcadorTemporal);
-                    puntosState.marcadorTemporal = null;
-                }
-            }
-        });
-
-        btnElegir.addEventListener(
-            "click",
-            iniciarSeleccionPuntoGPS
-        );
-
-        btnCancelar.addEventListener("click", () => {
-            puntosState.seleccionando = false;
-
-            if (state.map) {
-                state.map.getContainer().style.cursor = "";
-            }
-
-            if (puntosState.marcadorTemporal && state.map) {
-                state.map.removeLayer(puntosState.marcadorTemporal);
-                puntosState.marcadorTemporal = null;
-            }
-
-            panel.hidden = true;
-
-            puntosMensaje("Creación de punto cancelada.");
-        });
-
-        state.map.on("click", manejarClicMapaPunto);
-
-        cargarPuntosGPS();
-    }
-
-    // =========================================================
-    // 15. EVENTOS DE LA INTERFAZ
-    // =========================================================
-
-    // Menú del botón de filtro: Todos / En movimiento / Detenidos.
-    function initializeStatusFilter() {
-        const boton = $("btnFiltroEstado");
-        const opciones = document.querySelectorAll("[data-filtro-estado]");
-
-        // strategy "fixed": el menú no se recorta por el overflow del panel.
-        if (boton && window.bootstrap) {
-            bootstrap.Dropdown.getOrCreateInstance(boton, {
-                popperConfig: config => ({ ...config, strategy: "fixed" })
-            });
-        }
-
-        opciones.forEach(opcion => {
-            opcion.addEventListener("click", () => {
-                state.statusFilter = opcion.dataset.filtroEstado;
-
-                opciones.forEach(item =>
-                    item.classList.toggle("active", item === opcion)
-                );
-
-                boton?.classList.toggle("activo", state.statusFilter !== "all");
-
-                applyFilters();
-            });
-        });
-    }
-
-    function initializeEvents() {
-        const on = (id, eventName, callback) => {
-            const element = $(id);
-
-            if (element) {
-                element.addEventListener(eventName, callback);
-            }
-        };
-
-        // El botón "Última actualización" refresca vehículos y,
-        // mediante el evento, también los viajes (monitoreo-viajes.js).
-        on("refreshButton", "click", () => {
-            loadVehicles();
-            document.dispatchEvent(new CustomEvent("chc:actualizar"));
-        });
-
-        on("fitMapButton", "click", fitFleet);
-        on("locateFleetButton", "click", fitFleet);
-        on("btnCentrarMapa", "click", fitFleet);
-        on("btnVistaMapa", "click", toggleMapView);
-
-        on("clearSelectionButton", "click", () => {
-            state.selectedId = null;
-            renderFleet();
-            renderSelectedVehicle();
-        });
-
-        on("fleetSearch", "input", applyFilters);
-        on("mapSearch", "input", applyFilters);
-        on("statusFilter", "change", applyFilters);
-
-        on("applyFiltersButton", "click", renderTable);
-        on("dateFrom", "change", renderTable);
-        on("dateTo", "change", renderTable);
-        on("vehicleFilter", "change", renderTable);
-
-        on("exportButton", "click", exportCsv);
-
-        on("printButton", "click", () => {
-            window.print();
-        });
-
-        // Buscador de la tabla de vehículos.
-        const legacySearch = document.querySelector(
-            '.search-box input[type="search"]'
-        );
-
-        if (legacySearch) {
-            legacySearch.addEventListener("input", applyFilters);
-        }
-
-        initializeStatusFilter();
-
-        document.querySelectorAll(".activity-tab").forEach(tab => {
-            tab.addEventListener("click", () => {
-                document.querySelectorAll(".activity-tab").forEach(item => {
-                    const active = item === tab;
-                    item.classList.toggle("active", active);
-                    item.setAttribute("aria-selected", String(active));
-                });
-
-                renderTable();
-            });
-        });
-
-        document.addEventListener("visibilitychange", () => {
-            if (!document.hidden) {
-                state.map?.invalidateSize();
-            }
-        });
-    }
-
-    // =========================================================
-    // 16. INICIALIZACIÓN Y LIMPIEZA
-    // =========================================================
-
-    function start() {
-        if (state.initialized || state.destroyed) {
-            return;
-        }
-
-        state.initialized = true;
-
-        if (!initializeMap()) {
-            return;
-        }
-
-        initializeEvents();
-        inicializarPuntosGPS();
-
-        loadVehicles();
-
-        state.refreshTimer = window.setInterval(
-            loadVehicles,
-            CONFIG.refreshIntervalMs
-        );
-    }
-
-    function destroy() {
-        state.destroyed = true;
-
-        if (state.refreshTimer !== null) {
-            window.clearInterval(state.refreshTimer);
-            state.refreshTimer = null;
-        }
-
-        state.map?.remove();
-        state.map = null;
-        state.markers.clear();
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", start, { once: true });
-    } else {
-        start();
-    }
-
-    window.addEventListener("pagehide", destroy, { once: true });
+    $('#panel').innerHTML = `<div class="ph"><h2>Viajes</h2><span class="mut">${db.viajes.length} registrados</span></div>` +
+        (db.viajes.length ? db.viajes.map(x => `<div class="item" data-v="${x.id}"><div class="top2"><b>${esc(nomU(x))}</b><span class="tag ${x.estado}">${etq(x.estado)}</span></div>
+    <div class="mut">${esc(x.origen)} → ${esc(x.destino)}</div><div class="mut">Salida ${hora(x.inicio)} · ${x.nParadas} paradas</div></div>`).join('') : '<div class="empty">Aún no hay viajes. Usa “Nuevo viaje” para programar uno.</div>');
+    document.querySelectorAll('[data-v]').forEach(el => el.onclick = () => abrirViaje(+el.dataset.v));
+}
+
+/* ===== DIÁLOGOS ===== */
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
+const aviso = (sel, msg) => { const a = $(sel); if (!a) { if (msg) alert(msg); return } a.textContent = msg || ''; a.hidden = !msg };
+$('#nuevoViaje').onclick = () => {
+    const O = db.puntos.filter(p => p.tipo === 'origen'), D = db.puntos.filter(p => p.tipo === 'destino'), opt = a => a.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+    $('#vcam').innerHTML = flota.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}${u.placa ? ' · ' + esc(u.placa) : ''}</option>`).join('');
+    $('#vori').innerHTML = opt(O); $('#vdes').innerHTML = opt(D); $('#vid').value = '';
+    $('#vfec').value = ''; /* opcional: la hora real la pone el GPS */
+    const falta = !O.length || !D.length || !flota.length;
+    aviso('#vaviso', falta ? (!flota.length ? 'Aún no hay unidades cargadas desde el GPS.' : 'Primero crea un punto de origen y uno de destino.') : '');
+    $('#fv button.amber').disabled = falta; $('#dv').showModal();
+};
+$('#fv').onsubmit = async e => {
+    e.preventDefault();
+    const btn = $('#fv button.amber'); btn.disabled = true;
+    try {
+        await API.crearViaje({ idViaje: +$('#vid').value || null, idVehiculoGps: $('#vcam').value, origenId: +$('#vori').value, destinoId: +$('#vdes').value, fechaSalida: $('#vfec').value || null });
+        $('#dv').close(); tab = 'viajes'; selViaje = null; $('#crumb').textContent = 'Viajes';
+        document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x.dataset.t === 'viajes'));
+        pintarViaje(null); await ciclo(); vista();
+    } catch (err) { aviso('#vaviso', err.message) } finally { btn.disabled = false }
+};
+$('#nuevoPunto').onclick = () => { $('#fp').reset(); $('#prad').value = CFG.radioDefecto; aviso('#paviso'); $('#dp').showModal() };
+$('#fp').onsubmit = async e => {
+    e.preventDefault();
+    try {
+        await API.crearPunto({ nombre: $('#pnom').value.trim(), tipo: $('#ptipo').value.toUpperCase(), latitud: +$('#plat').value, longitud: +$('#plng').value, radioMetros: +$('#prad').value });
+        db.puntos = await API.puntos(); $('#dp').close(); vista();
+    } catch (err) { aviso('#paviso', err.message) }
+};
+$('#bpick').onclick = () => { pick = true; $('#dp').close(); $('#pickbar').hidden = false; map.getContainer().style.cursor = 'crosshair' };
+function finPick() { pick = false; $('#pickbar').hidden = true; map.getContainer().style.cursor = ''; $('#dp').showModal() }
+$('#pickcancel').onclick = finPick;
+map.on('click', e => { if (!pick) return; $('#plat').value = e.latlng.lat.toFixed(6); $('#plng').value = e.latlng.lng.toFixed(6); finPick() });
+
+/* ===== ARRANQUE ===== */
+(async () => {
+    try { db.puntos = await API.puntos() } catch (e) { console.warn('No se pudieron leer los puntos:', e.message) }
+    vista(); kpis();
+    if (db.puntos.length) map.fitBounds(db.puntos.map(p => [p.lat, p.lng]), { padding: [60, 60], maxZoom: 13 });
+    await ciclo(); setInterval(ciclo, CFG.intervaloMs);
 })();

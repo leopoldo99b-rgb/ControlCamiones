@@ -4,10 +4,14 @@ import com.proyecto.camiones.model.TipoPunto;
 
 public class PuntoPlantaRequest {
 
+    /** Radio máximo permitido, en metros. */
+    private static final double RADIO_MAXIMO = 5000;
+
     private String nombre;
     private TipoPunto tipo;
     private Double latitud;
     private Double longitud;
+    private Double radioMetros;
 
     public PuntoPlantaRequest() {
     }
@@ -42,6 +46,14 @@ public class PuntoPlantaRequest {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public Double getRadioMetros() {
+        return radioMetros;
+    }
+
+    public void setRadioMetros(Double radioMetros) {
+        this.radioMetros = radioMetros;
     }
 
     public void validar() {
@@ -79,6 +91,17 @@ public class PuntoPlantaRequest {
                 || longitud < -180 || longitud > 180) {
             throw new IllegalArgumentException(
                 "La longitud debe estar entre -180 y 180"
+            );
+        }
+
+        // El radio es opcional: si no viene, se usa el valor general.
+        if (radioMetros != null
+                && (!Double.isFinite(radioMetros)
+                    || radioMetros <= 0
+                    || radioMetros > RADIO_MAXIMO)) {
+            throw new IllegalArgumentException(
+                "El radio debe ser mayor que 0 y de máximo "
+                + (int) RADIO_MAXIMO + " metros"
             );
         }
     }

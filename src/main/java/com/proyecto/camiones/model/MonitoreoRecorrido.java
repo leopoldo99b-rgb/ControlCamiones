@@ -30,6 +30,10 @@ public class MonitoreoRecorrido {
     @Column(name = "velocidad")
     private Double velocidad;
 
+    /** IDA o RETORNO (null en registros anteriores a este cambio). */
+    @Column(name = "fase", length = 10)
+    private String fase;
+
     public Long getId() {
         return id;
     }
@@ -76,5 +80,13 @@ public class MonitoreoRecorrido {
 
     public void setVelocidad(Double velocidad) {
         this.velocidad = velocidad;
+    }
+
+    public String getFase() {
+        return fase;
+    }
+
+    public void setFase(String fase) {
+        this.fase = fase;
     }
 }

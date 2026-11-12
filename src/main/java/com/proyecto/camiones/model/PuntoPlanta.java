@@ -24,6 +24,13 @@ public class PuntoPlanta {
     @Column(name = "longitud", nullable = false)
     private Double longitud;
 
+    /**
+     * Radio de detección del punto, en metros. Si es null se usa el valor
+     * general de monitoreo.radio-punto-metros (application.properties).
+     */
+    @Column(name = "radio_metros")
+    private Double radioMetros;
+
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
 
@@ -91,6 +98,14 @@ public class PuntoPlanta {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public Double getRadioMetros() {
+        return radioMetros;
+    }
+
+    public void setRadioMetros(Double radioMetros) {
+        this.radioMetros = radioMetros;
     }
 
     public Boolean getActivo() {

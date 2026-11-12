@@ -48,6 +48,14 @@ public class MonitoreoViaje {
     @Column(name = "fechafin")
     private LocalDateTime fechaFin;
 
+    /** Hora en que la unidad llegó y se estacionó en el destino. */
+    @Column(name = "fechallegadadestino")
+    private LocalDateTime fechaLlegadaDestino;
+
+    /** Hora en que la unidad salió del destino (inicio del retorno). */
+    @Column(name = "fechasalidadestino")
+    private LocalDateTime fechaSalidaDestino;
+
     @Column(name = "estado", length = 30)
     private String estado;
 
@@ -131,6 +139,22 @@ public class MonitoreoViaje {
 
     public void setFechaFin(LocalDateTime fechaFin) {
         this.fechaFin = fechaFin;
+    }
+
+    public LocalDateTime getFechaLlegadaDestino() {
+        return fechaLlegadaDestino;
+    }
+
+    public void setFechaLlegadaDestino(LocalDateTime fechaLlegadaDestino) {
+        this.fechaLlegadaDestino = fechaLlegadaDestino;
+    }
+
+    public LocalDateTime getFechaSalidaDestino() {
+        return fechaSalidaDestino;
+    }
+
+    public void setFechaSalidaDestino(LocalDateTime fechaSalidaDestino) {
+        this.fechaSalidaDestino = fechaSalidaDestino;
     }
 
     public String getEstado() {
