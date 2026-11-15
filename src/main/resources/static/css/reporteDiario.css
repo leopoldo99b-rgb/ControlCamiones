@@ -1228,6 +1228,128 @@ body.modal-abierto, body.modal-open {
 	pointer-events: none !important;
 }
 
+/* Botón "Imagen remisiones" (hereda el estilo de .btn-imagen) */
+.btn-remisiones {
+	background: var(--amber-soft);
+	color: #a16207;
+}
+
+.btn-remisiones:hover {
+	background: #fde9a8;
+}
+
+/* =========================================================
+   CHIP DE VIAJES POR CONDUCTOR
+========================================================= */
+.tabla-header-info {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-shrink: 0;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+
+.chip-conductor {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 7px 14px;
+	border-radius: 8px;
+	background: var(--amber-soft);
+	color: #a16207;
+	font-size: 11px;
+	font-weight: 600;
+	border: 1px solid #fde68a;
+}
+
+.chip-conductor[hidden] {
+	display: none;
+}
+
+.chip-conductor strong {
+	font-family: 'Barlow Condensed', 'Poppins', sans-serif;
+	font-size: 15px;
+	color: var(--navy);
+}
+
+/* =========================================================
+   PAGINACIÓN
+========================================================= */
+.paginacion {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	flex-wrap: wrap;
+	padding: 14px 24px;
+	border-top: 1px solid #edf1f5;
+	background: #f6f8fb;
+}
+
+.paginacion[hidden] {
+	display: none;
+}
+
+.paginacion-info {
+	font-size: 11px;
+	color: var(--muted);
+}
+
+.paginacion-info strong {
+	color: var(--navy);
+}
+
+.paginacion-botones {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	flex-wrap: wrap;
+}
+
+.pag-btn {
+	min-width: 34px;
+	height: 34px;
+	padding: 0 10px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: #fff;
+	color: var(--navy-2);
+	font-size: 11px;
+	font-weight: 600;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	transition: all 0.2s ease;
+}
+
+.pag-btn:hover:not(:disabled):not(.activa) {
+	background: var(--navy);
+	border-color: var(--navy);
+	color: #fff;
+}
+
+.pag-btn.activa {
+	background: var(--amber);
+	border-color: var(--amber);
+	color: var(--navy);
+	font-weight: 700;
+	cursor: default;
+}
+
+.pag-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.pag-puntos {
+	padding: 0 4px;
+	color: var(--muted);
+	font-size: 12px;
+}
+
 /* =========================================================
    RESPONSIVE
 ========================================================= */
@@ -1308,6 +1430,13 @@ body.modal-abierto, body.modal-open {
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 12px;
+	}
+	.tabla-header-info {
+		justify-content: flex-start;
+	}
+	.paginacion {
+		justify-content: center;
+		padding: 14px 16px;
 	}
 	.fila-form {
 		grid-template-columns: 1fr;

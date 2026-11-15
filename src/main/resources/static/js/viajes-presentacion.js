@@ -1,19 +1,19 @@
 /* ============================================================
-   PRESENTACIÓN EJECUTIVA DE VIAJES  ·  v2
+   PRESENTACIÓN EJECUTIVA DE VIAJES  ·  v3
    Transportes CHC
 
-   Cambios principales respecto a la v1:
-   - Lee los datos REALES (cacheViajes de viajes.js) y no las celdas
-     de la tabla, así se corrigen ODT / tiempo máximo / excedido.
-     Si cacheViajes no existe, usa la tabla como respaldo.
-   - Enfocada en lo que preguntan: ¿hubo incumplimiento?, ¿por qué?,
-     ¿quién fue?, ¿cuántas rutas hizo cada conductor?
-   - TODOS los incumplimientos se muestran (paginados, 4 por slide),
-     cada uno con su justificación o la alerta "sin justificación".
-   - Clic en conductor / ruta / furgón / fecha => desglose de sus viajes.
-   - Agenda, menú lateral, pestañas de sección, ir a slide (G),
-     guion del presentador (N), tema claro/oscuro (T), swipe táctil.
-   - Gráficos con colores semánticos (verde / rojo).
+   Cambios de la v3 respecto a la v2:
+   - Los destinos/orígenes con numeración (Teguarque 1, 2, 3...) se
+     agrupan como un solo lugar ("Teguarque").
+   - Logo de la empresa (imgs/logo.png) en la portada.
+   - Menos redundancia: se quitaron el párrafo repetido del Resumen,
+     la slide "Justificación", la slide "Mayores excesos" y la slide
+     de Furgones (ahora va junto al cumplimiento ODT).
+   - El registro completo ("Detalle") queda apagado; se activa con
+     INCLUIR_DETALLE = true.
+
+   Datos: lee los datos REALES (cacheViajes de viajes.js) y no las celdas
+   de la tabla. Si cacheViajes no existe, usa la tabla como respaldo.
 
    Atajos:  ← → espacio  ·  Home / End  ·  M menú  ·  N guion
             G ir a slide ·  T tema       ·  F pantalla completa
@@ -23,6 +23,28 @@
 (function() {
 
     "use strict";
+
+    /* ============================================================
+       CONFIGURACIÓN
+       ============================================================ */
+
+    const LOGO_URL = "imgs/logo.png";   // si tu página no está en la raíz, usa "/imgs/logo.png"
+    const INCLUIR_DETALLE = false;      // true = agrega el registro completo de viajes
+
+    const POR_PAGINA_INCIDENCIAS = 4;
+    const POR_PAGINA_TABLAS = 9;
+    const POR_PAGINA_DETALLE = 9;
+
+    const SECCIONES = [
+        { id: "Resumen", icono: "bi-speedometer2", desc: "Panorama general del período" },
+        { id: "Cumplimiento", icono: "bi-pie-chart-fill", desc: "ODT, furgón y evolución por fecha" },
+        { id: "Rutas", icono: "bi-signpost-split", desc: "Qué rutas se hicieron y cómo cumplieron" },
+        { id: "Conductores", icono: "bi-person-badge-fill", desc: "Quién hizo cuántas rutas y quién incumplió" },
+        { id: "Incumplimientos", icono: "bi-exclamation-triangle-fill", desc: "Cada caso con su justificación" },
+        { id: "Detalle", icono: "bi-list-columns-reverse", desc: "Registro completo de viajes" },
+        { id: "Cierre", icono: "bi-clipboard2-check-fill", desc: "Hallazgos y recomendaciones" }
+    ].filter(function(s) { return INCLUIR_DETALLE || s.id !== "Detalle"; });
+
 
     /* ============================================================
        ESTADO
@@ -37,19 +59,7 @@
     let temaClaro = false;
     let idleTimer = null;
 
-    const POR_PAGINA_INCIDENCIAS = 4;
-    const POR_PAGINA_TABLAS = 9;
-    const POR_PAGINA_DETALLE = 9;
-
-    const SECCIONES = [
-        { id: "Resumen", icono: "bi-speedometer2", desc: "Panorama general del período" },
-        { id: "Cumplimiento", icono: "bi-pie-chart-fill", desc: "ODT, furgón y evolución por fecha" },
-        { id: "Rutas", icono: "bi-signpost-split", desc: "Qué rutas se hicieron y cómo cumplieron" },
-        { id: "Conductores", icono: "bi-person-badge-fill", desc: "Quién hizo cuántas rutas y quién incumplió" },
-        { id: "Incumplimientos", icono: "bi-exclamation-triangle-fill", desc: "Cada caso con su justificación" },
-        { id: "Detalle", icono: "bi-list-columns-reverse", desc: "Registro completo de viajes" },
-        { id: "Cierre", icono: "bi-clipboard2-check-fill", desc: "Hallazgos y recomendaciones" }
-    ];
+    const lugaresCanon = new Map();
 
 
     /* ============================================================
@@ -74,6 +84,7 @@
 
     function abrirPresentacion() {
 
+        lugaresCanon.clear();
         viajes = obtenerViajes();
 
         if (!viajes.length) {
@@ -184,6 +195,27 @@
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     }
 
+    /* ---- Lugares: agrupa los puntos numerados de un mismo destino ---- */
+
+    // "Teguarque 3", "Teguarque #3", "Teguarque - 3", "Teguarque (3)", "Teguarque P3",
+    // "Teguarque Parqueo 3"  →  "Teguarque"
+    function limpiarLugar(t) {
+        const original = String(t || "").replace(/\s+/g, " ").trim();
+        const s = original.replace(
+            /[\s\-–:,]*\(?\s*(?:#|n[ºo°.]*\s*)?(?:(?:punto|parqueo|estacionamiento|parking|puesto|p)\s*\.?\s*)?\d+\s*\)?\s*$/i, ""
+        ).trim();
+        return s || original;
+    }
+
+    // Unifica mayúsculas y tildes: "TEGUARQUE" y "Teguarque" cuentan como el mismo lugar
+    function lugar(t) {
+        const limpio = limpiarLugar(t);
+        if (!limpio) return "";
+        const clave = limpio.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        if (!lugaresCanon.has(clave)) lugaresCanon.set(clave, limpio);
+        return lugaresCanon.get(clave);
+    }
+
     function desdeCrudo(v) {
 
         const salida = horaDe(v.salida);
@@ -211,8 +243,8 @@
             conductor: String(v.conductor || "").trim() || "Sin conductor",
             placa: String(v.placa || "").trim(),
             furgon: furgon,
-            origen: String(v.origen || "").trim(),
-            destino: String(v.destino || "").trim(),
+            origen: lugar(v.origen),
+            destino: lugar(v.destino),
             salida: salida,
             llegada: llegada,
             real: real,
@@ -231,8 +263,8 @@
             conductor: texto(f[2]) || "Sin conductor",
             placa: texto(f[3]),
             furgon: texto(f[4]),
-            origen: texto(f[5]),
-            destino: texto(f[6]),
+            origen: lugar(texto(f[5])),
+            destino: lugar(texto(f[6])),
             salida: texto(f[7]),
             llegada: texto(f[8]),
             real: durAMin(texto(f[9])),
@@ -357,17 +389,14 @@
         lista.push(slideResumen(r));
         lista.push(slideCumplimiento(r));
         lista.push(slideTendencia(r));
-        lista.push(slideFurgones(r));
 
         slideRutas(r).forEach(function(s) { lista.push(s); });
         slideConductores(r).forEach(function(s) { lista.push(s); });
 
         lista.push(slideQuienIncumplio(r));
-        lista.push(slideJustificacion(r));
         slideIncidencias(r).forEach(function(s) { lista.push(s); });
-        if (r.malos.length) lista.push(slideTopExcesos(r));
 
-        slideDetalle(r).forEach(function(s) { lista.push(s); });
+        if (INCLUIR_DETALLE) slideDetalle(r).forEach(function(s) { lista.push(s); });
         lista.push(slideConclusiones(r));
 
         // Agenda: primer slide de cada sección
@@ -435,7 +464,7 @@
             notas: "Presenta el informe: período " + periodo(r) + " con " + r.total + " viajes analizados. Menciona que el informe responde cuatro preguntas: ¿hubo incumplimientos?, ¿por qué?, ¿quién fue? y ¿cuántas rutas hizo cada conductor?",
             html:
                 '<div class="pv-cover-content">' +
-                '<div class="pv-cover-icon"><i class="bi bi-truck-front-fill"></i></div>' +
+                '<div class="pv-cover-logo"><img src="' + esc(LOGO_URL) + '" alt="Transportes CHC" onerror="this.parentNode.style.display=\'none\'"></div>' +
                 '<span class="pv-eyebrow">INFORME EJECUTIVO</span>' +
                 "<h1>Gestión de Viajes</h1>" +
                 '<p class="pv-cover-subtitle">Cumplimiento de tiempos, responsables y justificaciones</p>' +
@@ -480,30 +509,32 @@
                 kpi("Cumplimiento ODT", r.pctODT.toFixed(1) + "%", "bi-percent", "success") +
                 kpi("Con justificación", r.conNota + " / " + r.odtBad, "bi-chat-left-text", "info", "incumplimientos") +
                 kpi("Sin justificación", r.sinNota, "bi-exclamation-circle", "warning", "incumplimientos") +
-                "</div>" +
-                '<div class="pv-message"><i class="bi bi-bar-chart-line-fill"></i><div>' +
-                "<strong>Resultado del período</strong>" +
-                "<p>Se analizaron <b>" + r.total + "</b> viajes. El cumplimiento ODT fue de <b>" + r.pctODT.toFixed(1) +
-                "%</b> con <b>" + r.odtBad + "</b> incumplimientos. De ellos, <b>" + r.conNota +
-                "</b> tienen justificación registrada y <b>" + r.sinNota + "</b> no.</p></div></div>"
+                "</div>"
         };
     }
 
-    /* ---- Cumplimiento (gráficos) ---- */
+    /* ---- Cumplimiento (ODT + furgón) ---- */
 
     function slideCumplimiento(r) {
+
+        const filas = r.porFurgon.map(function(f) {
+            return "<tr><td>" + drill("furgon", f.nombre, "<strong>" + esc(f.nombre || "Sin furgón") + "</strong>") + "</td>" +
+                "<td>" + f.total + "</td><td>" + f.bad + "</td><td>" + chip(f.pct) + "</td></tr>";
+        }).join("");
+
         return {
             sec: "Cumplimiento", titulo: "Cumplimiento operativo",
-            notas: "ODT: " + r.pctODT.toFixed(1) + "% cumplido. Furgón: " + r.pctFurgon.toFixed(1) + "% cumplido (el estado del furgón depende de la empresa del furgón).",
+            notas: "ODT: " + r.pctODT.toFixed(1) + "% cumplido. Furgón: " + r.pctFurgon.toFixed(1) + "% cumplido (el estado depende de la empresa del furgón: CHC y CMI cumplen). Haz clic en un furgón para ver sus viajes.",
             html:
-                titulo("Cumplimiento operativo", "Viajes cumplidos vs. incumplidos", "bi-pie-chart-fill") +
+                titulo("Cumplimiento operativo", "ODT y furgón", "bi-pie-chart-fill") +
                 '<div class="pv-chart-layout">' +
                 '<div class="pv-card"><h3>Cumplimiento ODT</h3><div class="pv-chart-box"><canvas id="chartODT"></canvas></div></div>' +
-                '<div class="pv-card"><h3>Cumplimiento de Furgón</h3><div class="pv-chart-box"><canvas id="chartFurgon"></canvas></div></div>' +
+                '<div class="pv-card pv-card-tabla"><h3>Furgón · ' + r.pctFurgon.toFixed(1) + '% cumplido</h3>' +
+                '<div class="pv-table-wrap"><table class="pv-table"><thead><tr><th>Furgón</th><th>Viajes</th><th>Incumpl.</th><th>Cumpl.</th></tr></thead><tbody>' +
+                (filas || '<tr><td colspan="4" class="pv-vacio">Sin datos</td></tr>') + "</tbody></table></div></div>" +
                 "</div>",
             init: function() {
                 dona("chartODT", r.odtOk, r.odtBad);
-                dona("chartFurgon", r.furgOk, r.furgBad);
             }
         };
     }
@@ -544,22 +575,6 @@
                     }
                 }));
             }
-        };
-    }
-
-    function slideFurgones(r) {
-        const filas = r.porFurgon.map(function(f) {
-            return "<tr><td>" + drill("furgon", f.nombre, "<strong>" + esc(f.nombre || "Sin furgón") + "</strong>") + "</td>" +
-                "<td>" + f.total + "</td><td>" + f.ok + "</td><td>" + f.bad + "</td><td>" + chip(f.pct) + "</td></tr>";
-        }).join("");
-
-        return {
-            sec: "Cumplimiento", titulo: "Cumplimiento por furgón",
-            notas: "Si preguntan por furgones: el estado de furgón se marca como cumplido para CHC y CMI. Haz clic en un furgón para ver sus viajes.",
-            html:
-                titulo("Cumplimiento por furgón", "Viajes por empresa de furgón", "bi-box-seam") +
-                '<div class="pv-table-wrap"><table class="pv-table"><thead><tr><th>Furgón</th><th>Viajes</th><th>Cumplidos</th><th>Incumplidos</th><th>Cumplimiento</th></tr></thead><tbody>' +
-                (filas || '<tr><td colspan="5" class="pv-vacio">Sin datos</td></tr>') + "</tbody></table></div>"
         };
     }
 
@@ -645,36 +660,6 @@
         };
     }
 
-    /* ---- Justificación ---- */
-
-    function slideJustificacion(r) {
-
-        const sin = r.malosOrdenados.filter(function(v) { return !v.notas; });
-
-        const filas = sin.slice(0, 8).map(function(v) {
-            return "<tr><td>" + fechaBonita(v.fecha) + "</td>" +
-                "<td>" + drill("conductor", v.conductor, esc(v.conductor)) + "</td>" +
-                "<td>" + esc(rutaDe(v)) + "</td>" +
-                '<td class="pv-text-danger"><b>+' + v.exceso + " min</b></td></tr>";
-        }).join("");
-
-        return {
-            sec: "Incumplimientos", titulo: "Justificación de incumplimientos",
-            notas: "De " + r.odtBad + " incumplimientos, " + r.conNota + " tienen nota (" + pct(r.conNota, r.odtBad).toFixed(0) + "%). Los " + r.sinNota + " restantes no tienen justificación: es lo que hay que completar en el sistema.",
-            html:
-                titulo("Justificación de incumplimientos", "¿Los incumplimientos están explicados?", "bi-chat-left-text-fill") +
-                '<div class="pv-kpi-grid pv-kpi-3">' +
-                kpi("Incumplimientos", r.odtBad, "bi-x-circle", "danger") +
-                kpi("Con justificación", r.conNota, "bi-check-circle", "success", pct(r.conNota, r.odtBad).toFixed(0) + "% documentado") +
-                kpi("Sin justificación", r.sinNota, "bi-exclamation-triangle", "warning", "pendientes de explicar") +
-                "</div>" +
-                (sin.length
-                    ? '<h3 class="pv-subtitulo">Casos sin justificación' + (sin.length > 8 ? " (primeros 8 de " + sin.length + ")" : "") + "</h3>" +
-                    '<div class="pv-table-wrap"><table class="pv-table"><thead><tr><th>Fecha</th><th>Conductor</th><th>Ruta</th><th>Exceso</th></tr></thead><tbody>' + filas + "</tbody></table></div>"
-                    : '<div class="pv-message"><i class="bi bi-patch-check-fill"></i><div><strong>Todo documentado</strong><p>Todos los incumplimientos tienen una justificación registrada.</p></div></div>')
-        };
-    }
-
     /* ---- Incumplimientos (tarjetas) ---- */
 
     function slideIncidencias(r) {
@@ -724,27 +709,7 @@
         });
     }
 
-    function slideTopExcesos(r) {
-
-        const top = r.malos.slice().sort(function(a, b) { return b.exceso - a.exceso; }).slice(0, 8);
-
-        const filas = top.map(function(v, i) {
-            return "<tr><td>" + (i + 1) + "</td><td>" + fechaBonita(v.fecha) + "</td>" +
-                "<td>" + drill("conductor", v.conductor, esc(v.conductor)) + "</td>" +
-                "<td>" + esc(rutaDe(v)) + "</td>" +
-                '<td class="pv-text-danger"><b>+' + v.exceso + " min</b></td>" +
-                "<td>" + (v.notas ? '<span class="pv-chip pv-good">Sí</span>' : '<span class="pv-chip pv-medium">No</span>') + "</td></tr>";
-        }).join("");
-
-        return {
-            sec: "Incumplimientos", titulo: "Mayores excesos de tiempo",
-            notas: "El mayor exceso fue de " + top[0].exceso + " min (" + top[0].conductor + ", " + fechaBonita(top[0].fecha) + "). Si te preguntan por los casos más graves, empieza por aquí.",
-            html: titulo("Mayores excesos de tiempo", "Los 8 incumplimientos más graves", "bi-hourglass-split") +
-                '<div class="pv-table-wrap"><table class="pv-table"><thead><tr><th>#</th><th>Fecha</th><th>Conductor</th><th>Ruta</th><th>Exceso</th><th>Justificado</th></tr></thead><tbody>' + filas + "</tbody></table></div>"
-        };
-    }
-
-    /* ---- Detalle ---- */
+    /* ---- Detalle (opcional: INCLUIR_DETALLE) ---- */
 
     function slideDetalle(r) {
 
@@ -1288,13 +1253,13 @@
         .pv-slide-title p{margin:4px 0 0;color:var(--mut)}
         .pv-pagina{margin-left:auto;padding:6px 14px;border-radius:999px;background:var(--card);
             border:1px solid var(--line);color:var(--mut);font-weight:700;font-size:14px}
-        .pv-subtitulo{margin:26px 0 12px;font-size:18px;color:var(--txt2)}
 
         /* ---- Portada ---- */
         .pv-cover{display:flex;align-items:center;justify-content:center;text-align:center}
         .pv-cover-content{max-width:900px}
-        .pv-cover-icon{width:100px;height:100px;margin:0 auto 24px;border-radius:28px;display:grid;place-items:center;
-            font-size:45px;color:#fff;background:linear-gradient(135deg,#0d6efd,#0dcaf0);box-shadow:0 20px 60px rgba(13,110,253,.25)}
+        .pv-cover-logo{display:inline-block;margin:0 auto 26px;padding:18px 30px;border-radius:24px;background:#fff;
+            box-shadow:0 20px 60px rgba(13,110,253,.25)}
+        .pv-cover-logo img{display:block;max-width:260px;max-height:120px;object-fit:contain}
         .pv-eyebrow{color:var(--acc);font-weight:800;letter-spacing:4px;font-size:13px}
         .pv-cover h1{font-size:clamp(46px,7vw,88px);margin:10px 0;font-weight:800}
         .pv-cover-subtitle{color:var(--mut);font-size:20px}
@@ -1319,7 +1284,6 @@
 
         /* ---- KPIs ---- */
         .pv-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
-        .pv-kpi-3{grid-template-columns:repeat(3,1fr)}
         .pv-kpi{padding:22px;border-radius:18px;display:flex;gap:16px;align-items:center;background:var(--card);border:1px solid var(--line)}
         .pv-kpi-icon{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;font-size:23px;flex:none}
         .pv-kpi span{display:block;color:var(--mut);font-size:14px}
@@ -1341,6 +1305,9 @@
         .pv-card{padding:24px;border-radius:20px;background:var(--card);border:1px solid var(--line);min-width:0}
         .pv-card h3{margin:0 0 6px}
         .pv-card-grande{height:calc(100% - 110px);min-height:380px}
+        .pv-card-tabla{overflow:auto}
+        .pv-card-tabla h3{margin-bottom:14px}
+        .pv-card-tabla .pv-table-wrap{max-height:none}
         .pv-chart-box{position:relative;height:calc(100% - 40px);min-height:300px}
         .pv-card-grande .pv-chart-box{height:100%}
 
@@ -1501,8 +1468,7 @@
             .pv-drill-kpis{grid-template-columns:repeat(2,1fr)}
         }
         @media(max-width:900px){
-            .pv-chart-layout,.pv-kpi-3{grid-template-columns:1fr}
-            .pv-chart-layout{height:auto}
+            .pv-chart-layout{grid-template-columns:1fr;height:auto}
             .pv-card{min-height:360px}
             .pv-slide{padding:28px 48px}
             .pv-inc-datos{grid-template-columns:1fr 1fr}

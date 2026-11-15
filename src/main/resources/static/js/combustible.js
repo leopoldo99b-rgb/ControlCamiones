@@ -1939,367 +1939,1196 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("beforeunload", cerrarSweetAlert);
 
 
-    // ============================================================
-    // EXPORTAR REPORTE PDF
-    // ============================================================
-
-    if (btnExportar) {
-        btnExportar.addEventListener("click", exportarPDF);
-    }
-
-    async function exportarPDF() {
-
-        if (
-            typeof window.jspdf === "undefined" ||
-            typeof window.jspdf.jsPDF === "undefined"
-        ) {
-            mostrarError("No se pudo cargar la herramienta para generar el PDF.");
-            return;
-        }
-
-        // usa la misma función de filtrado (incluye motorista)
-        const registros = filtrarRegistros();
-
-        if (!registros || registros.length === 0) {
-            mostrarAdvertencia(
-                "No existen registros que coincidan con los filtros seleccionados."
-            );
-            return;
-        }
-
-        const { jsPDF } = window.jspdf;
-
-        const doc = new jsPDF({
-            orientation: "landscape",
-            unit: "mm",
-            format: "a4"
-        });
-
-        const anchoPagina = doc.internal.pageSize.getWidth();
-        const altoPagina = doc.internal.pageSize.getHeight();
-        const margen = 10;
-
-        // PERÍODO
-
-        let textoRango = "Todos los registros";
-
-        if (fechaDesde?.value && fechaHasta?.value) {
-            textoRango = `${formatearFechaPDF(fechaDesde.value)} al ${formatearFechaPDF(fechaHasta.value)}`;
-        } else if (fechaDesde?.value) {
-            textoRango = `Desde ${formatearFechaPDF(fechaDesde.value)}`;
-        } else if (fechaHasta?.value) {
-            textoRango = `Hasta ${formatearFechaPDF(fechaHasta.value)}`;
-        }
-
-        // si se filtró por motorista, se indica en el reporte
-        if (filtroMotorista?.value) {
-            textoRango += `  ·  Motorista: ${filtroMotorista.value}`;
-        }
-
-        const fechaGeneracion = new Date().toLocaleDateString("es-HN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-        });
-
-        // TOTALES
-
-        const totalGalones = registros.reduce(
-            (t, i) => t + (Number(i?.galonesAutorizados) || 0), 0
-        );
-
-        const totalCosto = registros.reduce(
-            (t, i) => t + (Number(i?.total) || 0), 0
-        );
-
-        const totalKilometros = registros.reduce(
-            (t, i) => t + (Number(i?.kmRuta) || 0), 0
-        );
-
-        // ENCABEZADO
-
-        doc.setFillColor(18, 31, 48);
-        doc.rect(0, 0, anchoPagina, 34, "F");
-
-        let logo = null;
-
-        try {
-            logo = await cargarImagenPDF("/imgs/logo.png");
-        } catch (error) {
-            console.warn("No se pudo cargar el logo:", error);
-        }
-
-        if (logo) {
-            doc.addImage(logo, "PNG", margen, 6, 34, 22);
-        }
-
-        const xContenido = margen + 40;
-
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(20);
-        doc.text("REPORTE DE COMBUSTIBLE", xContenido, 14);
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.setTextColor(220, 226, 232);
-        doc.text(
-            "Control de abastecimientos y consumo de combustible",
-            xContenido,
-            21
-        );
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
-        doc.setTextColor(255, 255, 255);
-        doc.text(`Período: ${textoRango}`, xContenido, 28);
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.text(`Generado: ${fechaGeneracion}`, anchoPagina - margen, 13, { align: "right" });
-        doc.text(`Registros: ${registros.length}`, anchoPagina - margen, 20, { align: "right" });
-
-        // RESUMEN
-
-        const yResumen = 42;
-        const espacio = 4;
-        const anchoTarjeta = (anchoPagina - (margen * 2) - (espacio * 3)) / 4;
-
-        function dibujarTarjeta(x, titulo, valor, subtitulo) {
-
-            doc.setFillColor(245, 247, 250);
-            doc.roundedRect(x, yResumen, anchoTarjeta, 25, 2, 2, "F");
-
-            doc.setDrawColor(220, 224, 230);
-            doc.roundedRect(x, yResumen, anchoTarjeta, 25, 2, 2, "S");
-
-            doc.setTextColor(90, 99, 110);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(7);
-            doc.text(titulo.toUpperCase(), x + 5, yResumen + 7);
-
-            doc.setTextColor(18, 31, 48);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(13);
-            doc.text(valor, x + 5, yResumen + 15);
-
-            doc.setTextColor(120, 128, 138);
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(6.5);
-            doc.text(subtitulo, x + 5, yResumen + 21);
-        }
-
-        dibujarTarjeta(
-            margen,
-            "Abastecimientos",
-            String(registros.length),
-            "Registros incluidos"
-        );
-
-        dibujarTarjeta(
-            margen + (anchoTarjeta + espacio),
-            "Galones",
-            formatearNumeroPDF(totalGalones),
-            "Total autorizado"
-        );
-
-        dibujarTarjeta(
-            margen + ((anchoTarjeta + espacio) * 2),
-            "Kilómetros",
-            formatearNumeroPDF(totalKilometros),
-            "Distancia registrada"
-        );
-
-        dibujarTarjeta(
-            margen + ((anchoTarjeta + espacio) * 3),
-            "Costo total",
-            `L. ${formatearNumeroPDF(totalCosto)}`,
-            "Valor de abastecimientos"
-        );
-
-        // TABLA
-
-        const yTabla = yResumen + 32;
-
-        const filas = registros.map(function (item) {
-
-            const combustible =
-                item.combustible?.nombre ||
-                item.combustibleNombre ||
-                "—";
-
-            const fecha = formatearFecha(item.fecha);
-
-            return [
-                fecha.fecha,
-                item.placa || "—",
-                item.motorista || "—",
-                item.destino || "—",
-                item.gasolinera || "—",
-                `${formatearNumeroPDF(item.kmRuta)} km`,
-                `${formatearNumeroPDF(item.galonesAutorizados)} gal`,
-                combustible,
-                `L. ${formatearNumeroPDF(item.precioGalon)}`,
-                `L. ${formatearNumeroPDF(item.total)}`
-            ];
-        });
-
-        doc.autoTable({
-
-            startY: yTabla,
-
-            margin: { left: margen, right: margen },
-
-            head: [[
-                "Fecha",
-                "Placa",
-                "Motorista",
-                "Destino",
-                "Gasolinera",
-                "KM Ruta",
-                "Galones",
-                "Combustible",
-                "Precio/Galón",
-                "Total"
-            ]],
-
-            body: filas,
-
-            theme: "grid",
-
-            styles: {
-                font: "helvetica",
-                fontSize: 6.5,
-                cellPadding: 2,
-                textColor: [45, 52, 60],
-                lineColor: [220, 224, 230],
-                lineWidth: 0.25,
-                valign: "middle"
-            },
-
-            headStyles: {
-                fillColor: [18, 31, 48],
-                textColor: [255, 255, 255],
-                fontStyle: "bold",
-                fontSize: 6.5,
-                halign: "center",
-                cellPadding: 2.5
-            },
-
-            alternateRowStyles: {
-                fillColor: [248, 249, 251]
-            },
-
-            columnStyles: {
-                0: { halign: "center", cellWidth: 18 },
-                1: { halign: "center", cellWidth: 18 },
-                2: { cellWidth: 35 },
-                3: { cellWidth: 38 },
-                4: { halign: "center", cellWidth: 25 },
-                5: { halign: "right", cellWidth: 20 },
-                6: { halign: "right", cellWidth: 22 },
-                7: { halign: "center", cellWidth: 26 },
-                8: { halign: "right", cellWidth: 27 },
-                9: { halign: "right", cellWidth: 25 }
-            },
-
-            didDrawPage: function () {
-
-                const paginaActual = doc.internal.getNumberOfPages();
-
-                doc.setDrawColor(220, 224, 230);
-                doc.line(margen, altoPagina - 13, anchoPagina - margen, altoPagina - 13);
-
-                doc.setTextColor(120, 128, 138);
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(7);
-
-                doc.text("Reporte de Combustible", margen, altoPagina - 7);
-
-                doc.text(
-                    "Control de abastecimientos",
-                    anchoPagina / 2,
-                    altoPagina - 7,
-                    { align: "center" }
-                );
-
-                doc.text(
-                    `Página ${paginaActual}`,
-                    anchoPagina - margen,
-                    altoPagina - 7,
-                    { align: "right" }
-                );
-            }
-        });
-
-        // NOMBRE DEL ARCHIVO
-
-        let nombreArchivo = "Reporte_de_Combustible";
-
-        if (fechaDesde?.value && fechaHasta?.value) {
-            nombreArchivo += `_${fechaDesde.value}_${fechaHasta.value}`;
-        } else if (fechaDesde?.value) {
-            nombreArchivo += `_desde_${fechaDesde.value}`;
-        } else if (fechaHasta?.value) {
-            nombreArchivo += `_hasta_${fechaHasta.value}`;
-        }
-
-        if (filtroGasolinera?.value) {
-            nombreArchivo += `_${filtroGasolinera.value}`;
-        }
-
-        nombreArchivo += ".pdf";
-
-        doc.save(nombreArchivo);
-
-        mostrarExito("El reporte de combustible fue generado correctamente en PDF.");
-    }
-
-    function cargarImagenPDF(src) {
-
-        return new Promise(function (resolve, reject) {
-
-            const img = new Image();
-
-            img.onload = () => resolve(img);
-
-            img.onerror = () => reject(
-                new Error("No se pudo cargar la imagen: " + src)
-            );
-
-            img.src = src;
-        });
-    }
-
-    function formatearFechaPDF(fecha) {
-
-        if (!fecha) {
-            return "—";
-        }
-
-        const partes = String(fecha).substring(0, 10).split("-");
-
-        if (partes.length !== 3) {
-            return fecha;
-        }
-
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-
-    function formatearNumeroPDF(numero) {
-
-        const valor = Number(numero);
-
-        if (isNaN(valor)) {
-            return "0.00";
-        }
-
-        return valor.toLocaleString("es-HN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
+	// ============================================================
+	    // EXPORTAR REPORTE PDF
+	    // ============================================================
 
+	    // Ponga en false si no desea el bloque de firmas al final del reporte
+	    const PDF_INCLUIR_FIRMAS = true;
+
+	    // Misma paleta del sistema (variables de combustible.css)
+	    const PDF_COLORES = {
+	        asfalto: [27, 36, 48],
+	        asfalto2: [42, 58, 77],
+	        linea: [242, 183, 5],
+	        borde: [221, 227, 234],
+	        fondoSuave: [241, 244, 248],
+	        filaAlterna: [248, 249, 251],
+	        pistaBarra: [226, 231, 238],
+	        textoSuave: [107, 122, 140],
+	        textoCuerpo: [45, 52, 60],
+	        azul: [45, 91, 138],
+	        blanco: [255, 255, 255]
+	    };
+
+	    if (btnExportar) {
+	        btnExportar.addEventListener("click", exportarPDF);
+	    }
+
+
+	    // ---------- utilidades del reporte ----------
+
+	    function nombreCombustibleRegistro(registro) {
+
+	        return registro?.combustible?.nombre ||
+	            registro?.combustibleNombre ||
+	            "Sin combustible";
+	    }
+
+	    function estiloCombustiblePDF(nombre) {
+
+	        const clase = obtenerClaseCombustible(nombre);
+
+	        if (clase === "diesel") {
+	            return { fondo: [255, 244, 204], texto: [138, 102, 0], barra: [242, 183, 5] };
+	        }
+
+	        if (clase === "regular") {
+	            return { fondo: [224, 243, 234], texto: [31, 107, 70], barra: [59, 155, 107] };
+	        }
+
+	        if (clase === "super") {
+	            return { fondo: [253, 227, 224], texto: [165, 43, 34], barra: [214, 69, 59] };
+	        }
+
+	        return { fondo: [241, 244, 248], texto: [27, 36, 48], barra: [45, 91, 138] };
+	    }
+
+	    function dineroPDF(numero) {
+	        return "L. " + formatearNumeroPDF(numero);
+	    }
+
+	    function porcentajePDF(parte, total) {
+	        return total > 0 ? (parte / total) * 100 : 0;
+	    }
+
+	    function textoPorcentajePDF(parte, total) {
+	        return porcentajePDF(parte, total).toFixed(1) + "%";
+	    }
+
+	    function pluralPDF(cantidad, singular, plural) {
+	        return `${cantidad} ${cantidad === 1 ? singular : plural}`;
+	    }
+
+	    // Agrupa los registros (por unidad, motorista, destino, etc.)
+	    // y acumula galones, kilómetros y costo, también por tipo de combustible.
+	    function agruparRegistrosPDF(registros, obtenerClave) {
+
+	        const mapa = new Map();
+
+	        registros.forEach(function (registro) {
+
+	            const nombre = String(obtenerClave(registro) ?? "").trim() || "Sin dato";
+	            const llave = normalizarTexto(nombre);
+
+	            if (!mapa.has(llave)) {
+	                mapa.set(llave, {
+	                    nombre: nombre,
+	                    abastecimientos: 0,
+	                    km: 0,
+	                    galones: 0,
+	                    costo: 0,
+	                    porCombustible: {}
+	                });
+	            }
+
+	            const grupo = mapa.get(llave);
+
+	            const galones = Number(registro.galonesAutorizados) || 0;
+	            const costo = Number(registro.total) || 0;
+
+	            grupo.abastecimientos += 1;
+	            grupo.km += Number(registro.kmRuta) || 0;
+	            grupo.galones += galones;
+	            grupo.costo += costo;
+
+	            const llaveCombustible = normalizarTexto(nombreCombustibleRegistro(registro));
+
+	            if (!grupo.porCombustible[llaveCombustible]) {
+	                grupo.porCombustible[llaveCombustible] = { galones: 0, costo: 0 };
+	            }
+
+	            grupo.porCombustible[llaveCombustible].galones += galones;
+	            grupo.porCombustible[llaveCombustible].costo += costo;
+	        });
+
+	        // el que más gastó primero
+	        return [...mapa.values()].sort((a, b) => b.costo - a.costo);
+	    }
+
+
+	    // ---------- reporte ----------
+
+	    async function exportarPDF() {
+
+	        if (
+	            typeof window.jspdf === "undefined" ||
+	            typeof window.jspdf.jsPDF === "undefined"
+	        ) {
+	            mostrarError("No se pudo cargar la herramienta para generar el PDF.");
+	            return;
+	        }
+
+	        // misma función de filtrado que la tabla
+	        const registros = filtrarRegistros();
+
+	        if (!registros || registros.length === 0) {
+	            mostrarAdvertencia(
+	                "No existen registros que coincidan con los filtros seleccionados."
+	            );
+	            return;
+	        }
+
+	        // orden cronológico para el reporte
+	        registros.sort((a, b) =>
+	            String(a.fecha ?? "").localeCompare(String(b.fecha ?? ""))
+	        );
+
+	        const { jsPDF } = window.jspdf;
+
+	        const doc = new jsPDF({
+	            orientation: "landscape",
+	            unit: "mm",
+	            format: "a4"
+	        });
+
+	        if (typeof doc.autoTable !== "function") {
+	            mostrarError("No se pudo cargar el complemento de tablas del PDF.");
+	            return;
+	        }
+
+	        const C = PDF_COLORES;
+	        const fmt = formatearNumeroPDF;
+
+	        const anchoPagina = doc.internal.pageSize.getWidth();
+	        const altoPagina = doc.internal.pageSize.getHeight();
+	        const margen = 10;
+	        const anchoUtil = anchoPagina - (margen * 2);
+	        const limiteInferior = altoPagina - 18;
+	        const topContinuacion = 18;
+
+
+	        // ======================================================
+	        // DATOS DEL REPORTE
+	        // ======================================================
+
+	        // período
+	        let textoRango = "Todos los registros";
+
+	        if (fechaDesde?.value && fechaHasta?.value) {
+	            textoRango = `${formatearFechaPDF(fechaDesde.value)} al ${formatearFechaPDF(fechaHasta.value)}`;
+	        } else if (fechaDesde?.value) {
+	            textoRango = `Desde ${formatearFechaPDF(fechaDesde.value)}`;
+	        } else if (fechaHasta?.value) {
+	            textoRango = `Hasta ${formatearFechaPDF(fechaHasta.value)}`;
+	        }
+
+	        // filtros activos
+	        const filtros = [];
+
+	        if (filtroPlaca?.value) filtros.push(`Unidad ${filtroPlaca.value}`);
+	        if (filtroMotorista?.value) filtros.push(`Motorista ${filtroMotorista.value}`);
+	        if (filtroCombustible?.value) filtros.push(`Combustible ${filtroCombustible.value}`);
+	        if (filtroGasolinera?.value) filtros.push(`Gasolinera ${filtroGasolinera.value}`);
+
+	        // fecha y hora de generación
+	        const ahora = new Date();
+	        const dos = n => String(n).padStart(2, "0");
+
+	        const fechaGeneracion =
+	            `${dos(ahora.getDate())}/${dos(ahora.getMonth() + 1)}/${ahora.getFullYear()} ` +
+	            `${dos(ahora.getHours())}:${dos(ahora.getMinutes())}`;
+
+	        // totales
+	        const totalGalones = registros.reduce(
+	            (t, i) => t + (Number(i?.galonesAutorizados) || 0), 0
+	        );
+
+	        const totalCosto = registros.reduce(
+	            (t, i) => t + (Number(i?.total) || 0), 0
+	        );
+
+	        const totalKilometros = registros.reduce(
+	            (t, i) => t + (Number(i?.kmRuta) || 0), 0
+	        );
+
+	        const precioPromedio = totalGalones > 0 ? totalCosto / totalGalones : 0;
+	        const costoPorKm = totalKilometros > 0 ? totalCosto / totalKilometros : 0;
+	        const totalesManuales = registros.filter(r => r.totalManual).length;
+
+	        // agrupaciones
+	        const porCombustible = agruparRegistrosPDF(registros, nombreCombustibleRegistro);
+	        const porUnidad = agruparRegistrosPDF(registros, r => r.placa);
+	        const porMotorista = agruparRegistrosPDF(registros, r => r.motorista);
+	        const porDestino = agruparRegistrosPDF(registros, r => r.destino);
+	        const porGasolinera = agruparRegistrosPDF(registros, r => r.gasolinera);
+
+	        // columnas de combustible (orden alfabético, igual en todas las tablas)
+	        const tiposCombustible = porCombustible
+	            .map(g => ({ nombre: g.nombre, clave: normalizarTexto(g.nombre) }))
+	            .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+
+
+	        // ======================================================
+	        // FUNCIONES DE DIBUJO
+	        // ======================================================
+
+	        function dibujarTarjeta(x, y, ancho, titulo, valor, subtitulo, destacada) {
+
+	            const alto = 25;
+
+	            if (destacada) {
+	                doc.setFillColor(...C.asfalto);
+	                doc.roundedRect(x, y, ancho, alto, 2, 2, "F");
+	            } else {
+	                doc.setFillColor(...C.fondoSuave);
+	                doc.setDrawColor(...C.borde);
+	                doc.setLineWidth(0.25);
+	                doc.roundedRect(x, y, ancho, alto, 2, 2, "FD");
+	            }
+
+	            // franja amarilla inferior (como las tarjetas del sistema)
+	            doc.setFillColor(...C.linea);
+	            doc.rect(x + 5, y + alto - 1.4, ancho - 10, 1.4, "F");
+
+	            doc.setFont("helvetica", "bold");
+	            doc.setFontSize(6.5);
+	            doc.setTextColor(...(destacada ? C.linea : C.textoSuave));
+	            doc.text(titulo.toUpperCase(), x + 5, y + 7);
+
+	            // el valor se reduce si no cabe en la tarjeta
+	            let tamano = 14;
+	            doc.setFont("helvetica", "bold");
+	            doc.setFontSize(tamano);
+
+	            while (doc.getTextWidth(valor) > ancho - 10 && tamano > 8) {
+	                tamano -= 0.5;
+	                doc.setFontSize(tamano);
+	            }
+
+	            doc.setTextColor(...(destacada ? C.blanco : C.asfalto));
+	            doc.text(valor, x + 5, y + 15.5);
+
+	            doc.setFont("helvetica", "normal");
+	            doc.setFontSize(6.5);
+	            doc.setTextColor(...(destacada ? [200, 208, 218] : C.textoSuave));
+	            doc.text(subtitulo, x + 5, y + 20.5);
+	        }
+
+	        function tituloSeccion(y, titulo, subtitulo) {
+
+	            doc.setFillColor(...C.linea);
+	            doc.roundedRect(margen, y, 1.8, subtitulo ? 9 : 6, 0.9, 0.9, "F");
+
+	            doc.setFont("helvetica", "bold");
+	            doc.setFontSize(11);
+	            doc.setTextColor(...C.asfalto);
+	            doc.text(titulo, margen + 5, y + 4);
+
+	            if (subtitulo) {
+	                doc.setFont("helvetica", "normal");
+	                doc.setFontSize(7.5);
+	                doc.setTextColor(...C.textoSuave);
+	                doc.text(subtitulo, margen + 5, y + 8.3);
+	            }
+
+	            return y + (subtitulo ? 13 : 9);
+	        }
+
+	        // si no cabe lo siguiente, pasa a una página nueva
+	        function asegurarEspacio(y, alto) {
+
+	            if (y + alto > limiteInferior) {
+	                doc.addPage();
+	                return topContinuacion + 2;
+	            }
+
+	            return y;
+	        }
+
+	        // cinta superior de las páginas 2 en adelante
+	        function dibujarBandaContinuacion() {
+
+	            doc.setFillColor(...C.asfalto);
+	            doc.rect(0, 0, anchoPagina, 11, "F");
+
+	            doc.setFillColor(...C.linea);
+	            doc.rect(0, 11, anchoPagina, 0.9, "F");
+
+	            doc.setFont("helvetica", "bold");
+	            doc.setFontSize(9);
+	            doc.setTextColor(...C.blanco);
+	            doc.text("REPORTE DE COMBUSTIBLE", margen, 7);
+
+	            doc.setFont("helvetica", "normal");
+	            doc.setFontSize(7.5);
+	            doc.setTextColor(...C.linea);
+	            doc.text(`Período: ${textoRango}`, anchoPagina - margen, 7, { align: "right" });
+	        }
+
+	        function dibujarPie(pagina, totalPaginas) {
+
+	            doc.setDrawColor(...C.borde);
+	            doc.setLineWidth(0.3);
+	            doc.line(margen, altoPagina - 13, anchoPagina - margen, altoPagina - 13);
+
+	            doc.setFillColor(...C.linea);
+	            doc.rect(margen, altoPagina - 13.4, 24, 0.9, "F");
+
+	            doc.setFont("helvetica", "normal");
+	            doc.setFontSize(7);
+	            doc.setTextColor(...C.textoSuave);
+
+	            doc.text("Transportes CHC  ·  Reporte de Combustible", margen, altoPagina - 7);
+
+	            doc.text(
+	                `Generado el ${fechaGeneracion}`,
+	                anchoPagina / 2,
+	                altoPagina - 7,
+	                { align: "center" }
+	            );
+
+	            doc.text(
+	                `Página ${pagina} de ${totalPaginas}`,
+	                anchoPagina - margen,
+	                altoPagina - 7,
+	                { align: "right" }
+	            );
+	        }
+
+	        // Tabla de desglose con barra de porcentaje del gasto
+	        function tablaDesglose(y, cfg) {
+
+	            const encabezado = [cfg.colNombre, "Abast."];
+
+	            if (cfg.conKm) encabezado.push("KM ruta");
+
+	            if (cfg.conCombustible) {
+	                tiposCombustible.forEach(t => encabezado.push(`${t.nombre} (gal)`));
+	            }
+
+	            encabezado.push("Galones");
+
+	            if (cfg.conPrecioProm) encabezado.push("Precio prom./gal");
+
+	            encabezado.push("Costo total", "% del gasto");
+
+	            const ultimo = encabezado.length - 1;
+
+	            const cuerpo = cfg.grupos.map(function (g) {
+
+	                const fila = [g.nombre, String(g.abastecimientos)];
+
+	                if (cfg.conKm) fila.push(`${fmt(g.km)} km`);
+
+	                if (cfg.conCombustible) {
+	                    tiposCombustible.forEach(function (t) {
+	                        const dato = g.porCombustible[t.clave];
+	                        fila.push(dato ? fmt(dato.galones) : "—");
+	                    });
+	                }
+
+	                fila.push(fmt(g.galones));
+
+	                if (cfg.conPrecioProm) {
+	                    fila.push(dineroPDF(g.galones > 0 ? g.costo / g.galones : 0));
+	                }
+
+	                fila.push(dineroPDF(g.costo));
+	                fila.push(textoPorcentajePDF(g.costo, totalCosto));
+
+	                return fila;
+	            });
+
+	            const pie = ["TOTAL", String(registros.length)];
+
+	            if (cfg.conKm) pie.push(`${fmt(totalKilometros)} km`);
+
+	            if (cfg.conCombustible) {
+	                tiposCombustible.forEach(function (t) {
+	                    const suma = cfg.grupos.reduce(
+	                        (s, g) => s + (g.porCombustible[t.clave]?.galones || 0), 0
+	                    );
+	                    pie.push(suma > 0 ? fmt(suma) : "—");
+	                });
+	            }
+
+	            pie.push(fmt(totalGalones));
+
+	            if (cfg.conPrecioProm) pie.push(dineroPDF(precioPromedio));
+
+	            pie.push(dineroPDF(totalCosto), "100%");
+
+	            const porcentajes = cfg.grupos.map(g => porcentajePDF(g.costo, totalCosto));
+
+	            const columnas = {};
+	            columnas[0] = { cellWidth: cfg.anchoNombre };
+	            columnas[ultimo] = { cellWidth: 42 };
+
+	            y = asegurarEspacio(y, 38);
+	            y = tituloSeccion(y, cfg.titulo, cfg.subtitulo);
+
+	            doc.autoTable({
+
+	                startY: y,
+
+	                margin: { left: margen, right: margen, top: topContinuacion, bottom: 18 },
+
+	                head: [encabezado],
+	                body: cuerpo,
+	                foot: [pie],
+	                showFoot: "lastPage",
+
+	                theme: "grid",
+
+	                styles: {
+	                    font: "helvetica",
+	                    fontSize: 7.5,
+	                    cellPadding: 2.2,
+	                    textColor: C.textoCuerpo,
+	                    lineColor: C.borde,
+	                    lineWidth: 0.25,
+	                    valign: "middle"
+	                },
+
+	                headStyles: {
+	                    fillColor: C.asfalto2,
+	                    textColor: C.blanco,
+	                    fontStyle: "bold",
+	                    fontSize: 7
+	                },
+
+	                footStyles: {
+	                    fillColor: C.asfalto,
+	                    textColor: C.linea,
+	                    fontStyle: "bold"
+	                },
+
+	                alternateRowStyles: { fillColor: C.filaAlterna },
+
+	                columnStyles: columnas,
+
+	                didParseCell: function (data) {
+
+	                    const col = data.column.index;
+
+	                    // alineación: texto a la izquierda, cifras a la derecha
+	                    data.cell.styles.halign =
+	                        (col === 0 || col === ultimo) ? "left" : "right";
+
+	                    if (data.section === "body" && col === 0) {
+
+	                        data.cell.styles.fontStyle = "bold";
+
+	                        if (cfg.colorearNombre) {
+	                            const estilo = estiloCombustiblePDF(data.cell.raw);
+	                            data.cell.styles.fillColor = estilo.fondo;
+	                            data.cell.styles.textColor = estilo.texto;
+	                        }
+	                    }
+
+	                    if (data.section === "body" && col === ultimo - 1) {
+	                        data.cell.styles.fontStyle = "bold";
+	                    }
+	                },
+
+	                didDrawCell: function (data) {
+
+	                    if (data.section !== "body" || data.column.index !== ultimo) {
+	                        return;
+	                    }
+
+	                    const grupo = cfg.grupos[data.row.index];
+	                    const pct = porcentajes[data.row.index] || 0;
+
+	                    const x = data.cell.x + 15;
+	                    const ancho = data.cell.width - 15 - 3;
+	                    const alto = 2.2;
+	                    const yBarra = data.cell.y + (data.cell.height / 2) - (alto / 2);
+
+	                    if (!grupo || ancho < 5) {
+	                        return;
+	                    }
+
+	                    doc.setFillColor(...C.pistaBarra);
+	                    doc.roundedRect(x, yBarra, ancho, alto, 1, 1, "F");
+
+	                    const relleno = pct > 0 ? Math.max(ancho * pct / 100, 0.8) : 0;
+
+	                    if (relleno > 0) {
+
+	                        doc.setFillColor(
+	                            ...(cfg.colorearNombre
+	                                ? estiloCombustiblePDF(grupo.nombre).barra
+	                                : C.azul)
+	                        );
+
+	                        if (relleno < 2) {
+	                            doc.rect(x, yBarra, relleno, alto, "F");
+	                        } else {
+	                            doc.roundedRect(x, yBarra, relleno, alto, 1, 1, "F");
+	                        }
+	                    }
+	                }
+	            });
+
+	            return doc.lastAutoTable.finalY + 9;
+	        }
+
+
+	        // ======================================================
+	        // ENCABEZADO
+	        // ======================================================
+
+	        const altoEncabezado = 38;
+
+	        doc.setFillColor(...C.asfalto);
+	        doc.rect(0, 0, anchoPagina, altoEncabezado, "F");
+
+	        // diagonal más clara a la derecha (efecto degradado del sistema)
+	        doc.setFillColor(...C.asfalto2);
+	        doc.triangle(
+	            anchoPagina * 0.6, 0,
+	            anchoPagina, 0,
+	            anchoPagina, altoEncabezado,
+	            "F"
+	        );
+
+	        // línea de carretera
+	        doc.setDrawColor(...C.linea);
+	        doc.setLineWidth(1.1);
+	        doc.setLineDashPattern([7, 4], 0);
+	        doc.line(margen, altoEncabezado - 3.5, anchoPagina - margen, altoEncabezado - 3.5);
+	        doc.setLineDashPattern([], 0);
+
+	        // logo (se ajusta sin deformarse, sobre un recuadro blanco)
+	        let logo = null;
+
+	        try {
+	            logo = await cargarImagenPDF("/imgs/logo.png");
+	        } catch (error) {
+	            console.warn("No se pudo cargar el logo:", error);
+	        }
+
+	        const cajaLogo = { x: margen, y: 5.5, w: 40, h: 24 };
+
+	        if (logo && logo.naturalWidth > 0 && logo.naturalHeight > 0) {
+
+				// Fondo del logo azul oscuro
+				doc.setFillColor(30, 43, 58);
+
+				doc.roundedRect(
+				    cajaLogo.x,
+				    cajaLogo.y,
+				    cajaLogo.w,
+				    cajaLogo.h,
+				    2.5,
+				    2.5,
+				    "F"
+				);
+
+	            const escala = Math.min(
+	                (cajaLogo.w - 4) / logo.naturalWidth,
+	                (cajaLogo.h - 4) / logo.naturalHeight
+	            );
+
+	            const wLogo = logo.naturalWidth * escala;
+	            const hLogo = logo.naturalHeight * escala;
+
+	            doc.addImage(
+	                logo,
+	                "PNG",
+	                cajaLogo.x + ((cajaLogo.w - wLogo) / 2),
+	                cajaLogo.y + ((cajaLogo.h - hLogo) / 2),
+	                wLogo,
+	                hLogo
+	            );
+	        } else {
+	            logo = null;
+	        }
+
+	        const xContenido = logo ? margen + 46 : margen;
+
+	        // etiqueta "CONTROL DE FLOTA"
+	        doc.setFillColor(57, 57, 42);
+	        doc.roundedRect(xContenido, 6.5, 36, 5.6, 2.8, 2.8, "F");
+
+	        doc.setFont("helvetica", "bold");
+	        doc.setFontSize(6.5);
+	        doc.setTextColor(...C.linea);
+	        doc.text("CONTROL DE FLOTA", xContenido + 18, 10.3, { align: "center" });
+
+	        // título
+	        doc.setFont("helvetica", "bold");
+	        doc.setFontSize(20);
+	        doc.setTextColor(...C.blanco);
+	        doc.text("REPORTE DE COMBUSTIBLE", xContenido, 20);
+
+	        doc.setFont("helvetica", "normal");
+	        doc.setFontSize(8.5);
+	        doc.setTextColor(200, 208, 218);
+	        doc.text(
+	            "Transportes CHC  ·  Control de abastecimientos y consumo de combustible",
+	            xContenido,
+	            26
+	        );
+
+	        // período (y filtros, si los hay)
+	        doc.setFont("helvetica", "bold");
+	        doc.setFontSize(9);
+	        doc.setTextColor(...C.linea);
+
+	        const lineaPeriodo = `Período: ${textoRango}` +
+	            (filtros.length ? `   ·   ${filtros.join("  ·  ")}` : "");
+
+	        doc.text(
+	            doc.splitTextToSize(lineaPeriodo, anchoPagina - xContenido - 65)[0],
+	            xContenido,
+	            31
+	        );
+
+	        // datos a la derecha
+	        doc.setFont("helvetica", "normal");
+	        doc.setFontSize(8);
+	        doc.setTextColor(220, 226, 232);
+	        doc.text(`Generado: ${fechaGeneracion}`, anchoPagina - margen, 12, { align: "right" });
+	        doc.text(`Registros: ${registros.length}`, anchoPagina - margen, 18, { align: "right" });
+
+
+	        // ======================================================
+	        // TARJETAS DE RESUMEN
+	        // ======================================================
+
+	        const yResumen = altoEncabezado + 8;
+	        const espacio = 4;
+	        const anchoTarjeta = (anchoUtil - (espacio * 4)) / 5;
+
+	        const subtituloCosto = totalKilometros > 0
+	            ? `${dineroPDF(costoPorKm)} por km de ruta`
+	            : "Costo de combustible";
+
+	        dibujarTarjeta(
+	            margen, yResumen, anchoTarjeta,
+	            "Abastecimientos", String(registros.length), "Registros incluidos", false
+	        );
+
+	        dibujarTarjeta(
+	            margen + (anchoTarjeta + espacio), yResumen, anchoTarjeta,
+	            "Galones", fmt(totalGalones), "Total autorizado", false
+	        );
+
+	        dibujarTarjeta(
+	            margen + ((anchoTarjeta + espacio) * 2), yResumen, anchoTarjeta,
+	            "Kilómetros", fmt(totalKilometros), "Distancia de ruta registrada", false
+	        );
+
+	        dibujarTarjeta(
+	            margen + ((anchoTarjeta + espacio) * 3), yResumen, anchoTarjeta,
+	            "Precio promedio", dineroPDF(precioPromedio), "Por galón (ponderado)", false
+	        );
+
+	        dibujarTarjeta(
+	            margen + ((anchoTarjeta + espacio) * 4), yResumen, anchoTarjeta,
+	            "Total gastado", dineroPDF(totalCosto), subtituloCosto, true
+	        );
+
+
+	        // ======================================================
+	        // TABLA DE DETALLE
+	        // ======================================================
+
+	        let y = tituloSeccion(
+	            yResumen + 25 + 8,
+	            "Detalle de abastecimientos",
+	            `${pluralPDF(registros.length, "registro", "registros")} en orden cronológico`
+	        );
+
+	        const filas = registros.map(function (item, indice) {
+
+	            const fecha = formatearFecha(item.fecha);
+	            const marca = item.totalManual ? "*" : "";
+
+	            return [
+	                String(indice + 1),
+	                fecha.fecha,
+	                item.placa || "—",
+	                item.motorista || "—",
+	                item.destino || "—",
+	                item.gasolinera || "—",
+	                `${fmt(item.kmRuta)} km`,
+	                `${fmt(item.galonesAutorizados)} gal`,
+	                nombreCombustibleRegistro(item),
+	                dineroPDF(item.precioGalon),
+	                dineroPDF(item.total) + marca
+	            ];
+	        });
+
+	        doc.autoTable({
+
+	            startY: y,
+
+	            margin: { left: margen, right: margen, top: topContinuacion, bottom: 18 },
+
+	            head: [[
+	                "#",
+	                "Fecha",
+	                "Placa",
+	                "Motorista",
+	                "Destino",
+	                "Gasolinera",
+	                "KM ruta",
+	                "Galones",
+	                "Combustible",
+	                "Precio/galón",
+	                "Total"
+	            ]],
+
+	            body: filas,
+
+	            foot: [[
+	                { content: "TOTALES", colSpan: 6, styles: { halign: "right" } },
+	                `${fmt(totalKilometros)} km`,
+	                `${fmt(totalGalones)} gal`,
+	                "",
+	                `Prom. ${dineroPDF(precioPromedio)}`,
+	                dineroPDF(totalCosto)
+	            ]],
+
+	            showFoot: "lastPage",
+
+	            theme: "grid",
+
+	            styles: {
+	                font: "helvetica",
+	                fontSize: 7,
+	                cellPadding: 2.2,
+	                textColor: C.textoCuerpo,
+	                lineColor: C.borde,
+	                lineWidth: 0.25,
+	                valign: "middle"
+	            },
+
+	            headStyles: {
+	                fillColor: C.asfalto,
+	                textColor: C.blanco,
+	                fontStyle: "bold",
+	                fontSize: 7,
+	                halign: "center"
+	            },
+
+	            footStyles: {
+	                fillColor: C.asfalto,
+	                textColor: C.linea,
+	                fontStyle: "bold",
+	                halign: "right"
+	            },
+
+	            alternateRowStyles: { fillColor: C.filaAlterna },
+
+	            columnStyles: {
+	                0: { halign: "center", cellWidth: 8 },
+	                1: { halign: "center", cellWidth: 20 },
+	                2: { halign: "center", cellWidth: 20 },
+	                3: { halign: "left", cellWidth: 40 },
+	                4: { halign: "left", cellWidth: 40 },
+	                5: { halign: "center", cellWidth: 24 },
+	                6: { halign: "right", cellWidth: 20 },
+	                7: { halign: "right", cellWidth: 22 },
+	                8: { halign: "center", cellWidth: 28 },
+	                9: { halign: "right", cellWidth: 26 },
+	                10: { halign: "right", cellWidth: 29 }
+	            },
+
+	            didParseCell: function (data) {
+
+	                if (data.section !== "body") {
+	                    return;
+	                }
+
+	                // el tipo de combustible lleva el color del sistema
+	                if (data.column.index === 8) {
+	                    const estilo = estiloCombustiblePDF(data.cell.raw);
+	                    data.cell.styles.fillColor = estilo.fondo;
+	                    data.cell.styles.textColor = estilo.texto;
+	                    data.cell.styles.fontStyle = "bold";
+	                }
+
+	                if (data.column.index === 2 || data.column.index === 10) {
+	                    data.cell.styles.fontStyle = "bold";
+	                }
+	            }
+	        });
+
+	        y = doc.lastAutoTable.finalY + 5;
+
+	        if (totalesManuales > 0) {
+
+	            y = asegurarEspacio(y, 8);
+
+	            doc.setFont("helvetica", "italic");
+	            doc.setFontSize(7);
+	            doc.setTextColor(...C.textoSuave);
+	            doc.text(
+	                "* Total editado manualmente (no corresponde a galones × precio).",
+	                margen,
+	                y
+	            );
+
+	            y += 6;
+	        }
+
+
+	        // ======================================================
+	        // ESPECIFICACIONES DEL REPORTE
+	        // ======================================================
+
+	        // --- análisis en palabras ---
+
+	        const unidadTop = porUnidad[0];
+	        const motoristaTop = porMotorista[0];
+	        const destinoTop = porDestino[0];
+
+	        const gasolineraTop = [...porGasolinera].sort(
+	            (a, b) => (b.abastecimientos - a.abastecimientos) || (b.costo - a.costo)
+	        )[0];
+
+	        const mayor = registros.reduce(
+	            (m, r) => (Number(r.total) || 0) > (Number(m.total) || 0) ? r : m,
+	            registros[0]
+	        );
+
+	        const describir = g =>
+	            `${g.nombre}, con ${fmt(g.galones)} galones por ${dineroPDF(g.costo)} ` +
+	            `(${textoPorcentajePDF(g.costo, totalCosto)} del gasto) en ` +
+	            `${pluralPDF(g.abastecimientos, "abastecimiento", "abastecimientos")}.`;
+
+	        const items = [];
+
+	        items.push({
+	            etiqueta: "Alcance",
+	            texto:
+	                `${textoRango}. Incluye ${pluralPDF(registros.length, "abastecimiento", "abastecimientos")} ` +
+	                `de ${pluralPDF(porUnidad.length, "unidad", "unidades")}, realizados por ` +
+	                `${pluralPDF(porMotorista.length, "motorista", "motoristas")} hacia ` +
+	                `${pluralPDF(porDestino.length, "destino", "destinos")}.` +
+	                (filtros.length ? ` Filtros aplicados: ${filtros.join(", ")}.` : "")
+	        });
+
+	        items.push({
+	            etiqueta: "Total gastado",
+	            texto:
+	                `${dineroPDF(totalCosto)} en ${fmt(totalGalones)} galones, a un precio promedio de ` +
+	                `${dineroPDF(precioPromedio)} por galón` +
+	                (totalKilometros > 0
+	                    ? `; equivale a ${dineroPDF(costoPorKm)} por kilómetro de ruta.`
+	                    : ".")
+	        });
+
+	        items.push({
+	            etiqueta: "Por combustible",
+	            texto: [...porCombustible]
+	                .map(g =>
+	                    `${g.nombre}: ${fmt(g.galones)} gal por ${dineroPDF(g.costo)} ` +
+	                    `(${textoPorcentajePDF(g.costo, totalCosto)})`
+	                )
+	                .join("; ") + "."
+	        });
+
+	        items.push({ etiqueta: "Unidad con mayor gasto", texto: describir(unidadTop) });
+	        items.push({ etiqueta: "Motorista con mayor gasto", texto: describir(motoristaTop) });
+	        items.push({ etiqueta: "Destino con mayor gasto", texto: describir(destinoTop) });
+
+	        items.push({
+	            etiqueta: "Gasolinera más usada",
+	            texto:
+	                `${gasolineraTop.nombre}, con ` +
+	                `${pluralPDF(gasolineraTop.abastecimientos, "abastecimiento", "abastecimientos")} ` +
+	                `por ${dineroPDF(gasolineraTop.costo)} (${fmt(gasolineraTop.galones)} galones).`
+	        });
+
+	        items.push({
+	            etiqueta: "Mayor abastecimiento",
+	            texto:
+	                `${dineroPDF(mayor.total)} el ${formatearFecha(mayor.fecha).fecha}, ` +
+	                `unidad ${mayor.placa || "—"} hacia ${mayor.destino || "—"} ` +
+	                `(${fmt(mayor.galonesAutorizados)} galones de ${nombreCombustibleRegistro(mayor)}).`
+	        });
+
+	        if (totalesManuales > 0) {
+	            items.push({
+	                etiqueta: "Totales editados",
+	                texto:
+	                    `${pluralPDF(totalesManuales, "registro tiene", "registros tienen")} el total ` +
+	                    `editado manualmente (marcados con * en el detalle).`
+	            });
+	        }
+
+	        // medir el cuadro antes de dibujarlo
+	        const anchoEtiqueta = 40;
+	        const xEtiqueta = margen + 7;
+	        const xTexto = xEtiqueta + anchoEtiqueta;
+	        const anchoTexto = anchoPagina - margen - 5 - xTexto;
+	        const interlinea = 3.8;
+
+	        doc.setFont("helvetica", "normal");
+	        doc.setFontSize(8);
+
+	        const bloques = items.map(it => ({
+	            etiqueta: it.etiqueta,
+	            lineas: doc.splitTextToSize(it.texto, anchoTexto)
+	        }));
+
+	        const altoCaja = bloques.reduce(
+	            (t, b) => t + (b.lineas.length * interlinea) + 2.2, 0
+	        ) + 4.5;
+
+	        y = asegurarEspacio(y + 4, 15 + altoCaja);
+
+	        // cinta del título de la sección
+	        doc.setFillColor(...C.asfalto);
+	        doc.roundedRect(margen, y, anchoUtil, 11, 2, 2, "F");
+
+	        doc.setFillColor(...C.linea);
+	        doc.roundedRect(margen + 4, y + 3, 1.8, 5, 0.9, 0.9, "F");
+
+	        doc.setFont("helvetica", "bold");
+	        doc.setFontSize(10);
+	        doc.setTextColor(...C.blanco);
+	        doc.text("ESPECIFICACIONES DEL REPORTE", margen + 9, y + 7.2);
+
+	        doc.setFont("helvetica", "normal");
+	        doc.setFontSize(8);
+	        doc.setTextColor(...C.linea);
+	        doc.text(
+	            "Detalle del consumo y del gasto del período",
+	            anchoPagina - margen - 4,
+	            y + 7.2,
+	            { align: "right" }
+	        );
+
+	        y += 15;
+
+	        // cuadro de análisis
+	        doc.setFillColor(...C.fondoSuave);
+	        doc.setDrawColor(...C.borde);
+	        doc.setLineWidth(0.25);
+	        doc.roundedRect(margen, y, anchoUtil, altoCaja, 2, 2, "FD");
+
+	        doc.setFillColor(...C.linea);
+	        doc.rect(margen, y + 2, 1.6, altoCaja - 4, "F");
+
+	        let yTexto = y + 6.5;
+
+	        bloques.forEach(function (bloque) {
+
+	            doc.setFont("helvetica", "bold");
+	            doc.setFontSize(8);
+	            doc.setTextColor(...C.asfalto);
+	            doc.text(bloque.etiqueta, xEtiqueta, yTexto);
+
+	            doc.setFont("helvetica", "normal");
+	            doc.setTextColor(...C.textoCuerpo);
+
+	            bloque.lineas.forEach(function (linea, i) {
+	                doc.text(linea, xTexto, yTexto + (i * interlinea));
+	            });
+
+	            yTexto += (bloque.lineas.length * interlinea) + 2.2;
+	        });
+
+	        y += altoCaja + 9;
+
+	        // --- tablas de desglose ---
+
+	        y = tablaDesglose(y, {
+	            titulo: "Gasto por tipo de combustible",
+	            subtitulo: "Cuántos galones se abastecieron de cada combustible, a qué precio promedio y cuánto costaron.",
+	            colNombre: "Combustible",
+	            grupos: porCombustible,
+	            anchoNombre: 50,
+	            conPrecioProm: true,
+	            colorearNombre: true
+	        });
+
+	        y = tablaDesglose(y, {
+	            titulo: "Consumo por unidad (placa)",
+	            subtitulo: "Galones de cada combustible que consumió cada unidad y lo que costó.",
+	            colNombre: "Unidad",
+	            grupos: porUnidad,
+	            anchoNombre: 36,
+	            conKm: true,
+	            conCombustible: true
+	        });
+
+	        y = tablaDesglose(y, {
+	            titulo: "Consumo por motorista",
+	            subtitulo: "Galones de cada combustible abastecidos por cada motorista y lo que costó.",
+	            colNombre: "Motorista",
+	            grupos: porMotorista,
+	            anchoNombre: 62,
+	            conKm: true,
+	            conCombustible: true
+	        });
+
+	        y = tablaDesglose(y, {
+	            titulo: "Gasto por destino",
+	            subtitulo: "Viajes, kilómetros y galones autorizados por destino, con su costo.",
+	            colNombre: "Destino",
+	            grupos: porDestino,
+	            anchoNombre: 60,
+	            conKm: true
+	        });
+
+	        y = tablaDesglose(y, {
+	            titulo: "Gasto por gasolinera",
+	            subtitulo: "Dónde se abasteció la flota y cuánto se gastó en cada gasolinera.",
+	            colNombre: "Gasolinera",
+	            grupos: porGasolinera,
+	            anchoNombre: 50,
+	            conPrecioProm: true
+	        });
+
+	        // --- notas ---
+
+	        y = asegurarEspacio(y, 16);
+
+	        const textoNota =
+	            "Notas: los kilómetros y galones corresponden a los valores autorizados para cada destino. " +
+	            "El costo de cada abastecimiento usa el precio por galón vigente al momento de registrarlo" +
+	            (totalesManuales > 0
+	                ? ", salvo los marcados con * cuyo total fue editado manualmente."
+	                : ".");
+
+	        const lineasNota = doc.splitTextToSize(textoNota, anchoUtil);
+
+	        doc.setFont("helvetica", "italic");
+	        doc.setFontSize(7);
+	        doc.setTextColor(...C.textoSuave);
+
+	        lineasNota.forEach(function (linea, i) {
+	            doc.text(linea, margen, y + (i * 3.2));
+	        });
+
+	        y += (lineasNota.length * 3.2) + 4;
+
+	        // --- firmas ---
+
+	        if (PDF_INCLUIR_FIRMAS) {
+
+	            y = asegurarEspacio(y + 4, 26);
+
+	            const separacion = 22;
+	            const anchoFirma = (anchoUtil - (separacion * 2)) / 3;
+
+	            ["Elaborado por", "Revisado por", "Autorizado por"].forEach(function (etiqueta, i) {
+
+	                const x = margen + (i * (anchoFirma + separacion));
+	                const yLinea = y + 14;
+
+	                doc.setDrawColor(...C.textoSuave);
+	                doc.setLineWidth(0.3);
+	                doc.line(x, yLinea, x + anchoFirma, yLinea);
+
+	                doc.setFont("helvetica", "bold");
+	                doc.setFontSize(7.5);
+	                doc.setTextColor(...C.asfalto);
+	                doc.text(etiqueta, x + (anchoFirma / 2), yLinea + 4.5, { align: "center" });
+
+	                doc.setFont("helvetica", "normal");
+	                doc.setFontSize(6.5);
+	                doc.setTextColor(...C.textoSuave);
+	                doc.text("Nombre, firma y fecha", x + (anchoFirma / 2), yLinea + 8, { align: "center" });
+	            });
+	        }
+
+
+	        // ======================================================
+	        // CINTA SUPERIOR (pág. 2+) Y PIE EN TODAS LAS PÁGINAS
+	        // ======================================================
+
+	        const totalPaginas = doc.internal.getNumberOfPages();
+
+	        for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+
+	            doc.setPage(pagina);
+
+	            if (pagina > 1) {
+	                dibujarBandaContinuacion();
+	            }
+
+	            dibujarPie(pagina, totalPaginas);
+	        }
+
+
+	        // ======================================================
+	        // NOMBRE DEL ARCHIVO
+	        // ======================================================
+
+	        let nombreArchivo = "Reporte_de_Combustible";
+
+	        if (fechaDesde?.value && fechaHasta?.value) {
+	            nombreArchivo += `_${fechaDesde.value}_${fechaHasta.value}`;
+	        } else if (fechaDesde?.value) {
+	            nombreArchivo += `_desde_${fechaDesde.value}`;
+	        } else if (fechaHasta?.value) {
+	            nombreArchivo += `_hasta_${fechaHasta.value}`;
+	        }
+
+	        if (filtroGasolinera?.value) {
+	            nombreArchivo += `_${filtroGasolinera.value}`;
+	        }
+
+	        nombreArchivo += ".pdf";
+
+	        doc.save(nombreArchivo);
+
+	        mostrarExito("El reporte de combustible fue generado correctamente en PDF.");
+	    }
+
+	    function cargarImagenPDF(src) {
+
+	        return new Promise(function (resolve, reject) {
+
+	            const img = new Image();
+
+	            img.onload = () => resolve(img);
+
+	            img.onerror = () => reject(
+	                new Error("No se pudo cargar la imagen: " + src)
+	            );
+
+	            img.src = src;
+	        });
+	    }
+
+	    function formatearFechaPDF(fecha) {
+
+	        if (!fecha) {
+	            return "—";
+	        }
+
+	        const partes = String(fecha).substring(0, 10).split("-");
+
+	        if (partes.length !== 3) {
+	            return fecha;
+	        }
+
+	        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+	    }
+
+	    function formatearNumeroPDF(numero) {
+
+	        const valor = Number(numero);
+
+	        if (isNaN(valor)) {
+	            return "0.00";
+	        }
+
+	        return valor.toLocaleString("es-HN", {
+	            minimumFractionDigits: 2,
+	            maximumFractionDigits: 2
+	        });
+	    }
 
     // ============================================================
     // ESTADO DE CARGA

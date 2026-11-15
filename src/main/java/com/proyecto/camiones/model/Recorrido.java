@@ -27,6 +27,16 @@ public class Recorrido {
     @Column(name = "motorista", nullable = false, length = 150)
     private String motorista;
 
+    // =====================================================
+    // FURGÓN QUE HIZO EL VIAJE
+    //
+    // Es opcional (nullable) para no romper los recorridos
+    // antiguos que se guardaron antes de existir este campo.
+    // No se muestra en la tabla, solo en el detalle del viaje.
+    // =====================================================
+    @Column(name = "furgon", length = 50)
+    private String furgon;
+
     @Column(name = "ejes_camion", nullable = false)
     private Integer ejesCamion;
 
@@ -116,6 +126,15 @@ public class Recorrido {
 
     public void setMotorista(String motorista) {
         this.motorista = motorista;
+    }
+
+
+    public String getFurgon() {
+        return furgon;
+    }
+
+    public void setFurgon(String furgon) {
+        this.furgon = furgon;
     }
 
 

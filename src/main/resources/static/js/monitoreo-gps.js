@@ -63,6 +63,7 @@ const API = {
     motivo: (id, motivo) => http(`${RUTAS.paradas}/${id}/motivo`, 'PUT', { motivo })
 };
 let db = { puntos: [], viajes: [] }, flota = [], tab = 'mon', selViaje = null, pick = false, filtro = 'todas', busca = '', primera = true;
+let fDesde = '', fHasta = '', fRapido = 'todo'; // filtro de viajes por fecha
 
 /* ===== GPS: ajusta aquí los nombres de campo de VTracker ===== */
 const num = x => { const n = typeof x === 'string' ? parseFloat(x.replace(',', '.')) : +x; return isFinite(n) ? n : NaN };
@@ -234,7 +235,7 @@ async function ciclo() {
     } catch (e) { console.warn('No se pudieron leer los viajes:', e.message) }
     kpis();
     if (tab === 'mon') lista();
-    else if (tab === 'viajes' && !$('#panel input:focus')) vViajes(); // no repintar si el usuario está escribiendo un motivo
+    else if (tab === 'viajes' && !$('#panel input:focus')) { if (selViaje) vViajes(); else listaViajes() } // en la lista solo se repinta la lista: el filtro de fechas no se toca
     const sv = db.viajes.find(x => x.id === selViaje); if (sv) pintarViaje(sv, false);
 }
 
@@ -288,6 +289,35 @@ function vPuntos() {
     });
 }
 
+/* ===== FILTRO POR FECHAS (siempre en hora de Honduras) ===== */
+const diaHN = t => t ? new Date(t).toLocaleDateString('en-CA', { timeZone: ZONA_HN }) : null; // AAAA-MM-DD
+const sumaDias = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10) };
+function aplicarRapido(k) {
+    const h = diaHN(Date.now()); fRapido = k;
+    if (k === 'hoy') { fDesde = h; fHasta = h }
+    else if (k === '7') { fDesde = sumaDias(h, -6); fHasta = h }
+    else if (k === 'mes') { fDesde = h.slice(0, 8) + '01'; fHasta = h }
+    else { fDesde = ''; fHasta = '' }
+}
+const rangoInvalido = () => !!(fDesde && fHasta && fHasta < fDesde);
+function viajesFiltrados() {
+    if (!fDesde && !fHasta) return db.viajes;
+    if (rangoInvalido()) return [];
+    return db.viajes.filter(v => { const d = diaHN(v.inicio); return d && (!fDesde || d >= fDesde) && (!fHasta || d <= fHasta) });
+}
+function listaViajes() {
+    const el = $('#vlista'); if (!el) return;
+    const L2 = viajesFiltrados().slice().sort((a, b) => (b.inicio || 9e15) - (a.inicio || 9e15)); // más recientes primero
+    const filtrando = !!(fDesde || fHasta);
+    $('#vcuenta').textContent = filtrando ? L2.length + ' de ' + db.viajes.length : db.viajes.length + ' registrados';
+    $('#vaviso2').hidden = !rangoInvalido();
+    el.innerHTML = L2.length ? L2.map(x => `<div class="item" data-v="${x.id}"><div class="top2"><b>${esc(nomU(x))}</b><span class="tag ${x.estado}">${etq(x.estado)}</span></div>
+    <div class="mut">${esc(x.origen)} → ${esc(x.destino)}</div><div class="mut">Salida ${hora(x.inicio)} · ${x.nParadas} paradas</div></div>`).join('')
+        : `<div class="empty">${db.viajes.length ? 'No hay viajes en ese rango de fechas.<br><br><button type="button" class="btn sm soft" data-limpiar>Quitar filtro</button>' : 'Aún no hay viajes. Usa “Nuevo viaje” para programar uno.'}</div>`;
+    el.querySelectorAll('[data-v]').forEach(i => i.onclick = () => abrirViaje(+i.dataset.v));
+    const lim = el.querySelector('[data-limpiar]'); if (lim) lim.onclick = () => { aplicarRapido('todo'); vViajes() };
+}
+
 const ETQV = { programado: 'Programado', en_curso: 'En ida', en_destino: 'En destino', en_retorno: 'En retorno', finalizado: 'Finalizado' };
 const etq = e => ETQV[e] || String(e).replace(/_/g, ' ');
 async function abrirViaje(id) {
@@ -299,11 +329,18 @@ function vViajes() {
     const v = db.viajes.find(x => x.id === selViaje);
     if (v) {
         const ps = paradasDe(v);
-        $('#panel').innerHTML = `<div class="top2"><button class="btn sm soft" id="bback">Volver</button><span>${v.estado !== 'finalizado' ? '<button class="btn sm soft" id="bfin">Finalizar</button> ' : ''}<button class="btn sm del" id="bdel">Eliminar viaje</button></span></div>
+        $('#panel').innerHTML = `<div class="top2"><button class="btn sm soft" id="bback">Volver</button><span>${v.estado !== 'finalizado' ? '<button class="btn sm soft" id="bfin">Finalizar</button> ' : ''}<button class="btn sm amber" id="bprint">&#128424; Imprimir auditoría</button> <button class="btn sm del" id="bdel">Eliminar viaje</button></span></div>
     <div class="ph" style="margin-top:12px"><h2>${esc(nomU(v))}</h2><span class="tag ${v.estado}">${etq(v.estado)}</span></div>
     <div class="mut">Viaje #${v.id}${v.etiqueta ? ' · ' + esc(v.etiqueta.split(' | ').slice(1).join(' · ')) : ''}</div>
     <ul class="tl">${lineaTiempo(v, ps)}</ul>`;
         $('#bback').onclick = () => { selViaje = null; pintarViaje(null); vViajes() };
+        const bp = $('#bprint'); bp.onclick = async () => {
+            if (!window.CHCAuditoria) return alert('Falta cargar js/monitoreo-auditoria.js');
+            const cur = db.viajes.find(x => x.id === selViaje) || v, txt = bp.innerHTML;
+            bp.disabled = true; bp.textContent = 'Preparando…';
+            try { await CHCAuditoria.imprimir({ viaje: cur, paradas: paradasDe(cur), origen: pOri(cur), destino: pDes(cur), unidad: unidad(cur.vehiculo), nombreUnidad: nomU(cur), minParada: CFG.paradaMinMin }) }
+            catch (err) { alert(err.message) } finally { bp.disabled = false; bp.innerHTML = txt }
+        };
         const bf = $('#bfin'); if (bf) bf.onclick = async () => { if (!confirm('¿Finalizar este viaje ahora?')) return; try { await API.finalizar(v.id); await ciclo() } catch (e) { alert(e.message) } };
         $('#bdel').onclick = async () => { if (!confirm('¿Eliminar este viaje y su historial?')) return; try { await API.borrarViaje(v.id); db.viajes = db.viajes.filter(x => x.id !== v.id); selViaje = null; pintarViaje(null); vViajes(); kpis() } catch (e) { alert(e.message) } };
         document.querySelectorAll('[data-s]').forEach(el => el.onclick = () => { const s = ps[+el.dataset.s]; map.flyTo([s.lat, s.lng], 16) });
@@ -315,10 +352,25 @@ function vViajes() {
         });
         return;
     }
-    $('#panel').innerHTML = `<div class="ph"><h2>Viajes</h2><span class="mut">${db.viajes.length} registrados</span></div>` +
-        (db.viajes.length ? db.viajes.map(x => `<div class="item" data-v="${x.id}"><div class="top2"><b>${esc(nomU(x))}</b><span class="tag ${x.estado}">${etq(x.estado)}</span></div>
-    <div class="mut">${esc(x.origen)} → ${esc(x.destino)}</div><div class="mut">Salida ${hora(x.inicio)} · ${x.nParadas} paradas</div></div>`).join('') : '<div class="empty">Aún no hay viajes. Usa “Nuevo viaje” para programar uno.</div>');
-    document.querySelectorAll('[data-v]').forEach(el => el.onclick = () => abrirViaje(+el.dataset.v));
+    /* Lista con filtro por fechas */
+    $('#panel').innerHTML = `<div class="ph"><h2>Viajes</h2><span class="mut" id="vcuenta"></span></div>
+    <div class="filtro">
+      <div class="chips">${[['todo', 'Todos'], ['hoy', 'Hoy'], ['7', 'Últimos 7 días'], ['mes', 'Este mes']].map(f => `<button type="button" class="chip ${fRapido === f[0] ? 'on' : ''}" data-r="${f[0]}">${f[1]}</button>`).join('')}</div>
+      <div class="row">
+        <div><label for="fdesde">Desde</label><input type="date" id="fdesde" value="${fDesde}"></div>
+        <div><label for="fhasta">Hasta</label><input type="date" id="fhasta" value="${fHasta}"></div>
+      </div>
+      <p class="hint" id="vaviso2" hidden>La fecha final no puede ser anterior a la inicial.</p>
+    </div><div id="vlista"></div>`;
+    document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { aplicarRapido(b.dataset.r); vViajes() });
+    const onFecha = () => {
+        fDesde = $('#fdesde').value; fHasta = $('#fhasta').value; fRapido = '';
+        document.querySelectorAll('[data-r]').forEach(b => b.classList.remove('on'));
+        if (!fDesde && !fHasta) { fRapido = 'todo'; document.querySelector('[data-r="todo"]').classList.add('on') }
+        listaViajes();
+    };
+    $('#fdesde').onchange = onFecha; $('#fhasta').onchange = onFecha;
+    listaViajes();
 }
 
 /* ===== DIÁLOGOS ===== */

@@ -1,7 +1,10 @@
 package com.proyecto.camiones.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Entity
@@ -43,8 +46,11 @@ public class Abastecimiento {
     @Column(nullable = false, length = 150)
     private String gasolinera;
 
+    // El @JsonIgnoreProperties evita el error de serializacion
+    // con los proxies LAZY de Hibernate al listar.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "combustible_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Combustible combustible;
 
     /**
@@ -56,7 +62,9 @@ public class Abastecimiento {
     private BigDecimal precioGalon;
 
     /**
-     * Galones autorizados × precio por galón.
+     * Normalmente galones autorizados × precio por galón.
+     * Puede ser un valor distinto si la factura no coincide
+     * (total editado manualmente).
      */
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
@@ -92,12 +100,16 @@ public class Abastecimiento {
 
     // =========================================================
     // CÁLCULO DEL TOTAL
+    // Solo calcula si el total viene vacío; así se respeta
+    // el total que se editó a mano.
     // =========================================================
 
     private void calcularTotal() {
 
-        if (galonesAutorizados != null && precioGalon != null) {
-            total = galonesAutorizados.multiply(precioGalon);
+        if (total == null && galonesAutorizados != null && precioGalon != null) {
+            total = galonesAutorizados
+                    .multiply(precioGalon)
+                    .setScale(2, RoundingMode.HALF_UP);
         }
     }
 

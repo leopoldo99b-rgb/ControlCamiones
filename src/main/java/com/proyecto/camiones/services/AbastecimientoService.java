@@ -1,6 +1,7 @@
 package com.proyecto.camiones.services;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,9 +50,7 @@ public class AbastecimientoService {
             Long combustibleId
     ) {
 
-        // ========================================================
         // NORMALIZAR PLACA
-        // ========================================================
 
         if (placa != null) {
 
@@ -62,19 +61,13 @@ public class AbastecimientoService {
             }
         }
 
-        // ========================================================
-        // CONVERTIR FECHA DESDE
-        // ========================================================
+        // CONVERTIR FECHAS
 
         LocalDateTime fechaDesde = null;
 
         if (desde != null) {
             fechaDesde = desde.atStartOfDay();
         }
-
-        // ========================================================
-        // CONVERTIR FECHA HASTA
-        // ========================================================
 
         LocalDateTime fechaHasta = null;
 
@@ -84,16 +77,10 @@ public class AbastecimientoService {
                     .atStartOfDay();
         }
 
-        // ========================================================
         // SPECIFICATION
-        // ========================================================
 
         Specification<Abastecimiento> specification =
                 (root, query, cb) -> cb.conjunction();
-
-        // ========================================================
-        // FILTRO FECHA DESDE
-        // ========================================================
 
         if (fechaDesde != null) {
 
@@ -108,10 +95,6 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
-        // FILTRO FECHA HASTA
-        // ========================================================
-
         if (fechaHasta != null) {
 
             LocalDateTime fechaHastaFinal = fechaHasta;
@@ -124,10 +107,6 @@ public class AbastecimientoService {
                             )
             );
         }
-
-        // ========================================================
-        // FILTRO PLACA
-        // ========================================================
 
         if (placa != null) {
 
@@ -145,10 +124,6 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
-        // FILTRO COMBUSTIBLE
-        // ========================================================
-
         if (combustibleId != null) {
 
             Long combustibleIdFinal =
@@ -165,9 +140,7 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // BUSCAR
-        // ========================================================
 
         return abastecimientoRepository.findAll(
                 specification,
@@ -217,9 +190,7 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // VALIDAR GASOLINERA
-        // ========================================================
 
         String gasolinera =
                 request.getGasolinera();
@@ -238,9 +209,7 @@ public class AbastecimientoService {
 
         validarGasolinera(gasolinera);
 
-        // ========================================================
         // BUSCAR COMBUSTIBLE
-        // ========================================================
 
         if (request.getCombustibleId() == null) {
 
@@ -260,10 +229,6 @@ public class AbastecimientoService {
                                 )
                         );
 
-        // ========================================================
-        // VERIFICAR ACTIVO
-        // ========================================================
-
         if (!Boolean.TRUE.equals(
                 combustible.getActivo()
         )) {
@@ -273,10 +238,6 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
-        // VERIFICAR PRECIO
-        // ========================================================
-
         if (combustible.getPrecioGalon() == null) {
 
             throw new IllegalArgumentException(
@@ -284,9 +245,7 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // VALIDAR GALONES
-        // ========================================================
 
         if (
                 request.getGalonesAutorizados() == null ||
@@ -299,26 +258,16 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // CREAR ENTIDAD
-        // ========================================================
 
         Abastecimiento abastecimiento =
                 new Abastecimiento();
-
-        // ========================================================
-        // FECHA
-        // ========================================================
 
         abastecimiento.setFecha(
                 request.getFecha() != null
                         ? request.getFecha()
                         : LocalDateTime.now()
         );
-
-        // ========================================================
-        // DATOS GENERALES
-        // ========================================================
 
         abastecimiento.setPlaca(
                 request.getPlaca().trim()
@@ -332,10 +281,6 @@ public class AbastecimientoService {
                 request.getDestino().trim()
         );
 
-        // ========================================================
-        // DATOS DE RUTA
-        // ========================================================
-
         abastecimiento.setKmRuta(
                 request.getKmRuta()
         );
@@ -344,47 +289,32 @@ public class AbastecimientoService {
                 request.getGalonesAutorizados()
         );
 
-        // ========================================================
-        // GASOLINERA
-        // ========================================================
-
         abastecimiento.setGasolinera(
                 gasolinera
         );
-
-        // ========================================================
-        // COMBUSTIBLE
-        // ========================================================
 
         abastecimiento.setCombustible(
                 combustible
         );
 
-        // ========================================================
-        // PRECIO HISTÓRICO
-        // ========================================================
+        // PRECIO HISTORICO (el vigente al momento de registrar)
 
         abastecimiento.setPrecioGalon(
                 combustible.getPrecioGalon()
         );
 
-        // ========================================================
-        // TOTAL
-        // ========================================================
+        // TOTAL: el escrito a mano si viene, si no galones x precio
 
-        BigDecimal total =
-                request.getGalonesAutorizados()
-                        .multiply(
-                                combustible.getPrecioGalon()
-                        );
+        BigDecimal total = calcularTotal(
+                request,
+                abastecimiento.getPrecioGalon()
+        );
 
         abastecimiento.setTotal(
                 total
         );
 
-        // ========================================================
         // GUARDAR
-        // ========================================================
 
         return abastecimientoRepository.save(
                 abastecimiento
@@ -407,16 +337,12 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // BUSCAR ABASTECIMIENTO
-        // ========================================================
 
         Abastecimiento abastecimiento =
                 obtenerPorId(id);
 
-        // ========================================================
         // VALIDAR GASOLINERA
-        // ========================================================
 
         String gasolinera =
                 request.getGasolinera();
@@ -435,9 +361,7 @@ public class AbastecimientoService {
 
         validarGasolinera(gasolinera);
 
-        // ========================================================
         // VALIDAR COMBUSTIBLE
-        // ========================================================
 
         if (request.getCombustibleId() == null) {
 
@@ -457,10 +381,6 @@ public class AbastecimientoService {
                                 )
                         );
 
-        // ========================================================
-        // VERIFICAR ACTIVO
-        // ========================================================
-
         if (!Boolean.TRUE.equals(
                 combustible.getActivo()
         )) {
@@ -470,10 +390,6 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
-        // VERIFICAR PRECIO
-        // ========================================================
-
         if (combustible.getPrecioGalon() == null) {
 
             throw new IllegalArgumentException(
@@ -481,9 +397,7 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // VALIDAR GALONES
-        // ========================================================
 
         if (
                 request.getGalonesAutorizados() == null ||
@@ -496,9 +410,7 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // FECHA
-        // ========================================================
 
         if (request.getFecha() != null) {
 
@@ -507,9 +419,7 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // DATOS GENERALES
-        // ========================================================
 
         abastecimiento.setPlaca(
                 request.getPlaca().trim()
@@ -523,9 +433,7 @@ public class AbastecimientoService {
                 request.getDestino().trim()
         );
 
-        // ========================================================
         // DATOS DE RUTA
-        // ========================================================
 
         abastecimiento.setKmRuta(
                 request.getKmRuta()
@@ -535,47 +443,50 @@ public class AbastecimientoService {
                 request.getGalonesAutorizados()
         );
 
-        // ========================================================
         // GASOLINERA
-        // ========================================================
 
         abastecimiento.setGasolinera(
                 gasolinera
         );
 
-        // ========================================================
+        // PRECIO HISTORICO
+        // Se conserva el precio original del registro.
+        // Solo se reemplaza si cambia el tipo de combustible.
+        // (Esto debe ir ANTES de setCombustible.)
+
+        boolean mismoCombustible =
+                abastecimiento.getCombustible() != null &&
+                abastecimiento.getCombustible().getId()
+                        .equals(combustible.getId());
+
+        if (
+                !mismoCombustible ||
+                abastecimiento.getPrecioGalon() == null
+        ) {
+
+            abastecimiento.setPrecioGalon(
+                    combustible.getPrecioGalon()
+            );
+        }
+
         // COMBUSTIBLE
-        // ========================================================
 
         abastecimiento.setCombustible(
                 combustible
         );
 
-        // ========================================================
-        // PRECIO HISTÓRICO
-        // ========================================================
+        // TOTAL: el escrito a mano si viene, si no galones x precio
 
-        abastecimiento.setPrecioGalon(
-                combustible.getPrecioGalon()
+        BigDecimal total = calcularTotal(
+                request,
+                abastecimiento.getPrecioGalon()
         );
-
-        // ========================================================
-        // RECALCULAR TOTAL
-        // ========================================================
-
-        BigDecimal total =
-                request.getGalonesAutorizados()
-                        .multiply(
-                                combustible.getPrecioGalon()
-                        );
 
         abastecimiento.setTotal(
                 total
         );
 
-        // ========================================================
         // GUARDAR
-        // ========================================================
 
         return abastecimientoRepository.save(
                 abastecimiento
@@ -595,9 +506,7 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // VERIFICAR QUE EXISTA
-        // ========================================================
 
         if (!abastecimientoRepository.existsById(id)) {
 
@@ -607,17 +516,12 @@ public class AbastecimientoService {
             );
         }
 
-        // ========================================================
         // ELIMINAR DIRECTAMENTE
-        // ========================================================
         //
-        // IMPORTANTE:
         // No usamos findById() + delete(entidad).
-        //
         // El DELETE directo evita que Hibernate tenga que
         // sincronizar una entidad Abastecimiento que pudiera
         // tener gasolinera = null.
-        // ========================================================
 
         int eliminados =
                 abastecimientoRepository.eliminarPorId(id);
@@ -629,6 +533,35 @@ public class AbastecimientoService {
                             + id
             );
         }
+    }
+
+    // ============================================================
+    // CALCULAR TOTAL
+    // Si el request trae un total mayor que cero (factura que no
+    // coincide), se respeta. Si no, galones x precio.
+    // ============================================================
+
+    private BigDecimal calcularTotal(
+            AbastecimientoRequest request,
+            BigDecimal precioGalon
+    ) {
+
+        BigDecimal total;
+
+        if (
+                request.getTotal() != null &&
+                request.getTotal().compareTo(BigDecimal.ZERO) > 0
+        ) {
+
+            total = request.getTotal();
+
+        } else {
+
+            total = request.getGalonesAutorizados()
+                    .multiply(precioGalon);
+        }
+
+        return total.setScale(2, RoundingMode.HALF_UP);
     }
 
     // ============================================================

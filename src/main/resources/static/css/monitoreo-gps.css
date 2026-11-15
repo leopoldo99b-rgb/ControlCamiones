@@ -977,3 +977,23 @@ dialog .msg {
 		min-height: 300px
 	}
 }
+/* ===== Filtro de viajes por fecha ===== */
+.filtro {
+	background: #f6f8fc;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	padding: 2px 12px 12px;
+	margin-bottom: 6px
+}
+
+.filtro .chips {
+	margin: 10px 0 0
+}
+
+.filtro .row label {
+	margin-top: 8px
+}
+
+.filtro .hint {
+	margin: 10px 0 0
+}

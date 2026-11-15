@@ -1,1749 +1,442 @@
-document.addEventListener("DOMContentLoaded", function () {
-
-    /* =========================================================
-       CONFIGURACIÓN
-       ========================================================= */
+document.addEventListener("DOMContentLoaded", function() {
 
     const API_URL = "/notas/api";
+    const $ = (id) => document.getElementById(id);
 
+    const CATS = {
+        OPERATIVA: { n: "Operativa", i: "fa-gears", c: "#4a6a85" },
+        VIAJE: { n: "Viaje", i: "fa-route", c: "#b9822a" },
+        CAMION: { n: "Camión", i: "fa-truck", c: "#5f7f5a" },
+        CONDUCTOR: { n: "Conductor", i: "fa-id-card", c: "#7a6a8f" },
+        PERSONAL: { n: "Personal", i: "fa-user", c: "#9a6070" },
+        GENERAL: { n: "General", i: "fa-layer-group", c: "#64748b" }
+    };
 
-    /* =========================================================
-       ELEMENTOS
-       ========================================================= */
-
-    const btnNuevaNota =
-        document.getElementById("btnNuevaNota");
-
-    const btnNuevaNotaEmpty =
-        document.getElementById("btnNuevaNotaEmpty");
-
-    const notaModal =
-        document.getElementById("notaModal");
-
-    const btnCerrarModal =
-        document.getElementById("btnCerrarModal");
-
-    const btnCancelarNota =
-        document.getElementById("btnCancelarNota");
-
-    const notaForm =
-        document.getElementById("notaForm");
-
-    const modalTitle =
-        document.getElementById("modalTitle");
-
-    const notaFecha =
-        document.getElementById("notaFecha");
-
-    const notaCategoria =
-        document.getElementById("notaCategoria");
-
-    const notaTitulo =
-        document.getElementById("notaTitulo");
-
-    const notaContenido =
-        document.getElementById("notaContenido");
-
-    const contadorCaracteres =
-        document.getElementById("contadorCaracteres");
-
-    const buscarNota =
-        document.getElementById("buscarNota");
-
-    const fechaFiltro =
-        document.getElementById("fechaFiltro");
-
-    const btnLimpiarFiltros =
-        document.getElementById("btnLimpiarFiltros");
-
-    const notesList =
-        document.getElementById("notesList");
-
-    const emptyState =
-        document.getElementById("emptyState");
-
-    const totalNotas =
-        document.getElementById("totalNotas");
-
-    const notasHoy =
-        document.getElementById("notasHoy");
-
-    const ultimaNota =
-        document.getElementById("ultimaNota");
-
-    const contadorNotas =
-        document.getElementById("contadorNotas");
-
-
-    /* =========================================================
-       VARIABLES
-       ========================================================= */
+    const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
     let notas = [];
+    let editId = null;
+    let selCat = "OPERATIVA";
+    let filtroCat = "ALL";
+    let vista = localStorage.getItem("notas.vista") || "grid";
+    let fijadas = new Set(JSON.parse(localStorage.getItem("notas.fijadas") || "[]"));
+    const pendientes = new Map();
 
-    let notaEditandoId = null;
+    /* ---------- utilidades ---------- */
+    const hoyStr = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
 
+    const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 
-    /* =========================================================
-       FECHA LOCAL
-       ========================================================= */
+    const fechaObj = (f) => {
+        const p = String(f || "").split("-").map(Number);
+        return p.length === 3 ? new Date(p[0], p[1] - 1, p[2]) : null;
+    };
 
-    function obtenerFechaLocal() {
+    const fechaLarga = (f) => {
+        const d = fechaObj(f);
+        return d ? d.toLocaleDateString("es-HN", { day: "numeric", month: "long", year: "numeric" }) : "--";
+    };
 
-        const ahora = new Date();
+    const fechaCorta = (f) => {
+        const d = fechaObj(f);
+        return d ? `${d.getDate()} ${MESES[d.getMonth()]}` : "--";
+    };
 
-        const year =
-            ahora.getFullYear();
-
-        const month =
-            String(
-                ahora.getMonth() + 1
-            ).padStart(2, "0");
-
-        const day =
-            String(
-                ahora.getDate()
-            ).padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
+    function etiquetaGrupo(f) {
+        const d = fechaObj(f);
+        if (!d) return "Sin fecha";
+        const dias = Math.round((fechaObj(hoyStr()) - d) / 86400000);
+        if (dias === 0) return "Hoy";
+        if (dias === 1) return "Ayer";
+        if (dias > 1 && dias < 7) return d.toLocaleDateString("es-HN", { weekday: "long" });
+        return fechaLarga(f);
     }
 
+    const catDe = (t) => {
+        const m = String(t || "").match(/^\[([^\]]+)\]/);
+        const k = m ? m[1].trim().toUpperCase() : "GENERAL";
+        return CATS[k] ? k : "GENERAL";
+    };
+    const limpio = (t) => String(t || "").replace(/^\[[^\]]+\]\s*/, "").trim();
 
-    /* =========================================================
-       FORMATEAR FECHA
-       ========================================================= */
+    const hora = (v) => {
+        const d = new Date(v);
+        return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString("es-HN", { hour: "2-digit", minute: "2-digit" });
+    };
 
-    function formatearFecha(fecha) {
-
-        if (!fecha) {
-            return "--";
-        }
-
-        const partes =
-            String(fecha).split("-");
-
-        if (partes.length !== 3) {
-            return fecha;
-        }
-
-        const year =
-            Number(partes[0]);
-
-        const month =
-            Number(partes[1]);
-
-        const day =
-            Number(partes[2]);
-
-
-        const fechaObj =
-            new Date(
-                year,
-                month - 1,
-                day
-            );
-
-
-        return fechaObj.toLocaleDateString(
-            "es-HN",
-            {
-                day: "numeric",
-                month: "long",
-                year: "numeric"
-            }
-        );
+    function resaltar(texto, q) {
+        const s = esc(texto);
+        if (!q) return s;
+        const re = new RegExp(`(${esc(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+        return s.replace(re, "<mark>$1</mark>");
     }
 
-
-    /* =========================================================
-       OBTENER DÍA
-       ========================================================= */
-
-    function obtenerDia(fecha) {
-
-        if (!fecha) {
-            return "--";
+    function toast(msg, opts = {}) {
+        const t = document.createElement("div");
+        t.className = "toast" + (opts.error ? " error" : "");
+        t.innerHTML = `<span>${esc(msg)}</span>`;
+        if (opts.undo) {
+            const b = document.createElement("button");
+            b.textContent = "Deshacer";
+            b.onclick = () => { opts.undo(); t.remove(); };
+            t.appendChild(b);
         }
-
-        const partes =
-            String(fecha).split("-");
-
-        if (partes.length !== 3) {
-            return "--";
-        }
-
-        return partes[2];
+        $("toasts").appendChild(t);
+        setTimeout(() => t.remove(), opts.ms || 4000);
     }
 
+    /* ---------- tema y vista ---------- */
+    function aplicarTema(t) {
+        document.documentElement.dataset.theme = t;
+        $("btnTema").innerHTML = `<i class="fas fa-${t === "dark" ? "sun" : "moon"}"></i>`;
+        localStorage.setItem("notas.tema", t);
+    }
+    aplicarTema(localStorage.getItem("notas.tema") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+    $("btnTema").onclick = () => aplicarTema(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
 
-    /* =========================================================
-       OBTENER MES
-       ========================================================= */
+    function aplicarVista(v) {
+        vista = v;
+        $("notesList").className = "notes " + v;
+        $("vGrid").classList.toggle("on", v === "grid");
+        $("vList").classList.toggle("on", v === "list");
+        localStorage.setItem("notas.vista", v);
+    }
+    $("vGrid").onclick = () => aplicarVista("grid");
+    $("vList").onclick = () => aplicarVista("list");
+    aplicarVista(vista);
 
-    function obtenerMes(fecha) {
+    /* ---------- saludo ---------- */
+    (function saludo() {
+        const h = new Date().getHours();
+        $("saludo").textContent = h < 12 ? "Buenos días ☀️" : h < 19 ? "Buenas tardes 👋" : "Buenas noches 🌙";
+        $("fechaHoy").textContent = new Date().toLocaleDateString("es-HN", { weekday: "long", day: "numeric", month: "long" });
+    })();
 
-        if (!fecha) {
-            return "---";
-        }
-
-        const partes =
-            String(fecha).split("-");
-
-        if (partes.length !== 3) {
-            return "---";
-        }
-
-
-        const meses = [
-            "ENE",
-            "FEB",
-            "MAR",
-            "ABR",
-            "MAY",
-            "JUN",
-            "JUL",
-            "AGO",
-            "SEP",
-            "OCT",
-            "NOV",
-            "DIC"
-        ];
-
-
-        const mes =
-            Number(partes[1]);
-
-
-        return meses[mes - 1] || "---";
+    /* ---------- sidebar ---------- */
+    function pintarNav() {
+        const cuenta = (k) => notas.filter((n) => catDe(n.titulo) === k).length;
+        let h = `<button class="nav-item ${filtroCat === "ALL" ? "on" : ""}" data-cat="ALL"><i class="fas fa-inbox"></i>Todas<em>${notas.length}</em></button>
+                 <button class="nav-item ${filtroCat === "PIN" ? "on" : ""}" data-cat="PIN" style="--c:#b9822a"><i class="fas fa-thumbtack"></i>Fijadas<em>${notas.filter((n) => fijadas.has(String(n.id))).length}</em></button>
+                 <div class="nav-sep"></div>`;
+        Object.entries(CATS).forEach(([k, v]) => {
+            h += `<button class="nav-item ${filtroCat === k ? "on" : ""}" data-cat="${k}" style="--c:${v.c}"><i class="fas ${v.i}"></i>${v.n}<em>${cuenta(k)}</em></button>`;
+        });
+        $("nav").innerHTML = h;
+        $("nav").querySelectorAll(".nav-item").forEach((b) => b.onclick = () => {
+            filtroCat = b.dataset.cat;
+            cerrarMenu();
+            render();
+        });
     }
 
+    const cerrarMenu = () => { $("side").classList.remove("open"); $("scrim").classList.remove("show"); };
+    $("btnMenu").onclick = () => { $("side").classList.add("open"); $("scrim").classList.add("show"); };
+    $("scrim").onclick = cerrarMenu;
 
-    /* =========================================================
-       ESCAPAR HTML
-       ========================================================= */
-
-    function escaparHTML(texto) {
-
-        if (
-            texto === null ||
-            texto === undefined
-        ) {
-            return "";
-        }
-
-
-        return String(texto)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    /* ---------- render ---------- */
+    function filtradas() {
+        const q = $("buscarNota").value.trim().toLowerCase();
+        const f = $("fechaFiltro").value;
+        return notas.filter((n) => {
+            const k = catDe(n.titulo);
+            if (filtroCat === "PIN" && !fijadas.has(String(n.id))) return false;
+            if (filtroCat !== "ALL" && filtroCat !== "PIN" && k !== filtroCat) return false;
+            if (f && String(n.fecha) !== f) return false;
+            return !q || limpio(n.titulo).toLowerCase().includes(q) || String(n.contenido || "").toLowerCase().includes(q);
+        });
     }
 
-
-    /* =========================================================
-       OBTENER CATEGORÍA DEL TÍTULO
-       ========================================================= */
-
-    function obtenerCategoria(titulo) {
-
-        if (!titulo) {
-            return "GENERAL";
-        }
-
-
-        const coincidencia =
-            String(titulo).match(
-                /^\[([^\]]+)\]/
-            );
-
-
-        if (coincidencia) {
-
-            return coincidencia[1]
-                .trim()
-                .toUpperCase();
-        }
-
-
-        return "GENERAL";
-    }
-
-
-    /* =========================================================
-       OBTENER TÍTULO SIN CATEGORÍA
-       ========================================================= */
-
-    function obtenerTituloLimpio(titulo) {
-
-        if (!titulo) {
-            return "";
-        }
-
-
-        return String(titulo)
-            .replace(
-                /^\[[^\]]+\]\s*/,
-                ""
-            )
-            .trim();
-    }
-
-
-    /* =========================================================
-       ABRIR MODAL
-       ========================================================= */
-
-    function abrirModal() {
-
-        if (!notaModal) {
-            return;
-        }
-
-
-        notaModal.classList.add("show");
-
-        document.body.classList.add(
-            "modal-open"
-        );
-
-
-        setTimeout(function () {
-
-            if (notaTitulo) {
-
-                notaTitulo.focus();
-
-            }
-
-        }, 100);
-    }
-
-
-    /* =========================================================
-       CERRAR MODAL
-       ========================================================= */
-
-    function cerrarModal() {
-
-        if (!notaModal) {
-            return;
-        }
-
-
-        notaModal.classList.remove("show");
-
-        document.body.classList.remove(
-            "modal-open"
-        );
-
-
-        notaEditandoId = null;
-
-
-        if (modalTitle) {
-
-            modalTitle.textContent =
-                "Nueva nota";
-        }
-
-
-        if (notaForm) {
-
-            notaForm.reset();
-
-        }
-
-
-        if (notaFecha) {
-
-            notaFecha.value =
-                obtenerFechaLocal();
-
-        }
-
-
-        if (notaCategoria) {
-
-            notaCategoria.value =
-                "OPERATIVA";
-
-        }
-
-
-        actualizarContadorCaracteres();
-    }
-
-
-    /* =========================================================
-       NUEVA NOTA
-       ========================================================= */
-
-    function nuevaNota() {
-
-        notaEditandoId = null;
-
-
-        if (modalTitle) {
-
-            modalTitle.textContent =
-                "Nueva nota";
-        }
-
-
-        if (notaForm) {
-
-            notaForm.reset();
-
-        }
-
-
-        if (notaFecha) {
-
-            notaFecha.value =
-                obtenerFechaLocal();
-
-        }
-
-
-        if (notaCategoria) {
-
-            notaCategoria.value =
-                "OPERATIVA";
-
-        }
-
-
-        actualizarContadorCaracteres();
-
-        abrirModal();
-    }
-
-
-    /* =========================================================
-       EDITAR NOTA
-       ========================================================= */
-
-    function editarNota(id) {
-
-        const nota =
-            notas.find(function (item) {
-
-                return String(item.id) ===
-                       String(id);
-
-            });
-
-
-        if (!nota) {
-
-            alert(
-                "No se encontró la nota."
-            );
-
-            return;
-        }
-
-
-        notaEditandoId =
-            nota.id;
-
-
-        if (modalTitle) {
-
-            modalTitle.textContent =
-                "Editar nota";
-        }
-
-
-        if (notaFecha) {
-
-            notaFecha.value =
-                nota.fecha || "";
-        }
-
-
-        if (notaCategoria) {
-
-            const categoria =
-                obtenerCategoria(
-                    nota.titulo
-                );
-
-
-            const opcionExiste =
-                Array.from(
-                    notaCategoria.options
-                ).some(function (opcion) {
-
-                    return opcion.value ===
-                           categoria;
-
-                });
-
-
-            if (opcionExiste) {
-
-                notaCategoria.value =
-                    categoria;
-
-            } else {
-
-                notaCategoria.value =
-                    "GENERAL";
-            }
-        }
-
-
-        if (notaTitulo) {
-
-            notaTitulo.value =
-                obtenerTituloLimpio(
-                    nota.titulo
-                );
-        }
-
-
-        if (notaContenido) {
-
-            notaContenido.value =
-                nota.contenido || "";
-        }
-
-
-        actualizarContadorCaracteres();
-
-        abrirModal();
-    }
-
-
-    /* =========================================================
-       ELIMINAR NOTA
-       ========================================================= */
-
-    async function eliminarNota(id) {
-
-        const nota =
-            notas.find(function (item) {
-
-                return String(item.id) ===
-                       String(id);
-
-            });
-
-
-        if (!nota) {
-            return;
-        }
-
-
-        const titulo =
-            obtenerTituloLimpio(
-                nota.titulo
-            );
-
-
-        const confirmar =
-            confirm(
-                `¿Deseas eliminar la nota "${titulo}"?`
-            );
-
-
-        if (!confirmar) {
-            return;
-        }
-
-
-        try {
-
-            const respuesta =
-                await fetch(
-                    `${API_URL}/${id}`,
-                    {
-                        method: "DELETE"
-                    }
-                );
-
-
-            if (!respuesta.ok) {
-
-                throw new Error(
-                    "No se pudo eliminar la nota."
-                );
-            }
-
-
-            await cargarNotas();
-
-
-        } catch (error) {
-
-            console.error(
-                "Error eliminando nota:",
-                error
-            );
-
-
-            alert(
-                error.message ||
-                "No se pudo eliminar la nota."
-            );
-        }
-    }
-
-
-    /* =========================================================
-       GUARDAR NOTA
-       ========================================================= */
-
-    async function guardarNota(event) {
-
-        event.preventDefault();
-
-
-        if (
-            !notaFecha ||
-            !notaTitulo ||
-            !notaContenido
-        ) {
-            return;
-        }
-
-
-        const fecha =
-            notaFecha.value;
-
-
-        const categoria =
-            notaCategoria
-                ? notaCategoria.value
-                : "GENERAL";
-
-
-        const tituloBase =
-            notaTitulo.value.trim();
-
-
-        const contenido =
-            notaContenido.value.trim();
-
-
-        /* -----------------------------------------------------
-           VALIDACIONES
-           ----------------------------------------------------- */
-
-        if (!fecha) {
-
-            alert(
-                "Selecciona una fecha."
-            );
-
-            return;
-        }
-
-
-        if (!tituloBase) {
-
-            alert(
-                "Escribe un título."
-            );
-
-            notaTitulo.focus();
-
-            return;
-        }
-
-
-        if (!contenido) {
-
-            alert(
-                "Escribe el contenido de la nota."
-            );
-
-            notaContenido.focus();
-
-            return;
-        }
-
-
-        /* -----------------------------------------------------
-           CATEGORÍA DENTRO DEL TÍTULO
-           ----------------------------------------------------- */
-
-        const titulo =
-            `[${categoria}] ${tituloBase}`;
-
-
-        const nota = {
-
-            fecha: fecha,
-
-            titulo: titulo,
-
-            contenido: contenido
-        };
-
-
-        try {
-
-            let respuesta;
-
-
-            /* =================================================
-               ACTUALIZAR
-               ================================================= */
-
-            if (notaEditandoId !== null) {
-
-                respuesta =
-                    await fetch(
-                        `${API_URL}/${notaEditandoId}`,
-                        {
-                            method: "PUT",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify(nota)
-                        }
-                    );
-
-            }
-
-
-            /* =================================================
-               CREAR
-               ================================================= */
-
-            else {
-
-                respuesta =
-                    await fetch(
-                        API_URL,
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify(nota)
-                        }
-                    );
-            }
-
-
-            /* -------------------------------------------------
-               ERROR DEL SERVIDOR
-               ------------------------------------------------- */
-
-            if (!respuesta.ok) {
-
-                let mensaje =
-                    "No se pudo guardar la nota.";
-
-
-                try {
-
-                    const texto =
-                        await respuesta.text();
-
-
-                    if (texto) {
-
-                        mensaje =
-                            texto;
-                    }
-
-                } catch (error) {
-
-                    console.error(
-                        "No se pudo leer el error:",
-                        error
-                    );
-                }
-
-
-                throw new Error(
-                    mensaje
-                );
-            }
-
-
-            /* -------------------------------------------------
-               ÉXITO
-               ------------------------------------------------- */
-
-            cerrarModal();
-
-            await cargarNotas();
-
-
-        } catch (error) {
-
-            console.error(
-                "Error guardando nota:",
-                error
-            );
-
-
-            alert(
-                error.message ||
-                "No se pudo guardar la nota."
-            );
-        }
-    }
-
-
-    /* =========================================================
-       CARGAR NOTAS
-       ========================================================= */
-
-    async function cargarNotas() {
-
-        try {
-
-            const respuesta =
-                await fetch(
-                    API_URL,
-                    {
-                        method: "GET",
-
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        }
-                    }
-                );
-
-
-            if (!respuesta.ok) {
-
-                throw new Error(
-                    `Error HTTP ${respuesta.status}`
-                );
-            }
-
-
-            const datos =
-                await respuesta.json();
-
-
-            notas =
-                Array.isArray(datos)
-                    ? datos
-                    : [];
-
-
-            console.log(
-                "Notas cargadas:",
-                notas
-            );
-
-
-            mostrarNotas();
-
-            actualizarResumen();
-
-
-        } catch (error) {
-
-            console.error(
-                "Error cargando notas:",
-                error
-            );
-
-
-            notas = [];
-
-
-            if (notesList) {
-
-                const tarjetas =
-                    notesList.querySelectorAll(
-                        ".note-card"
-                    );
-
-
-                tarjetas.forEach(
-                    function (tarjeta) {
-
-                        tarjeta.remove();
-
-                    }
-                );
-            }
-
-
-            if (emptyState) {
-
-                emptyState.style.display =
-                    "flex";
-            }
-
-
-            actualizarContadorVisible(0);
-
-            actualizarResumen();
-
-
-            /*
-             * Si quieres mostrar el error
-             * directamente en pantalla.
-             */
-
-            if (emptyState) {
-
-                emptyState.innerHTML = `
-
-                    <div class="empty-icon">
-
-                        <i class="fas fa-triangle-exclamation"></i>
-
-                    </div>
-
-                    <h3>
-                        No se pudieron cargar las notas
-                    </h3>
-
-                    <p>
-                        Verifica la conexión con el servidor.
-                    </p>
-
-                    <button
-                        type="button"
-                        class="primary-button"
-                        id="btnReintentarNotas">
-
-                        <i class="fas fa-rotate"></i>
-
-                        Reintentar
-
-                    </button>
-
-                `;
-
-
-                const btnReintentar =
-                    document.getElementById(
-                        "btnReintentarNotas"
-                    );
-
-
-                if (btnReintentar) {
-
-                    btnReintentar.addEventListener(
-                        "click",
-                        cargarNotas
-                    );
-                }
-            }
-        }
-    }
-
-
-    /* =========================================================
-       FILTRAR NOTAS
-       ========================================================= */
-
-    function obtenerNotasFiltradas() {
-
-        const texto =
-            buscarNota
-                ? buscarNota.value
-                    .trim()
-                    .toLowerCase()
-                : "";
-
-
-        const fecha =
-            fechaFiltro
-                ? fechaFiltro.value
-                : "";
-
-
-        return notas.filter(
-            function (nota) {
-
-                const titulo =
-                    String(
-                        nota.titulo || ""
-                    ).toLowerCase();
-
-
-                const contenido =
-                    String(
-                        nota.contenido || ""
-                    ).toLowerCase();
-
-
-                const coincideTexto =
-                    !texto ||
-                    titulo.includes(texto) ||
-                    contenido.includes(texto);
-
-
-                const coincideFecha =
-                    !fecha ||
-                    String(nota.fecha) ===
-                    String(fecha);
-
-
-                return (
-                    coincideTexto &&
-                    coincideFecha
-                );
-            }
-        );
-    }
-
-
-    /* =========================================================
-       MOSTRAR NOTAS
-       ========================================================= */
-
-    function mostrarNotas() {
-
-        if (!notesList) {
-            return;
-        }
-
-
-        const notasFiltradas =
-            obtenerNotasFiltradas();
-
-
-        const tarjetas =
-            notesList.querySelectorAll(
-                ".note-card"
-            );
-
-
-        tarjetas.forEach(
-            function (tarjeta) {
-
-                tarjeta.remove();
-
-            }
-        );
-
-
-        /* -----------------------------------------------------
-           SIN RESULTADOS
-           ----------------------------------------------------- */
-
-        if (notasFiltradas.length === 0) {
-
-            if (emptyState) {
-
-                emptyState.style.display =
-                    "flex";
-
-            }
-
-
-            actualizarContadorVisible(0);
-
-            return;
-        }
-
-
-        if (emptyState) {
-
-            emptyState.style.display =
-                "none";
-        }
-
-
-        /* -----------------------------------------------------
-           ORDENAR POR FECHA
-           ----------------------------------------------------- */
-
-        const ordenadas =
-            [...notasFiltradas].sort(
-                function (a, b) {
-
-                    const fechaA =
-                        String(
-                            a.fecha || ""
-                        );
-
-
-                    const fechaB =
-                        String(
-                            b.fecha || ""
-                        );
-
-
-                    if (fechaA !== fechaB) {
-
-                        return fechaB.localeCompare(
-                            fechaA
-                        );
-                    }
-
-
-                    const createdA =
-                        String(
-                            a.createdAt || ""
-                        );
-
-
-                    const createdB =
-                        String(
-                            b.createdAt || ""
-                        );
-
-
-                    return createdB.localeCompare(
-                        createdA
-                    );
-                }
-            );
-
-
-        /* -----------------------------------------------------
-           CREAR TARJETAS
-           ----------------------------------------------------- */
-
-        ordenadas.forEach(
-            function (nota) {
-
-                const tarjeta =
-                    crearTarjetaNota(nota);
-
-
-                if (emptyState) {
-
-                    notesList.insertBefore(
-                        tarjeta,
-                        emptyState
-                    );
-
-                } else {
-
-                    notesList.appendChild(
-                        tarjeta
-                    );
-                }
-            }
-        );
-
-
-        actualizarContadorVisible(
-            ordenadas.length
-        );
-    }
-
-
-    /* =========================================================
-       CREAR TARJETA
-       ========================================================= */
-
-    function crearTarjetaNota(nota) {
-
-        const article =
-            document.createElement("article");
-
-
-        article.className =
-            "note-card";
-
-
-        const categoria =
-            obtenerCategoria(
-                nota.titulo
-            );
-
-
-        const titulo =
-            obtenerTituloLimpio(
-                nota.titulo
-            );
-
-
-        const categoriaTexto =
-            escaparHTML(
-                categoria
-            );
-
-
-        const tituloTexto =
-            escaparHTML(
-                titulo
-            );
-
-
-        const contenidoTexto =
-            escaparHTML(
-                nota.contenido
-            );
-
-
-        const fechaTexto =
-            escaparHTML(
-                formatearFecha(
-                    nota.fecha
-                )
-            );
-
-
-        const dia =
-            escaparHTML(
-                obtenerDia(
-                    nota.fecha
-                )
-            );
-
-
-        const mes =
-            escaparHTML(
-                obtenerMes(
-                    nota.fecha
-                )
-            );
-
-
-        let horaHTML = "";
-
-
-        if (nota.createdAt) {
-
-            horaHTML = `
-
-                <span>
-
-                    <i class="far fa-clock"></i>
-
-                    ${escaparHTML(
-                        formatearHora(
-                            nota.createdAt
-                        )
-                    )}
-
-                </span>
-
-            `;
-        }
-
-
-        article.innerHTML = `
-
-            <div class="note-date">
-
-                <div class="date-day">
-                    ${dia}
+    function tarjeta(n, q, i) {
+        const k = catDe(n.titulo), c = CATS[k], pin = fijadas.has(String(n.id));
+        const h = n.createdAt ? hora(n.createdAt) : "";
+        return `<article class="note-card ${pin ? "pinned" : ""}" style="--c:${c.c};animation-delay:${Math.min(i, 12) * 30}ms" data-id="${esc(n.id)}">
+            <div class="note-top">
+                <span class="chip"><i class="fas ${c.i}"></i>${c.n}</span>
+                <div class="note-actions">
+                    <button class="pin ${pin ? "on" : ""}" data-a="pin" title="${pin ? "Quitar de fijadas" : "Fijar"}"><i class="fas fa-thumbtack"></i></button>
+                    <button data-a="edit" title="Editar"><i class="fas fa-pen"></i></button>
+                    <button class="delete" data-a="del" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </div>
-
-                <div class="date-month">
-                    ${mes}
-                </div>
-
             </div>
-
-
-            <div class="note-content">
-
-                <div class="note-top">
-
-                    <div>
-
-                        <span class="note-label">
-                            ${categoriaTexto}
-                        </span>
-
-                        <h3>
-                            ${tituloTexto}
-                        </h3>
-
-                    </div>
-
-
-                    <div class="note-actions">
-
-                        <button
-                            type="button"
-                            class="icon-button edit"
-                            title="Editar"
-                            data-id="${escaparHTML(nota.id)}">
-
-                            <i class="fas fa-pen"></i>
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="icon-button delete"
-                            title="Eliminar"
-                            data-id="${escaparHTML(nota.id)}">
-
-                            <i class="fas fa-trash"></i>
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <p>
-                    ${contenidoTexto}
-                </p>
-
-
-                <div class="note-footer">
-
-                    <span>
-
-                        <i class="far fa-calendar"></i>
-
-                        ${fechaTexto}
-
-                    </span>
-
-                    ${horaHTML}
-
-                </div>
-
+            <h3>${resaltar(limpio(n.titulo), q)}</h3>
+            <p>${resaltar(n.contenido, q)}</p>
+            <div class="note-foot">
+                <span><i class="far fa-calendar"></i>${fechaCorta(n.fecha)}</span>
+                ${h ? `<span><i class="far fa-clock"></i>${h}</span>` : ""}
+                <span style="margin-left:auto">${String(n.contenido || "").length} car.</span>
             </div>
-
-        `;
-
-
-        /* -----------------------------------------------------
-           EDITAR
-           ----------------------------------------------------- */
-
-        const btnEditar =
-            article.querySelector(
-                ".edit"
-            );
-
-
-        if (btnEditar) {
-
-            btnEditar.addEventListener(
-                "click",
-                function () {
-
-                    editarNota(
-                        this.dataset.id
-                    );
-                }
-            );
-        }
-
-
-        /* -----------------------------------------------------
-           ELIMINAR
-           ----------------------------------------------------- */
-
-        const btnEliminar =
-            article.querySelector(
-                ".delete"
-            );
-
-
-        if (btnEliminar) {
-
-            btnEliminar.addEventListener(
-                "click",
-                function () {
-
-                    eliminarNota(
-                        this.dataset.id
-                    );
-                }
-            );
-        }
-
-
-        return article;
+        </article>`;
     }
 
+    function render() {
+        pintarNav();
+        actualizarResumen();
 
-    /* =========================================================
-       FORMATEAR HORA
-       ========================================================= */
+        const q = $("buscarNota").value.trim();
+        const lista = filtradas().sort((a, b) => {
+            const pa = fijadas.has(String(a.id)) ? 1 : 0, pb = fijadas.has(String(b.id)) ? 1 : 0;
+            if (pa !== pb) return pb - pa;
+            const fa = String(a.fecha || ""), fb = String(b.fecha || "");
+            return fa !== fb ? fb.localeCompare(fa) : String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+        });
 
-    function formatearHora(fechaHora) {
+        $("tituloLista").textContent = filtroCat === "ALL" ? "Todas las notas" : filtroCat === "PIN" ? "Notas fijadas" : CATS[filtroCat].n;
+        $("contadorNotas").textContent = lista.length === 1 ? "1 nota" : `${lista.length} notas`;
+        $("btnLimpiarFiltros").hidden = !(q || $("fechaFiltro").value || filtroCat !== "ALL");
 
-        if (!fechaHora) {
-            return "--";
-        }
-
-
-        try {
-
-            const fecha =
-                new Date(fechaHora);
-
-
-            if (
-                Number.isNaN(
-                    fecha.getTime()
-                )
-            ) {
-
-                return "--";
-            }
-
-
-            return fecha.toLocaleTimeString(
-                "es-HN",
-                {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
-            );
-
-        } catch (error) {
-
-            return "--";
-        }
-    }
-
-
-    /* =========================================================
-       CONTADOR VISIBLE
-       ========================================================= */
-
-    function actualizarContadorVisible(
-        cantidad
-    ) {
-
-        if (!contadorNotas) {
+        const vacio = lista.length === 0;
+        $("emptyState").hidden = !vacio;
+        $("notesList").hidden = vacio;
+        if (vacio) {
+            const hayFiltro = notas.length > 0;
+            $("emptyTitulo").textContent = hayFiltro ? "Sin resultados" : "Aún no hay notas";
+            $("emptyTexto").textContent = hayFiltro ? "Prueba con otra búsqueda, fecha o categoría." : "Crea la primera y empieza a organizar la operación.";
             return;
         }
 
-
-        contadorNotas.textContent =
-            cantidad === 1
-                ? "1 nota"
-                : `${cantidad} notas`;
+        let html = "", grupo = null, i = 0;
+        const fijas = lista.filter((n) => fijadas.has(String(n.id)));
+        if (fijas.length) {
+            html += `<div class="group-title"><i class="fas fa-thumbtack"></i> Fijadas</div>`;
+            fijas.forEach((n) => html += tarjeta(n, q, i++));
+        }
+        lista.filter((n) => !fijadas.has(String(n.id))).forEach((n) => {
+            const g = etiquetaGrupo(n.fecha);
+            if (g !== grupo) { grupo = g; html += `<div class="group-title">${esc(g)}</div>`; }
+            html += tarjeta(n, q, i++);
+        });
+        $("notesList").innerHTML = html;
     }
 
-
-    /* =========================================================
-       ACTUALIZAR RESUMEN
-       ========================================================= */
+    $("notesList").addEventListener("click", (e) => {
+        const card = e.target.closest(".note-card");
+        if (!card) return;
+        const id = card.dataset.id, btn = e.target.closest("button[data-a]");
+        const a = btn ? btn.dataset.a : "edit";
+        if (a === "pin") alternarPin(id);
+        else if (a === "del") eliminar(id);
+        else ver(id);
+    });
 
     function actualizarResumen() {
+        $("totalNotas").textContent = notas.length;
+        $("notasHoy").textContent = notas.filter((n) => String(n.fecha) === hoyStr()).length;
+        $("totalFijadas").textContent = notas.filter((n) => fijadas.has(String(n.id))).length;
+        const ult = [...notas].sort((a, b) => String(b.createdAt || b.fecha || "").localeCompare(String(a.createdAt || a.fecha || "")))[0];
+        $("ultimaNota").textContent = ult ? fechaCorta(ult.fecha) : "--";
+    }
 
-        /* -----------------------------------------------------
-           TOTAL
-           ----------------------------------------------------- */
+    function alternarPin(id) {
+        id = String(id);
+        fijadas.has(id) ? fijadas.delete(id) : fijadas.add(id);
+        localStorage.setItem("notas.fijadas", JSON.stringify([...fijadas]));
+        render();
+    }
 
-        if (totalNotas) {
+    /* ---------- panel editor ---------- */
+    function pintarCats() {
+        $("catPicker").innerHTML = Object.entries(CATS).map(([k, v]) =>
+            `<button type="button" class="cat-opt ${k === selCat ? "on" : ""}" data-k="${k}" style="--c:${v.c}"><i class="fas ${v.i}"></i>${v.n}</button>`).join("");
+        $("catPicker").querySelectorAll(".cat-opt").forEach((b) => b.onclick = () => { selCat = b.dataset.k; pintarCats(); });
+    }
 
-            totalNotas.textContent =
-                notas.length;
+    function contador() {
+        const n = $("notaContenido").value.length;
+        $("contadorCaracteres").textContent = n;
+        $("barra").style.width = (n / 2000 * 100) + "%";
+        $("barra").style.background = n > 1800 ? "#e11d48" : "";
+    }
+
+    function abrir() {
+        $("notaModal").classList.add("show");
+        $("overlay").classList.add("show");
+        $("notaModal").setAttribute("aria-hidden", "false");
+        document.body.classList.add("lock");
+        pintarCats();
+        contador();
+        setTimeout(() => $("notaTitulo").focus(), 250);
+    }
+
+    function cerrar() {
+        $("notaModal").classList.remove("show");
+        $("overlay").classList.remove("show");
+        $("notaModal").setAttribute("aria-hidden", "true");
+        document.body.classList.remove("lock");
+        editId = null;
+    }
+
+    function nueva() {
+        editId = null;
+        $("modalTitle").textContent = "Nueva nota";
+        $("notaForm").reset();
+        $("notaFecha").value = hoyStr();
+        selCat = filtroCat in CATS ? filtroCat : "OPERATIVA";
+        abrir();
+    }
+
+    function editar(id) {
+        const n = notas.find((x) => String(x.id) === String(id));
+        if (!n) return toast("No se encontró la nota.", { error: true });
+        editId = n.id;
+        $("modalTitle").textContent = "Editar nota";
+        $("notaFecha").value = n.fecha || "";
+        $("notaTitulo").value = limpio(n.titulo);
+        $("notaContenido").value = n.contenido || "";
+        selCat = catDe(n.titulo);
+        abrir();
+    }
+
+    async function guardar(e) {
+        e.preventDefault();
+        const titulo = $("notaTitulo").value.trim(), contenido = $("notaContenido").value.trim(), fecha = $("notaFecha").value;
+        if (!fecha || !titulo || !contenido) return toast("Completa fecha, título y contenido.", { error: true });
+
+        const btn = $("btnGuardar");
+        btn.disabled = true;
+        const body = JSON.stringify({ fecha, titulo: `[${selCat}] ${titulo}`, contenido });
+
+        try {
+            const r = await fetch(editId !== null ? `${API_URL}/${editId}` : API_URL, {
+                method: editId !== null ? "PUT" : "POST",
+                headers: { "Content-Type": "application/json" },
+                body
+            });
+            if (!r.ok) throw new Error((await r.text().catch(() => "")) || "No se pudo guardar la nota.");
+            const editando = editId !== null;
+            cerrar();
+            await cargar();
+            toast(editando ? "Nota actualizada ✓" : "Nota creada ✓");
+        } catch (err) {
+            console.error(err);
+            toast(err.message, { error: true });
+        } finally {
+            btn.disabled = false;
         }
+    }
 
+    /* ---------- lectura completa ---------- */
+    let verId = null;
 
-        /* -----------------------------------------------------
-           NOTAS DE HOY
-           ----------------------------------------------------- */
+    function ver(id) {
+        const n = notas.find((x) => String(x.id) === String(id));
+        if (!n) return;
+        verId = n.id;
+        const c = CATS[catDe(n.titulo)], pin = fijadas.has(String(n.id)), h = n.createdAt ? hora(n.createdAt) : "";
+        $("vistaNota").style.setProperty("--c", c.c);
+        $("vChip").innerHTML = `<i class="fas ${c.i}"></i>${c.n}`;
+        $("vTitulo").textContent = limpio(n.titulo);
+        $("vMeta").innerHTML = `<span><i class="far fa-calendar"></i>${esc(fechaLarga(n.fecha))}</span>` +
+            (h ? `<span><i class="far fa-clock"></i>${esc(h)}</span>` : "") +
+            `<span><i class="fas fa-font"></i>${String(n.contenido || "").length} caracteres</span>`;
+        $("vContenido").textContent = n.contenido || "";
+        $("vPin").innerHTML = `<i class="fas fa-thumbtack"></i> ${pin ? "Quitar fijada" : "Fijar"}`;
+        $("vistaNota").classList.add("show");
+        $("vistaNota").setAttribute("aria-hidden", "false");
+        $("overlay").classList.add("show");
+        document.body.classList.add("lock");
+    }
 
-        const hoy =
-            obtenerFechaLocal();
-
-
-        const cantidadHoy =
-            notas.filter(
-                function (nota) {
-
-                    return String(
-                        nota.fecha || ""
-                    ) === hoy;
-
-                }
-            ).length;
-
-
-        if (notasHoy) {
-
-            notasHoy.textContent =
-                cantidadHoy;
+    function cerrarVista() {
+        $("vistaNota").classList.remove("show");
+        $("vistaNota").setAttribute("aria-hidden", "true");
+        if (!$("notaModal").classList.contains("show")) {
+            $("overlay").classList.remove("show");
+            document.body.classList.remove("lock");
         }
-
-
-        /* -----------------------------------------------------
-           ÚLTIMA NOTA
-           ----------------------------------------------------- */
-
-        if (!ultimaNota) {
-            return;
-        }
-
-
-        if (notas.length === 0) {
-
-            ultimaNota.textContent =
-                "--";
-
-            return;
-        }
-
-
-        const ordenadas =
-            [...notas].sort(
-                function (a, b) {
-
-                    const fechaA =
-                        String(
-                            a.createdAt ||
-                            a.fecha ||
-                            ""
-                        );
-
-
-                    const fechaB =
-                        String(
-                            b.createdAt ||
-                            b.fecha ||
-                            ""
-                        );
-
-
-                    return fechaB.localeCompare(
-                        fechaA
-                    );
-                }
-            );
-
-
-        ultimaNota.textContent =
-            formatearFecha(
-                ordenadas[0].fecha
-            );
+        verId = null;
     }
 
+    /* ---------- eliminar con deshacer ---------- */
+    function eliminar(id) {
+        const idx = notas.findIndex((x) => String(x.id) === String(id));
+        if (idx < 0) return;
+        const nota = notas[idx];
+        notas.splice(idx, 1);
+        render();
 
-    /* =========================================================
-       CONTADOR DE CARACTERES
-       ========================================================= */
+        const timer = setTimeout(() => borrarServidor(id), 5000);
+        pendientes.set(String(id), timer);
 
-    function actualizarContadorCaracteres() {
-
-        if (
-            !notaContenido ||
-            !contadorCaracteres
-        ) {
-            return;
-        }
-
-
-        contadorCaracteres.textContent =
-            notaContenido.value.length;
-    }
-
-
-    /* =========================================================
-       EVENTO NUEVA NOTA
-       ========================================================= */
-
-    if (btnNuevaNota) {
-
-        btnNuevaNota.addEventListener(
-            "click",
-            nuevaNota
-        );
-    }
-
-
-    if (btnNuevaNotaEmpty) {
-
-        btnNuevaNotaEmpty.addEventListener(
-            "click",
-            nuevaNota
-        );
-    }
-
-
-    /* =========================================================
-       CERRAR MODAL
-       ========================================================= */
-
-    if (btnCerrarModal) {
-
-        btnCerrarModal.addEventListener(
-            "click",
-            cerrarModal
-        );
-    }
-
-
-    if (btnCancelarNota) {
-
-        btnCancelarNota.addEventListener(
-            "click",
-            cerrarModal
-        );
-    }
-
-
-    /* =========================================================
-       CLICK FUERA DEL MODAL
-       ========================================================= */
-
-    if (notaModal) {
-
-        notaModal.addEventListener(
-            "click",
-            function (event) {
-
-                if (
-                    event.target ===
-                    notaModal
-                ) {
-
-                    cerrarModal();
-                }
+        toast("Nota eliminada", {
+            ms: 5000,
+            undo: () => {
+                clearTimeout(timer);
+                pendientes.delete(String(id));
+                notas.splice(idx, 0, nota);
+                render();
             }
-        );
+        });
     }
 
-
-    /* =========================================================
-       ESC
-       ========================================================= */
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-
-            if (
-                event.key === "Escape" &&
-                notaModal &&
-                notaModal.classList.contains(
-                    "show"
-                )
-            ) {
-
-                cerrarModal();
-            }
+    async function borrarServidor(id, keepalive) {
+        pendientes.delete(String(id));
+        try {
+            const r = await fetch(`${API_URL}/${id}`, { method: "DELETE", keepalive: !!keepalive });
+            if (!r.ok) throw new Error();
+            fijadas.delete(String(id));
+            localStorage.setItem("notas.fijadas", JSON.stringify([...fijadas]));
+        } catch {
+            toast("No se pudo eliminar en el servidor.", { error: true });
+            cargar();
         }
-    );
-
-
-    /* =========================================================
-       FORMULARIO
-       ========================================================= */
-
-    if (notaForm) {
-
-        notaForm.addEventListener(
-            "submit",
-            guardarNota
-        );
     }
 
+    window.addEventListener("pagehide", () => {
+        pendientes.forEach((t, id) => { clearTimeout(t); borrarServidor(id, true); });
+    });
 
-    /* =========================================================
-       CONTADOR
-       ========================================================= */
-
-    if (notaContenido) {
-
-        notaContenido.addEventListener(
-            "input",
-            actualizarContadorCaracteres
-        );
+    /* ---------- carga ---------- */
+    async function cargar() {
+        try {
+            const r = await fetch(API_URL, { headers: { Accept: "application/json" } });
+            if (!r.ok) throw new Error(`Error HTTP ${r.status}`);
+            const d = await r.json();
+            notas = (Array.isArray(d) ? d : []).filter((n) => !pendientes.has(String(n.id)));
+            render();
+        } catch (err) {
+            console.error("Error cargando notas:", err);
+            notas = [];
+            render();
+            $("emptyTitulo").textContent = "No se pudieron cargar las notas";
+            $("emptyTexto").textContent = "Verifica la conexión con el servidor e inténtalo de nuevo.";
+            toast("Error al cargar las notas", { error: true });
+        }
     }
 
+    /* ---------- eventos ---------- */
+    ["btnNuevaNota", "btnNuevaNotaEmpty", "btnFab"].forEach((id) => $(id).onclick = () => { cerrarMenu(); nueva(); });
+    $("btnCerrarModal").onclick = cerrar;
+    $("btnCancelarNota").onclick = cerrar;
+    $("overlay").onclick = () => { cerrar(); cerrarVista(); };
+    $("vCerrar").onclick = cerrarVista;
+    $("vEditar").onclick = () => { const id = verId; cerrarVista(); editar(id); };
+    $("vEliminar").onclick = () => { const id = verId; cerrarVista(); eliminar(id); };
+    $("vPin").onclick = () => { const id = verId; alternarPin(id); ver(id); };
+    $("notaForm").addEventListener("submit", guardar);
+    $("notaContenido").addEventListener("input", contador);
+    $("buscarNota").addEventListener("input", render);
+    $("fechaFiltro").addEventListener("change", render);
+    $("btnLimpiarFiltros").onclick = () => {
+        $("buscarNota").value = "";
+        $("fechaFiltro").value = "";
+        filtroCat = "ALL";
+        render();
+    };
 
-    /* =========================================================
-       BUSCADOR
-       ========================================================= */
+    document.addEventListener("keydown", (e) => {
+        const enCampo = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+        const abierto = $("notaModal").classList.contains("show");
+        if (e.key === "Escape") { if (abierto) cerrar(); else if ($("vistaNota").classList.contains("show")) cerrarVista(); else cerrarMenu(); }
+        else if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && abierto) $("notaForm").requestSubmit();
+        else if (!enCampo && !abierto && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (e.key === "/") { e.preventDefault(); $("buscarNota").focus(); }
+            else if (e.key.toLowerCase() === "n") { e.preventDefault(); nueva(); }
+        }
+    });
 
-    if (buscarNota) {
-
-        buscarNota.addEventListener(
-            "input",
-            mostrarNotas
-        );
-    }
-
-
-    /* =========================================================
-       FILTRO FECHA
-       ========================================================= */
-
-    if (fechaFiltro) {
-
-        fechaFiltro.addEventListener(
-            "change",
-            mostrarNotas
-        );
-    }
-
-
-    /* =========================================================
-       LIMPIAR FILTROS
-       ========================================================= */
-
-    if (btnLimpiarFiltros) {
-
-        btnLimpiarFiltros.addEventListener(
-            "click",
-            function () {
-
-                if (buscarNota) {
-
-                    buscarNota.value =
-                        "";
-                }
-
-
-                if (fechaFiltro) {
-
-                    fechaFiltro.value =
-                        "";
-                }
-
-
-                mostrarNotas();
-            }
-        );
-    }
-
-
-    /* =========================================================
-       FECHA INICIAL
-       ========================================================= */
-
-    if (notaFecha) {
-
-        notaFecha.value =
-            obtenerFechaLocal();
-    }
-
-
-    /* =========================================================
-       INICIAR
-       ========================================================= */
-
-    cargarNotas();
-
-
-    /* =========================================================
-       CONSOLA
-       ========================================================= */
-
-    console.log(
-        "Sistema de notas iniciado."
-    );
-
-    console.log(
-        "API:",
-        API_URL
-    );
-
+    $("notesList").innerHTML = Array(6).fill('<div class="skel"></div>').join("");
+    cargar();
 });

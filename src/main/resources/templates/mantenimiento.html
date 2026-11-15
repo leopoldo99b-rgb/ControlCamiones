@@ -1,1490 +1,704 @@
 <!DOCTYPE html>
-
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Mantenimiento | Control de Flota</title>
-
-<!-- Bootstrap 5.3.3 -->
 <link
 	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
 	rel="stylesheet">
-
-<!-- Bootstrap Icons -->
 <link rel="stylesheet"
 	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-<!-- CSS de la aplicación -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+	href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap"
+	rel="stylesheet">
 <link rel="stylesheet" th:href="@{/css/mantenimiento.css}"
 	href="/css/mantenimiento.css">
-
 </head>
-
-
 <body>
-
 	<main class="main-content">
 
-		<!-- =========================================================
-             TOPBAR
-        ========================================================== -->
-
+		<!-- TOPBAR: carretera con camión en movimiento -->
 		<header class="topbar">
-
-			<div class="topbar-title">
-
-				<h1>Mantenimiento</h1>
-
-				<p>Registro y control de mantenimientos de la flota</p>
-
+			<div class="topbar-inner">
+				<div class="topbar-title">
+					<h1>Mantenimiento</h1>
+					<p>Registro y control de mantenimientos de la flota</p>
+				</div>
+				<div class="topbar-actions">
+					<a class="btn btn-dashboard" th:href="@{/dashboard}"
+						href="/dashboard"> <i class="bi bi-speedometer2"></i> Regresar
+						al dashboard
+					</a>
+				</div>
 			</div>
-
-			<div class="topbar-actions"></div>
-
+			<div class="road" aria-hidden="true">
+				<div class="road-line"></div>
+				<svg class="truck" viewBox="0 0 124 44"
+					xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="4" width="80" height="28" rx="3" fill="#e8eaed" />
+      <rect x="0" y="20" width="80" height="5" fill="#f5b700" />
+      <path d="M84 12h20l14 12v8H84z" fill="#f5b700" />
+      <path d="M96 15h7l9 9H96z" fill="#9fd3ff" />
+      <rect x="82" y="30" width="38" height="4" fill="#2b2f33" />
+      <g class="wheel">
+					<circle cx="14" cy="35" r="7" fill="#15171a" />
+					<circle cx="14" cy="35" r="2.5" fill="#8a9099" /></g>
+      <g class="wheel">
+					<circle cx="30" cy="35" r="7" fill="#15171a" />
+					<circle cx="30" cy="35" r="2.5" fill="#8a9099" /></g>
+      <g class="wheel">
+					<circle cx="92" cy="35" r="7" fill="#15171a" />
+					<circle cx="92" cy="35" r="2.5" fill="#8a9099" /></g>
+      <g class="wheel">
+					<circle cx="109" cy="35" r="7" fill="#15171a" />
+					<circle cx="109" cy="35" r="2.5" fill="#8a9099" /></g>
+    </svg>
+			</div>
 		</header>
-
-
-		<!-- =========================================================
-             CONTENIDO
-        ========================================================== -->
 
 		<div class="content-wrapper">
 
-
-			<!-- =====================================================
-                 ENCABEZADO
-            ====================================================== -->
-
 			<div class="page-heading">
-
 				<div>
-
-					<span class="section-label"> GESTIÓN </span>
-
 					<h2>Historial de mantenimientos</h2>
-
 					<p>Consulta y administra los mantenimientos realizados a las
 						unidades de la flota.</p>
-
 				</div>
-
-
 				<div class="page-heading-actions">
-
-					<!-- EXPORTAR -->
-
 					<button type="button" class="btn btn-export" id="btnExportar">
-
-						<i class="bi bi-download"></i> Exportar
-
+						<i class="bi bi-file-earmark-pdf"></i> Exportar PDF
 					</button>
-
-
-					<!-- NUEVO MANTENIMIENTO -->
-
 					<button type="button" class="btn btn-primary btn-new-maintenance"
 						data-bs-toggle="modal" data-bs-target="#nuevoMantenimientoModal">
-
 						<i class="bi bi-plus-lg"></i> Nuevo mantenimiento
-
 					</button>
-
 				</div>
-
 			</div>
 
-
-			<!-- =====================================================
-                 RESUMEN
-            ====================================================== -->
-
+			<!-- RESUMEN -->
 			<div class="summary-grid">
-
-
-				<!-- TOTAL -->
-
-				<div class="summary-card">
-
-					<div class="summary-icon blue">
-
+				<div class="summary-card yellow">
+					<div class="summary-icon">
 						<i class="bi bi-clipboard-check"></i>
-
 					</div>
-
 					<div class="summary-content">
-
-						<span> Total mantenimientos </span> <strong
-							id="totalMantenimientos"> 0 </strong> <small> Registros
-							acumulados </small>
-
+						<span>Total mantenimientos</span><strong id="totalMantenimientos">0</strong><small>Registros
+							acumulados</small>
 					</div>
-
 				</div>
-
-
-				<!-- PREVENTIVOS -->
-
-				<div class="summary-card">
-
-					<div class="summary-icon orange">
-
+				<div class="summary-card blue">
+					<div class="summary-icon">
 						<i class="bi bi-tools"></i>
-
 					</div>
-
 					<div class="summary-content">
-
-						<span> Preventivos </span> <strong id="totalPreventivos">
-							0 </strong> <small> Mantenimientos preventivos </small>
-
+						<span>Preventivos</span><strong id="totalPreventivos">0</strong><small>Mantenimientos
+							preventivos</small>
 					</div>
-
 				</div>
-
-
-				<!-- CORRECTIVOS -->
-
-				<div class="summary-card">
-
-					<div class="summary-icon green">
-
+				<div class="summary-card red">
+					<div class="summary-icon">
 						<i class="bi bi-wrench-adjustable"></i>
-
 					</div>
-
 					<div class="summary-content">
-
-						<span> Correctivos </span> <strong id="totalCorrectivos">
-							0 </strong> <small> Atenciones correctivas </small>
-
+						<span>Correctivos</span><strong id="totalCorrectivos">0</strong><small>Atenciones
+							correctivas</small>
 					</div>
-
 				</div>
-
-
-				<!-- UNIDADES -->
-
-				<div class="summary-card">
-
-					<div class="summary-icon gray">
-
+				<div class="summary-card gray">
+					<div class="summary-icon">
 						<i class="bi bi-truck"></i>
-
 					</div>
-
 					<div class="summary-content">
-
-						<span> Unidades atendidas </span> <strong
-							id="totalUnidadesAtendidas"> 0 </strong> <small> Unidades
-							con registros </small>
-
+						<span>Unidades atendidas</span><strong id="totalUnidadesAtendidas">0</strong><small>Unidades
+							con registros</small>
 					</div>
-
 				</div>
-
 			</div>
 
-
-			<!-- =====================================================
-                 FILTROS
-            ====================================================== -->
-
+			<!-- FILTROS -->
 			<section class="card-panel filters-panel">
-
 				<div class="panel-header">
-
-					<div>
-
-						<h3>
-
-							<i class="bi bi-funnel"></i> Filtros
-
-						</h3>
-
-						<span> Filtra el historial de mantenimientos </span>
-
-					</div>
-
+					<h3>
+						<i class="bi bi-funnel"></i> Filtros
+					</h3>
+					<span>Los resultados se actualizan al cambiar cualquier
+						filtro</span>
 				</div>
-
-
 				<div class="filters-grid">
-
-
-					<!-- UNIDAD -->
-
 					<div class="form-group">
-
-						<label for="filtroUnidad"> Unidad </label> <select
-							id="filtroUnidad" class="form-select">
-
-							<option value="">Todas las unidades</option>
-
-							<!-- Las unidades se cargarán dinámicamente -->
-
-						</select>
-
+						<label for="filtroUnidad">Unidad</label> <select id="filtroUnidad"
+							class="form-select"><option value="">Todas las
+								unidades</option></select>
 					</div>
-
-
-					<!-- TIPO -->
-
 					<div class="form-group">
-
-						<label for="filtroTipo"> Tipo </label> <select id="filtroTipo"
+						<label for="filtroTipo">Tipo</label> <select id="filtroTipo"
 							class="form-select">
-
 							<option value="">Todos los tipos</option>
-
 							<option value="PREVENTIVO">Preventivo</option>
-
 							<option value="CORRECTIVO">Correctivo</option>
-
 							<option value="REVISION">Revisión</option>
-
 							<option value="REPARACION">Reparación</option>
-
 							<option value="RESCATE">Rescate</option>
-
 							<option value="OTRO">Otro</option>
-
 						</select>
-
 					</div>
-
-
-					<!-- MEDICIÓN -->
-
 					<div class="form-group">
-
-						<label for="filtroMedicionTipo"> Medición </label> <select
-							id="filtroMedicionTipo" class="form-select">
-
-							<option value="">KM / Horas</option>
-
+						<label for="filtroMedicionTipo">Medición</label> <select
+							id="filtroMedicionTipo" class="form-select"><option
+								value="">KM / Horas</option>
 							<option value="KM">KM</option>
-
-							<option value="HORAS">Horas</option>
-
-						</select>
-
+							<option value="HORAS">Horas</option></select>
 					</div>
-
-
-					<!-- DESDE -->
-
 					<div class="form-group">
-
-						<label for="filtroDesde"> Desde </label> <input type="date"
+						<label for="filtroDesde">Desde</label><input type="date"
 							id="filtroDesde" class="form-control">
-
 					</div>
-
-
-					<!-- HASTA -->
-
 					<div class="form-group">
-
-						<label for="filtroHasta"> Hasta </label> <input type="date"
+						<label for="filtroHasta">Hasta</label><input type="date"
 							id="filtroHasta" class="form-control">
-
 					</div>
-
-
-					<!-- BUSCAR -->
-
 					<div class="form-group search-group">
-
-						<label for="filtroBuscar"> Buscar </label>
-
+						<label for="filtroBuscar">Buscar</label>
 						<div class="search-input-wrapper">
-
 							<i class="bi bi-search"></i> <input type="text" id="filtroBuscar"
 								class="form-control"
-								placeholder="Buscar por unidad o descripción...">
-
+								placeholder="Unidad, placa o descripción...">
 						</div>
-
 					</div>
-
-
-					<!-- LIMPIAR -->
-
 					<div class="form-group filter-clear-group">
-
-						<label class="filter-clear-label"> &nbsp; </label>
-
+						<label class="filter-clear-label">&nbsp;</label>
 						<button type="button" class="btn btn-light filter-clear-button"
 							id="btnLimpiarFiltros">
-
 							<i class="bi bi-arrow-counterclockwise"></i> Limpiar
-
 						</button>
-
 					</div>
-
 				</div>
-
 			</section>
 
-
-			<!-- =====================================================
-                 TABLA DE MANTENIMIENTOS
-            ====================================================== -->
-
+			<!-- TABLA -->
 			<section class="card-panel table-panel">
-
-
 				<div class="table-panel-header">
-
 					<div>
-
 						<h3>Historial</h3>
-
-						<span> Registros de mantenimiento </span>
-
+						<span>Registros de mantenimiento</span>
 					</div>
-
-
 					<div class="table-panel-actions">
-
-
-						<!-- VER UNIDADES -->
-
 						<button type="button" class="btn btn-light btn-table-action"
 							data-bs-toggle="modal" data-bs-target="#verUnidadesModal">
-
 							<i class="bi bi-truck"></i> Ver unidades
-
 						</button>
-
-
-						<!-- NUEVA UNIDAD -->
-
 						<button type="button" class="btn btn-primary btn-table-action"
 							data-bs-toggle="modal" data-bs-target="#nuevaUnidadModal">
-
 							<i class="bi bi-plus-lg"></i> Nueva unidad
-
 						</button>
-
-
-						<div class="table-count" id="tableCount">0 registros</div>
-
+						<div class="table-count" id="tableCount" aria-live="polite">0
+							registros</div>
 					</div>
-
 				</div>
-
-
 				<div class="table-responsive">
-
 					<table class="table maintenance-table">
-
 						<thead>
-
 							<tr>
-
 								<th>ID</th>
-
 								<th>Fecha</th>
-
 								<th>Medición</th>
-
 								<th>Unidad</th>
-
-								<!-- NUEVA COLUMNA PLACA -->
-
 								<th>Placa</th>
-
 								<th>Tipo</th>
-
 								<th>Descripción</th>
-
 								<th class="text-end">Acciones</th>
-
 							</tr>
-
 						</thead>
-
-
 						<tbody id="maintenanceTableBody">
-
-							<!-- Estado vacío -->
-
 							<tr id="emptyMaintenanceRow">
-
 								<td colspan="8" class="text-center py-5 text-muted"><i
-									class="bi bi-clipboard-x fs-2 d-block mb-2 text-secondary">
-								</i>
-
+									class="bi bi-clipboard-x fs-2 d-block mb-2"></i>
 									<p class="mb-1 fw-semibold text-dark">No hay mantenimientos
-										registrados</p> <small class="text-muted"> Haz clic en
-										"Nuevo mantenimiento" para registrar el primero. </small></td>
-
+										registrados</p> <small>Haz clic en "Nuevo mantenimiento"
+										para registrar el primero.</small></td>
 							</tr>
-
 						</tbody>
-
 					</table>
-
 				</div>
-
-
-				<!-- PAGINACIÓN -->
-
 				<div class="pagination-wrapper">
-
 					<div class="pagination-info" id="paginationInfo">
-
 						Mostrando <strong>0</strong> registros
-
 					</div>
-
-
 					<nav aria-label="Paginación">
-
 						<ul class="pagination" id="paginationNav">
-
-							<li class="page-item disabled">
-
-								<button class="page-link" type="button" aria-label="Anterior">
-
+							<li class="page-item disabled"><button class="page-link"
+									type="button" aria-label="Anterior">
 									<i class="bi bi-chevron-left"></i>
-
-								</button>
-
-							</li>
-
-
-							<li class="page-item active">
-
-								<button class="page-link" type="button">1</button>
-
-							</li>
-
-
-							<li class="page-item disabled">
-
-								<button class="page-link" type="button" aria-label="Siguiente">
-
+								</button></li>
+							<li class="page-item active"><button class="page-link"
+									type="button">1</button></li>
+							<li class="page-item disabled"><button class="page-link"
+									type="button" aria-label="Siguiente">
 									<i class="bi bi-chevron-right"></i>
-
-								</button>
-
-							</li>
-
+								</button></li>
 						</ul>
-
 					</nav>
-
 				</div>
-
 			</section>
-
 		</div>
-
 	</main>
 
-
-	<!-- =============================================================
-         MODAL: NUEVO MANTENIMIENTO
-    ============================================================== -->
-
+	<!-- MODAL: NUEVO MANTENIMIENTO -->
 	<div class="modal fade custom-modal" id="nuevoMantenimientoModal"
 		tabindex="-1" aria-hidden="true">
-
 		<div class="modal-dialog modal-dialog-centered modal-lg">
-
 			<div class="modal-content">
-
-
 				<div class="modal-header">
-
 					<div class="modal-title-wrapper">
-
-						<div class="modal-icon blue">
-
+						<div class="modal-icon yellow">
 							<i class="bi bi-plus-lg"></i>
-
 						</div>
-
 						<div>
-
 							<h5 class="modal-title">Nuevo mantenimiento</h5>
-
 							<p>Registra un nuevo mantenimiento.</p>
-
 						</div>
-
 					</div>
-
-
 					<button type="button" class="btn-close" data-bs-dismiss="modal"
 						aria-label="Cerrar"></button>
-
 				</div>
-
-
 				<form id="formMantenimiento">
-
 					<div class="modal-body">
-
 						<div class="form-section-title">Información del
 							mantenimiento</div>
-
-
 						<div class="row g-3">
-
-
-							<!-- FECHA -->
-
 							<div class="col-md-6">
-
-								<label for="fechaMantenimiento" class="form-label">
-
-									Fecha <span class="required"> * </span>
-
+								<label for="fechaMantenimiento" class="form-label">Fecha
+									<span class="required">*</span>
 								</label> <input type="date" id="fechaMantenimiento"
 									name="fecha_mantenimiento" class="form-control" required>
-
 							</div>
-
-
-							<!-- UNIDAD -->
-
 							<div class="col-md-6">
-
-								<label for="unidadMantenimiento" class="form-label">
-
-									Unidad <span class="required"> * </span>
-
+								<label for="unidadMantenimiento" class="form-label">Unidad
+									<span class="required">*</span>
 								</label> <select id="unidadMantenimiento" name="unidad_id"
-									class="form-select" required>
-
-									<option value="">Seleccione una unidad</option>
-
-									<!-- Opciones cargadas dinámicamente -->
-
-								</select>
-
+									class="form-select" required><option value="">Seleccione
+										una unidad</option></select>
 							</div>
-
-
-							<!-- MEDICIÓN -->
-
 							<div class="col-md-6">
-
-								<label for="medicionValor" class="form-label"> Medición
-
-								</label>
-
-
+								<label for="placaMantenimiento" class="form-label">Placa</label>
+								<input type="text" id="placaMantenimiento" class="form-control"
+									placeholder="Se completa al elegir la unidad" readonly
+									tabindex="-1">
+							</div>
+							<div class="col-md-6">
+								<label for="tipoMantenimiento" class="form-label">Tipo <span
+									class="required">*</span></label> <select id="tipoMantenimiento"
+									name="tipo" class="form-select" required>
+									<option value="">Seleccione un tipo</option>
+									<option value="PREVENTIVO">Preventivo</option>
+									<option value="CORRECTIVO">Correctivo</option>
+									<option value="REVISION">Revisión</option>
+									<option value="REPARACION">Reparación</option>
+									<option value="RESCATE">Rescate</option>
+									<option value="OTRO">Otro</option>
+								</select>
+							</div>
+							<div class="col-12">
+								<label for="medicionValor" class="form-label">Medición</label>
 								<div class="measurement-input">
-
 									<input type="number" id="medicionValor" name="medicion_valor"
 										class="form-control" min="0" placeholder="Ej. 327800">
-
-
 									<select id="medicionTipo" name="medicion_tipo"
-										class="form-select">
-
-										<option value="KM">KM</option>
-
-										<option value="HORAS">Horas</option>
-
-									</select>
-
+										class="form-select"><option value="KM">KM</option>
+										<option value="HORAS">Horas</option></select>
 								</div>
-
-
 								<div class="form-help">Puedes registrar la medición en
 									kilómetros u horas.</div>
-
 							</div>
-
-
-							<!-- TIPO -->
-
-							<div class="col-md-6">
-
-								<label for="tipoMantenimiento" class="form-label"> Tipo
-
-									<span class="required"> * </span>
-
-								</label> <select id="tipoMantenimiento" name="tipo" class="form-select"
-									required>
-
-									<option value="">Seleccione un tipo</option>
-
-									<option value="PREVENTIVO">Preventivo</option>
-
-									<option value="CORRECTIVO">Correctivo</option>
-
-									<option value="REVISION">Revisión</option>
-
-									<option value="REPARACION">Reparación</option>
-
-									<option value="RESCATE">Rescate</option>
-
-									<option value="OTRO">Otro</option>
-
-								</select>
-
-							</div>
-
-
-							<!-- DESCRIPCIÓN -->
-
 							<div class="col-12">
-
-								<label for="descripcionMantenimiento" class="form-label">
-
-									Descripción <span class="required"> * </span>
-
+								<label for="descripcionMantenimiento" class="form-label">Descripción
+									<span class="required">*</span>
 								</label>
-
-
 								<textarea id="descripcionMantenimiento" name="descripcion"
 									class="form-control description-input" rows="4"
 									maxlength="1000"
 									placeholder="Describe el mantenimiento realizado..." required></textarea>
-
-
 								<div class="form-help">Máximo 1000 caracteres.</div>
-
 							</div>
-
 						</div>
-
 					</div>
-
-
 					<div class="modal-footer">
-
 						<button type="button" class="btn btn-light"
 							data-bs-dismiss="modal">Cancelar</button>
-
-
 						<button type="submit" class="btn btn-primary">
-
 							<i class="bi bi-check-lg"></i> Guardar mantenimiento
-
 						</button>
-
 					</div>
-
 				</form>
-
 			</div>
-
 		</div>
-
 	</div>
 
-
-	<!-- =============================================================
-         MODAL: VER MANTENIMIENTO
-    ============================================================== -->
-
+	<!-- MODAL: VER MANTENIMIENTO -->
 	<div class="modal fade custom-modal" id="verMantenimientoModal"
 		tabindex="-1" aria-hidden="true">
-
 		<div class="modal-dialog modal-dialog-centered modal-lg">
-
 			<div class="modal-content">
-
-
 				<div class="modal-header">
-
 					<div class="modal-title-wrapper">
-
 						<div class="modal-icon green">
-
 							<i class="bi bi-eye"></i>
-
 						</div>
-
 						<div>
-
 							<h5 class="modal-title">Detalle del mantenimiento</h5>
-
 							<p>Información registrada.</p>
-
 						</div>
-
 					</div>
-
-
 					<button type="button" class="btn-close" data-bs-dismiss="modal"
 						aria-label="Cerrar"></button>
-
 				</div>
-
-
 				<div class="modal-body">
-
-
 					<div class="detail-id">
-
-						Mantenimiento <strong id="verDetalleId"> #— </strong>
-
+						Mantenimiento <strong id="verDetalleId">#—</strong>
 					</div>
-
-
 					<div class="detail-grid">
-
-
-						<!-- FECHA -->
-
 						<div class="detail-item">
-
-							<span> Fecha </span> <strong id="verDetalleFecha"> — </strong>
-
+							<span>Fecha</span><strong id="verDetalleFecha">—</strong>
 						</div>
-
-
-						<!-- UNIDAD -->
-
 						<div class="detail-item">
-
-							<span> Unidad </span> <strong id="verDetalleUnidad"> — </strong>
-
+							<span>Unidad</span><strong id="verDetalleUnidad">—</strong>
 						</div>
-
-
-						<!-- PLACA -->
-
 						<div class="detail-item">
-
-							<span> Placa </span> <strong id="verDetallePlaca"> — </strong>
-
+							<span>Placa</span><strong id="verDetallePlaca">—</strong>
 						</div>
-
-
-						<!-- MEDICIÓN -->
-
 						<div class="detail-item">
-
-							<span> Medición </span> <strong id="verDetalleMedicion">
-								— </strong>
-
+							<span>Medición</span><strong id="verDetalleMedicion">—</strong>
 						</div>
-
-
-						<!-- TIPO -->
-
 						<div class="detail-item">
-
-							<span> Tipo </span> <strong> <span id="verDetalleTipo"
-								class="type-badge"> — </span>
-
-							</strong>
-
+							<span>Tipo</span><strong><span id="verDetalleTipo"
+								class="type-badge">—</span></strong>
 						</div>
-
 					</div>
-
-
-					<!-- DESCRIPCIÓN -->
-
 					<div class="detail-item description-detail">
-
-						<span> Descripción </span>
-
+						<span>Descripción</span>
 						<p id="verDetalleDescripcion">—</p>
-
 					</div>
-
 				</div>
-
-
 				<div class="modal-footer">
-
-					<button type="button" class="btn btn-light" data-bs-dismiss="modal">
-
-						Cerrar</button>
-
+					<button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
 				</div>
-
 			</div>
-
 		</div>
-
 	</div>
 
-
-	<!-- =============================================================
-         MODAL: EDITAR MANTENIMIENTO
-    ============================================================== -->
-
+	<!-- MODAL: EDITAR MANTENIMIENTO -->
 	<div class="modal fade custom-modal" id="editarMantenimientoModal"
 		tabindex="-1" aria-hidden="true">
-
 		<div class="modal-dialog modal-dialog-centered modal-lg">
-
 			<div class="modal-content">
-
-
 				<div class="modal-header">
-
 					<div class="modal-title-wrapper">
-
 						<div class="modal-icon orange">
-
 							<i class="bi bi-pencil"></i>
-
 						</div>
-
 						<div>
-
 							<h5 class="modal-title">Editar mantenimiento</h5>
-
 							<p>Modifica la información del registro.</p>
-
 						</div>
-
 					</div>
-
-
 					<button type="button" class="btn-close" data-bs-dismiss="modal"
 						aria-label="Cerrar"></button>
-
 				</div>
-
-
 				<form id="formEditarMantenimiento">
-
-
-					<!-- ID oculto -->
-
 					<input type="hidden" id="editarId" name="id">
-
-
 					<div class="modal-body">
-
-
 						<div class="edit-record-label">
-
-							Mantenimiento <strong id="editarRegistroIdBadge"> #— </strong>
-
+							Mantenimiento <strong id="editarRegistroIdBadge">#—</strong>
 						</div>
-
-
 						<div class="row g-3">
-
-
-							<!-- FECHA -->
-
 							<div class="col-md-6">
-
-								<label for="editarFecha" class="form-label"> Fecha <span
-									class="required"> * </span>
-
-								</label> <input type="date" id="editarFecha" name="fecha_mantenimiento"
-									class="form-control" required>
-
+								<label for="editarFecha" class="form-label">Fecha <span
+									class="required">*</span></label> <input type="date" id="editarFecha"
+									name="fecha_mantenimiento" class="form-control" required>
 							</div>
-
-
-							<!-- UNIDAD -->
-
 							<div class="col-md-6">
-
-								<label for="editarUnidad" class="form-label"> Unidad <span
-									class="required"> * </span>
-
-								</label> <select id="editarUnidad" name="unidad_id" class="form-select"
-									required>
-
-									<option value="">Seleccione una unidad</option>
-
-									<!-- Opciones cargadas dinámicamente -->
-
+								<label for="editarUnidad" class="form-label">Unidad <span
+									class="required">*</span></label> <select id="editarUnidad"
+									name="unidad_id" class="form-select" required><option
+										value="">Seleccione una unidad</option></select>
+							</div>
+							<div class="col-md-6">
+								<label for="editarPlaca" class="form-label">Placa</label> <input
+									type="text" id="editarPlaca" class="form-control" readonly
+									tabindex="-1">
+							</div>
+							<div class="col-md-6">
+								<label for="editarTipo" class="form-label">Tipo <span
+									class="required">*</span></label> <select id="editarTipo" name="tipo"
+									class="form-select" required>
+									<option value="">Seleccione un tipo</option>
+									<option value="PREVENTIVO">Preventivo</option>
+									<option value="CORRECTIVO">Correctivo</option>
+									<option value="REVISION">Revisión</option>
+									<option value="REPARACION">Reparación</option>
+									<option value="RESCATE">Rescate</option>
+									<option value="OTRO">Otro</option>
 								</select>
-
 							</div>
-
-
-							<!-- MEDICIÓN -->
-
-							<div class="col-md-6">
-
-								<label for="editarMedicion" class="form-label"> Medición
-
-								</label>
-
-
+							<div class="col-12">
+								<label for="editarMedicion" class="form-label">Medición</label>
 								<div class="measurement-input">
-
 									<input type="number" id="editarMedicion" name="medicion_valor"
 										class="form-control" min="0"> <select
 										id="editarMedicionTipo" name="medicion_tipo"
-										class="form-select">
-
-										<option value="KM">KM</option>
-
-										<option value="HORAS">Horas</option>
-
-									</select>
-
+										class="form-select"><option value="KM">KM</option>
+										<option value="HORAS">Horas</option></select>
 								</div>
-
 							</div>
-
-
-							<!-- TIPO -->
-
-							<div class="col-md-6">
-
-								<label for="editarTipo" class="form-label"> Tipo <span
-									class="required"> * </span>
-
-								</label> <select id="editarTipo" name="tipo" class="form-select"
-									required>
-
-									<option value="">Seleccione un tipo</option>
-
-									<option value="PREVENTIVO">Preventivo</option>
-
-									<option value="CORRECTIVO">Correctivo</option>
-
-									<option value="REVISION">Revisión</option>
-
-									<option value="REPARACION">Reparación</option>
-
-									<option value="RESCATE">Rescate</option>
-
-									<option value="OTRO">Otro</option>
-
-								</select>
-
-							</div>
-
-
-							<!-- DESCRIPCIÓN -->
-
 							<div class="col-12">
-
-								<label for="editarDescripcion" class="form-label">
-
-									Descripción <span class="required"> * </span>
-
+								<label for="editarDescripcion" class="form-label">Descripción
+									<span class="required">*</span>
 								</label>
-
-
 								<textarea id="editarDescripcion" name="descripcion"
 									class="form-control description-input" rows="4"
 									maxlength="1000" required></textarea>
-
 							</div>
-
 						</div>
-
 					</div>
-
-
 					<div class="modal-footer">
-
 						<button type="button" class="btn btn-light"
 							data-bs-dismiss="modal">Cancelar</button>
-
-
 						<button type="submit" class="btn btn-primary">
-
 							<i class="bi bi-check-lg"></i> Guardar cambios
-
 						</button>
-
 					</div>
-
 				</form>
-
 			</div>
-
 		</div>
-
 	</div>
 
-
-	<!-- =============================================================
-         MODAL: ELIMINAR MANTENIMIENTO
-    ============================================================== -->
-
+	<!-- MODAL: ELIMINAR MANTENIMIENTO -->
 	<div class="modal fade custom-modal" id="eliminarMantenimientoModal"
 		tabindex="-1" aria-hidden="true">
-
 		<div class="modal-dialog modal-dialog-centered">
-
 			<div class="modal-content delete-modal">
-
-
 				<div class="modal-body text-center">
-
-
 					<div class="delete-icon">
-
 						<i class="bi bi-trash"></i>
-
 					</div>
-
-
 					<h5>¿Eliminar mantenimiento?</h5>
-
-
 					<p>Esta acción eliminará permanentemente el registro
 						seleccionado.</p>
-
-
 					<div class="delete-record-preview">
-
-						<strong id="eliminarBadge"> Mantenimiento #— </strong> <span
-							id="eliminarUnidadDetalle"> — </span>
-
+						<strong id="eliminarBadge">Mantenimiento #—</strong> <span
+							id="eliminarUnidadDetalle">—</span> <span
+							id="eliminarPlacaDetalle"></span>
 					</div>
-
 				</div>
-
-
 				<div class="modal-footer justify-content-center">
-
-					<button type="button" class="btn btn-light" data-bs-dismiss="modal">
-
-						Cancelar</button>
-
-
+					<button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
 					<button type="button" class="btn btn-danger"
 						id="btnConfirmarEliminar">
-
 						<i class="bi bi-trash"></i> Eliminar
-
 					</button>
-
 				</div>
-
 			</div>
-
 		</div>
-
 	</div>
 
-
-	<!-- =============================================================
-         MODAL: NUEVA UNIDAD
-    ============================================================== -->
-
+	<!-- MODAL: NUEVA UNIDAD -->
 	<div class="modal fade custom-modal" id="nuevaUnidadModal"
 		tabindex="-1" aria-hidden="true">
-
 		<div class="modal-dialog modal-dialog-centered modal-lg">
-
 			<div class="modal-content">
-
-
-				<!-- HEADER -->
-
 				<div class="modal-header">
-
 					<div class="modal-title-wrapper">
-
-						<div class="modal-icon blue">
-
+						<div class="modal-icon yellow">
 							<i class="bi bi-truck"></i>
-
 						</div>
-
 						<div>
-
 							<h5 class="modal-title">Nueva unidad</h5>
-
 							<p>Registra una nueva unidad en la flota.</p>
-
 						</div>
-
 					</div>
-
-
 					<button type="button" class="btn-close" data-bs-dismiss="modal"
 						aria-label="Cerrar"></button>
-
 				</div>
-
-
-				<!-- FORMULARIO -->
-
 				<form id="formUnidad">
-
 					<div class="modal-body">
-
-
 						<div class="form-section-title">Información de la unidad</div>
-
-
 						<div class="row g-3">
-
-
-							<!-- ID -->
-
 							<div class="col-md-4">
-
-								<label for="idUnidad" class="form-label"> ID unidad <span
-									class="required"> * </span>
-
-								</label> <input type="number" id="idUnidad" name="id_unidad"
-									class="form-control" min="1" placeholder="Ej. 1" required>
-
-
+								<label for="idUnidad" class="form-label">ID unidad <span
+									class="required">*</span></label> <input type="number" id="idUnidad"
+									name="id_unidad" class="form-control" min="1"
+									placeholder="Ej. 1" required>
 								<div class="form-help">Identificador único de la unidad.</div>
-
 							</div>
-
-
-							<!-- CÓDIGO -->
-
 							<div class="col-md-8">
-
-								<label for="codigoUnidad" class="form-label"> Código de
-									unidad <span class="required"> * </span>
-
+								<label for="codigoUnidad" class="form-label">Código de
+									unidad <span class="required">*</span>
 								</label> <input type="text" id="codigoUnidad" name="codigo_unidad"
 									class="form-control" maxlength="30" placeholder="Ej. CHC11"
 									required>
-
-
 								<div class="form-help">Debe ser único.</div>
-
 							</div>
-
-
-							<!-- PLACA -->
-
 							<div class="col-md-6">
-
-								<label for="placaUnidad" class="form-label"> Placa </label> <input
+								<label for="placaUnidad" class="form-label">Placa</label> <input
 									type="text" id="placaUnidad" name="placa" class="form-control"
 									maxlength="30" placeholder="Ej. TRC2831">
-
 							</div>
-
-
-							<!-- ACTIVO -->
-
 							<div class="col-md-6">
-
-								<label for="activoUnidad" class="form-label"> Estado </label> <select
-									id="activoUnidad" name="activo" class="form-select">
-
-									<option value="true" selected>Activa</option>
-
-									<option value="false">Inactiva</option>
-
-								</select>
-
+								<label for="activoUnidad" class="form-label">Estado</label> <select
+									id="activoUnidad" name="activo" class="form-select"><option
+										value="true" selected>Activa</option>
+									<option value="false">Inactiva</option></select>
 							</div>
-
-
-							<!-- DESCRIPCIÓN -->
-
 							<div class="col-12">
-
-								<label for="descripcionUnidad" class="form-label">
-
-									Descripción </label>
-
-
+								<label for="descripcionUnidad" class="form-label">Descripción</label>
 								<textarea id="descripcionUnidad" name="descripcion"
 									class="form-control description-input" rows="4" maxlength="100"
 									placeholder="Describe la unidad, modelo, tipo de vehículo, etc."></textarea>
-
-
 								<div class="form-help">Máximo 100 caracteres.</div>
-
 							</div>
-
 						</div>
-
 					</div>
-
-
-					<!-- FOOTER -->
-
 					<div class="modal-footer">
-
 						<button type="button" class="btn btn-light"
 							data-bs-dismiss="modal">Cancelar</button>
-
-
 						<button type="submit" class="btn btn-primary">
-
 							<i class="bi bi-check-lg"></i> Guardar unidad
-
 						</button>
-
 					</div>
-
 				</form>
-
 			</div>
-
 		</div>
-
 	</div>
 
-
-	<!-- =============================================================
-         MODAL: VER TODAS LAS UNIDADES
-    ============================================================== -->
-
+	<!-- MODAL: VER UNIDADES -->
 	<div class="modal fade custom-modal" id="verUnidadesModal"
 		tabindex="-1" aria-hidden="true">
-
 		<div class="modal-dialog modal-dialog-centered modal-xl">
-
 			<div class="modal-content">
-
-
-				<!-- HEADER -->
-
 				<div class="modal-header">
-
 					<div class="modal-title-wrapper">
-
 						<div class="modal-icon green">
-
 							<i class="bi bi-truck"></i>
-
 						</div>
-
 						<div>
-
 							<h5 class="modal-title">Unidades de la flota</h5>
-
 							<p>Consulta todas las unidades registradas.</p>
-
 						</div>
-
 					</div>
-
-
 					<button type="button" class="btn-close" data-bs-dismiss="modal"
 						aria-label="Cerrar"></button>
-
 				</div>
-
-
-				<!-- BODY -->
-
 				<div class="modal-body units-modal-body">
-
-
-					<!-- CABECERA -->
-
 					<div class="units-list-header">
-
 						<div>
-
-							<strong> Unidades registradas </strong> <span> Catálogo
-								actual de unidades </span>
-
+							<strong>Unidades registradas</strong><span>Catálogo actual
+								de unidades</span>
 						</div>
-
-
 						<div class="units-total">
-
-							<i class="bi bi-truck"></i> <span id="unitsTotalCount"> 0
-								unidades </span>
-
+							<i class="bi bi-truck"></i> <span id="unitsTotalCount">0
+								unidades</span>
 						</div>
-
 					</div>
-
-
-					<!-- TABLA -->
-
 					<div class="table-responsive units-table-wrapper">
-
 						<table class="table units-table">
-
 							<thead>
-
 								<tr>
-
 									<th>ID</th>
-
 									<th>Código</th>
-
 									<th>Placa</th>
-
 									<th>Descripción</th>
-
 									<th>Estado</th>
-
 									<th class="text-end">Acciones</th>
-
 								</tr>
-
 							</thead>
-
-
 							<tbody id="unitsTableBody">
-
-								<!-- Estado vacío -->
-
 								<tr id="emptyUnitsRow">
-
 									<td colspan="6" class="text-center py-4 text-muted"><i
-										class="bi bi-truck fs-3 d-block mb-1 text-secondary"> </i>
-
-										<p class="mb-0">No hay unidades registradas en la flota</p></td>
-
+										class="bi bi-truck fs-3 d-block mb-1"></i>
+									<p class="mb-0">No hay unidades registradas en la flota</p></td>
 								</tr>
-
 							</tbody>
-
 						</table>
-
 					</div>
-
 				</div>
-
-
-				<!-- FOOTER -->
-
 				<div class="modal-footer">
-
-					<button type="button" class="btn btn-light" data-bs-dismiss="modal">
-
-						Cerrar</button>
-
-
+					<button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
 					<button type="button" class="btn btn-primary"
 						id="btnImprimirUnidades">
 						<i class="bi bi-printer"></i> Imprimir
 					</button>
-
 				</div>
-
 			</div>
-
 		</div>
-
 	</div>
 
-
-	<!-- =============================================================
-         TOASTS
-    ============================================================== -->
-
+	<!-- TOASTS -->
 	<div class="toast-container position-fixed top-0 end-0 p-3">
-
-
-		<!-- ÉXITO -->
-
 		<div id="successToast" class="toast custom-toast success-toast"
 			role="alert" aria-live="assertive" aria-atomic="true">
-
 			<div class="toast-icon">
-
 				<i class="bi bi-check-lg"></i>
-
 			</div>
-
-
 			<div class="toast-content">
-
-				<strong> Operación exitosa </strong> <span id="successToastMessage">
-
-					El mantenimiento fue guardado correctamente. </span>
-
+				<strong>Operación exitosa</strong><span id="successToastMessage">El
+					mantenimiento fue guardado correctamente.</span>
 			</div>
-
-
 			<button type="button" class="btn-close" data-bs-dismiss="toast"
 				aria-label="Cerrar"></button>
-
 		</div>
-
-
-		<!-- ERROR -->
-
 		<div id="errorToast" class="toast custom-toast error-toast"
 			role="alert" aria-live="assertive" aria-atomic="true">
-
 			<div class="toast-icon">
-
 				<i class="bi bi-exclamation-circle"></i>
-
 			</div>
-
-
 			<div class="toast-content">
-
-				<strong> Ocurrió un error </strong> <span id="errorToastMessage">
-
-					No fue posible completar la operación. </span>
-
+				<strong>Ocurrió un error</strong><span id="errorToastMessage">No
+					fue posible completar la operación.</span>
 			</div>
-
-
 			<button type="button" class="btn-close" data-bs-dismiss="toast"
 				aria-label="Cerrar"></button>
-
 		</div>
-
-
-		<!-- ELIMINADO -->
-
 		<div id="deleteToast" class="toast custom-toast delete-toast"
 			role="alert" aria-live="assertive" aria-atomic="true">
-
 			<div class="toast-icon">
-
 				<i class="bi bi-trash"></i>
-
 			</div>
-
-
 			<div class="toast-content">
-
-				<strong> Registro eliminado </strong> <span id="deleteToastMessage">
-
-					El mantenimiento fue eliminado correctamente. </span>
-
+				<strong>Registro eliminado</strong><span id="deleteToastMessage">El
+					mantenimiento fue eliminado correctamente.</span>
 			</div>
-
-
 			<button type="button" class="btn-close" data-bs-dismiss="toast"
 				aria-label="Cerrar"></button>
-
 		</div>
-
 	</div>
 
-
-	<!-- =============================================================
-         JAVASCRIPT EXTERNO
-    ============================================================== -->
-
-	<!-- Bootstrap 5.3.3 Bundle -->
-
 	<script
-		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-		
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script th:src="@{/js/mantenimientos.js}" src="/js/mantenimientos.js"></script>
+	<script>
+		/* UX: la fecha del nuevo mantenimiento arranca en "hoy" y el foco va a la unidad */
+		(function() {
+			var m = document.getElementById('nuevoMantenimientoModal');
+			if (!m)
+				return;
+			m.addEventListener('show.bs.modal', function() {
+				var f = document.getElementById('fechaMantenimiento');
+				if (f && !f.value) {
+					var d = new Date();
+					f.value = d.getFullYear() + '-'
+							+ String(d.getMonth() + 1).padStart(2, '0') + '-'
+							+ String(d.getDate()).padStart(2, '0');
+				}
+			});
+			m.addEventListener('shown.bs.modal', function() {
+				var u = document.getElementById('unidadMantenimiento');
+				if (u)
+					u.focus();
+			});
+		})();
 	</script>
-
-
-	<!-- Script de lógica de mantenimiento -->
-
-	<script th:src="@{/js/mantenimientos.js}" src="/js/mantenimientos.js">
-		
-	</script>
-
-
 </body>
-
 </html>
-```

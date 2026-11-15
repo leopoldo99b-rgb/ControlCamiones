@@ -74,18 +74,19 @@ public class RecorridoService {
         }
 
 
-        // =================================================
-        // CALCULAR VALORES
-        // =================================================
+        // Limpiar la placa del furgón (mayúsculas, sin espacios)
+        recorrido.setFurgon(
+            normalizarFurgon(
+                recorrido.getFurgon()
+            )
+        );
 
+
+        // Calcular subtotal, ISV, tarifa y peajes
         calcularValores(
             recorrido
         );
 
-
-        // =================================================
-        // GUARDAR
-        // =================================================
 
         return recorridoRepository.save(
             recorrido
@@ -96,11 +97,8 @@ public class RecorridoService {
     // =====================================================
     // MODIFICAR RECORRIDO
     //
-    // IMPORTANTE:
-    //
     // Primero buscamos el registro original y después
     // copiamos solamente los campos editables.
-    //
     // De esta manera createdAt NO se pierde.
     // =====================================================
 
@@ -154,6 +152,13 @@ public class RecorridoService {
         );
 
 
+        existente.setFurgon(
+            normalizarFurgon(
+                datos.getFurgon()
+            )
+        );
+
+
         existente.setEjesCamion(
             datos.getEjesCamion()
         );
@@ -184,12 +189,7 @@ public class RecorridoService {
         );
 
 
-        // =================================================
-        // NO MODIFICAR createdAt
-        //
-        // Se conserva el createdAt original porque
-        // estamos trabajando sobre "existente".
-        // =================================================
+        // createdAt no se toca: seguimos sobre "existente".
 
 
         // =================================================
@@ -200,10 +200,6 @@ public class RecorridoService {
             existente
         );
 
-
-        // =================================================
-        // GUARDAR EL REGISTRO EXISTENTE
-        // =================================================
 
         return recorridoRepository.save(
             existente
@@ -248,6 +244,36 @@ public class RecorridoService {
 
 
     // =====================================================
+    // NORMALIZAR FURGÓN
+    //
+    // - Sin espacios al inicio ni al final
+    // - En mayúsculas
+    // - Si viene vacío se guarda como null
+    // =====================================================
+
+    private String normalizarFurgon(
+            String furgon
+    ) {
+
+        if (furgon == null) {
+
+            return null;
+        }
+
+
+        String limpio =
+                furgon
+                    .trim()
+                    .toUpperCase();
+
+
+        return limpio.isEmpty()
+                ? null
+                : limpio;
+    }
+
+
+    // =====================================================
     // CALCULAR TODOS LOS VALORES
     // =====================================================
 
@@ -255,30 +281,21 @@ public class RecorridoService {
             Recorrido recorrido
     ) {
 
-        // =================================================
         // KM
-        // =================================================
-
         BigDecimal km =
                 valor(
                     recorrido.getKmRecorridos()
                 );
 
 
-        // =================================================
         // BANDA POR KM
-        // =================================================
-
         BigDecimal banda =
                 valor(
                     recorrido.getBandaPorKm()
                 );
 
 
-        // =================================================
         // CANTIDAD DE PEAJES
-        // =================================================
-
         Integer cantidadPeajes =
                 recorrido.getCantidadPeajes();
 
@@ -297,12 +314,7 @@ public class RecorridoService {
         );
 
 
-        // =================================================
-        // SUBTOTAL
-        //
-        // KM × BANDA
-        // =================================================
-
+        // SUBTOTAL = KM × BANDA
         BigDecimal subtotal =
                 km.multiply(
                     banda
@@ -318,12 +330,7 @@ public class RecorridoService {
         );
 
 
-        // =================================================
-        // ISV
-        //
-        // SUBTOTAL × 15%
-        // =================================================
-
+        // ISV = SUBTOTAL × 15%
         BigDecimal isv =
                 subtotal
                     .multiply(
@@ -340,12 +347,7 @@ public class RecorridoService {
         );
 
 
-        // =================================================
-        // TARIFA
-        //
-        // SUBTOTAL + ISV
-        // =================================================
-
+        // TARIFA = SUBTOTAL + ISV
         BigDecimal tarifa =
                 subtotal
                     .add(
@@ -362,13 +364,9 @@ public class RecorridoService {
         );
 
 
-        // =================================================
         // VALOR DEL PEAJE
-        //
         // 2 EJES = L 224.00
         // 3 EJES = L 269.00
-        // =================================================
-
         BigDecimal valorPeaje =
                 BigDecimal.ZERO;
 
@@ -398,12 +396,7 @@ public class RecorridoService {
         );
 
 
-        // =================================================
-        // TOTAL DE PEAJES
-        //
-        // CANTIDAD × VALOR
-        // =================================================
-
+        // TOTAL DE PEAJES = CANTIDAD × VALOR
         BigDecimal totalPeajes =
                 valorPeaje
                     .multiply(

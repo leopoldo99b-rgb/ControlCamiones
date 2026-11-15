@@ -21,6 +21,12 @@ document.addEventListener("DOMContentLoaded", function() {
     let conductoresBD = [];
     let asignacionesBD = [];
 
+    /* Paginación de la tabla de viajes */
+    const REGISTROS_POR_PAGINA = 12;
+    let paginaActual = 1;
+    let paginaDestinos = 1;
+    let paginaRutas = 1;
+
     const ESTADOS_ACTIVOS = ["ACTIVA", "ACTIVO", "VIGENTE"];
 
     /* Librerías para el PDF (se cargan solas la primera vez que se necesitan) */
@@ -42,10 +48,17 @@ document.addEventListener("DOMContentLoaded", function() {
     const formDestino = document.getElementById("formDestino");
     const formRuta = document.getElementById("formRuta");
 
-    const buscador = document.querySelector(".filtro-busqueda input");
-    const filtroFecha = document.querySelector('.panel-filtros input[type="date"]');
-    const filtroEstado = document.querySelector(".panel-filtros select");
+    const buscador = document.getElementById("filtroBuscar");
+    const filtroDesde = document.getElementById("filtroDesde");
+    const filtroHasta = document.getElementById("filtroHasta");
+    const filtroConductor = document.getElementById("filtroConductor");
+    const filtroEstado = document.getElementById("filtroEstadoViaje");
     const btnLimpiar = document.querySelector(".btn-limpiar");
+
+    const contenedorPaginacion = document.getElementById("paginacionViajes");
+    const chipConductor = document.getElementById("chipConductor");
+    const contenedorPaginacionDestinos = document.getElementById("paginacionDestinos");
+    const contenedorPaginacionRutas = document.getElementById("paginacionRutas");
 
     /* =========================================================
        UTILIDADES
@@ -792,6 +805,26 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
+        /* Paginación: solo se pintan las rutas de la página actual */
+        const listaRutas = Array.isArray(rutas) ? rutas : [];
+        const totalRutas = listaRutas.length;
+        const totalPaginasRutas = Math.max(1, Math.ceil(totalRutas / REGISTROS_POR_PAGINA));
+
+        if (paginaRutas > totalPaginasRutas) {
+            paginaRutas = totalPaginasRutas;
+        }
+
+        if (paginaRutas < 1) {
+            paginaRutas = 1;
+        }
+
+        rutas = listaRutas.slice(
+            (paginaRutas - 1) * REGISTROS_POR_PAGINA,
+            paginaRutas * REGISTROS_POR_PAGINA
+        );
+
+        dibujarPaginacion(contenedorPaginacionRutas, totalRutas, paginaRutas, "rutas");
+
         if (!Array.isArray(rutas) || rutas.length === 0) {
             tbody.innerHTML = filaEstado(4, "fa-inbox", "No hay rutas registradas.");
         } else {
@@ -845,7 +878,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const etiqueta = document.querySelector("#tab-rutas .cantidad-registros strong");
 
         if (etiqueta) {
-            etiqueta.textContent = Array.isArray(rutas) ? rutas.length : 0;
+            etiqueta.textContent = totalRutas;
         }
     }
 
@@ -1039,8 +1072,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
             viajesBD = datos.map(normalizarViaje).filter(Boolean);
 
-            aplicarFiltros();
+            llenarFiltroConductores();
+            aplicarFiltros(true);
             actualizarContadores();
+
+            /* Los viajes de días anteriores pasan solos a FINALIZADO */
+            finalizarViajesVencidos();
 
         } catch (error) {
 
@@ -1054,9 +1091,96 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
+    /* =========================================================
+       FINALIZAR VIAJES AUTOMÁTICAMENTE
+       Un viaje PROGRAMADO o EN CURSO pasa a FINALIZADO cuando
+       llega la fecha siguiente a la del viaje (pasadas 24 horas).
+       Los CANCELADOS no se tocan.
+    ========================================================= */
+
+    let finalizandoViajes = false;
+
+    function fechaHoyISO() {
+        const d = new Date();
+        return d.getFullYear() + "-" +
+            String(d.getMonth() + 1).padStart(2, "0") + "-" +
+            String(d.getDate()).padStart(2, "0");
+    }
+
+    async function finalizarViajesVencidos() {
+
+        if (finalizandoViajes) {
+            return;
+        }
+
+        const hoy = fechaHoyISO();
+
+        const vencidos = viajesBD.filter(function(viaje) {
+
+            const f = convertirFechaInput(viaje.fecha);
+
+            return f && f < hoy &&
+                (viaje.estado === "PROGRAMADO" || viaje.estado === "EN_CURSO");
+        });
+
+        if (vencidos.length === 0) {
+            return;
+        }
+
+        finalizandoViajes = true;
+
+        try {
+
+            const resultados = await Promise.allSettled(vencidos.map(function(viaje) {
+
+                return api(
+                    "/programaciones/editar/" + encodeURIComponent(viaje.id),
+                    "PUT",
+                    {
+                        fecha: convertirFechaInput(viaje.fecha) || null,
+                        destinoInicial: viaje.destinoInicial || "",
+                        destinoFinal: viaje.destinoFinal || "",
+                        placa: viaje.placa || "",
+                        motorista: viaje.motorista || "",
+                        telefono: viaje.telefono || "",
+                        estado: "FINALIZADO"
+                    }
+                );
+            }));
+
+            let correctos = 0;
+
+            resultados.forEach(function(resultado, i) {
+
+                if (resultado.status === "fulfilled") {
+                    vencidos[i].estado = "FINALIZADO";
+                    correctos++;
+                } else {
+                    console.error("No se pudo finalizar el viaje " + vencidos[i].id + ":", resultado.reason);
+                }
+            });
+
+            if (correctos > 0) {
+
+                aplicarFiltros(true);
+                actualizarContadores();
+
+                mostrarMensaje(
+                    correctos === 1
+                        ? "1 viaje pasó a Finalizado automáticamente."
+                        : correctos + " viajes pasaron a Finalizado automáticamente."
+                );
+            }
+
+        } finally {
+
+            finalizandoViajes = false;
+        }
+    }
+
     function pintarTablaViajes(lista) {
 
-        /* Guardamos lo que se está mostrando: la imagen usa esta misma lista */
+        /* Guardamos la lista completa filtrada y ordenada: la imagen usa esta misma lista */
         viajesFiltrados = Array.isArray(lista) ? lista.slice() : [];
 
         const tbody = document.getElementById("tbodyViajes") ||
@@ -1067,16 +1191,34 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
+        const total = viajesFiltrados.length;
         const etiqueta = document.querySelector("#tab-viajes .cantidad-registros strong");
 
         if (etiqueta) {
-            etiqueta.textContent = Array.isArray(lista) ? lista.length : 0;
+            etiqueta.textContent = total;
         }
 
-        if (!Array.isArray(lista) || lista.length === 0) {
+        actualizarChipConductor();
+
+        if (total === 0) {
             tbody.innerHTML = filaEstado(8, "fa-inbox", "No hay viajes registrados.");
+            renderizarPaginacion(0);
             return;
         }
+
+        /* Paginación: solo se pintan los 12 de la página actual */
+        const totalPaginas = Math.ceil(total / REGISTROS_POR_PAGINA);
+
+        if (paginaActual > totalPaginas) {
+            paginaActual = totalPaginas;
+        }
+
+        if (paginaActual < 1) {
+            paginaActual = 1;
+        }
+
+        const inicio = (paginaActual - 1) * REGISTROS_POR_PAGINA;
+        const paginaViajes = viajesFiltrados.slice(inicio, inicio + REGISTROS_POR_PAGINA);
 
         const estados = {
             "PROGRAMADO": ["programado", "Programado"],
@@ -1087,7 +1229,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         const fragmento = document.createDocumentFragment();
 
-        lista.forEach(function(viaje) {
+        paginaViajes.forEach(function(viaje) {
 
             const estado = String(viaje.estado || "PROGRAMADO").toUpperCase();
             const par = estados[estado] || estados.PROGRAMADO;
@@ -1145,6 +1287,175 @@ document.addEventListener("DOMContentLoaded", function() {
 
         tbody.innerHTML = "";
         tbody.appendChild(fragmento);
+
+        renderizarPaginacion(total);
+    }
+
+    /* =========================================================
+       PAGINACIÓN (VIAJES, DESTINOS Y RUTAS)
+    ========================================================= */
+
+    function dibujarPaginacion(contenedor, total, pagina, palabra) {
+
+        if (!contenedor) {
+            return;
+        }
+
+        if (total === 0) {
+            contenedor.hidden = true;
+            contenedor.innerHTML = "";
+            return;
+        }
+
+        contenedor.hidden = false;
+
+        const totalPaginas = Math.ceil(total / REGISTROS_POR_PAGINA);
+        const desde = (pagina - 1) * REGISTROS_POR_PAGINA + 1;
+        const hasta = Math.min(pagina * REGISTROS_POR_PAGINA, total);
+
+        /* Números de página; si son muchas se abrevian con "…" */
+        const paginas = [];
+
+        for (let i = 1;i <= totalPaginas;i++) {
+            if (i === 1 || i === totalPaginas || Math.abs(i - pagina) <= 1) {
+                paginas.push(i);
+            } else if (paginas[paginas.length - 1] !== "...") {
+                paginas.push("...");
+            }
+        }
+
+        let botones = `
+            <button type="button" class="pag-btn" data-pagina="${pagina - 1}" ${pagina === 1 ? "disabled" : ""}>
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+        `;
+
+        paginas.forEach(function(p) {
+            if (p === "...") {
+                botones += '<span class="pag-puntos">…</span>';
+            } else {
+                botones += `<button type="button" class="pag-btn ${p === pagina ? "activa" : ""}" data-pagina="${p}">${p}</button>`;
+            }
+        });
+
+        botones += `
+            <button type="button" class="pag-btn" data-pagina="${pagina + 1}" ${pagina === totalPaginas ? "disabled" : ""}>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        `;
+
+        contenedor.innerHTML = `
+            <div class="paginacion-info">
+                Mostrando <strong>${desde}–${hasta}</strong> de <strong>${total}</strong> ${escaparHTML(palabra)}
+            </div>
+            <div class="paginacion-botones">${botones}</div>
+        `;
+    }
+
+    function enlazarPaginacion(contenedor, alCambiar) {
+
+        if (!contenedor) {
+            return;
+        }
+
+        contenedor.addEventListener("click", function(event) {
+
+            const boton = event.target.closest(".pag-btn");
+
+            if (!boton || boton.disabled || boton.classList.contains("activa")) {
+                return;
+            }
+
+            const pagina = parseInt(boton.dataset.pagina, 10);
+
+            if (!isFinite(pagina)) {
+                return;
+            }
+
+            alCambiar(pagina);
+
+            const hoja = contenedor.closest(".hoja-tab");
+
+            if (hoja) {
+                hoja.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        });
+    }
+
+    function renderizarPaginacion(total) {
+        dibujarPaginacion(contenedorPaginacion, total, paginaActual, "viajes");
+    }
+
+    enlazarPaginacion(contenedorPaginacion, function(pagina) {
+        paginaActual = pagina;
+        pintarTablaViajes(viajesFiltrados);
+    });
+
+    enlazarPaginacion(contenedorPaginacionDestinos, function(pagina) {
+        paginaDestinos = pagina;
+        pintarTablaDestinos(destinosBD);
+    });
+
+    enlazarPaginacion(contenedorPaginacionRutas, function(pagina) {
+        paginaRutas = pagina;
+        pintarTablaRutas(rutasBD);
+    });
+
+    /* =========================================================
+       FILTRO POR CONDUCTOR
+    ========================================================= */
+
+    function llenarFiltroConductores() {
+
+        if (!filtroConductor) {
+            return;
+        }
+
+        const valorActual = filtroConductor.value;
+        const nombres = {};
+
+        viajesBD.forEach(function(viaje) {
+            const nombre = String(viaje.motorista || "").trim();
+            if (nombre) {
+                nombres[normalizarTexto(nombre)] = nombre;
+            }
+        });
+
+        const lista = Object.keys(nombres)
+            .map(function(k) { return nombres[k]; })
+            .sort(function(a, b) { return a.localeCompare(b, "es"); });
+
+        filtroConductor.innerHTML = '<option value="">Todos</option>';
+
+        lista.forEach(function(nombre) {
+            const option = document.createElement("option");
+            option.value = nombre;
+            option.textContent = nombre;
+            filtroConductor.appendChild(option);
+        });
+
+        if (valorActual) {
+            seleccionarPorTexto(filtroConductor, valorActual);
+        }
+    }
+
+    /* Muestra cuántos viajes tiene el conductor elegido (respetando fechas y estado) */
+    function actualizarChipConductor() {
+
+        if (!chipConductor) {
+            return;
+        }
+
+        if (!filtroConductor || !filtroConductor.value) {
+            chipConductor.hidden = true;
+            chipConductor.innerHTML = "";
+            return;
+        }
+
+        chipConductor.hidden = false;
+        chipConductor.innerHTML =
+            '<i class="fa-solid fa-user"></i> ' + escaparHTML(filtroConductor.value) +
+            ': <strong>' + viajesFiltrados.length + '</strong> viaje(s)';
     }
 
     async function asegurarDatosDelFormulario() {
@@ -1429,10 +1740,11 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     /* =========================================================
-       FILTROS DE VIAJES
+       FILTROS DE VIAJES (texto, rango de fechas, conductor, estado)
+       Siempre ordenados de la fecha más reciente a la más antigua.
     ========================================================= */
 
-    function aplicarFiltros() {
+    function aplicarFiltros(mantenerPagina) {
 
         let resultado = Array.isArray(viajesBD) ? viajesBD.slice() : [];
 
@@ -1457,12 +1769,49 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         }
 
-        if (filtroFecha && filtroFecha.value) {
+        /* Rango de fechas (desde / hasta, ambos inclusivos) */
+        let desde = filtroDesde ? filtroDesde.value : "";
+        let hasta = filtroHasta ? filtroHasta.value : "";
+
+        if (desde && hasta && desde > hasta) {
+            const tmp = desde;
+            desde = hasta;
+            hasta = tmp;
+        }
+
+        if (desde || hasta) {
+
             resultado = resultado.filter(function(viaje) {
-                return convertirFechaInput(viaje.fecha) === filtroFecha.value;
+
+                const f = convertirFechaInput(viaje.fecha);
+
+                if (!f) {
+                    return false;
+                }
+
+                if (desde && f < desde) {
+                    return false;
+                }
+
+                if (hasta && f > hasta) {
+                    return false;
+                }
+
+                return true;
             });
         }
 
+        /* Por conductor */
+        if (filtroConductor && filtroConductor.value) {
+
+            const buscado = normalizarTexto(filtroConductor.value);
+
+            resultado = resultado.filter(function(viaje) {
+                return normalizarTexto(viaje.motorista) === buscado;
+            });
+        }
+
+        /* Por estado */
         if (filtroEstado && filtroEstado.value) {
             resultado = resultado.filter(function(viaje) {
                 return String(viaje.estado || "").toUpperCase() ===
@@ -1470,20 +1819,40 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
 
+        /* Siempre de la fecha más reciente a la más antigua */
+        resultado.sort(function(a, b) {
+
+            const fa = convertirFechaInput(a.fecha);
+            const fb = convertirFechaInput(b.fecha);
+
+            if (fa !== fb) {
+                return fb.localeCompare(fa);
+            }
+
+            return Number(b.id) - Number(a.id);
+        });
+
+        /* Al cambiar un filtro se vuelve a la página 1 */
+        if (mantenerPagina !== true) {
+            paginaActual = 1;
+        }
+
         pintarTablaViajes(resultado);
     }
 
     if (buscador) {
-        buscador.addEventListener("input", aplicarFiltros);
+        buscador.addEventListener("input", function() {
+            aplicarFiltros();
+        });
     }
 
-    if (filtroFecha) {
-        filtroFecha.addEventListener("change", aplicarFiltros);
-    }
-
-    if (filtroEstado) {
-        filtroEstado.addEventListener("change", aplicarFiltros);
-    }
+    [filtroDesde, filtroHasta, filtroConductor, filtroEstado].forEach(function(el) {
+        if (el) {
+            el.addEventListener("change", function() {
+                aplicarFiltros();
+            });
+        }
+    });
 
     if (btnLimpiar) {
 
@@ -1493,15 +1862,23 @@ document.addEventListener("DOMContentLoaded", function() {
                 buscador.value = "";
             }
 
-            if (filtroFecha) {
-                filtroFecha.value = "";
+            if (filtroDesde) {
+                filtroDesde.value = "";
+            }
+
+            if (filtroHasta) {
+                filtroHasta.value = "";
+            }
+
+            if (filtroConductor) {
+                filtroConductor.value = "";
             }
 
             if (filtroEstado) {
                 filtroEstado.value = "";
             }
 
-            pintarTablaViajes(viajesBD);
+            aplicarFiltros();
         });
     }
 
@@ -1539,6 +1916,26 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!tbody) {
             return;
         }
+
+        /* Paginación: solo se pintan los destinos de la página actual */
+        const listaDestinos = Array.isArray(lista) ? lista : [];
+        const totalDestinos = listaDestinos.length;
+        const totalPaginasDestinos = Math.max(1, Math.ceil(totalDestinos / REGISTROS_POR_PAGINA));
+
+        if (paginaDestinos > totalPaginasDestinos) {
+            paginaDestinos = totalPaginasDestinos;
+        }
+
+        if (paginaDestinos < 1) {
+            paginaDestinos = 1;
+        }
+
+        lista = listaDestinos.slice(
+            (paginaDestinos - 1) * REGISTROS_POR_PAGINA,
+            paginaDestinos * REGISTROS_POR_PAGINA
+        );
+
+        dibujarPaginacion(contenedorPaginacionDestinos, totalDestinos, paginaDestinos, "destinos");
 
         if (!lista || lista.length === 0) {
             tbody.innerHTML = filaEstado(5, "fa-inbox", "No hay destinos registrados.");
@@ -1585,7 +1982,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const etiqueta = document.querySelector("#tab-destinos .cantidad-registros strong");
 
         if (etiqueta) {
-            etiqueta.textContent = lista ? lista.length : 0;
+            etiqueta.textContent = totalDestinos;
         }
     }
 
@@ -1823,6 +2220,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 generarPDFRutas(botonPdf);
             }
 
+            return;
+        }
+
+        if (objetivo.closest(".btn-remisiones")) {
+            generarReporteRemisiones();
             return;
         }
 
@@ -2263,6 +2665,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     /* =========================================================
        GENERADOR DE IMAGEN (VIAJES)
+       Usa TODOS los viajes filtrados (no solo la página visible).
     ========================================================= */
 
     async function generarReporteImagen() {
@@ -2280,8 +2683,21 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         const ahora = fechaHoraActual();
-        const valorFecha = filtroFecha ? filtroFecha.value : "";
-        const fechaReporte = valorFecha ? formatearFecha(valorFecha) : "General";
+
+        /* Texto del rango de fechas para el encabezado y el nombre del archivo */
+        const rangoDesde = filtroDesde ? filtroDesde.value : "";
+        const rangoHasta = filtroHasta ? filtroHasta.value : "";
+        let fechaReporte = "General";
+
+        if (rangoDesde && rangoHasta) {
+            fechaReporte = formatearFecha(rangoDesde) + " al " + formatearFecha(rangoHasta);
+        } else if (rangoDesde) {
+            fechaReporte = "Desde " + formatearFecha(rangoDesde);
+        } else if (rangoHasta) {
+            fechaReporte = "Hasta " + formatearFecha(rangoHasta);
+        }
+
+        const hayFiltroFecha = fechaReporte !== "General";
 
         const estadosInfo = {
             "PROGRAMADO": { texto: "Programado", fondo: "#e0f2fe", color: "#0369a1", borde: "#bae6fd" },
@@ -2400,8 +2816,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 logging: false
             });
 
-            const sufijo = valorFecha
-                ? fechaReporte.replace(/\//g, "-")
+            const sufijo = hayFiltroFecha
+                ? fechaReporte.replace(/\//g, "-").replace(/\s+/g, "_")
                 : "General_" + ahora.fecha.replace(/\//g, "-");
 
             const link = document.createElement("a");
@@ -2416,6 +2832,249 @@ document.addEventListener("DOMContentLoaded", function() {
             console.error(err);
 
             mostrarMensaje("Error al renderizar la imagen corporativa.", "error");
+
+        } finally {
+
+            reporte.remove();
+        }
+    }
+
+    /* =========================================================
+       IMAGEN PARA REMISIONES (VIAJES POR CONDUCTOR)
+       Muestra cuántos viajes hizo cada conductor según los filtros activos
+       (rango de fechas, conductor, estado y búsqueda).
+    ========================================================= */
+
+    function obtenerRangoFechas() {
+
+        let desde = filtroDesde ? filtroDesde.value : "";
+        let hasta = filtroHasta ? filtroHasta.value : "";
+
+        if (desde && hasta && desde > hasta) {
+            const tmp = desde;
+            desde = hasta;
+            hasta = tmp;
+        }
+
+        let texto = "Todas las fechas";
+
+        if (desde && hasta) {
+            texto = formatearFecha(desde) + " al " + formatearFecha(hasta);
+        } else if (desde) {
+            texto = "Desde " + formatearFecha(desde);
+        } else if (hasta) {
+            texto = "Hasta " + formatearFecha(hasta);
+        }
+
+        return { texto: texto, hay: !!(desde || hasta) };
+    }
+
+    async function generarReporteRemisiones() {
+
+        const lista = viajesFiltrados.slice();
+
+        if (lista.length === 0) {
+            mostrarMensaje("No hay viajes con los filtros actuales para generar el reporte.", "error");
+            return;
+        }
+
+        if (typeof html2canvas === "undefined") {
+            mostrarMensaje("No se pudo cargar la librería para generar la imagen.", "error");
+            return;
+        }
+
+        const ahora = fechaHoraActual();
+        const rango = obtenerRangoFechas();
+
+        /* Agrupar los viajes por conductor */
+        const mapa = {};
+
+        lista.forEach(function(viaje) {
+
+            const nombre = String(viaje.motorista || "").trim() || "Sin motorista";
+            const clave = normalizarTexto(nombre);
+
+            if (!mapa[clave]) {
+                mapa[clave] = {
+                    nombre: nombre,
+                    total: 0,
+                    placas: {}
+                };
+            }
+
+            const grupo = mapa[clave];
+
+            grupo.total++;
+
+            if (viaje.placa) {
+                grupo.placas[String(viaje.placa).trim()] = true;
+            }
+        });
+
+        const conductores = Object.keys(mapa)
+            .map(function(k) { return mapa[k]; })
+            .sort(function(a, b) {
+                return (b.total - a.total) || a.nombre.localeCompare(b.nombre, "es");
+            });
+
+        const totales = { total: 0 };
+
+        conductores.forEach(function(c) {
+            totales.total += c.total;
+        });
+
+        /* Filtros activos que se muestran en el encabezado */
+        const nombresEstado = {
+            "PROGRAMADO": "Programado",
+            "EN_CURSO": "En curso",
+            "FINALIZADO": "Finalizado",
+            "CANCELADO": "Cancelado"
+        };
+
+        const detalles = [];
+
+        if (filtroConductor && filtroConductor.value) {
+            detalles.push("Conductor: " + filtroConductor.value);
+        }
+
+        if (filtroEstado && filtroEstado.value) {
+            detalles.push("Estado: " + (nombresEstado[filtroEstado.value] || filtroEstado.value));
+        }
+
+        const reporte = document.createElement("div");
+        reporte.id = "chc-remisiones-virtual";
+
+        Object.assign(reporte.style, {
+            position: "fixed",
+            left: "-10000px",
+            top: "0",
+            width: "1200px",
+            backgroundColor: "#f4f6f9",
+            padding: "50px",
+            boxSizing: "border-box",
+            fontFamily: '"Poppins", sans-serif',
+            color: "#1e293b"
+        });
+
+        const th = "padding:16px 18px;text-align:left;color:#dbe6f1;font-size:12px;font-weight:600;letter-spacing:1.2px;";
+        const td = "padding:16px 18px;border-top:1px solid #e6ebf2;border-bottom:1px solid #e6ebf2;background:#ffffff;vertical-align:middle;font-size:14px;";
+
+        reporte.innerHTML = `
+            <div style="background:#0c1f33;border-radius:18px 18px 0 0;padding:38px 42px;display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;">
+                    <img src="/imgs/logo.png" style="width:96px;height:auto;margin-right:28px;" alt="" onerror="this.style.display='none'">
+                    <div>
+                        <h1 style="margin:0;color:#ffffff;font-size:38px;font-weight:700;letter-spacing:3px;">TRANSPORTE CHC</h1>
+                        <p style="margin:6px 0 0 0;color:#f5a300;font-size:16px;font-weight:500;letter-spacing:1px;">Logística Terrestre de Carga Pesada</p>
+                    </div>
+                </div>
+                <div style="text-align:right;color:#ffffff;">
+                    <div style="font-size:13px;font-weight:600;letter-spacing:2px;color:#a9bdd1;">REPORTE DE REMISIONES</div>
+                    <h3 style="margin:4px 0 0 0;font-size:24px;font-weight:700;text-transform:uppercase;color:#ffffff;">Viajes por conductor</h3>
+                    <p style="margin:8px 0 0 0;font-size:17px;font-weight:600;color:#f5a300;">Período: ${escaparHTML(rango.texto)}</p>
+                    ${detalles.length ? '<p style="margin:4px 0 0 0;font-size:13px;color:#a9bdd1;">' + escaparHTML(detalles.join("  ·  ")) + '</p>' : ""}
+                </div>
+            </div>
+            <div style="height:8px;background:#f5a300;border-radius:0 0 18px 18px;margin-bottom:20px;"></div>
+
+            <table style="width:100%;border-collapse:separate;border-spacing:0 10px;">
+                <thead>
+                    <tr style="background-color:#16314e;">
+                        <th style="${th}border-radius:12px 0 0 12px;width:50px;">#</th>
+                        <th style="${th}">CONDUCTOR</th>
+                        <th style="${th}">UNIDAD(ES)</th>
+                        <th style="${th}text-align:center;border-radius:0 12px 12px 0;width:170px;">VIAJES</th>
+                    </tr>
+                </thead>
+                <tbody id="remisiones-body"></tbody>
+            </table>
+
+            <div style="margin-top:44px;border-top:2px solid #dde3ea;padding-top:22px;display:flex;justify-content:space-between;font-size:13px;color:#64748b;">
+                <p style="margin:0;">© ${new Date().getFullYear()} Transporte CHC · Departamento de Operaciones</p>
+                <p style="margin:0;">Generado el ${escaparHTML(ahora.fecha)} a las ${escaparHTML(ahora.hora)} · ${conductores.length} conductor(es) · ${totales.total} viaje(s)</p>
+            </div>
+        `;
+
+        const cuerpo = reporte.querySelector("#remisiones-body");
+
+        conductores.forEach(function(c, i) {
+
+            const iniciales = c.nombre
+                .split(" ")
+                .filter(Boolean)
+                .slice(0, 2)
+                .map(function(n) { return n.charAt(0); })
+                .join("")
+                .toUpperCase() || "M";
+
+            const placas = Object.keys(c.placas).map(function(placa) {
+                return '<span style="display:inline-block;margin:2px 6px 2px 0;padding:3px 10px;border:2px solid #0c1f33;border-radius:6px;font-family:monospace;font-size:13px;font-weight:700;letter-spacing:1.5px;color:#0c1f33;background:#ffffff;">' + escaparHTML(placa) + '</span>';
+            }).join("");
+
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td style="${td}border-left:1px solid #e6ebf2;border-radius:12px 0 0 12px;font-weight:700;color:#64748b;">${i + 1}</td>
+                <td style="${td}">
+                    <span style="display:inline-block;width:34px;height:34px;line-height:34px;border-radius:50%;background:#0c1f33;color:#f5a300;text-align:center;font-size:12px;font-weight:700;vertical-align:middle;margin-right:10px;">${escaparHTML(iniciales)}</span>
+                    <span style="vertical-align:middle;color:#0c1f33;font-weight:600;">${escaparHTML(c.nombre)}</span>
+                </td>
+                <td style="${td}">${placas || '<span style="color:#cbd5e1;">–</span>'}</td>
+                <td style="${td}border-right:1px solid #e6ebf2;border-radius:0 12px 12px 0;text-align:center;">
+                    <span style="display:inline-block;min-width:46px;padding:6px 14px;border-radius:20px;background:#fff4d6;border:1px solid #fde68a;color:#0c1f33;font-size:16px;font-weight:700;">${c.total}</span>
+                </td>
+            `;
+
+            cuerpo.appendChild(tr);
+        });
+
+        /* Fila de totales */
+        const tdTotal = "padding:16px 18px;background:#0c1f33;color:#ffffff;font-size:14px;font-weight:700;vertical-align:middle;";
+
+        const filaTotal = document.createElement("tr");
+
+        filaTotal.innerHTML = `
+            <td style="${tdTotal}border-radius:12px 0 0 12px;"></td>
+            <td style="${tdTotal}letter-spacing:1px;">TOTAL GENERAL</td>
+            <td style="${tdTotal}"></td>
+            <td style="${tdTotal}border-radius:0 12px 12px 0;text-align:center;color:#f5a300;font-size:18px;">${totales.total}</td>
+        `;
+
+        cuerpo.appendChild(filaTotal);
+
+        document.body.appendChild(reporte);
+
+        try {
+
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
+
+            await esperarImagenes(reporte);
+
+            const canvas = await html2canvas(reporte, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#f4f6f9",
+                logging: false
+            });
+
+            const sufijo = rango.hay
+                ? rango.texto.replace(/\//g, "-").replace(/\s+/g, "_")
+                : "General_" + ahora.fecha.replace(/\//g, "-");
+
+            const link = document.createElement("a");
+            link.download = "Transporte_CHC_Remisiones_" + sufijo + ".png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+
+            mostrarMensaje("Imagen de remisiones generada con éxito.");
+
+        } catch (err) {
+
+            console.error(err);
+
+            mostrarMensaje("Error al renderizar la imagen de remisiones.", "error");
 
         } finally {
 
@@ -2482,5 +3141,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     inicializarModulo();
+
+    /* Si la página queda abierta, se revisa cada 10 minutos (cubre el cambio de día) */
+    setInterval(finalizarViajesVencidos, 10 * 60 * 1000);
 
 });

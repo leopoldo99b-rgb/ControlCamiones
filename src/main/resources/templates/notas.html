@@ -1,781 +1,224 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <title>Control de Viajes | Notas</title>
-
-    <link rel="stylesheet"
-          href="/css/notas.css">
-
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notas | Control de Viajes</title>
+<link rel="stylesheet" href="/css/notas.css">
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-
-
 <body>
 
-
-<!-- =========================================================
-     CONTENEDOR PRINCIPAL
-     ========================================================= -->
-
-<div class="notes-page">
-
-
-    <!-- =====================================================
-         HEADER
-         ===================================================== -->
-
-    <header class="notes-header">
-
-
-        <div class="header-left">
-
-
-            <div class="header-icon">
-
-                <i class="fas fa-note-sticky"></i>
-
-            </div>
-
-
-            <div>
-
-                <span class="header-label">
-                    CONTROL DE VIAJES
-                </span>
-
-                <h1>
-                    Notas
-                </h1>
-
-                <p>
-                    Registra y consulta información importante
-                    organizada por fecha.
-                </p>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="header-actions">
-
-            <a href="/dashboard"
-               class="secondary-button">
-
-                <i class="fas fa-arrow-left"></i>
-
-                Dashboard
-
-            </a>
-
-
-            <button type="button"
-                    class="primary-button"
-                    id="btnNuevaNota">
-
-                <i class="fas fa-plus"></i>
-
-                Nueva nota
-
-            </button>
-
-        </div>
-
-    </header>
-
-
-
-    <!-- =====================================================
-         FILTROS
-         ===================================================== -->
-
-    <section class="filters-card">
-
-
-        <div class="filter-title">
-
-            <div class="filter-icon">
-
-                <i class="fas fa-filter"></i>
-
-            </div>
-
-
-            <div>
-
-                <strong>
-                    Consultar notas
-                </strong>
-
-                <span>
-                    Busca rápidamente la información registrada.
-                </span>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="filters">
-
-
-            <div class="form-group search-group">
-
-                <label for="buscarNota">
-                    Buscar
-                </label>
-
-                <div class="input-icon">
-
-                    <i class="fas fa-search"></i>
-
-                    <input
-                        type="text"
-                        id="buscarNota"
-                        placeholder="Buscar por título o contenido...">
-
-                </div>
-
-            </div>
-
-
-
-            <div class="form-group">
-
-                <label for="fechaFiltro">
-                    Fecha
-                </label>
-
-                <input
-                    type="date"
-                    id="fechaFiltro">
-
-            </div>
-
-
-
-            <button type="button"
-                    class="filter-button"
-                    id="btnLimpiarFiltros">
-
-                <i class="fas fa-rotate-left"></i>
-
-                Limpiar
-
-            </button>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =====================================================
-         RESUMEN
-         ===================================================== -->
-
-    <section class="notes-summary">
-
-
-        <div class="summary-card">
-
-            <div class="summary-icon blue">
-
-                <i class="fas fa-note-sticky"></i>
-
-            </div>
-
-            <div>
-
-                <span>
-                    Total de notas
-                </span>
-
-                <strong id="totalNotas">
-                    0
-                </strong>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="summary-card">
-
-            <div class="summary-icon orange">
-
-                <i class="fas fa-calendar-day"></i>
-
-            </div>
-
-            <div>
-
-                <span>
-                    Notas de hoy
-                </span>
-
-                <strong id="notasHoy">
-                    0
-                </strong>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="summary-card">
-
-            <div class="summary-icon green">
-
-                <i class="fas fa-clock"></i>
-
-            </div>
-
-            <div>
-
-                <span>
-                    Última nota
-                </span>
-
-                <strong id="ultimaNota">
-                    --
-                </strong>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =====================================================
-         CONTENIDO
-         ===================================================== -->
-
-    <main class="notes-content">
-
-
-        <!-- =================================================
-             LISTADO DE NOTAS
-             ================================================= -->
-
-        <section class="notes-list-section">
-
-
-            <div class="section-header">
-
-
-                <div>
-
-                    <span class="section-label">
-                        REGISTRO
-                    </span>
-
-                    <h2>
-                        Mis notas
-                    </h2>
-
-                </div>
-
-
-                <span class="notes-count"
-                      id="contadorNotas">
-
-                    0 notas
-
-                </span>
-
-            </div>
-
-
-
-            <!-- =============================================
-                 CONTENEDOR DE NOTAS
-                 ============================================= -->
-
-            <div class="notes-list"
-                 id="notesList">
-
-
-                <!-- =================================================
-                     EJEMPLO DE NOTA
-                     El contenido real puede venir desde Thymeleaf
-                     ================================================= -->
-
-                <article class="note-card">
-
-
-                    <div class="note-date">
-
-                        <div class="date-day">
-                            17
-                        </div>
-
-                        <div class="date-month">
-                            AGO
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="note-content">
-
-
-                        <div class="note-top">
-
-
-                            <div>
-
-                                <span class="note-label">
-                                    NOTA OPERATIVA
-                                </span>
-
-                                <h3>
-                                    Revisión de viaje
-                                </h3>
-
-                            </div>
-
-
-                            <div class="note-actions">
-
-                                <button
-                                    type="button"
-                                    class="icon-button edit"
-                                    title="Editar">
-
-                                    <i class="fas fa-pen"></i>
-
-                                </button>
-
-
-                                <button
-                                    type="button"
-                                    class="icon-button delete"
-                                    title="Eliminar">
-
-                                    <i class="fas fa-trash"></i>
-
-                                </button>
-
-                            </div>
-
-                        </div>
-
-
-
-                        <p>
-                            Revisar documentación del viaje
-                            programado y confirmar disponibilidad
-                            del conductor.
-                        </p>
-
-
-
-                        <div class="note-footer">
-
-
-                            <span>
-
-                                <i class="far fa-calendar"></i>
-
-                                17 de agosto de 2026
-
-                            </span>
-
-
-                            <span>
-
-                                <i class="far fa-clock"></i>
-
-                                08:30
-
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                </article>
-
-
-
-                <!-- =================================================
-                     ESTADO VACÍO
-                     Se puede mostrar cuando no existan notas.
-                     ================================================= -->
-
-                <div class="empty-state"
-                     id="emptyState"
-                     style="display: none;">
-
-                    <div class="empty-icon">
-
-                        <i class="fas fa-note-sticky"></i>
-
-                    </div>
-
-                    <h3>
-                        No hay notas registradas
-                    </h3>
-
-                    <p>
-                        Crea tu primera nota para comenzar
-                        a organizar la información.
-                    </p>
-
-                    <button
-                        type="button"
-                        class="primary-button"
-                        id="btnNuevaNotaEmpty">
-
-                        <i class="fas fa-plus"></i>
-
-                        Crear nota
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             PANEL LATERAL
-             ================================================= -->
-
-        <aside class="notes-sidebar">
-
-
-            <div class="quick-card">
-
-
-                <div class="quick-header">
-
-                    <div class="quick-icon">
-
-                        <i class="fas fa-lightbulb"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            CONSEJO
-                        </span>
-
-                        <h3>
-                            Organiza tus notas
-                        </h3>
-
-                    </div>
-
-                </div>
-
-
-                <p>
-                    Utiliza las notas para registrar recordatorios,
-                    incidencias, observaciones de viajes o cualquier
-                    información importante de la operación.
-                </p>
-
-            </div>
-
-
-
-            <div class="calendar-card">
-
-
-                <div class="calendar-header">
-
-                    <div>
-
-                        <span>
-                            CALENDARIO
-                        </span>
-
-                        <h3>
-                            Notas por fecha
-                        </h3>
-
-                    </div>
-
-                    <i class="far fa-calendar-days"></i>
-
-                </div>
-
-
-                <div class="calendar-info">
-
-                    <div class="calendar-info-icon">
-
-                        <i class="fas fa-calendar-check"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <strong>
-                            Organizadas
-                        </strong>
-
-                        <span>
-                            Consulta tus registros
-                            según la fecha.
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-        </aside>
-
-    </main>
-
-
-
-    <!-- =====================================================
-         MODAL NUEVA NOTA
-         ===================================================== -->
-
-    <div class="modal-overlay"
-         id="notaModal">
-
-
-        <div class="modal">
-
-
-            <div class="modal-header">
-
-
-                <div>
-
-                    <span class="modal-label">
-                        REGISTRO
-                    </span>
-
-                    <h2 id="modalTitle">
-                        Nueva nota
-                    </h2>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="modal-close"
-                    id="btnCerrarModal">
-
-                    <i class="fas fa-xmark"></i>
-
-                </button>
-
-            </div>
-
-
-
-            <form id="notaForm">
-
-
-                <div class="form-row">
-
-
-                    <div class="form-group">
-
-                        <label for="notaFecha">
-                            Fecha
-                        </label>
-
-                        <input
-                            type="date"
-                            id="notaFecha"
-                            name="fecha"
-                            required>
-
-                    </div>
-
-
-
-                    <div class="form-group">
-
-                        <label for="notaCategoria">
-                            Categoría
-                        </label>
-
-                        <select
-                            id="notaCategoria"
-                            name="categoria">
-
-                            <option value="OPERATIVA">
-                                Operativa
-                            </option>
-
-                            <option value="VIAJE">
-                                Viaje
-                            </option>
-
-                            <option value="CAMION">
-                                Camión
-                            </option>
-
-                            <option value="CONDUCTOR">
-                                Conductor
-                            </option>
-
-                            <option value="PERSONAL">
-                                Personal
-                            </option>
-
-                            <option value="GENERAL">
-                                General
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-
-
-                <div class="form-group">
-
-                    <label for="notaTitulo">
-                        Título
-                    </label>
-
-                    <input
-                        type="text"
-                        id="notaTitulo"
-                        name="titulo"
-                        maxlength="150"
-                        placeholder="Ej. Revisión del viaje"
-                        required>
-
-                </div>
-
-
-
-                <div class="form-group">
-
-                    <label for="notaContenido">
-                        Nota
-                    </label>
-
-                    <textarea
-                        id="notaContenido"
-                        name="contenido"
-                        rows="7"
-                        maxlength="2000"
-                        placeholder="Escribe aquí la información importante..."
-                        required></textarea>
-
-                    <div class="textarea-counter">
-
-                        <span id="contadorCaracteres">
-                            0
-                        </span>
-
-                        / 2000
-
-                    </div>
-
-                </div>
-
-
-
-                <div class="modal-footer">
-
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        id="btnCancelarNota">
-
-                        Cancelar
-
-                    </button>
-
-
-                    <button
-                        type="submit"
-                        class="primary-button">
-
-                        <i class="fas fa-floppy-disk"></i>
-
-                        Guardar nota
-
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         FOOTER
-         ===================================================== -->
-
-    <footer class="notes-footer">
-
-        <div>
-
-            <strong>
-                Control de Viajes
-            </strong>
-
-            <span>
-                Sistema de gestión de operaciones
-            </span>
-
-        </div>
-
-
-        <div>
-
-            © 2026
-            <span>•</span>
-            Todos los derechos reservados
-
-        </div>
-
-    </footer>
-
-
-</div>
-
-
-<script src="/js/notas.js"></script>
-
+	<div class="app">
+
+		<!-- SIDEBAR -->
+		<aside class="side" id="side">
+			<div class="brand">
+				<div class="brand-logo">
+					<i class="fas fa-note-sticky"></i>
+				</div>
+				<div>
+					<strong>Notas</strong><span>Control de Viajes</span>
+				</div>
+			</div>
+
+			<button type="button" class="btn-new" id="btnNuevaNota">
+				<i class="fas fa-plus"></i> Nueva nota
+				<kbd>N</kbd>
+			</button>
+
+			<nav class="nav" id="nav"></nav>
+
+			<div class="side-foot">
+				<a href="/dashboard" class="back-link"><i
+					class="fas fa-arrow-left"></i> Volver al Dashboard</a> <small>©
+					2026 · Control de Viajes</small>
+			</div>
+		</aside>
+		<div class="scrim" id="scrim"></div>
+
+		<!-- PRINCIPAL -->
+		<main class="main">
+
+			<header class="topbar">
+				<button type="button" class="ico-btn menu-btn" id="btnMenu"
+					title="Menú">
+					<i class="fas fa-bars"></i>
+				</button>
+
+				<a href="/dashboard" class="back-btn" title="Volver al Dashboard"><i
+					class="fas fa-arrow-left"></i><span>Dashboard</span></a> <label
+					class="search"> <i class="fas fa-search"></i> <input
+					type="text" id="buscarNota" placeholder="Buscar en tus notas…"
+					autocomplete="off"> <kbd>/</kbd>
+				</label> <input type="date" id="fechaFiltro" class="date-input"
+					title="Filtrar por fecha">
+
+				<div class="seg" role="group" aria-label="Vista">
+					<button type="button" id="vGrid" class="on" title="Cuadrícula">
+						<i class="fas fa-table-cells-large"></i>
+					</button>
+					<button type="button" id="vList" title="Lista">
+						<i class="fas fa-list"></i>
+					</button>
+				</div>
+
+				<button type="button" class="ico-btn" id="btnTema"
+					title="Cambiar tema">
+					<i class="fas fa-moon"></i>
+				</button>
+			</header>
+
+			<section class="hero">
+				<div>
+					<span class="eyebrow" id="fechaHoy">—</span>
+					<h1 id="saludo">Tus notas</h1>
+					<p>Todo lo importante de la operación, a un vistazo.</p>
+				</div>
+				<div class="stats">
+					<div class="stat">
+						<i class="fas fa-layer-group"></i>
+						<div>
+							<strong id="totalNotas">0</strong><span>Total</span>
+						</div>
+					</div>
+					<div class="stat">
+						<i class="fas fa-calendar-day"></i>
+						<div>
+							<strong id="notasHoy">0</strong><span>Hoy</span>
+						</div>
+					</div>
+					<div class="stat">
+						<i class="fas fa-thumbtack"></i>
+						<div>
+							<strong id="totalFijadas">0</strong><span>Fijadas</span>
+						</div>
+					</div>
+					<div class="stat">
+						<i class="fas fa-clock"></i>
+						<div>
+							<strong id="ultimaNota">--</strong><span>Última</span>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<div class="list-head">
+				<h2 id="tituloLista">Todas las notas</h2>
+				<span id="contadorNotas">0 notas</span>
+				<button type="button" class="clear-link" id="btnLimpiarFiltros"
+					hidden>
+					<i class="fas fa-xmark"></i> Quitar filtros
+				</button>
+			</div>
+
+			<div class="notes grid" id="notesList"></div>
+
+			<div class="empty" id="emptyState" hidden>
+				<div class="empty-ico">
+					<i class="fas fa-note-sticky"></i>
+				</div>
+				<h3 id="emptyTitulo">Aún no hay notas</h3>
+				<p id="emptyTexto">Crea la primera y empieza a organizar la
+					operación.</p>
+				<button type="button" class="btn-new inline" id="btnNuevaNotaEmpty">
+					<i class="fas fa-plus"></i> Crear nota
+				</button>
+			</div>
+		</main>
+	</div>
+
+	<button type="button" class="fab" id="btnFab" title="Nueva nota">
+		<i class="fas fa-plus"></i>
+	</button>
+
+	<!-- PANEL DE LECTURA -->
+	<aside class="panel viewer" id="vistaNota" aria-hidden="true">
+		<header class="panel-head">
+			<span class="chip" id="vChip"></span>
+			<button type="button" class="ico-btn" id="vCerrar"
+				title="Cerrar (Esc)">
+				<i class="fas fa-xmark"></i>
+			</button>
+		</header>
+		<div class="panel-body">
+			<h2 class="v-title" id="vTitulo"></h2>
+			<div class="v-meta" id="vMeta"></div>
+			<div class="v-text" id="vContenido"></div>
+		</div>
+		<footer class="panel-foot">
+			<button type="button" class="btn-ghost danger" id="vEliminar">
+				<i class="fas fa-trash"></i> Eliminar
+			</button>
+			<div>
+				<button type="button" class="btn-ghost" id="vPin"></button>
+				<button type="button" class="btn-new inline" id="vEditar">
+					<i class="fas fa-pen"></i> Editar
+				</button>
+			</div>
+		</footer>
+	</aside>
+
+	<!-- PANEL EDITOR -->
+	<div class="overlay" id="overlay"></div>
+	<aside class="panel" id="notaModal" aria-hidden="true">
+		<form id="notaForm">
+			<header class="panel-head">
+				<div>
+					<span class="eyebrow">EDITOR</span>
+					<h2 id="modalTitle">Nueva nota</h2>
+				</div>
+				<button type="button" class="ico-btn" id="btnCerrarModal"
+					title="Cerrar (Esc)">
+					<i class="fas fa-xmark"></i>
+				</button>
+			</header>
+
+			<div class="panel-body">
+				<div class="field">
+					<label>Categoría</label>
+					<div class="cat-picker" id="catPicker"></div>
+				</div>
+
+				<div class="field">
+					<label for="notaFecha">Fecha</label> <input type="date"
+						id="notaFecha" name="fecha" required>
+				</div>
+
+				<div class="field">
+					<label for="notaTitulo">Título</label> <input type="text"
+						id="notaTitulo" name="titulo" maxlength="150"
+						placeholder="Ej. Revisión del viaje a Tegucigalpa" required>
+				</div>
+
+				<div class="field grow">
+					<label for="notaContenido">Nota</label>
+					<textarea id="notaContenido" name="contenido" maxlength="2000"
+						placeholder="Escribe aquí la información importante…" required></textarea>
+					<div class="counter">
+						<div class="bar">
+							<i id="barra"></i>
+						</div>
+						<span><b id="contadorCaracteres">0</b> / 2000</span>
+					</div>
+				</div>
+			</div>
+
+			<footer class="panel-foot">
+				<small><kbd>Ctrl</kbd>+<kbd>Enter</kbd> guarda</small>
+				<div>
+					<button type="button" class="btn-ghost" id="btnCancelarNota">Cancelar</button>
+					<button type="submit" class="btn-new inline" id="btnGuardar">
+						<i class="fas fa-floppy-disk"></i> Guardar
+					</button>
+				</div>
+			</footer>
+		</form>
+	</aside>
+
+	<div class="toasts" id="toasts"></div>
+
+	<script src="/js/notas.js"></script>
 </body>
-
 </html>

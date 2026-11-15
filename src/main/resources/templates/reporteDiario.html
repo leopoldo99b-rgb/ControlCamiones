@@ -108,6 +108,12 @@
 							<i class="fa-solid fa-image"></i> Crear imagen
 						</button>
 
+						<button class="btn-exportar btn-imagen btn-remisiones"
+							type="button"
+							title="Viajes por conductor según los filtros activos">
+							<i class="fa-solid fa-file-invoice"></i> Imagen remisiones
+						</button>
+
 						<!--
                             Este botón NO lleva data-bs-toggle / data-bs-target:
                             el JavaScript abre el modal cuando los combos ya
@@ -131,20 +137,36 @@
 
 						<div class="input-icon">
 							<i class="fa-solid fa-magnifying-glass"></i> <input type="text"
-								placeholder="Destino, placa o motorista...">
+								id="filtroBuscar" placeholder="Destino, placa o motorista...">
 						</div>
 
 					</div>
 
 					<div class="filtro">
 
-						<label> Fecha </label> <input type="date">
+						<label> Desde </label> <input type="date" id="filtroDesde">
 
 					</div>
 
 					<div class="filtro">
 
-						<label> Estado </label> <select>
+						<label> Hasta </label> <input type="date" id="filtroHasta">
+
+					</div>
+
+					<div class="filtro">
+
+						<label> Conductor </label> <select id="filtroConductor">
+
+							<option value="">Todos</option>
+
+						</select>
+
+					</div>
+
+					<div class="filtro">
+
+						<label> Estado </label> <select id="filtroEstadoViaje">
 
 							<option value="">Todos</option>
 
@@ -219,8 +241,14 @@
 
 						</div>
 
-						<div class="cantidad-registros">
-							<strong>0</strong> registros
+						<div class="tabla-header-info">
+
+							<span class="chip-conductor" id="chipConductor" hidden></span>
+
+							<div class="cantidad-registros">
+								<strong>0</strong> registros
+							</div>
+
 						</div>
 
 					</div>
@@ -257,6 +285,9 @@
 						</table>
 
 					</div>
+
+					<!-- PAGINACIÓN (la dibuja el JavaScript) -->
+					<div class="paginacion" id="paginacionViajes" hidden></div>
 
 				</section>
 
@@ -347,6 +378,10 @@
 
 					</div>
 
+					<!-- PAGINACIÓN (la dibuja el JavaScript) -->
+					<div class="paginacion" id="paginacionDestinos" hidden></div>
+
+
 				</section>
 
 			</section>
@@ -435,6 +470,10 @@
 						</table>
 
 					</div>
+
+					<!-- PAGINACIÓN (la dibuja el JavaScript) -->
+					<div class="paginacion" id="paginacionRutas" hidden></div>
+
 
 				</section>
 

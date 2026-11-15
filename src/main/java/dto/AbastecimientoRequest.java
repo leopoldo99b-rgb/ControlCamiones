@@ -26,6 +26,14 @@ public class AbastecimientoRequest {
     private Long combustibleId;
 
     // ============================================================
+    // TOTAL (opcional)
+    // Si viene con valor, se guarda tal cual (factura que no
+    // coincide con galones x precio). Si viene vacio, se calcula.
+    // ============================================================
+
+    private BigDecimal total;
+
+    // ============================================================
     // CONSTRUCTOR
     // ============================================================
 
@@ -68,6 +76,10 @@ public class AbastecimientoRequest {
         return combustibleId;
     }
 
+    public BigDecimal getTotal() {
+        return total;
+    }
+
     // ============================================================
     // SETTERS
     // ============================================================
@@ -102,5 +114,9 @@ public class AbastecimientoRequest {
 
     public void setCombustibleId(Long combustibleId) {
         this.combustibleId = combustibleId;
+    }
+
+    public void setTotal(BigDecimal total) {
+        this.total = total;
     }
 }
