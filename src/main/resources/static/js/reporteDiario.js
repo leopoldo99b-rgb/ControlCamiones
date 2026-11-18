@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const modalEliminarViaje = document.getElementById("modalEliminarViaje");
     const modalEliminarDestino = document.getElementById("modalEliminarDestino");
     const modalEliminarRuta = document.getElementById("modalEliminarRuta");
+    const modalRecomendacion = document.getElementById("modalRecomendacion");
 
     const formViaje = document.getElementById("formViaje");
     const formDestino = document.getElementById("formDestino");
@@ -59,6 +60,13 @@ document.addEventListener("DOMContentLoaded", function() {
     const chipConductor = document.getElementById("chipConductor");
     const contenedorPaginacionDestinos = document.getElementById("paginacionDestinos");
     const contenedorPaginacionRutas = document.getElementById("paginacionRutas");
+
+    /* Recomendación de programación */
+    const recFecha = document.getElementById("recFecha");
+    const recResumen = document.getElementById("recResumen");
+    const recAvisos = document.getElementById("recAvisos");
+    const recTbody = document.getElementById("recTbody");
+    const recRankingTbody = document.getElementById("recRankingTbody");
 
     /* =========================================================
        UTILIDADES
@@ -78,6 +86,20 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function normalizarTexto(valor) {
         return String(valor || "").replace(/\s+/g, " ").trim().toLowerCase();
+    }
+
+    /*
+     * Clave de comparación tolerante: sin tildes, sin signos y sin
+     * espacios repetidos. "San Pedro Sula - Siguatepeque" y
+     * "san pedro sula–siguatepeque " dan la misma clave.
+     */
+    function claveTexto(valor) {
+        return String(valor || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, " ")
+            .trim();
     }
 
     function nombreCompleto(persona) {
@@ -300,7 +322,8 @@ document.addEventListener("DOMContentLoaded", function() {
     /* Mueve los modales al <body> para evitar problemas de z-index */
     [
         "modalViaje", "modalDestino", "modalRuta",
-        "modalEliminarViaje", "modalEliminarDestino", "modalEliminarRuta"
+        "modalEliminarViaje", "modalEliminarDestino", "modalEliminarRuta",
+        "modalRecomendacion"
     ].forEach(function(id) {
         const modal = document.getElementById(id);
         if (modal && modal.parentElement !== document.body) {
@@ -1840,9 +1863,15 @@ document.addEventListener("DOMContentLoaded", function() {
         pintarTablaViajes(resultado);
     }
 
+    /* El buscador espera 150 ms tras la última tecla (evita repintar en cada letra) */
+    let temporizadorBuscador = null;
+
     if (buscador) {
         buscador.addEventListener("input", function() {
-            aplicarFiltros();
+            clearTimeout(temporizadorBuscador);
+            temporizadorBuscador = setTimeout(function() {
+                aplicarFiltros();
+            }, 150);
         });
     }
 
@@ -1857,6 +1886,8 @@ document.addEventListener("DOMContentLoaded", function() {
     if (btnLimpiar) {
 
         btnLimpiar.addEventListener("click", function() {
+
+            clearTimeout(temporizadorBuscador);
 
             if (buscador) {
                 buscador.value = "";
@@ -2194,6 +2225,12 @@ document.addEventListener("DOMContentLoaded", function() {
         if (objetivo.closest("#btnNuevoViaje")) {
             event.preventDefault();
             abrirNuevoViaje();
+            return;
+        }
+
+        if (objetivo.closest("#btnRecomendar")) {
+            event.preventDefault();
+            abrirRecomendacion();
             return;
         }
 
@@ -3080,6 +3117,646 @@ document.addEventListener("DOMContentLoaded", function() {
 
             reporte.remove();
         }
+    }
+
+    /* =========================================================
+       RECOMENDACIÓN DE PROGRAMACIÓN
+       Solo SUGIERE: no guarda, no modifica viajes y no toca los
+       filtros, la paginación ni los reportes de la pantalla.
+
+       Reglas:
+       1) Para un viaje largo (más de 5 horas) tiene prioridad quien lleva
+          más días sin hacer uno (o nunca ha hecho). Si empatan, quien no
+          viajó ayer; si siguen empatando, quien lleva más días sin viajar.
+       2) Para un viaje corto tiene prioridad quien NO viajó ayer.
+       3) Los viajes largos se asignan primero; luego los cortos.
+
+       La duración de cada viaje sale de la pestaña "Rutas y horarios"
+       (ruta cuyo nombre coincide con el destino final del viaje).
+    ========================================================= */
+
+    const HORAS_VIAJE_LARGO = 5;
+
+    const ESTADOS_CONDUCTOR_NO_DISPONIBLE = [
+        "INACTIVO", "INACTIVA", "BAJA", "RETIRADO",
+        "SUSPENDIDO", "VACACIONES", "INCAPACIDAD", "INCAPACITADO"
+    ];
+
+    let cargandoRecomendacion = false;
+
+    /* "02:30" o "02:30:00" -> 2.5 horas. Devuelve null si no es válido o es 0. */
+    function horasDeTexto(valor) {
+
+        if (typeof valor === "number") {
+            return isFinite(valor) && valor > 0 ? valor : null;
+        }
+
+        const m = String(valor || "").trim().match(/^(\d{1,3}):(\d{2})/);
+
+        if (!m) {
+            return null;
+        }
+
+        const horas = Number(m[1]) + Number(m[2]) / 60;
+
+        return horas > 0 ? horas : null;
+    }
+
+    /* Mapa clave-de-ruta -> horas. Se arma una sola vez por cálculo. */
+    function construirMapaHoras() {
+
+        const mapa = new Map();
+
+        rutasBD.forEach(function(ruta) {
+
+            const clave = claveTexto(nombreDeRuta(ruta));
+
+            if (!clave || mapa.has(clave)) {
+                return;
+            }
+
+            const horas = horasDeTexto(ruta.odt || ruta.tiempo || ruta.tiempoPromedio);
+
+            if (horas !== null) {
+                mapa.set(clave, horas);
+            }
+        });
+
+        return mapa;
+    }
+
+    function horasDeViaje(viaje, mapaHoras) {
+
+        const clave = claveTexto(viaje.destinoFinal);
+
+        return clave && mapaHoras.has(clave) ? mapaHoras.get(clave) : null;
+    }
+
+    function textoHoras(horas) {
+
+        if (horas === null) {
+            return "Sin tiempo";
+        }
+
+        const min = Math.round(horas * 60);
+
+        return Math.floor(min / 60) + ":" + String(min % 60).padStart(2, "0") + " h";
+    }
+
+    /* Días entre dos fechas "AAAA-MM-DD" (con UTC: no le afectan cambios de hora) */
+    function diasEntre(desdeISO, hastaISO) {
+
+        const a = desdeISO.split("-").map(Number);
+        const b = hastaISO.split("-").map(Number);
+
+        return Math.round(
+            (Date.UTC(b[0], b[1] - 1, b[2]) - Date.UTC(a[0], a[1] - 1, a[2])) / 86400000
+        );
+    }
+
+    function fechaISODesdeHoy(desplazamiento) {
+
+        const d = new Date();
+
+        d.setDate(d.getDate() + desplazamiento);
+
+        return d.getFullYear() + "-" +
+            String(d.getMonth() + 1).padStart(2, "0") + "-" +
+            String(d.getDate()).padStart(2, "0");
+    }
+
+    function textoDias(dias) {
+
+        if (dias === Infinity) {
+            return "Sin registro";
+        }
+
+        return dias === 1 ? "Ayer" : "Hace " + dias + " días";
+    }
+
+    /*
+     * Historial de cada conductor usando SOLO viajes anteriores a la
+     * fecha elegida (así los viajes ya cargados ese día no lo alteran).
+     */
+    function calcularHistorial(fechaISO, mapaHoras) {
+
+        const porConductor = {};
+        let sinTiempo = 0;
+
+        viajesBD.forEach(function(viaje) {
+
+            if (viaje.estado === "CANCELADO") {
+                return;
+            }
+
+            const f = convertirFechaInput(viaje.fecha);
+            const clave = claveTexto(viaje.motorista);
+
+            if (!f || !clave || f >= fechaISO) {
+                return;
+            }
+
+            const dias = diasEntre(f, fechaISO);
+
+            const reg = porConductor[clave] || (porConductor[clave] = {
+                ultimoViaje: Infinity,
+                ultimoLargo: Infinity,
+                viajesSemana: 0
+            });
+
+            if (dias < reg.ultimoViaje) {
+                reg.ultimoViaje = dias;
+            }
+
+            const horas = horasDeViaje(viaje, mapaHoras);
+
+            if (horas === null) {
+                if (dias <= 30) {
+                    sinTiempo++;
+                }
+            } else if (horas > HORAS_VIAJE_LARGO && dias < reg.ultimoLargo) {
+                reg.ultimoLargo = dias;
+            }
+
+            if (dias <= 7) {
+                reg.viajesSemana++;
+            }
+        });
+
+        return { porConductor: porConductor, sinTiempo: sinTiempo };
+    }
+
+    function construirCandidatos(porConductor) {
+
+        const vistos = new Set();
+        const lista = [];
+
+        conductoresBD.forEach(function(c) {
+
+            const nombre = nombreCompleto(c);
+            const clave = claveTexto(nombre);
+
+            if (!clave || vistos.has(clave)) {
+                return;
+            }
+
+            const estado = String(c.estado || "").trim().toUpperCase();
+
+            if (c.activo === false || ESTADOS_CONDUCTOR_NO_DISPONIBLE.includes(estado)) {
+                return;
+            }
+
+            vistos.add(clave);
+
+            const h = porConductor[clave] ||
+                { ultimoViaje: Infinity, ultimoLargo: Infinity, viajesSemana: 0 };
+
+            lista.push({
+                clave: clave,
+                nombre: nombre,
+                placa: obtenerPlacaDeAsignacion(buscarAsignacionDelConductor(c.id)),
+                viajoAyer: h.ultimoViaje === 1,
+                diasUltimoViaje: h.ultimoViaje,
+                diasUltimoLargo: h.ultimoLargo,
+                viajesSemana: h.viajesSemana
+            });
+        });
+
+        return lista;
+    }
+
+    /* Orden de prioridad para un viaje LARGO:
+       1) más días sin hacer un viaje largo
+       2) si empatan, quien no viajó ayer
+       3) si siguen empatando, más días sin viajar */
+    function compararParaLargo(a, b) {
+
+        if (a.diasUltimoLargo !== b.diasUltimoLargo) {
+            return b.diasUltimoLargo - a.diasUltimoLargo;
+        }
+
+        if (a.viajoAyer !== b.viajoAyer) {
+            return a.viajoAyer ? 1 : -1;
+        }
+
+        if (a.diasUltimoViaje !== b.diasUltimoViaje) {
+            return b.diasUltimoViaje - a.diasUltimoViaje;
+        }
+
+        if (a.viajesSemana !== b.viajesSemana) {
+            return a.viajesSemana - b.viajesSemana;
+        }
+
+        return a.nombre.localeCompare(b.nombre, "es");
+    }
+
+    /* Orden de prioridad para un viaje CORTO */
+    function compararParaCorto(a, b) {
+
+        if (a.viajoAyer !== b.viajoAyer) {
+            return a.viajoAyer ? 1 : -1;
+        }
+
+        if (a.diasUltimoViaje !== b.diasUltimoViaje) {
+            return b.diasUltimoViaje - a.diasUltimoViaje;
+        }
+
+        if (a.viajesSemana !== b.viajesSemana) {
+            return a.viajesSemana - b.viajesSemana;
+        }
+
+        /* Quien hizo un largo hace poco es el mejor para un corto */
+        if (a.diasUltimoLargo !== b.diasUltimoLargo) {
+            return a.diasUltimoLargo - b.diasUltimoLargo;
+        }
+
+        return a.nombre.localeCompare(b.nombre, "es");
+    }
+
+    function motivoRecomendacion(c, largo) {
+
+        const ayer = c.viajoAyer ? "viajó ayer" : "no viajó ayer";
+
+        if (largo) {
+            return (c.diasUltimoLargo === Infinity
+                ? "Nunca ha hecho viaje largo"
+                : "Último largo: " + textoDias(c.diasUltimoLargo).toLowerCase()) +
+                " · " + ayer;
+        }
+
+        return (c.viajoAyer ? "Viajó ayer" : "No viajó ayer") + " · " +
+            (c.diasUltimoViaje === Infinity
+                ? "sin viajes previos"
+                : "último viaje: " + textoDias(c.diasUltimoViaje).toLowerCase());
+    }
+
+    /* Lista de destinos que el usuario ingresa para el día: [{ uid, destino }] */
+    let destinosRec = [];
+    let contadorRec = 0;
+
+    const recDestino = document.getElementById("recDestino");
+    const recCantidad = document.getElementById("recCantidad");
+
+    /* Combo con las rutas activas (con su tiempo promedio al lado) */
+    function llenarSelectDestinosRec() {
+
+        if (!recDestino) {
+            return;
+        }
+
+        const valorActual = recDestino.value;
+        const mapaHoras = construirMapaHoras();
+        const fragmento = document.createDocumentFragment();
+
+        const vacio = document.createElement("option");
+        vacio.value = "";
+        vacio.textContent = "Selecciona un destino";
+        fragmento.appendChild(vacio);
+
+        rutasBD.forEach(function(ruta) {
+
+            if (!ruta || !esActiva(ruta.estado)) {
+                return;
+            }
+
+            const nombre = nombreDeRuta(ruta);
+
+            if (!nombre) {
+                return;
+            }
+
+            const horas = mapaHoras.get(claveTexto(nombre));
+            const option = document.createElement("option");
+
+            option.value = String(nombre);
+            option.textContent = nombre + " · " + (horas ? textoHoras(horas) : "sin tiempo");
+
+            fragmento.appendChild(option);
+        });
+
+        recDestino.innerHTML = "";
+        recDestino.appendChild(fragmento);
+
+        if (valorActual) {
+            seleccionarPorTexto(recDestino, valorActual);
+        }
+    }
+
+    function agregarDestinoRec() {
+
+        const destino = recDestino ? recDestino.value : "";
+
+        if (!destino) {
+            mostrarMensaje("Selecciona un destino para agregarlo.", "error");
+            return;
+        }
+
+        let cantidad = recCantidad ? parseInt(recCantidad.value, 10) : 1;
+
+        if (!isFinite(cantidad) || cantidad < 1) {
+            cantidad = 1;
+        }
+
+        if (cantidad > 50) {
+            cantidad = 50;
+        }
+
+        for (let i = 0;i < cantidad;i++) {
+            destinosRec.push({ uid: ++contadorRec, destino: destino });
+        }
+
+        if (recCantidad) {
+            recCantidad.value = 1;
+        }
+
+        generarRecomendacion();
+    }
+
+    /* Copia a la lista los destinos finales de los viajes ya registrados en la fecha elegida */
+    function traerViajesRegistradosRec() {
+
+        const fecha = recFecha ? recFecha.value : "";
+
+        if (!fecha) {
+            mostrarMensaje("Selecciona primero la fecha.", "error");
+            return;
+        }
+
+        const delDia = viajesBD.filter(function(v) {
+            return v.estado !== "CANCELADO" && v.destinoFinal && convertirFechaInput(v.fecha) === fecha;
+        });
+
+        if (delDia.length === 0) {
+            mostrarMensaje("No hay viajes registrados para esa fecha.", "error");
+            return;
+        }
+
+        destinosRec = delDia.map(function(v) {
+            return { uid: ++contadorRec, destino: v.destinoFinal };
+        });
+
+        generarRecomendacion();
+    }
+
+    function generarRecomendacion() {
+
+        if (!recFecha || !recTbody || !recRankingTbody || !recResumen || !recAvisos) {
+            return;
+        }
+
+        const fecha = recFecha.value;
+
+        recAvisos.innerHTML = "";
+
+        if (!fecha) {
+            recResumen.textContent = "";
+            recTbody.innerHTML = filaEstado(5, "fa-calendar", "Selecciona una fecha.");
+            recRankingTbody.innerHTML = "";
+            return;
+        }
+
+        const mapaHoras = construirMapaHoras();
+        const historial = calcularHistorial(fecha, mapaHoras);
+        const candidatos = construirCandidatos(historial.porConductor);
+
+        const items = destinosRec.map(function(d) {
+
+            const horas = mapaHoras.get(claveTexto(d.destino));
+
+            return {
+                uid: d.uid,
+                destino: d.destino,
+                horas: horas === undefined ? null : horas,
+                largo: horas !== undefined && horas > HORAS_VIAJE_LARGO,
+                recomendado: null
+            };
+        });
+
+        /* Los viajes más largos se asignan primero (empate: en el orden en que se agregaron) */
+        items.sort(function(a, b) {
+            return ((b.horas || 0) - (a.horas || 0)) || (a.uid - b.uid);
+        });
+
+        const libres = candidatos.slice();
+
+        items.forEach(function(it) {
+            libres.sort(it.largo ? compararParaLargo : compararParaCorto);
+            it.recomendado = libres.length ? libres.shift() : null;
+        });
+
+        /* ---------- Resumen y avisos ---------- */
+
+        const largos = items.filter(function(i) { return i.largo; }).length;
+
+        recResumen.innerHTML =
+            "<strong>" + items.length + "</strong> viaje(s) · <strong>" + largos +
+            "</strong> largo(s) · <strong>" + candidatos.length + "</strong> conductor(es)";
+
+        const avisos = [];
+        const sinTiempoHoy = items.filter(function(i) { return i.horas === null; }).length;
+        const sinConductor = items.filter(function(i) { return !i.recomendado; }).length;
+
+        if (candidatos.length === 0) {
+            avisos.push("No hay conductores disponibles. Revisa que la lista de conductores esté cargada.");
+        }
+
+        if (sinTiempoHoy > 0) {
+            avisos.push(sinTiempoHoy + " destino(s) no tienen tiempo registrado en Rutas y horarios. Se trataron como viajes cortos.");
+        }
+
+        if (historial.sinTiempo > 0) {
+            avisos.push(historial.sinTiempo + " viaje(s) de los últimos 30 días no tienen tiempo registrado, por lo que no se pudo saber si fueron largos. Revisa que el destino final coincida con el nombre de una ruta.");
+        }
+
+        if (sinConductor > 0) {
+            avisos.push("Hay más viajes que conductores: " + sinConductor + " viaje(s) quedaron sin conductor recomendado.");
+        }
+
+        if (viajesBD.length === 0) {
+            avisos.push("Todavía no hay historial de programaciones: todos los conductores tienen la misma prioridad.");
+        }
+
+        recAvisos.innerHTML = avisos.map(function(t) {
+            return '<div class="rec-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ' + escaparHTML(t) + "</div>";
+        }).join("");
+
+        /* ---------- Tabla de recomendaciones ---------- */
+
+        if (items.length === 0) {
+            recTbody.innerHTML = filaEstado(5, "fa-list", "Agrega los destinos del día (arriba) para ver qué conductor le toca a cada uno.");
+        } else {
+
+            recTbody.innerHTML = items.map(function(it) {
+
+                const rec = it.recomendado;
+
+                const recHTML = rec
+                    ? "<strong>" + escaparHTML(rec.nombre) + "</strong> " +
+                      (rec.placa
+                          ? '<span class="placa">' + escaparHTML(rec.placa) + "</span>"
+                          : '<span class="rec-badge dif">Sin camión</span>')
+                    : '<span class="rec-sin">Sin conductor disponible</span>';
+
+                return `
+                    <tr>
+                        <td><span class="ruta">${escaparHTML(it.destino)}</span></td>
+                        <td>${escaparHTML(textoHoras(it.horas))}
+                            ${it.largo ? '<span class="rec-badge largo">Largo</span>' : ""}</td>
+                        <td>${recHTML}</td>
+                        <td class="rec-motivo">${rec ? escaparHTML(motivoRecomendacion(rec, it.largo)) : ""}</td>
+                        <td>
+                            <button type="button" class="btn-accion eliminar" data-rec-quitar="${it.uid}" title="Quitar este viaje">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        /* ---------- Tabla de prioridad de conductores ---------- */
+
+        const asignadoHoy = {};
+
+        items.forEach(function(it) {
+            if (it.recomendado) {
+                asignadoHoy[it.recomendado.clave] = it.destino;
+            }
+        });
+
+        const ranking = candidatos.slice().sort(compararParaLargo);
+
+        if (ranking.length === 0) {
+            recRankingTbody.innerHTML = filaEstado(7, "fa-inbox", "No hay conductores.");
+            return;
+        }
+
+        recRankingTbody.innerHTML = ranking.map(function(c, i) {
+
+            const destino = asignadoHoy[c.clave];
+
+            return `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><strong>${escaparHTML(c.nombre)}</strong></td>
+                    <td>${c.placa ? '<span class="placa">' + escaparHTML(c.placa) + "</span>" : '<span class="rec-sin">—</span>'}</td>
+                    <td>${escaparHTML(textoDias(c.diasUltimoViaje))}</td>
+                    <td>${escaparHTML(textoDias(c.diasUltimoLargo))}</td>
+                    <td>${c.viajesSemana}</td>
+                    <td>${destino
+                        ? '<span class="rec-badge ok">' + escaparHTML(destino) + "</span>"
+                        : '<span class="rec-sin">Libre</span>'}</td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    /*
+     * Abre el modal enseguida y refresca los datos (historial, rutas,
+     * conductores y camiones) para que la recomendación esté al día.
+     * La lista de destinos ingresada se conserva mientras la página siga abierta.
+     */
+    async function abrirRecomendacion() {
+
+        if (cargandoRecomendacion) {
+            return;
+        }
+
+        cargandoRecomendacion = true;
+
+        try {
+
+            if (recFecha && !recFecha.value) {
+                recFecha.value = fechaISODesdeHoy(0);
+            }
+
+            if (recTbody) {
+                recTbody.innerHTML = filaEstado(5, "fa-spinner fa-spin", "Analizando el historial de programaciones…");
+            }
+
+            abrirModal("modalRecomendacion");
+
+            await Promise.all([
+                cargarViajesDesdeBD(),
+                cargarRutasDesdeBD(),
+                cargarConductoresParaViajes(),
+                cargarAsignacionesParaViajes()
+            ]);
+
+            llenarSelectDestinosRec();
+            generarRecomendacion();
+
+        } catch (error) {
+
+            console.error("Error generando la recomendación:", error);
+
+            if (recTbody) {
+                recTbody.innerHTML = filaEstado(5, "fa-circle-exclamation", "No se pudo generar la recomendación.");
+            }
+
+            mostrarMensaje(error.message || "No se pudo generar la recomendación.", "error");
+
+        } finally {
+
+            cargandoRecomendacion = false;
+        }
+    }
+
+    if (recFecha) {
+        recFecha.addEventListener("change", generarRecomendacion);
+    }
+
+    if (recCantidad) {
+        recCantidad.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                agregarDestinoRec();
+            }
+        });
+    }
+
+    /* Botones del modal: Hoy / Mañana, Agregar, Traer, Limpiar y Quitar */
+    if (modalRecomendacion) {
+
+        modalRecomendacion.addEventListener("click", function(event) {
+
+            const dia = event.target.closest("[data-rec-dia]");
+
+            if (dia && recFecha) {
+                recFecha.value = fechaISODesdeHoy(Number(dia.dataset.recDia) || 0);
+                generarRecomendacion();
+                return;
+            }
+
+            if (event.target.closest("#recAgregar")) {
+                agregarDestinoRec();
+                return;
+            }
+
+            if (event.target.closest("#recTraer")) {
+                traerViajesRegistradosRec();
+                return;
+            }
+
+            if (event.target.closest("#recLimpiar")) {
+                destinosRec = [];
+                generarRecomendacion();
+                return;
+            }
+
+            const quitar = event.target.closest("[data-rec-quitar]");
+
+            if (quitar) {
+
+                const uid = Number(quitar.dataset.recQuitar);
+
+                destinosRec = destinosRec.filter(function(d) {
+                    return d.uid !== uid;
+                });
+
+                generarRecomendacion();
+            }
+        });
     }
 
     /* =========================================================

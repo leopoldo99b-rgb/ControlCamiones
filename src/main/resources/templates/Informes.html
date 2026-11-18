@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informes | Transportes CHC</title>
+<link rel="stylesheet" href="/css/informes.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="topbar">
+	<div class="topbar-in">
+		<div class="marca"><span class="marca-ico"><i class="fa-solid fa-truck-moving"></i></span><b>TRANSPORTES CHC</b></div>
+		<a href="/reportes" class="volver"><i class="fa-solid fa-arrow-left"></i> Volver a reportes</a>
+	</div>
+</header>
+
+<section class="hero">
+	<div class="hero-in">
+		<nav class="migas"><a href="/dashboard">Dashboard</a><i class="fa-solid fa-chevron-right"></i><a href="/reportes">Reportes</a><i class="fa-solid fa-chevron-right"></i><span>Informes</span></nav>
+		<h1>Archivo de <em>informes</em></h1>
+		<p>Registra cada informe con su enlace de Drive y consúltalo cuando lo necesites, sin perder nada en el camino.</p>
+	</div>
+	<div class="ruta" aria-hidden="true">
+		<i class="fa-solid fa-truck-moving camion"></i>
+		<span class="linea"></span>
+	</div>
+	<div class="franja" aria-hidden="true"></div>
+</section>
+
+<main class="wrap">
+
+	<section class="stats">
+		<div class="stat" style="--i:0"><i class="fa-solid fa-file-lines"></i><div><b data-n id="stTotal">0</b><span>Informes registrados</span></div></div>
+		<div class="stat" style="--i:1"><i class="fa-solid fa-calendar-check"></i><div><b data-n id="stMes">0</b><span>Este mes</span></div></div>
+		<div class="stat" style="--i:2"><i class="fa-solid fa-layer-group"></i><div><b data-n id="stCat">0</b><span>Categorías en uso</span></div></div>
+		<div class="stat" style="--i:3"><i class="fa-solid fa-clock-rotate-left"></i><div><b id="stUlt">—</b><span>Último informe</span></div></div>
+	</section>
+
+	<section class="panel" id="panelForm">
+		<button class="panel-cab" id="toggleForm" type="button" aria-expanded="true">
+			<span><i class="fa-solid fa-circle-plus"></i> Registrar nuevo informe</span>
+			<i class="fa-solid fa-chevron-up chev"></i>
+		</button>
+		<div class="panel-cuerpo">
+			<ol class="pasos">
+				<li><b>1</b> Sube el PDF a tu Drive</li>
+				<li><b>2</b> Compártelo: <em>“Cualquier persona con el enlace · Lector”</em></li>
+				<li><b>3</b> Pega el enlace aquí</li>
+			</ol>
+			<form id="form" autocomplete="off" novalidate>
+				<div class="campos">
+					<label class="full">Enlace de Google Drive
+						<div class="input-ico"><i class="fa-brands fa-google-drive"></i>
+							<input type="url" id="enlace" placeholder="https://drive.google.com/file/d/…/view" required></div>
+						<small id="enlaceEstado" class="estado"></small>
+					</label>
+					<label>Título del informe
+						<input type="text" id="titulo" maxlength="120" placeholder="Ej. Consumo de combustible – octubre" required>
+					</label>
+					<label>Categoría
+						<select id="categoria"></select>
+					</label>
+					<label>Fecha del informe
+						<input type="date" id="fecha" required>
+					</label>
+					<label>Descripción (opcional)
+						<input type="text" id="descripcion" maxlength="200" placeholder="Ruta, unidad, periodo…">
+					</label>
+				</div>
+				<div class="form-pie">
+					<button type="reset" class="btn sec" id="btnLimpiar">Limpiar</button>
+					<button type="submit" class="btn pri" id="btnGuardar" disabled><i class="fa-solid fa-floppy-disk"></i> Guardar informe</button>
+				</div>
+			</form>
+		</div>
+	</section>
+
+	<section class="lista">
+		<div class="barra">
+			<h2><i class="fa-solid fa-folder-open"></i> Mis informes <span class="cont" id="contador"></span></h2>
+			<div class="herr">
+				<div class="buscar"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="buscar" placeholder="Buscar por título o descripción…"></div>
+				<select id="orden" aria-label="Ordenar">
+					<option value="rec">Más recientes</option>
+					<option value="ant">Más antiguos</option>
+					<option value="az">A → Z</option>
+				</select>
+			</div>
+		</div>
+		<div class="chips" id="chips"></div>
+		<div class="grid" id="grid"></div>
+		<div class="vacio" id="vacio" hidden>
+			<i class="fa-solid fa-truck-ramp-box"></i>
+			<h3>Nada por aquí todavía</h3>
+			<p>Registra tu primer informe o ajusta los filtros.</p>
+		</div>
+	</section>
+</main>
+
+<!-- Visor -->
+<div class="modal" id="modal" hidden>
+	<div class="visor-caja" role="dialog" aria-modal="true" aria-labelledby="visorTitulo">
+		<div class="visor-cab">
+			<div><strong id="visorTitulo"></strong><small id="visorMeta"></small></div>
+			<div class="visor-acc">
+				<a class="btn sec" id="visorDesc" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-download"></i> <span>Descargar</span></a>
+				<a class="btn sec" id="visorDrive" href="#" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive"></i> <span>Abrir en Drive</span></a>
+				<button class="btn sec" id="visorCerrar" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+			</div>
+		</div>
+		<div class="visor-marco"><div class="cargando"><i class="fa-solid fa-gear"></i> Cargando informe…</div><iframe id="visor" title="Visor de informe" allow="autoplay"></iframe></div>
+	</div>
+</div>
+
+<!-- Confirmar eliminar -->
+<div class="modal" id="confirmar" hidden>
+	<div class="confirma">
+		<i class="fa-solid fa-triangle-exclamation"></i>
+		<h3>¿Eliminar este informe?</h3>
+		<p id="confirmaTxt"></p>
+		<small>Solo se quita del sistema. El archivo en Drive no se borra.</small>
+		<div><button class="btn sec" id="cNo">Cancelar</button><button class="btn peligro" id="cSi">Sí, eliminar</button></div>
+	</div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<footer class="pie">Transportes CHC · Archivo de informes</footer>
+<script src="/js/informes.js"></script>
+</body>
+</html>

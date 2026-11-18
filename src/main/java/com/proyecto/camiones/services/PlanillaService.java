@@ -1,489 +1,152 @@
 package com.proyecto.camiones.services;
 
-import jakarta.transaction.Transactional;
-
+import com.proyecto.camiones.exception.NegocioException;
+import com.proyecto.camiones.model.*;
+import com.proyecto.camiones.repository.*;
+import dto.PlanillaDtos.DetalleResponse;
+import dto.PlanillaDtos.GenerarPlanillaRequest;
+import dto.PlanillaDtos.PlanillaResponse;
 import org.springframework.stereotype.Service;
-
-import com.proyecto.camiones.model.EstadoPago;
-import com.proyecto.camiones.model.EstadoPlanilla;
-import com.proyecto.camiones.model.HistorialPlanilla;
-import com.proyecto.camiones.model.Planilla;
-import com.proyecto.camiones.repository.PlanillaRepository;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
+/** Pago = sueldo del período - adelantos - vales - préstamos. */
 @Service
 public class PlanillaService {
+    private final PlanillaRepository planillaRepo;
+    private final PlanillaDetalleRepository detalleRepo;
+    private final EmpleadoRepository empleadoRepo;
+    private final AdelantoRepository adelantoRepo;
 
-    private final PlanillaRepository planillaRepository;
-
-    public PlanillaService(PlanillaRepository planillaRepository) {
-        this.planillaRepository = planillaRepository;
+    public PlanillaService(PlanillaRepository planillaRepo, PlanillaDetalleRepository detalleRepo,
+                           EmpleadoRepository empleadoRepo, AdelantoRepository adelantoRepo) {
+        this.planillaRepo = planillaRepo;
+        this.detalleRepo = detalleRepo;
+        this.empleadoRepo = empleadoRepo;
+        this.adelantoRepo = adelantoRepo;
     }
 
-    // =========================================================
-    // CREAR / GUARDAR PLANILLA
-    // =========================================================
+    @Transactional(readOnly = true)
+    public List<PlanillaResponse> listar() {
+        return planillaRepo.findAllByOrderByFechaFinDescIdDesc().stream()
+                .map(p -> PlanillaResponse.de(p, (int) detalleRepo.countByPlanillaId(p.getId()), null)).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PlanillaResponse obtener(Integer id) {
+        Planilla p = planillaRepo.findById(id).orElseThrow();
+        List<DetalleResponse> det = detalleRepo.findByPlanillaIdOrderByEmpleadoNombreAsc(id).stream().map(DetalleResponse::de).toList();
+        return PlanillaResponse.de(p, det.size(), det);
+    }
 
     @Transactional
-    public Planilla guardar(Planilla planilla) {
+    public PlanillaResponse generar(GenerarPlanillaRequest r) {
+        if (r.fechaInicio() == null || r.fechaFin() == null) throw new NegocioException("Indica las fechas del período.");
+        if (r.fechaFin().isBefore(r.fechaInicio())) throw new NegocioException("La fecha final es anterior a la inicial.");
+        BigDecimal factor = factor(r.frecuencia());
+        if (planillaRepo.existsByFrecuenciaAndFechaInicioAndFechaFin(r.frecuencia(), r.fechaInicio(), r.fechaFin()))
+            throw new NegocioException("Ya existe una planilla " + r.frecuencia().toLowerCase() + " para esas fechas.");
 
-        validarPlanilla(planilla);
+        Planilla p = new Planilla();
+        p.setFrecuencia(r.frecuencia());
+        p.setFechaInicio(r.fechaInicio());
+        p.setFechaFin(r.fechaFin());
+        p.setDescripcion(r.descripcion());
+        planillaRepo.save(p);
 
-        // Estado inicial
-        if (planilla.getEstado() == null) {
-            planilla.setEstado(EstadoPlanilla.PENDIENTE);
+        List<PlanillaDetalle> detalles = new ArrayList<>();
+        for (Empleado e : empleadoRepo.findByActivoTrueAndFrecuenciaPagoAndFechaIngresoLessThanEqual(r.frecuencia(), r.fechaFin())) {
+            BigDecimal base = r2(e.getSalarioMensual().multiply(factor));
+            if (e.getFechaIngreso().isAfter(r.fechaInicio())) { // ingresó dentro del período: prorrateo por días
+                long total = ChronoUnit.DAYS.between(r.fechaInicio(), r.fechaFin()) + 1;
+                long trab = ChronoUnit.DAYS.between(e.getFechaIngreso(), r.fechaFin()) + 1;
+                base = base.multiply(BigDecimal.valueOf(trab)).divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP);
+            }
+            List<Adelanto> pend = adelantoRepo.findByEmpleadoIdAndEstadoOrderByFechaAscIdAsc(e.getId(), "PENDIENTE");
+            BigDecimal restante = base; // el neto nunca queda negativo
+            BigDecimal adel = base.min(suma(pend, "ADELANTO", r.fechaFin()));  restante = restante.subtract(adel);
+            BigDecimal vales = restante.min(suma(pend, "VALE", r.fechaFin())); restante = restante.subtract(vales);
+            BigDecimal prest = restante.min(suma(pend, "PRESTAMO", r.fechaFin()));
+
+            PlanillaDetalle d = new PlanillaDetalle();
+            d.setPlanilla(p);
+            d.setEmpleado(e);
+            d.setSalarioBase(base);
+            d.setAdelantos(adel);
+            d.setVales(vales);
+            d.setPrestamos(prest);
+            BigDecimal ded = adel.add(vales).add(prest);
+            d.setTotalDeducciones(ded);
+            d.setNeto(base.subtract(ded));
+            detalles.add(d);
         }
-
-        LocalDateTime ahora = LocalDateTime.now();
-
-        // Fecha de creación
-        if (planilla.getFechaCreacion() == null) {
-            planilla.setFechaCreacion(ahora);
-        }
-
-        // Fecha de actualización
-        planilla.setFechaActualizacion(ahora);
-
-        // Preparar los registros del historial
-        prepararHistorial(planilla);
-
-        // Calcular totales
-        calcularTotales(planilla);
-
-        return planillaRepository.save(planilla);
+        detalleRepo.saveAll(detalles);
+        p.setTotalIngresos(detalles.stream().map(PlanillaDetalle::getSalarioBase).reduce(BigDecimal.ZERO, BigDecimal::add));
+        p.setTotalDeducciones(detalles.stream().map(PlanillaDetalle::getTotalDeducciones).reduce(BigDecimal.ZERO, BigDecimal::add));
+        p.setTotalNeto(detalles.stream().map(PlanillaDetalle::getNeto).reduce(BigDecimal.ZERO, BigDecimal::add));
+        planillaRepo.save(p);
+        return PlanillaResponse.de(p, detalles.size(), null);
     }
 
-    // =========================================================
-    // BUSCAR POR ID
-    // =========================================================
+    /** Marca como pagada y rebaja los saldos de adelantos, vales y préstamos. */
+    @Transactional
+    public void pagar(Integer id) {
+        Planilla p = planillaRepo.findById(id).orElseThrow();
+        if (!"BORRADOR".equals(p.getEstado())) throw new NegocioException("Esta planilla ya fue pagada.");
+        p.setEstado("PAGADA");
+        p.setFechaPago(LocalDateTime.now());
+        for (PlanillaDetalle d : detalleRepo.findByPlanillaIdOrderByEmpleadoNombreAsc(id)) {
+            Integer emp = d.getEmpleado().getId();
+            aplicar(emp, "ADELANTO", d.getAdelantos(), p.getFechaFin());
+            aplicar(emp, "VALE", d.getVales(), p.getFechaFin());
+            aplicar(emp, "PRESTAMO", d.getPrestamos(), p.getFechaFin());
+        }
+    }
 
     @Transactional
-    public Planilla buscarPorId(Long id) {
-
-        return planillaRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "No se encontró la planilla con ID: " + id
-                        )
-                );
+    public void eliminar(Integer id) {
+        Planilla p = planillaRepo.findById(id).orElseThrow();
+        if (!"BORRADOR".equals(p.getEstado())) throw new NegocioException("Solo se eliminan planillas en borrador.");
+        planillaRepo.delete(p); // planilla_detalle se borra por ON DELETE CASCADE
     }
 
-    // =========================================================
-    // BUSCAR POR NÚMERO
-    // =========================================================
-
-    @Transactional
-    public Planilla buscarPorNumero(String numeroPlanilla) {
-
-        return planillaRepository
-                .findByNumeroPlanilla(numeroPlanilla)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "No se encontró la planilla: "
-                                        + numeroPlanilla
-                        )
-                );
+    /* ---------- Auxiliares ---------- */
+    private static BigDecimal montoACobrar(Adelanto a) {
+        return a.getCuotaPorPlanilla() == null ? a.getSaldo() : a.getSaldo().min(a.getCuotaPorPlanilla());
     }
 
-    // =========================================================
-    // LISTAR TODAS LAS PLANILLAS
-    // =========================================================
-
-    @Transactional
-    public List<Planilla> listarTodas() {
-
-        return planillaRepository
-                .findAllByOrderByFechaPagoDesc();
+    private static BigDecimal suma(List<Adelanto> pend, String tipo, LocalDate hasta) {
+        return pend.stream().filter(a -> tipo.equals(a.getTipo()) && !a.getFecha().isAfter(hasta))
+                .map(PlanillaService::montoACobrar).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // =========================================================
-    // LISTAR PLANILLAS POR ESTADO
-    // =========================================================
-
-    @Transactional
-    public List<Planilla> listarPorEstado(
-            EstadoPlanilla estado) {
-
-        return planillaRepository
-                .findByEstadoOrderByFechaPagoDesc(estado);
-    }
-
-    // =========================================================
-    // LISTAR PLANILLAS POR RANGO DE FECHA DE PAGO
-    // =========================================================
-
-    @Transactional
-    public List<Planilla> listarPorFecha(
-            LocalDate desde,
-            LocalDate hasta) {
-
-        if (desde == null || hasta == null) {
-            throw new IllegalArgumentException(
-                    "Las fechas desde y hasta son obligatorias."
-            );
-        }
-
-        if (hasta.isBefore(desde)) {
-            throw new IllegalArgumentException(
-                    "La fecha hasta no puede ser anterior a la fecha desde."
-            );
-        }
-
-        return planillaRepository
-                .findByFechaPagoBetweenOrderByFechaPagoDesc(
-                        desde,
-                        hasta
-                );
-    }
-
-    // =========================================================
-    // ACTUALIZAR ESTADO DE PLANILLA
-    // =========================================================
-
-    @Transactional
-    public Planilla actualizarEstado(
-            Long id,
-            EstadoPlanilla nuevoEstado) {
-
-        if (nuevoEstado == null) {
-            throw new IllegalArgumentException(
-                    "El nuevo estado es obligatorio."
-            );
-        }
-
-        Planilla planilla = buscarPorId(id);
-
-        planilla.setEstado(nuevoEstado);
-        planilla.setFechaActualizacion(
-                LocalDateTime.now()
-        );
-
-        return planillaRepository.save(planilla);
-    }
-
-    // =========================================================
-    // MARCAR EMPLEADO COMO PAGADO
-    // =========================================================
-
-    @Transactional
-    public HistorialPlanilla marcarEmpleadoPagado(
-            Long planillaId,
-            Long historialId) {
-
-        Planilla planilla = buscarPorId(planillaId);
-
-        if (planilla.getEmpleados() == null
-                || planilla.getEmpleados().isEmpty()) {
-
-            throw new RuntimeException(
-                    "La planilla no tiene empleados registrados."
-            );
-        }
-
-        HistorialPlanilla historial = planilla
-                .getEmpleados()
-                .stream()
-                .filter(item ->
-                        item.getId() != null
-                                && item.getId().equals(historialId)
-                )
-                .findFirst()
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "No se encontró el empleado dentro de la planilla."
-                        )
-                );
-
-        // Marcar el registro individual como pagado
-        historial.setEstadoPago(EstadoPago.PAGADO);
-
-        // Registrar fecha de pago
-        historial.setFechaPago(
-                LocalDateTime.now()
-        );
-
-        // Actualizar estado general de la planilla
-        actualizarEstadoGeneral(planilla);
-
-        // Actualizar fecha de modificación
-        planilla.setFechaActualizacion(
-                LocalDateTime.now()
-        );
-
-        // Guardar cambios
-        planillaRepository.save(planilla);
-
-        return historial;
-    }
-
-    // =========================================================
-    // PREPARAR HISTORIAL
-    // =========================================================
-
-    private void prepararHistorial(Planilla planilla) {
-
-        if (planilla.getEmpleados() == null
-                || planilla.getEmpleados().isEmpty()) {
-
-            return;
-        }
-
-        LocalDateTime ahora = LocalDateTime.now();
-
-        for (HistorialPlanilla historial :
-                planilla.getEmpleados()) {
-
-            // Relación con la planilla
-            historial.setPlanilla(planilla);
-
-            // Valores por defecto
-            if (historial.getSalario() == null) {
-                historial.setSalario(BigDecimal.ZERO);
-            }
-
-            if (historial.getBonos() == null) {
-                historial.setBonos(BigDecimal.ZERO);
-            }
-
-            if (historial.getAnticipos() == null) {
-                historial.setAnticipos(BigDecimal.ZERO);
-            }
-
-            if (historial.getDeducciones() == null) {
-                historial.setDeducciones(BigDecimal.ZERO);
-            }
-
-            if (historial.getNeto() == null) {
-                historial.setNeto(BigDecimal.ZERO);
-            }
-
-            // Estado inicial de pago
-            if (historial.getEstadoPago() == null) {
-                historial.setEstadoPago(
-                        EstadoPago.PENDIENTE
-                );
-            }
-
-            // Fecha de registro
-            if (historial.getFechaRegistro() == null) {
-                historial.setFechaRegistro(ahora);
-            }
+    private void aplicar(Integer empleadoId, String tipo, BigDecimal monto, LocalDate hasta) {
+        BigDecimal restante = monto;
+        for (Adelanto a : adelantoRepo.findByEmpleadoIdAndEstadoOrderByFechaAscIdAsc(empleadoId, "PENDIENTE")) {
+            if (restante.signum() <= 0) break;
+            if (!tipo.equals(a.getTipo()) || a.getFecha().isAfter(hasta)) continue;
+            BigDecimal aplica = restante.min(a.getSaldo());
+            a.setSaldo(a.getSaldo().subtract(aplica));
+            if (a.getSaldo().signum() <= 0) a.setEstado("SALDADO");
+            restante = restante.subtract(aplica);
         }
     }
 
-    // =========================================================
-    // CALCULAR TOTALES
-    // =========================================================
-
-    private void calcularTotales(Planilla planilla) {
-
-        BigDecimal salarios = BigDecimal.ZERO;
-        BigDecimal bonos = BigDecimal.ZERO;
-        BigDecimal anticipos = BigDecimal.ZERO;
-        BigDecimal deducciones = BigDecimal.ZERO;
-        BigDecimal neto = BigDecimal.ZERO;
-
-        int cantidadEmpleados = 0;
-
-        if (planilla.getEmpleados() != null) {
-
-            cantidadEmpleados =
-                    planilla.getEmpleados().size();
-
-            for (HistorialPlanilla historial :
-                    planilla.getEmpleados()) {
-
-                BigDecimal salario =
-                        valor(historial.getSalario());
-
-                BigDecimal bono =
-                        valor(historial.getBonos());
-
-                BigDecimal anticipo =
-                        valor(historial.getAnticipos());
-
-                BigDecimal deduccion =
-                        valor(historial.getDeducciones());
-
-                // Acumular salarios
-                salarios = salarios.add(salario);
-
-                // Acumular bonos
-                bonos = bonos.add(bono);
-
-                // Acumular anticipos
-                anticipos = anticipos.add(anticipo);
-
-                // Acumular deducciones
-                deducciones = deducciones.add(deduccion);
-
-                // Calcular SIEMPRE el neto en el servidor
-                BigDecimal netoEmpleado = salario
-                        .add(bono)
-                        .subtract(anticipo)
-                        .subtract(deduccion);
-
-                historial.setNeto(netoEmpleado);
-
-                neto = neto.add(netoEmpleado);
-            }
-        }
-
-        // Guardar totales de la planilla
-        planilla.setTotalEmpleados(
-                cantidadEmpleados
-        );
-
-        planilla.setTotalSalarios(
-                salarios
-        );
-
-        planilla.setTotalBonos(
-                bonos
-        );
-
-        planilla.setTotalAnticipos(
-                anticipos
-        );
-
-        planilla.setTotalDeducciones(
-                deducciones
-        );
-
-        planilla.setTotalNeto(
-                neto
-        );
+    private BigDecimal factor(String frecuencia) {
+        if (frecuencia == null) throw new NegocioException("Indica la frecuencia.");
+        return switch (frecuencia) {
+            case "SEMANAL" -> BigDecimal.valueOf(12).divide(BigDecimal.valueOf(52), 8, RoundingMode.HALF_UP);
+            case "QUINCENAL" -> new BigDecimal("0.5");
+            case "MENSUAL" -> BigDecimal.ONE;
+            default -> throw new NegocioException("Frecuencia inválida.");
+        };
     }
 
-    // =========================================================
-    // ACTUALIZAR ESTADO GENERAL
-    // =========================================================
-
-    private void actualizarEstadoGeneral(
-            Planilla planilla) {
-
-        if (planilla.getEmpleados() == null
-                || planilla.getEmpleados().isEmpty()) {
-
-            planilla.setEstado(
-                    EstadoPlanilla.PENDIENTE
-            );
-
-            return;
-        }
-
-        boolean todosPagados = planilla
-                .getEmpleados()
-                .stream()
-                .allMatch(item ->
-                        item.getEstadoPago()
-                                == EstadoPago.PAGADO
-                );
-
-        if (todosPagados) {
-
-            planilla.setEstado(
-                    EstadoPlanilla.PAGADA
-            );
-
-        } else {
-
-            planilla.setEstado(
-                    EstadoPlanilla.PENDIENTE
-            );
-        }
-    }
-
-    // =========================================================
-    // VALIDACIONES
-    // =========================================================
-
-    private void validarPlanilla(Planilla planilla) {
-
-        if (planilla == null) {
-            throw new IllegalArgumentException(
-                    "La planilla no puede ser null."
-            );
-        }
-
-        // Número de planilla
-        if (planilla.getNumeroPlanilla() == null
-                || planilla.getNumeroPlanilla().isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "El número de planilla es obligatorio."
-            );
-        }
-
-        // Fecha inicio
-        if (planilla.getFechaInicio() == null) {
-
-            throw new IllegalArgumentException(
-                    "La fecha de inicio es obligatoria."
-            );
-        }
-
-        // Fecha fin
-        if (planilla.getFechaFin() == null) {
-
-            throw new IllegalArgumentException(
-                    "La fecha de fin es obligatoria."
-            );
-        }
-
-        // Fecha pago
-        if (planilla.getFechaPago() == null) {
-
-            throw new IllegalArgumentException(
-                    "La fecha de pago es obligatoria."
-            );
-        }
-
-        // Validar período
-        if (planilla.getFechaFin()
-                .isBefore(planilla.getFechaInicio())) {
-
-            throw new IllegalArgumentException(
-                    "La fecha de fin no puede ser anterior "
-                            + "a la fecha de inicio."
-            );
-        }
-
-        // Validar empleados
-        if (planilla.getEmpleados() == null
-                || planilla.getEmpleados().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "La planilla debe tener al menos un empleado."
-            );
-        }
-
-        // Validar número duplicado solamente al crear
-        if (planilla.getId() == null
-                && planillaRepository
-                        .existsByNumeroPlanilla(
-                                planilla.getNumeroPlanilla()
-                        )) {
-
-            throw new IllegalArgumentException(
-                    "Ya existe una planilla con el número: "
-                            + planilla.getNumeroPlanilla()
-            );
-        }
-    }
-
-    // =========================================================
-    // UTILIDAD PARA BIGDECIMAL
-    // =========================================================
-
-    private BigDecimal valor(BigDecimal valor) {
-
-        return valor != null
-                ? valor
-                : BigDecimal.ZERO;
-    }
+    private static BigDecimal r2(BigDecimal v) { return v.setScale(2, RoundingMode.HALF_UP); }
 }

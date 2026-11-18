@@ -114,6 +114,13 @@
 							<i class="fa-solid fa-file-invoice"></i> Imagen remisiones
 						</button>
 
+						<!-- Solo sugiere: no guarda, no modifica viajes ni genera imágenes -->
+						<button class="btn-sugerir" id="btnRecomendar" type="button"
+							title="Sugiere qué conductor le toca a cada viaje del día">
+							<i class="fa-solid fa-wand-magic-sparkles"></i> Recomendar
+							programación
+						</button>
+
 						<!--
                             Este botón NO lleva data-bs-toggle / data-bs-target:
                             el JavaScript abre el modal cuando los combos ya
@@ -483,6 +490,145 @@
 
 	</div>
 
+
+
+	<!-- =========================================================
+     MODAL RECOMENDACIÓN DE PROGRAMACIÓN
+========================================================= -->
+	<div class="modal fade" id="modalRecomendacion" tabindex="-1"
+		aria-hidden="true">
+
+		<div class="modal-dialog modal-lg modal-recomendacion modal-dialog-centered">
+
+			<div class="modal-content">
+
+				<div class="modal-header">
+
+					<div>
+						<div class="modal-etiqueta">
+							<i class="fa-solid fa-wand-magic-sparkles"></i> SUGERENCIA
+						</div>
+
+						<h5 class="modal-title">Programación recomendada</h5>
+					</div>
+
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="Cerrar"></button>
+
+				</div>
+
+				<div class="modal-body">
+
+					<div class="rec-barra">
+
+						<div class="campo-form">
+							<label for="recFecha">Fecha a programar</label> <input
+								type="date" id="recFecha">
+						</div>
+
+						<div class="rec-rapidos">
+							<button type="button" class="btn-cancelar" data-rec-dia="0">Hoy</button>
+							<button type="button" class="btn-cancelar" data-rec-dia="1">Mañana</button>
+						</div>
+
+						<div class="rec-resumen" id="recResumen" aria-live="polite"></div>
+
+					</div>
+
+					<!-- Destinos que ingresa el usuario: el sistema recomienda un conductor por cada uno -->
+					<div class="rec-destinos">
+
+						<label for="recDestino">Destinos del día</label>
+
+						<div class="rec-agregar">
+
+							<select id="recDestino" class="campo-input"></select> <input
+								type="number" id="recCantidad" class="campo-input" min="1"
+								max="50" value="1" title="Cantidad de viajes a ese destino"
+								aria-label="Cantidad de viajes">
+
+							<button type="button" class="btn-guardar" id="recAgregar">
+								<i class="fa-solid fa-plus"></i> Agregar
+							</button>
+
+						</div>
+
+						<div class="rec-acciones-lista">
+							<button type="button" class="btn-cancelar" id="recTraer"
+								title="Copia a la lista los viajes ya registrados en la fecha elegida">
+								<i class="fa-solid fa-download"></i> Traer viajes registrados de
+								esta fecha
+							</button>
+							<button type="button" class="btn-cancelar" id="recLimpiar">
+								<i class="fa-solid fa-eraser"></i> Limpiar lista
+							</button>
+						</div>
+
+					</div>
+
+					<div class="rec-avisos" id="recAvisos"></div>
+
+					<h6 class="rec-titulo">Conductor recomendado para cada destino</h6>
+
+					<div class="tabla-responsive">
+
+						<table class="tabla-admin tabla-rec">
+
+							<thead>
+								<tr>
+									<th>DESTINO</th>
+									<th>DURACIÓN</th>
+									<th>RECOMENDADO</th>
+									<th>MOTIVO</th>
+									<th>QUITAR</th>
+								</tr>
+							</thead>
+
+							<tbody id="recTbody"></tbody>
+
+						</table>
+
+					</div>
+
+					<h6 class="rec-titulo">Orden de prioridad de conductores (para
+						viaje largo)</h6>
+
+					<div class="tabla-responsive">
+
+						<table class="tabla-admin tabla-rec">
+
+							<thead>
+								<tr>
+									<th>#</th>
+									<th>CONDUCTOR</th>
+									<th>PLACA</th>
+									<th>ÚLTIMO VIAJE</th>
+									<th>ÚLTIMO VIAJE LARGO</th>
+									<th>VIAJES (7 DÍAS)</th>
+									<th>RECOMENDADO PARA</th>
+								</tr>
+							</thead>
+
+							<tbody id="recRankingTbody"></tbody>
+
+						</table>
+
+					</div>
+
+				</div>
+
+				<div class="modal-footer">
+
+					<button type="button" class="btn-cancelar" data-bs-dismiss="modal">
+						Cerrar</button>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
 
 
 	<!-- =========================================================
